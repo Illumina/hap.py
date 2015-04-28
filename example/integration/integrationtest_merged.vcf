@@ -1,0 +1,82 @@
+##fileformat=VCFv4.2
+##FILTER=<ID=PASS,Description="All filters passed">
+##reference=hg19
+##contig=<ID=chr1,length=249250621>
+##contig=<ID=chr2,length=243199373>
+##contig=<ID=chr3,length=198022430>
+##contig=<ID=chr4,length=191154276>
+##contig=<ID=chr5,length=180915260>
+##contig=<ID=chr6,length=171115067>
+##contig=<ID=chr7,length=159138663>
+##contig=<ID=chr8,length=146364022>
+##contig=<ID=chr9,length=141213431>
+##contig=<ID=chr10,length=135534747>
+##contig=<ID=chr11,length=135006516>
+##contig=<ID=chr12,length=133851895>
+##contig=<ID=chr13,length=115169878>
+##contig=<ID=chr14,length=107349540>
+##contig=<ID=chr15,length=102531392>
+##contig=<ID=chr16,length=90354753>
+##contig=<ID=chr17,length=81195210>
+##contig=<ID=chr18,length=78077248>
+##contig=<ID=chr19,length=59128983>
+##contig=<ID=chr20,length=63025520>
+##contig=<ID=chr21,length=48129895>
+##contig=<ID=chr22,length=51304566>
+##contig=<ID=chrX,length=155270560>
+##INFO=<ID=END,Number=1,Type=Integer,Description="SV end position">
+##FORMAT=<ID=AGT,Number=1,Type=String,Description="Genotypes at ambiguous locations">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
+##FORMAT=<ID=AD,Number=A,Type=Integer,Description="Allele Depths">
+##FILTER=<ID=HighDPFRatio,Description="DPF Ratio high">
+##FILTER=<ID=LowGQX,Description="Low GQX">
+##contig=<ID=1,length=249250621>
+##contig=<ID=10,length=135534747>
+##contig=<ID=11,length=135006516>
+##contig=<ID=12,length=133851895>
+##contig=<ID=13,length=115169878>
+##contig=<ID=14,length=107349540>
+##contig=<ID=15,length=102531392>
+##contig=<ID=16,length=90354753>
+##contig=<ID=17,length=81195210>
+##contig=<ID=18,length=78077248>
+##contig=<ID=19,length=59128983>
+##contig=<ID=2,length=243199373>
+##contig=<ID=20,length=63025520>
+##contig=<ID=21,length=48129895>
+##contig=<ID=22,length=51304566>
+##contig=<ID=3,length=198022430>
+##contig=<ID=4,length=191154276>
+##contig=<ID=5,length=180915260>
+##contig=<ID=6,length=171115067>
+##contig=<ID=7,length=159138663>
+##contig=<ID=8,length=146364022>
+##contig=<ID=9,length=141213431>
+##contig=<ID=X,length=155270560>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	integrationtest_lhs.vcf	integrationtest_rhs.vcf
+chr21	20001394	.	C	G	0	.	.	GT	0/1	0/1
+chr21	20001602	.	A	G	0	.	.	GT	0/1	1/1
+chr21	20004839	.	AGTGT	AGT,A	0	.	.	GT	2/1	2/1
+chr21	20183772	.	CCA	C	898	.	.	GT	./.	0/1
+chr21	20183776	.	AT	A	898	.	.	GT	0/1	./.
+chr21	20183777	.	T	A	180	.	.	GT	./.	0/1
+chr21	20256842	.	G	GGTGTGT	378	.	.	GT	0/1	0/1
+chr21	20836305	.	C	CAT	167	.	.	GT	./.	0/1
+chr21	20836309	.	CAT	CATACATATATATAT,C	215	.	.	GT	2/1	0/2
+chr21	20836311	.	T	TAC	215	.	.	GT	./.	0/1
+chr21	20921501	.	G	C	226	.	.	GT	./.	0/1
+chr21	20921518	.	TCTCTCACA	T	373	.	.	GT	./.	0/1
+chr21	20921522	.	TCACA	T	373	.	.	GT	1/1	0/1
+chr21	21147450	.	C	CACACACAT,CAT,T	1328	.	.	GT	2/1	3/1
+chr21	21176518	.	T	TGA	686	.	.	GT	0/1	0/1
+chr21	21176520	.	T	A,TGA	151	.	.	GT	0/2	0/1
+chr21	21295542	.	AAT	A	1699	.	.	GT	1/1	1/1
+chr21	21295571	.	G	GTGTATTTT	439	.	.	GT	0/1	0/1
+chr21	21295573	.	G	GTATTTT	439	.	.	GT	0/1	./.
+chr21	21295576	.	T	A,TGA	56	.	.	GT	0/2	0/1
+chr21	21548219	.	GC	G	0	.	.	GT	1/1	./.
+chr21	21548228	.	C	G	26	LowGQX;HighDPFRatio	.	GT	./.	1/1
+chr21	21548229	.	G	C	5	LowGQX;HighDPFRatio	.	GT	./.	0/1
+chr21	21548230	.	C	A	5	LowGQX;HighDPFRatio	.	GT	./.	0/1

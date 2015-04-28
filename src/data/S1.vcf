@@ -1,0 +1,153 @@
+##fileformat=VCFv4.1
+##FORMAT=<ID=GQX,Number=1,Type=Integer,Description="Minimum of {Genotype quality assuming variant position,Genotype quality assuming non-variant position}">
+##FORMAT=<ID=AD,Number=.,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Approximate read depth (reads with MQ=255 or with bad mates are filtered)">
+##FORMAT=<ID=GQ,Number=1,Type=Float,Description="Genotype Quality">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=MQ,Number=1,Type=Integer,Description="RMS Mapping Quality">
+##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification">
+##FORMAT=<ID=VF,Number=1,Type=Float,Description="Variant Frequency, the ratio of the sum of the called variant depth to the total depth">
+##INFO=<ID=AC,Number=A,Type=Integer,Description="Allele count in genotypes, for each ALT allele, in the same order as listed">
+##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency, for each ALT allele, in the same order as listed">
+##INFO=<ID=AN,Number=1,Type=Integer,Description="Total number of alleles in called genotypes">
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Approximate read depth; some reads may have been filtered">
+##INFO=<ID=QD,Number=1,Type=Float,Description="Variant Confidence/Quality by Depth">
+##INFO=<ID=BLOCKAVG_min30p3a,Number=0,Type=Flag,Description="Non-variant site block. All sites in a block are constrained to be non-variant, have the same filter value, and have all sample values in range [x,y], y <= max(x+3,(x*1.3)). All printed site block sample values are the minimum observed in the region spanned by the block">
+##INFO=<ID=BaseQRankSum,Number=1,Type=Float,Description="Z-score from Wilcoxon rank sum test of Alt Vs. Ref base qualities">
+##INFO=<ID=DS,Number=0,Type=Flag,Description="Were any of the samples downsampled?">
+##INFO=<ID=Dels,Number=1,Type=Float,Description="Fraction of Reads Containing Spanning Deletions">
+##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the region described in this record">
+##INFO=<ID=FS,Number=1,Type=Float,Description="Phred-scaled p-value using Fisher's exact test to detect strand bias">
+##INFO=<ID=HRun,Number=1,Type=Integer,Description="Largest Contiguous Homopolymer Run of Variant Allele In Either Direction">
+##INFO=<ID=HaplotypeScore,Number=1,Type=Float,Description="Consistency of the site with at most two segregating haplotypes">
+##INFO=<ID=InbreedingCoeff,Number=1,Type=Float,Description="Inbreeding coefficient as estimated from the genotype likelihoods per-sample when compared against the Hardy-Weinberg expectation">
+##INFO=<ID=MQ,Number=1,Type=Float,Description="RMS Mapping Quality">
+##INFO=<ID=MQ0,Number=1,Type=Integer,Description="Total Mapping Quality Zero Reads">
+##INFO=<ID=MQRankSum,Number=1,Type=Float,Description="Z-score From Wilcoxon rank sum test of Alt vs. Ref read mapping qualities">
+##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description="Z-score from Wilcoxon rank sum test of Alt vs. Ref read position bias">
+##INFO=<ID=SB,Number=1,Type=Float,Description="Strand Bias">
+##INFO=<ID=VQSLOD,Number=1,Type=Float,Description="Log odds ratio of being a true variant versus being false under the trained gaussian mixture model">
+##INFO=<ID=culprit,Number=1,Type=String,Description="The annotation which was the worst performing in the Gaussian mixture model, likely the reason why the variant was filtered out">
+##INFO=<ID=set,Number=1,Type=String,Description="Source VCF for the merged record in CombineVariants">
+##FILTER=<ID=LowGQX,Description="Locus GQX is less than 30.0000 or not present">
+##FILTER=<ID=LowQD,Description="Locus QD is less than 2.0000">
+##FILTER=<ID=LowMQ,Description="Site MQ is less than 20.0000">
+##FILTER=<ID=IndelConflict,Description="Locus is in region with conflicting indel calls.">
+##FILTER=<ID=MaxDepth,Description="Site depth is greater than 3.0x the mean chromosome depth">
+##FILTER=<ID=SiteConflict,Description="Site genotype conflicts with proximal indel call. This is typically a heterozygous SNV call made inside of a heterozygous deletion.">
+##FILTER=<ID=TruthSensitivityTranche99.00to99.90,Description="Truth sensitivity tranche level at VSQ Lod: -1.8337 <= x < -0.5214">
+##FILTER=<ID=TruthSensitivityTranche99.90to100.00+,Description="Truth sensitivity tranche level at VQS Lod < -48.5831">
+##FILTER=<ID=TruthSensitivityTranche99.90to100.00,Description="Truth sensitivity tranche level at VSQ Lod: -48.5831 <= x < -1.8337">
+##ApplyRecalibration="analysis_type=ApplyRecalibration input_file=[] read_buffer_size=null phone_home=NO_ET gatk_key=null read_filter=[] intervals=null excludeIntervals=null interval_set_rule=UNION interval_merging=ALL reference_sequence=/illumina/development/Isis/Genomes/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFASTA/genome.fa nonDeterministicRandomSeed=false downsampling_type=BY_SAMPLE downsample_to_fraction=null downsample_to_coverage=1000 baq=OFF baqGapOpenPenalty=40.0 performanceLog=null useOriginalQualities=false BQSR=null quantize_quals=-1 defaultBaseQualities=-1 validation_strictness=SILENT unsafe=null num_threads=1 num_cpu_threads=null num_io_threads=null num_bam_file_handles=null read_group_black_list=null pedigree=[] pedigreeString=[] pedigreeValidationType=STRICT allow_intervals_with_unindexed_bam=false logging_level=INFO log_to_file=null help=false input=[(RodBinding name=input source=/illumina/builds/platinumgenomes/Platinum_Genomes_Short_Insert/bwa_0.6.1/NA12877/Data/Intensities/BaseCalls/Alignment/tempvariants_G1.1.Indel.txt)] recal_file=(RodBinding name=recal_file source=/illumina/builds/platinumgenomes/Platinum_Genomes_Short_Insert/bwa_0.6.1/NA12877/Data/Intensities/BaseCalls/Alignment/tempvariants_G1.1.vcf.1.recal) tranches_file=/illumina/builds/platinumgenomes/Platinum_Genomes_Short_Insert/bwa_0.6.1/NA12877/Data/Intensities/BaseCalls/Alignment/tempvariants_G1.1.vcf.1.tranches out=org.broadinstitute.sting.gatk.io.stubs.VCFWriterStub NO_HEADER=org.broadinstitute.sting.gatk.io.stubs.VCFWriterStub sites_only=org.broadinstitute.sting.gatk.io.stubs.VCFWriterStub ts_filter_level=99.0 ignore_filter=null mode=INDEL filter_mismatching_base_and_quals=false"
+##CombineVariants="analysis_type=CombineVariants input_file=[] read_buffer_size=null phone_home=NO_ET gatk_key=null read_filter=[] intervals=null excludeIntervals=null interval_set_rule=UNION interval_merging=ALL reference_sequence=/illumina/development/Isis/Genomes/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFASTA/genome.fa nonDeterministicRandomSeed=false downsampling_type=BY_SAMPLE downsample_to_fraction=null downsample_to_coverage=1000 baq=OFF baqGapOpenPenalty=40.0 performanceLog=null useOriginalQualities=false BQSR=null quantize_quals=-1 defaultBaseQualities=-1 validation_strictness=SILENT unsafe=null num_threads=1 num_cpu_threads=null num_io_threads=null num_bam_file_handles=null read_group_black_list=null pedigree=[] pedigreeString=[] pedigreeValidationType=STRICT allow_intervals_with_unindexed_bam=false logging_level=INFO log_to_file=null help=false variant=[(RodBinding name=variant source=/illumina/builds/platinumgenomes/Platinum_Genomes_Short_Insert/bwa_0.6.1/NA12877/Data/Intensities/BaseCalls/Alignment/tempvariants_G1.1.vcf.0.output), (RodBinding name=variant2 source=/illumina/builds/platinumgenomes/Platinum_Genomes_Short_Insert/bwa_0.6.1/NA12877/Data/Intensities/BaseCalls/Alignment/tempvariants_G1.1.vcf.1.output)] out=org.broadinstitute.sting.gatk.io.stubs.VCFWriterStub NO_HEADER=org.broadinstitute.sting.gatk.io.stubs.VCFWriterStub sites_only=org.broadinstitute.sting.gatk.io.stubs.VCFWriterStub genotypemergeoption=PRIORITIZE filteredrecordsmergetype=KEEP_IF_ANY_UNFILTERED multipleallelesmergetype=BY_TYPE rod_priority_list=variant2,variant printComplexMerges=false filteredAreUncalled=false minimalVCF=false setKey=set assumeIdenticalSamples=false minimumN=1 suppressCommandLineHeader=false mergeInfoWithMaxAC=false filter_mismatching_base_and_quals=false"
+##MaxDepth_chr10=169.26
+##MaxDepth_chr11=158.94
+##MaxDepth_chr12=159.84
+##MaxDepth_chr13=136.65
+##MaxDepth_chr14=136.44
+##MaxDepth_chr15=131.73
+##MaxDepth_chr16=157.29
+##MaxDepth_chr17=156.09
+##MaxDepth_chr18=161.58
+##MaxDepth_chr19=152.31
+##MaxDepth_chr1=156.6
+##MaxDepth_chr20=152.1
+##MaxDepth_chr21=134.25
+##MaxDepth_chr22=106.38
+##MaxDepth_chr2=165.3
+##MaxDepth_chr3=163.65
+##MaxDepth_chr4=164.73
+##MaxDepth_chr5=163.47
+##MaxDepth_chr6=164.55
+##MaxDepth_chr7=162.45
+##MaxDepth_chr8=163.65
+##MaxDepth_chr9=140.73
+##MaxDepth_chrM=42108.3
+##MaxDepth_chrX=82.53
+##MaxDepth_chrY=59.97
+##UnifiedGenotyper="analysis_type=UnifiedGenotyper input_file=[/illumina/builds/platinumgenomes/Platinum_Genomes_Short_Insert/bwa_0.6.1/NA12877/Data/Intensities/BaseCalls/Alignment/NA12877_S1.bam] read_buffer_size=null phone_home=NO_ET gatk_key=null read_filter=[] intervals=[chrM:1-16571] excludeIntervals=null interval_set_rule=UNION interval_merging=ALL reference_sequence=/illumina/development/Isis/Genomes/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFASTA/genome.fa nonDeterministicRandomSeed=false downsampling_type=BY_SAMPLE downsample_to_fraction=null downsample_to_coverage=250 baq=OFF baqGapOpenPenalty=40.0 performanceLog=null useOriginalQualities=false BQSR=null quantize_quals=-1 defaultBaseQualities=-1 validation_strictness=SILENT unsafe=null num_threads=1 num_cpu_threads=null num_io_threads=null num_bam_file_handles=null read_group_black_list=null pedigree=[] pedigreeString=[] pedigreeValidationType=STRICT allow_intervals_with_unindexed_bam=false logging_level=OFF log_to_file=null help=false genotype_likelihoods_model=BOTH p_nonref_model=EXACT heterozygosity=0.0010 pcr_error_rate=1.0E-4 genotyping_mode=DISCOVERY output_mode=EMIT_ALL_SITES standard_min_confidence_threshold_for_calling=1.0 standard_min_confidence_threshold_for_emitting=30.0 noSLOD=false annotateNDA=false alleles=(RodBinding name= source=UNBOUND) min_base_quality_score=17 max_deletion_fraction=0.05 max_alternate_alleles=3 min_indel_count_for_genotyping=5 min_indel_fraction_per_sample=0.25 indel_heterozygosity=1.25E-4 indelGapContinuationPenalty=10 indelGapOpenPenalty=45 indelHaplotypeSize=80 noBandedIndel=false indelDebug=false ignoreSNPAlleles=false includeGVCFData=true dbsnp=(RodBinding name= source=UNBOUND) comp=[] out=org.broadinstitute.sting.gatk.io.stubs.VCFWriterStub NO_HEADER=org.broadinstitute.sting.gatk.io.stubs.VCFWriterStub sites_only=org.broadinstitute.sting.gatk.io.stubs.VCFWriterStub debug_file=null metrics_file=null annotation=[] excludeAnnotation=[] filter_mismatching_base_and_quals=false"
+##contig=<ID=chr1,length=249250621>
+##contig=<ID=chr10,length=135534747>
+##contig=<ID=chr11,length=135006516>
+##contig=<ID=chr12,length=133851895>
+##contig=<ID=chr13,length=115169878>
+##contig=<ID=chr14,length=107349540>
+##contig=<ID=chr15,length=102531392>
+##contig=<ID=chr16,length=90354753>
+##contig=<ID=chr17,length=81195210>
+##contig=<ID=chr18,length=78077248>
+##contig=<ID=chr19,length=59128983>
+##contig=<ID=chr2,length=243199373>
+##contig=<ID=chr20,length=63025520>
+##contig=<ID=chr21,length=48129895>
+##contig=<ID=chr22,length=51304566>
+##contig=<ID=chr3,length=198022430>
+##contig=<ID=chr4,length=191154276>
+##contig=<ID=chr5,length=180915260>
+##contig=<ID=chr6,length=171115067>
+##contig=<ID=chr7,length=159138663>
+##contig=<ID=chr8,length=146364022>
+##contig=<ID=chr9,length=141213431>
+##contig=<ID=chrM,length=16571>
+##contig=<ID=chrX,length=155270560>
+##contig=<ID=chrY,length=59373566>
+##gvcftools_cmdline="/illumina/development/Isis/2.2.13/gatk_to_gvcf --chrom-depth-file=/illumina/builds/platinumgenomes/Platinum_Genomes_Short_Insert/bwa_0.6.1/NA12877/Data/Intensities/BaseCalls/Alignment/NA12877_S1.bam.depth --no-default-filters --min-qd 2.0000 --min-gqx 30.0000 --min-mq 20.0000"
+##gvcftools_version="v0.8"
+##reference=file:///illumina/development/Isis/Genomes/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFASTA/genome.fa
+##source=GATK 1.6
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA12877
+chr1	10001	.	T	.	.	LowMQ	.	GT:DP:GQX:MQ	0/0:50:30:12
+chr1	10002	.	A	.	.	LowGQX;LowMQ	.	GT:DP:GQX:MQ	0/0:96:14:11
+chr1	10003	.	A	.	.	LowMQ	.	GT:DP:GQX:MQ	0/0:121:57:12
+chr1	10004	.	C	.	.	MaxDepth;LowMQ	END=10005;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:170:99:14
+chr1	10006	.	C	.	.	MaxDepth;LowMQ	END=10022;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:247:99:13
+chr1	10023	.	C	.	.	MaxDepth;LowMQ	END=10103;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:195:99:16
+chr1	10104	.	A	.	.	MaxDepth;LowMQ	END=10106;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:161:80:18
+chr1	10107	.	C	.	.	LowMQ	END=10108;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:150:99:19
+chr1	10109	.	A	T	371.50	TruthSensitivityTranche99.90to100.00	AC=1;AF=0.50;AN=2;BaseQRankSum=3.327;DP=155;DS;Dels=0.00;FS=17.437;HRun=0;HaplotypeScore=59.9750;MQ=20;MQ0=35;MQRankSum=-1.572;QD=2.40;ReadPosRankSum=-1.070;SB=-93.06;VQSLOD=-8.5629;culprit=QD;set=FilteredInAll	GT:AD:DP:GQ:GQX:MQ:PL:VF	0/1:104,48:155:99:99:20:401,0,926:0.316
+chr1	10110	.	A	.	.	PASS	END=10111;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:155:99:20
+chr1	10112	.	C	.	.	MaxDepth	END=10120;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:159:99:20
+chr1	10121	.	A	.	.	MaxDepth;LowMQ	END=10144;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:163:99:18
+chr1	10145	.	A	.	.	LowMQ	.	GT:DP:GQX:MQ	0/0:154:99:19
+chr1	10146	.	A	.	.	MaxDepth;LowMQ	.	GT:DP:GQX:MQ	0/0:168:99:19
+chr1	10147	.	C	.	133.70	LowMQ	DP=169;DS;MQ=19;MQ0=38	GT:AD:DP:GQ:MQ:GQX	0/0:116:134:99:19:99
+chr1	10148	.	C	.	.	MaxDepth;LowMQ	END=10149;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:178:99:19
+chr1	10150	.	C	T	85.00	TruthSensitivityTranche99.90to100.00;LowMQ;LowQD	AC=1;AF=0.50;AN=2;BaseQRankSum=0.700;DP=184;DS;Dels=0.02;FS=1.501;HRun=1;HaplotypeScore=126.1278;MQ=19;MQ0=40;MQRankSum=3.042;QD=0.46;ReadPosRankSum=0.455;SB=-28.27;VQSLOD=-13.0463;culprit=DP;set=FilteredInAll	GT:AD:DP:GQ:GQX:MQ:PL:VF	0/1:163,18:181:99:85:19:115,0,1407:0.099
+chr1	10151	.	T	.	.	MaxDepth;LowMQ	END=10176;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:173:84:19
+chr1	10177	.	A	C	699.02	TruthSensitivityTranche99.90to100.00	AC=1;AF=0.50;AN=2;BaseQRankSum=5.531;DP=182;DS;Dels=0.04;FS=2.425;HRun=2;HaplotypeScore=150.6080;MQ=20;MQ0=36;MQRankSum=1.588;QD=3.84;ReadPosRankSum=0.543;SB=-323.30;VQSLOD=-13.2899;culprit=DP;set=FilteredInAll	GT:AD:DP:GQ:GQX:MQ:PL:VF	0/1:112,62:174:99:99:20:729,0,676:0.356
+chr1	10178	.	C	.	.	MaxDepth	.	GT:DP:GQX:MQ	0/0:184:99:20
+chr1	10179	.	C	.	.	MaxDepth;LowMQ	.	GT:DP:GQX:MQ	0/0:190:99:19
+chr1	10180	.	T	C	118.35	TruthSensitivityTranche99.90to100.00;LowMQ;LowQD	AC=1;AF=0.50;AN=2;BaseQRankSum=-1.768;DP=190;DS;Dels=0.00;FS=5.643;HRun=2;HaplotypeScore=148.0820;MQ=19;MQ0=40;MQRankSum=0.455;QD=0.62;ReadPosRankSum=-2.302;SB=-8.26;VQSLOD=-13.7552;culprit=DP;set=FilteredInAll	GT:AD:DP:GQ:GQX:MQ:PL:VF	0/1:155,32:190:99:99:19:148,0,1545:0.171
+chr1	10181	.	A	.	.	LowGQX;MaxDepth;LowMQ	.	GT:DP:GQX:MQ	0/0:188:1:19
+chr1	10182	.	A	.	.	MaxDepth;LowMQ	.	GT:DP:GQX:MQ	0/0:192:99:19
+chr1	10183	.	C	.	.	MaxDepth	END=10198;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:210:99:20
+chr1	10199	.	A	.	.	MaxDepth;LowMQ	END=10200;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:247:99:19
+chr1	10201	.	C	.	.	MaxDepth	END=10211;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:237:99:20
+chr1	10212	.	A	.	.	MaxDepth;LowMQ	END=10213;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:240:99:19
+chr1	10214	.	C	.	.	MaxDepth	END=10215;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:237:99:20
+chr1	10216	.	T	.	.	MaxDepth;LowMQ	END=10228;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:191:99:19
+chr1	10229	.	A	.	.	MaxDepth;LowMQ	END=10230;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:175:99:19
+chr1	10231	.	C	.	7.81	LowGQX;LowMQ	DP=180;DS;MQ=19;MQ0=47	GT:AD:DP:GQ:MQ:GQX	0/0:137:156:0.02:19:0
+chr1	10232	.	C	.	.	MaxDepth	END=10233;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:170:99:20
+chr1	10234	.	C	T	116.93	TruthSensitivityTranche99.90to100.00;LowQD	AC=1;AF=0.50;AN=2;BaseQRankSum=-0.438;DP=155;DS;Dels=0.03;FS=3.431;HRun=1;HaplotypeScore=120.2277;MQ=20;MQ0=38;MQRankSum=1.257;QD=0.75;ReadPosRankSum=2.335;SB=-40.00;VQSLOD=-10.0846;culprit=DP;set=FilteredInAll	GT:AD:DP:GQ:GQX:MQ:PL:VF	0/1:130,21:151:99:99:20:147,0,1301:0.139
+chr1	10235	.	T	A	49.37	TruthSensitivityTranche99.90to100.00;LowQD	AC=1;AF=0.50;AN=2;BaseQRankSum=-0.142;DP=152;DS;Dels=0.03;FS=3.804;HRun=2;HaplotypeScore=113.0505;MQ=21;MQ0=35;MQRankSum=2.126;QD=0.32;ReadPosRankSum=1.044;SB=-4.75;VQSLOD=-9.3893;culprit=DP;set=FilteredInAll	GT:AD:DP:GQ:GQX:MQ:PL:VF	0/1:131,13:148:79.36:49:21:79,0,1062:0.090
+chr1	10236	.	A	.	.	PASS	END=10246;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:127:97:21
+chr1	10247	.	T	C	31.70	TruthSensitivityTranche99.90to100.00;LowQD	AC=1;AF=0.50;AN=2;BaseQRankSum=-0.058;DP=121;DS;Dels=0.03;FS=2.482;HRun=3;HaplotypeScore=142.8709;MQ=22;MQ0=22;MQRankSum=0.352;QD=0.26;ReadPosRankSum=3.218;SB=-0.01;VQSLOD=-8.4616;culprit=HaplotypeScore;set=FilteredInAll	GT:AD:DP:GQ:GQX:MQ:PL:VF	0/1:100,17:117:61.69:32:22:62,0,1171:0.145
+chr1	10248	.	A	T	78.94	TruthSensitivityTranche99.90to100.00;LowQD	AC=1;AF=0.50;AN=2;BaseQRankSum=0.007;DP=113;DS;Dels=0.21;FS=0.000;HRun=1;HaplotypeScore=201.2193;MQ=22;MQ0=19;MQRankSum=-1.173;QD=0.70;ReadPosRankSum=2.368;SB=-52.77;VQSLOD=-11.4628;culprit=HaplotypeScore;set=FilteredInAll	GT:AD:DP:GQ:GQX:MQ:PL:VF	0/1:68,18:89:99:79:22:109,0,757:0.209
+chr1	10249	.	A	.	.	PASS	.	GT:DP:GQX:MQ	0/0:107:99:22
+chr1	10250	.	A	C	350.82	TruthSensitivityTranche99.90to100.00	AC=1;AF=0.50;AN=2;BaseQRankSum=1.891;DP=107;DS;Dels=0.00;FS=1.250;HRun=3;HaplotypeScore=140.2732;MQ=22;MQ0=18;MQRankSum=1.805;QD=3.28;ReadPosRankSum=1.285;SB=-167.83;VQSLOD=-6.9477;culprit=QD;set=FilteredInAll	GT:AD:DP:GQ:GQX:MQ:PL:VF	0/1:75,31:107:99:99:22:381,0,826:0.292
+chr1	10251	.	C	.	.	PASS	END=10254;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:95:99:22
+chr1	10255	.	A	T	57.32	TruthSensitivityTranche99.90to100.00;LowQD	AC=1;AF=0.50;AN=2;BaseQRankSum=1.424;DP=100;DS;Dels=0.20;FS=8.039;HRun=1;HaplotypeScore=137.8765;MQ=22;MQ0=14;MQRankSum=0.338;QD=0.57;ReadPosRankSum=-0.979;SB=-0.01;VQSLOD=-6.0059;culprit=HaplotypeScore;set=FilteredInAll	GT:AD:DP:GQ:GQX:MQ:PL:VF	0/1:65,11:80:87.31:57:22:87,0,792:0.145
+chr1	10256	.	A	.	.	PASS	.	GT:DP:GQX:MQ	0/0:101:99:22
+chr1	10257	.	A	C	334.45	TruthSensitivityTranche99.90to100.00	AC=1;AF=0.50;AN=2;BaseQRankSum=2.040;DP=102;DS;Dels=0.01;FS=1.264;HRun=3;HaplotypeScore=134.5262;MQ=22;MQ0=16;MQRankSum=-0.303;QD=3.28;ReadPosRankSum=2.180;SB=-167.74;VQSLOD=-6.5607;culprit=QD;set=FilteredInAll	GT:AD:DP:GQ:GQX:MQ:PL:VF	0/1:65,36:101:99:99:22:364,0,767:0.356
+chr1	10258	.	C	.	.	PASS	END=10261;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:102:99:22
+chr1	10262	.	A	.	.	PASS	.	GT:DP:GQX:MQ	0/0:103:64:22
+chr1	10263	.	A	.	.	PASS	END=10267;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:105:86:22
+chr1	10268	.	A	.	.	LowGQX	.	GT:DP:GQX:MQ	0/0:111:18:22
+chr1	10269	.	A	.	.	PASS	END=10273;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:113:99:21
+chr1	10274	.	A	.	.	PASS	.	GT:DP:GQX:MQ	0/0:115:30:21
+chr1	10275	.	A	.	.	PASS	END=10279;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:115:99:21
+chr1	10280	.	A	.	.	PASS	.	GT:DP:GQX:MQ	0/0:113:38:21
+chr1	10281	.	A	.	.	PASS	END=10285;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:99:99:21
+chr1	10286	.	A	.	.	PASS	.	GT:DP:GQX:MQ	0/0:99:52:21
+chr1	10287	.	A	.	.	PASS	END=10290;BLOCKAVG_min30p3a	GT:DP:GQX:MQ	0/0:101:99:21

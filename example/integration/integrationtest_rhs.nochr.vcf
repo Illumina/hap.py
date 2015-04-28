@@ -1,0 +1,49 @@
+##fileformat=VCFv4.1
+##FILTER=<ID=PASS,Description="All	filters	passed">
+##FILTER=<ID=LowGQX,Description="Low GQX">
+##FILTER=<ID=HighDPFRatio,Description="DPF Ratio high">
+##reference=hg19
+##contig=<ID=1,length=249250621>
+##contig=<ID=2,length=243199373>
+##contig=<ID=3,length=198022430>
+##contig=<ID=4,length=191154276>
+##contig=<ID=5,length=180915260>
+##contig=<ID=6,length=171115067>
+##contig=<ID=7,length=159138663>
+##contig=<ID=8,length=146364022>
+##contig=<ID=9,length=141213431>
+##contig=<ID=10,length=135534747>
+##contig=<ID=11,length=135006516>
+##contig=<ID=12,length=133851895>
+##contig=<ID=13,length=115169878>
+##contig=<ID=14,length=107349540>
+##contig=<ID=15,length=102531392>
+##contig=<ID=16,length=90354753>
+##contig=<ID=17,length=81195210>
+##contig=<ID=18,length=78077248>
+##contig=<ID=19,length=59128983>
+##contig=<ID=20,length=63025520>
+##contig=<ID=21,length=48129895>
+##contig=<ID=22,length=51304566>
+##contig=<ID=X,length=155270560>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA12878
+21	20001394	match	C	G	.	PASS	.	GT	0/1
+21	20001602	under	A	G	.	PASS	.	GT	1/1
+21	20004839	lsm	AGTGTGTGTGT	AGTGTGT,AGTGTGTGT,A	.	PASS	.	GT	1|2
+21	20183772	.	CCA	C	898	PASS	.	GT	0/1
+21	20183777	.	T	A	180	PASS	.	GT	0/1
+21	20256842	.	G	GGTGTGT	378	PASS	.	GT	0/1
+21	20836305	.	C	CAT	167	PASS	.	GT	0/1
+21	20836309	.	CAT	C,CATAC	215	PASS	.	GT	1/2
+21	20921501	.	G	C	226	PASS	.	GT	0/1
+21	20921518	.	TCTCTCACA	T,TCTCT	373	PASS	.	GT	1/2
+21	21147450	.	C	T	84	PASS	.	GT	0/1
+21	21147450	.	C	CACACACAT	1328	PASS	.	GT	0/1
+21	21176518	.	T	TGA	686	PASS	.	GT	0/1
+21	21176520	.	T	A	151	PASS	.	GT	0/1
+21	21295542	.	AAT	A	1699	PASS	.	GT	1/1
+21	21295571	.	G	GTGTATTTT	439	PASS	.	GT	0/1
+21	21295576	.	T	A	56	PASS	.	GT	0/1
+21	21548228	.	C	G	26	LowGQX;HighDPFRatio	.	GT	1/1
+21	21548229	.	G	C	5	LowGQX;HighDPFRatio	.	GT	0/1
+21	21548230	.	C	A	5	LowGQX;HighDPFRatio	.	GT	0/1

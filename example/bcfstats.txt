@@ -1,0 +1,164 @@
+# This file was produced by bcftools stats (1.0-67-g326b4b4+htslib-1.0-11-g830ea73) and can be plotted using plot-vcfstats.
+# The command line was:	bcftools stats 
+#
+# Definition of sets:
+# ID	[2]id	[3]tab-separated file names
+ID	0	<STDIN>
+# SN, Summary numbers:
+# SN	[2]id	[3]key	[4]value
+SN	0	number of samples:	1
+SN	0	number of records:	753
+SN	0	number of SNPs:	0
+SN	0	number of MNPs:	0
+SN	0	number of indels:	753
+SN	0	number of others:	0
+SN	0	number of multiallelic sites:	0
+SN	0	number of multiallelic SNP sites:	0
+# TSTV, transitions/transversions:
+# TSTV	[2]id	[3]ts	[4]tv	[5]ts/tv	[6]ts (1st ALT)	[7]tv (1st ALT)	[8]ts/tv (1st ALT)
+TSTV	0	0	0	0.00	0	0	0.00
+# Sis, Singleton stats:
+# SiS	[2]id	[3]allele count	[4]number of SNPs	[5]number of transitions	[6]number of transversions	[7]number of indels	[8]repeat-consistent	[9]repeat-inconsistent	[10]not applicable
+SiS	0	1	0	0	0	753	0	0	753
+# AF, Stats by non-reference allele frequency:
+# AF	[2]id	[3]allele frequency	[4]number of SNPs	[5]number of transitions	[6]number of transversions	[7]number of indels	[8]repeat-consistent	[9]repeat-inconsistent	[10]not applicable
+AF	0	0.000000	0	0	0	753	0	0	753
+# QUAL, Stats by quality:
+# QUAL	[2]id	[3]Quality	[4]number of SNPs	[5]number of transitions (1st ALT)	[6]number of transversions (1st ALT)	[7]number of indels
+QUAL	0	0	0	0	0	72
+QUAL	0	8	0	0	0	1
+QUAL	0	10	0	0	0	1
+QUAL	0	14	0	0	0	2
+QUAL	0	19	0	0	0	1
+QUAL	0	20	0	0	0	1
+QUAL	0	21	0	0	0	1
+QUAL	0	26	0	0	0	1
+QUAL	0	30	0	0	0	2
+QUAL	0	31	0	0	0	1
+QUAL	0	34	0	0	0	2
+QUAL	0	37	0	0	0	1
+QUAL	0	39	0	0	0	1
+QUAL	0	40	0	0	0	2
+QUAL	0	41	0	0	0	1
+QUAL	0	44	0	0	0	3
+QUAL	0	47	0	0	0	1
+QUAL	0	48	0	0	0	1
+QUAL	0	49	0	0	0	2
+QUAL	0	50	0	0	0	1
+QUAL	0	51	0	0	0	2
+QUAL	0	53	0	0	0	1
+QUAL	0	54	0	0	0	1
+QUAL	0	55	0	0	0	2
+QUAL	0	56	0	0	0	1
+QUAL	0	57	0	0	0	5
+QUAL	0	58	0	0	0	3
+QUAL	0	59	0	0	0	2
+QUAL	0	60	0	0	0	3
+QUAL	0	61	0	0	0	1
+QUAL	0	62	0	0	0	3
+QUAL	0	63	0	0	0	1
+QUAL	0	64	0	0	0	5
+QUAL	0	65	0	0	0	4
+QUAL	0	66	0	0	0	1
+QUAL	0	67	0	0	0	4
+QUAL	0	68	0	0	0	3
+QUAL	0	69	0	0	0	8
+QUAL	0	70	0	0	0	7
+QUAL	0	71	0	0	0	4
+QUAL	0	72	0	0	0	4
+QUAL	0	73	0	0	0	6
+QUAL	0	74	0	0	0	4
+QUAL	0	75	0	0	0	10
+QUAL	0	76	0	0	0	7
+QUAL	0	77	0	0	0	13
+QUAL	0	78	0	0	0	9
+QUAL	0	79	0	0	0	8
+QUAL	0	80	0	0	0	8
+QUAL	0	81	0	0	0	12
+QUAL	0	82	0	0	0	20
+QUAL	0	83	0	0	0	19
+QUAL	0	84	0	0	0	12
+QUAL	0	85	0	0	0	17
+QUAL	0	86	0	0	0	22
+QUAL	0	87	0	0	0	27
+QUAL	0	88	0	0	0	24
+QUAL	0	89	0	0	0	14
+QUAL	0	90	0	0	0	27
+QUAL	0	91	0	0	0	23
+QUAL	0	92	0	0	0	38
+QUAL	0	93	0	0	0	48
+QUAL	0	94	0	0	0	37
+QUAL	0	95	0	0	0	52
+QUAL	0	96	0	0	0	32
+QUAL	0	97	0	0	0	45
+QUAL	0	98	0	0	0	35
+QUAL	0	99	0	0	0	19
+QUAL	0	100	0	0	0	2
+# IDD, InDel distribution:
+# IDD	[2]id	[3]length (deletions negative)	[4]count
+IDD	0	-50	1
+IDD	0	-36	1
+IDD	0	-34	1
+IDD	0	-33	1
+IDD	0	-31	1
+IDD	0	-30	2
+IDD	0	-29	2
+IDD	0	-28	2
+IDD	0	-27	1
+IDD	0	-25	2
+IDD	0	-24	2
+IDD	0	-23	1
+IDD	0	-22	3
+IDD	0	-21	5
+IDD	0	-20	5
+IDD	0	-19	8
+IDD	0	-18	5
+IDD	0	-17	1
+IDD	0	-16	5
+IDD	0	-15	7
+IDD	0	-14	5
+IDD	0	-13	5
+IDD	0	-12	7
+IDD	0	-11	1
+IDD	0	-10	4
+IDD	0	-9	1
+IDD	0	-8	7
+IDD	0	-7	5
+IDD	0	-6	15
+IDD	0	-5	12
+IDD	0	-4	26
+IDD	0	-3	32
+IDD	0	-2	53
+IDD	0	-1	187
+IDD	0	1	193
+IDD	0	2	48
+IDD	0	3	17
+IDD	0	4	25
+IDD	0	5	15
+IDD	0	6	7
+IDD	0	7	4
+IDD	0	8	9
+IDD	0	9	4
+IDD	0	10	2
+IDD	0	12	2
+IDD	0	13	1
+IDD	0	14	2
+IDD	0	16	2
+IDD	0	22	2
+IDD	0	26	2
+IDD	0	30	1
+IDD	0	31	1
+# ST, Substitution types:
+# ST	[2]id	[3]type	[4]count
+ST	0	A>C	0
+ST	0	A>G	0
+ST	0	A>T	0
+ST	0	C>A	0
+ST	0	C>G	0
+ST	0	C>T	0
+ST	0	G>A	0
+ST	0	G>C	0
+ST	0	G>T	0
+ST	0	T>A	0
+ST	0	T>C	0
+ST	0	T>G	0

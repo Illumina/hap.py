@@ -1,0 +1,25 @@
+// -*- mode: c++; indent-tabs-mode: nil; -*-
+//
+// 
+// Copyright (c) 2014 Illumina, Inc.
+//
+// This software is provided under the terms and conditions of the
+// Illumina Open Source Software License 1.
+//
+// You should have received a copy of the Illumina Open Source
+// Software License 1 along with this program. If not, see
+// <https://github.com/sequencing/licenses/>
+//
+
+/**
+ *  \brief Version from Git via CMAKE
+ *  
+ * \file Version.hh
+ * \author Peter Krusche
+ * \email pkrusche@illumina.com
+ *
+ */
+
+#pragma once
+
+#define HAPLOTYPES_VERSION "@HAPLOTYPES_VERSION@"

@@ -1,0 +1,115 @@
+##fileformat=VCFv4.1
+##fileDate=20131031
+##source=RTG Core Core vPOST-3.2 build 73b28fc (2013-10-24)
+##CL=population -o /results/3/len/mpr/cohort-mpr-fix/population_1 -t /data/1/1000g_v37_phase2/sdf --region 1 -I /results/3/len/mpr/family_all-sam-files-mpr.txt --pedigree-connectivity=dense --pedigree /results/3/family_caller/19_indv.ped
+##RUN-ID=8e941764-77d4-4ebb-a7c7-d4d701e847be
+##TEMPLATE-SDF-ID=f1765b39-de93-481a-925d-282fe62ec8a6
+##reference=/data/1/1000g_v37_phase2/sdf
+##contig=<ID=1,length=249250621>
+##contig=<ID=2,length=243199373>
+##contig=<ID=3,length=198022430>
+##contig=<ID=4,length=191154276>
+##contig=<ID=5,length=180915260>
+##contig=<ID=6,length=171115067>
+##contig=<ID=7,length=159138663>
+##contig=<ID=8,length=146364022>
+##contig=<ID=9,length=141213431>
+##contig=<ID=10,length=135534747>
+##contig=<ID=11,length=135006516>
+##contig=<ID=12,length=133851895>
+##contig=<ID=13,length=115169878>
+##contig=<ID=14,length=107349540>
+##contig=<ID=15,length=102531392>
+##contig=<ID=16,length=90354753>
+##contig=<ID=17,length=81195210>
+##contig=<ID=18,length=78077248>
+##contig=<ID=19,length=59128983>
+##contig=<ID=20,length=63025520>
+##contig=<ID=21,length=48129895>
+##contig=<ID=22,length=51304566>
+##contig=<ID=X,length=155270560>
+##contig=<ID=Y,length=59373566>
+##contig=<ID=MT,length=16569>
+##contig=<ID=GL000207.1,length=4262>
+##contig=<ID=GL000226.1,length=15008>
+##contig=<ID=GL000229.1,length=19913>
+##contig=<ID=GL000231.1,length=27386>
+##contig=<ID=GL000210.1,length=27682>
+##contig=<ID=GL000239.1,length=33824>
+##contig=<ID=GL000235.1,length=34474>
+##contig=<ID=GL000201.1,length=36148>
+##contig=<ID=GL000247.1,length=36422>
+##contig=<ID=GL000245.1,length=36651>
+##contig=<ID=GL000197.1,length=37175>
+##contig=<ID=GL000203.1,length=37498>
+##contig=<ID=GL000246.1,length=38154>
+##contig=<ID=GL000249.1,length=38502>
+##contig=<ID=GL000196.1,length=38914>
+##contig=<ID=GL000248.1,length=39786>
+##contig=<ID=GL000244.1,length=39929>
+##contig=<ID=GL000238.1,length=39939>
+##contig=<ID=GL000202.1,length=40103>
+##contig=<ID=GL000234.1,length=40531>
+##contig=<ID=GL000232.1,length=40652>
+##contig=<ID=GL000206.1,length=41001>
+##contig=<ID=GL000240.1,length=41933>
+##contig=<ID=GL000236.1,length=41934>
+##contig=<ID=GL000241.1,length=42152>
+##contig=<ID=GL000243.1,length=43341>
+##contig=<ID=GL000242.1,length=43523>
+##contig=<ID=GL000230.1,length=43691>
+##contig=<ID=GL000237.1,length=45867>
+##contig=<ID=GL000233.1,length=45941>
+##contig=<ID=GL000204.1,length=81310>
+##contig=<ID=GL000198.1,length=90085>
+##contig=<ID=GL000208.1,length=92689>
+##contig=<ID=GL000191.1,length=106433>
+##contig=<ID=GL000227.1,length=128374>
+##contig=<ID=GL000228.1,length=129120>
+##contig=<ID=GL000214.1,length=137718>
+##contig=<ID=GL000221.1,length=155397>
+##contig=<ID=GL000209.1,length=159169>
+##contig=<ID=GL000218.1,length=161147>
+##contig=<ID=GL000220.1,length=161802>
+##contig=<ID=GL000213.1,length=164239>
+##contig=<ID=GL000211.1,length=166566>
+##contig=<ID=GL000199.1,length=169874>
+##contig=<ID=GL000217.1,length=172149>
+##contig=<ID=GL000216.1,length=172294>
+##contig=<ID=GL000215.1,length=172545>
+##contig=<ID=GL000205.1,length=174588>
+##contig=<ID=GL000219.1,length=179198>
+##contig=<ID=GL000224.1,length=179693>
+##contig=<ID=GL000223.1,length=180455>
+##contig=<ID=GL000195.1,length=182896>
+##contig=<ID=GL000212.1,length=186858>
+##contig=<ID=GL000222.1,length=186861>
+##contig=<ID=GL000200.1,length=187035>
+##contig=<ID=GL000193.1,length=189789>
+##contig=<ID=GL000194.1,length=191469>
+##contig=<ID=GL000225.1,length=211173>
+##contig=<ID=GL000192.1,length=547496>
+##contig=<ID=NC_007605,length=171823>
+##contig=<ID=hs37d5,length=35477943>
+##FILTER=<ID=OC,Description="Coverage threshold exceeded">
+##FILTER=<ID=RC,Description="RTG variant is a complex region">
+##FILTER=<ID=RX,Description="RTG variant contained within hypercomplex region">
+##FILTER=<ID=RCEQUIV,Description="RTG variant is equivalent to the previous variant">
+##FILTER=<ID=OTHER,Description="Variant is invalid for unknown reasons">
+##FILTER=<ID=PHI,Description="This variant has a phasing incompatibility">
+##FILTER=<ID=PHO,Description="This variant was outside the regions of known phasing">
+##FILTER=<ID=PHR,Description="This variant should be ignored as it has been replaced by a variant with a repair for phasing incompatibility">
+##FILTER=<ID=PME,Description="This variant should be ignored as the genotype ploidy of some of the samples did not match the expected ploidy">
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Combined read depth for variant over all samples">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##SAMPLE=<ID=NA12878,Sex=FEMALE>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA12878
+5	139931629	.	C	GTCG	42511.3	PASS	.	GT	1|1
+6	90577707	.	GACATCTTTGCCCAGACATGGA	ACAT	18414	PASS	.	GT	1|0
+11	76751541	.	CT	C	25673.7	PASS	.	GT	1|1
+11	76751585	.	TGGCCCTTCGGCGTGCAGCT	GGCCCTTCGGCGTGCAGC	67273.9	PASS	.	GT	1|1
+14	29261308	.	AA	CAAAC	11968.1	PASS	.	GT	1|0
+14	74060508	.	C	A	28953.1	PASS	.	GT	1|0
+14	74060512	.	AGCTTA	TCAAAG	28953.1	PASS	.	GT	1|0
+19	2341059	.	GT	AC	42699.6	PASS	.	GT	1|1
+19	2341094	.	CTCCCTGGAG	A	27053.8	PASS	.	GT	1|0

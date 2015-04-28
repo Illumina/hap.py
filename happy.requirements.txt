@@ -1,0 +1,7 @@
+Cython
+numpy
+pandas
+pybedtools
+pysam
+nose
+https://bitbucket.org/pkrusche/bx-python/get/tip.tar.bz2

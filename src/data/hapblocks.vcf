@@ -1,0 +1,13 @@
+##fileformat=VCFv4.1
+##FILTER=<ID=PASS,Description="All filters passed">
+##reference=hg19
+##contig=<ID=chr1,length=249250621>
+##INFO=<ID=END,Number=1,Type=Integer,Description="SV end position">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA12877	NA12878
+chr1	9000	.	N	A	0	PASS	.	GT	1/1	0/1
+chr1	9014	.	N	A	0	PASS	.	GT	1/1	0/1
+chr1	9500	.	N	A	0	PASS	.	GT	1/1	0/1
+chr1	10000	.	NTAA	A,AAA	0	PASS	.	GT	0/1	0/2
+chr1	10005	.	CC	AGGGC,A	0	PASS	.	GT	0/1	0/2
+chr1	10010	.	C	G,T	0	PASS	.	GT	0/1	0/2

@@ -1,0 +1,8 @@
+##fileformat=VCFv4.1
+##FILTER=<ID=PASS,Description="All	filters	passed">
+##contig=<ID=chr1,length=2147483647>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	hap_alleles_1.vcf	hap_alleles_2.vcf
+chr1	19472002	.	GACACACACACACACACACAC	G,GACACACACACACACACACACAC	0	.	.	GT	0/1	2/1
+chr1	19472002	.	G	GAC	0	.	.	GT	0/1	0/0
+chr1	31755330	.	GTATCTATC	G,GTATC	0	.	.	GT	0/1	2/1
+chr1	31755330	.	GTATC	G	0	.	.	GT	0/1	0/0

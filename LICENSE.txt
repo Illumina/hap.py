@@ -1,0 +1,72 @@
+The main hap.py code (in the src subfolder) is distributed under the
+simplified BSD license.
+
+The full text can be found here:
+
+https://github.com/sequencing/licenses/blob/master/Simplified-BSD-License.txt
+
+-------------------------------------------------------------------------------
+Copyright (c) 2010-2015 Illumina, Inc.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-------------------------------------------------------------------------------
+
+The dependencies supplied in the external subfolder are covered by their own
+respective licenses as follows (original license text included in the 
+respective source files / tarballs):
+
+*   Htslib 1.2.1 (MIT license - 
+    https://github.com/samtools/htslib/blob/develop/LICENSE)
+*   bcftools 1.2.1 (MIT license - 
+    https://github.com/samtools/bcftools/blob/develop/LICENSE)
+*   samtools 1.2.1 (MIT license - 
+    https://github.com/samtools/samtools/blob/develop/LICENSE)
+*   Klib/ksw (from https://github.com/attractivechaos/klib -- MIT license)
+*   JsonCPP (MIT license -- 
+    https://github.com/open-source-parsers/jsoncpp/blob/master/LICENSE)
+*   Intervaltree ((c) Erik Garrison, MIT license, 
+    see https://github.com/ekg/intervaltree)
+*   GetGitRevisionDescription.cmake from 
+    https://github.com/rpavlik/cmake-modules/blob/master/GetGitRevisionDescription.cmake
+    Copyright Iowa State University 2009-2014
+    Distributed under the Boost Software License, Version 1.0.
+    (See http://www.boost.org/LICENSE_1_0.txt)
+*   Python virtualenv: MIT-like 
+    (https://raw.githubusercontent.com/pypa/virtualenv/master/LICENSE.txt)
+
+Further dependencies (to be installed by the user of this software):
+
+*   Python/Pandas: BSD-compatible 
+    (http://pandas.pydata.org/pandas-docs/stable/overview.html#license)
+*   Python/PySAM: MIT license (https://github.com/pysam-developers/pysam)
+*   bx-python: Copyright (c) 2005-2015 The Pennsylvania State University
+               Copyright (c) 2013-2015 The Johns Hopkins University
+               (https://bitbucket.org/james_taylor/bx-python)
+*   Boost C++ library: Boost software license 
+    (http://www.boost.org/users/license.html)
+
+Optional dependency (not included, can be downloaded via config script), 
+not required for benchmarking:
+
+*   Muscle (multiple aligner, used for extracting shared variation for
+    approximate matches, public domain)

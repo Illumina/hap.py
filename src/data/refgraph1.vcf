@@ -1,0 +1,15 @@
+##fileformat=VCFv4.1
+##reference=hg19
+##contig=<ID=chrQ,length=37>
+##INFO=<ID=END,Number=1,Type=Integer,Description="Variant end">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA12877
+chrQ	1	.	AAAC	A	.	PASS	.	GT	0/1
+chrQ	6	.	C	CGGG	.	PASS	.	GT	1/1
+chrQ	10	.	C	G	.	PASS	.	GT	0/1
+chrQ	11	.	C	T	.	PASS	.	GT	0|1
+chrQ	12	.	C	T	.	PASS	.	GT	0|1
+chrQ	13	.	A	T,G	.	PASS	.	GT	1|2
+chrQ	20	.	G	.	.	PASS	.	GT	0|0
+chrQ	21	.	G	C,T	.	PASS	.	GT	1|2
+chrQ	23	.	T	.	.	PASS	.	GT	0|0

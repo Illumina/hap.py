@@ -1,0 +1,5 @@
+##fileformat=VCFv4.1
+##contig=<ID=chr1,length=2147483647>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	SIMPLE
+chr1	5003167	.	G	T	22	.	.	GT	0/1
+chr1	5003167	.	G	GT	83	.	.	GT	1/1

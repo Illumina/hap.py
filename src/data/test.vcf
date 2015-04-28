@@ -1,0 +1,63 @@
+##fileformat=VCFv4.1
+##reference=hg19
+##contig=<ID=chr1,length=249250621>
+##contig=<ID=chr2,length=243199373>
+##contig=<ID=chr3,length=198022430>
+##contig=<ID=chr4,length=191154276>
+##contig=<ID=chr5,length=180915260>
+##contig=<ID=chr6,length=171115067>
+##contig=<ID=chr7,length=159138663>
+##contig=<ID=chr8,length=146364022>
+##contig=<ID=chr9,length=141213431>
+##contig=<ID=chr10,length=135534747>
+##contig=<ID=chr11,length=135006516>
+##contig=<ID=chr12,length=133851895>
+##contig=<ID=chr13,length=115169878>
+##contig=<ID=chr14,length=107349540>
+##contig=<ID=chr15,length=102531392>
+##contig=<ID=chr16,length=90354753>
+##contig=<ID=chr17,length=81195210>
+##contig=<ID=chr18,length=78077248>
+##contig=<ID=chr19,length=59128983>
+##contig=<ID=chr20,length=63025520>
+##contig=<ID=chr21,length=48129895>
+##contig=<ID=chr22,length=51304566>
+##contig=<ID=chrX,length=155270560>
+##FILTER=<ID=TEST>
+##INFO=<ID=END,Number=1,Type=Integer,Description="Variant end">
+##INFO=<ID=CIGAR,Number=1,Type=String,Description="Cigar">
+##INFO=<ID=RU,Number=1,Type=String,Description="RU">
+##INFO=<ID=REFREP,Number=1,Type=Integer,Description="REFREP">
+##INFO=<ID=IDREP,Number=1,Type=Integer,Description="IDREP">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=GQ,Number=A,Type=Float,Description="GQ">
+##FORMAT=<ID=GQX,Number=A,Type=Float,Description="GQX">
+##FORMAT=<ID=DP,Number=A,Type=Integer,Description="DP">
+##FORMAT=<ID=DPI,Number=A,Type=Integer,Description="DPI">
+##FORMAT=<ID=DPF,Number=A,Type=Integer,Description="DPF">
+##FORMAT=<ID=AD,Number=A,Type=Integer,Description="AD">
+##source=TEST
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA12877	NA12878
+chr1	16209	TN_FN1	A	.	.	PASS	END=16210	GT	0/0	1/0
+chr1	16211	TP	A	T	.	PASS	.	GT	1|1	1/0
+chr1	16212	FP2	A	T	.	PASS	.	GT	1|1	1/0
+chr1	16214	FP1	A	T	.	PASS	.	GT	1|0	1/0
+chr1	16217	FP3	A	T	.	PASS	.	GT	1|1	1/0
+chr1	16218	FP1	G	T	.	PASS	.	GT	1|1	1/0
+chr1	16219	FP2	T	A	.	TEST	.	GT	1|1	1/0
+chr1	16229	UNK	A	T	.	TEST	.	GT	1|1	1/0
+chr1	16230	FP2	A	T	.	PASS	.	GT	1|1	1/0
+chr1	16256	FP2	A	T	.	PASS	.	GT	1|1	1/0
+chr1	16257	UNK	A	T	.	PASS	.	GT	1|1	1/0
+chr1	16258	FN2	A	T	.	PASS	.	GT	./.	1/0
+chr1	16259	TN	A	.	.	PASS	END=16260	GT	0/0	1/0
+chr1	19995	FP1	CT	C	.	PASS	.	GT	1/0	1/0
+chr1	19997	TP	CT	C	.	PASS	.	GT	1/1	1/0
+chr1	19999	FP3	GT	G	.	PASS	.	GT	1/1	1/0
+chr1	20001	FP2	CCT	C	.	PASS	.	GT	1/0	1/0
+chr1	20005	UNK	TG	T	.	PASS	.	GT	1/0	1/0
+chr1	826158	.	G	.	.	PASS	END=826161	GT:GQX:DP:DPF	0/0:138:47:6	1/0
+chr1	826161	FP3	C	CTTTGAT	153	PASS	CIGAR=1M6I;RU=TTTGAT;REFREP=0;IDREP=1	GT:GQ:GQX:DPI:AD	0/1:193:153:55:34,5	1/0
+chr1	826162	.	C	.	.	PASS	END=826168	GT:GQX:DP:DPF	0/0:102:35:5	1/0
+chr1	826169	.	A	.	.	PASS	END=826181	GT:GQX:DP:DPF	0/0:96:33:8	1/0
+chr1	826181	FP3	CAG	C	191	PASS	CIGAR=1M2D;RU=AG;REFREP=2;IDREP=1	GT:GQ:GQX:DPI:AD	0/1:231:191:48:38,7	1/0

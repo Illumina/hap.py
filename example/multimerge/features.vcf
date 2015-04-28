@@ -1,0 +1,14 @@
+##fileformat=VCFv4.2
+##FILTER=<ID=PASS,Description="All filters passed">
+##reference=hg19
+##contig=<ID=chr1,length=249250621>
+##INFO=<ID=END,Number=.,Type=Integer,Description="SV end position">
+##FORMAT=<ID=AGT,Number=1,Type=String,Description="Genotypes at ambiguous locations">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=GQ,Number=1,Type=Float,Description="Genotype Quality">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
+##FORMAT=<ID=AD,Number=A,Type=Integer,Description="Allele Depths">
+##FORMAT=<ID=ADO,Number=.,Type=Integer,Description="Summed depth of non-called alleles.">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA12877	NA12878
+chr1	10005	.	CC	AGGGC,A	0	.	.	GT:GQ:AD:DP	0/1:10:2,2,0:4	0/2:11:4,0,4:8
+chr1	10010	.	C	G,T	0	.	.	GT:GQ:AD:DP	0/1:12:4,2,1:7	1/2:13:10,11,12:33
