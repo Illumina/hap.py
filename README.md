@@ -174,3 +174,9 @@ There are two fast ways to get a running installation of hap.py:
    $/ /opt/hap.py/bin/hap.py
    ```
 
+Known Issues
+============
+
+*  The testing scripts aren't working under MacOS X -- needs some shell tweaking
+   [src/sh/run_tests.sh](src/sh/run_tests.sh)
+   
