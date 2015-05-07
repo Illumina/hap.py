@@ -47,7 +47,7 @@ namespace variant
 struct VariantLocationAggregator::VariantLocationAggregatorImpl
 {
     VariantLocationAggregatorImpl() : aggregationtype(VariantLocationAggregator::aggregate_nocall) {}
-    VariantLocationAggregatorImpl(VariantLocationAggregatorImpl const & rhs) : 
+    VariantLocationAggregatorImpl(VariantLocationAggregatorImpl const & rhs) :
         buffered_variants(rhs.buffered_variants), aggregationtype(rhs.aggregationtype), vs(rhs.vs) {}
     std::list<Variants> buffered_variants;
     VariantLocationAggregator::AggregationType aggregationtype;
@@ -109,6 +109,8 @@ void VariantLocationAggregator::add(Variants const & vs)
     if (   _impl->buffered_variants.empty()
         || vs.chr != _impl->buffered_variants.back().chr
         || vs.pos != _impl->buffered_variants.back().pos
+        || (   (vs.anyHomref() || _impl->buffered_variants.back().anyHomref())
+            && (vs.pos + vs.len != _impl->buffered_variants.back().pos + _impl->buffered_variants.back().len) )
        )
     {
         _impl->buffered_variants.push_back(vs);
@@ -141,7 +143,7 @@ void VariantLocationAggregator::add(Variants const & vs)
         }
 #ifdef DEBUG_VARIANTLOCATIONAGGREGATOR
         std::cerr << "\t" <<
-                " vs_has_call: " << vs_has_call << 
+                " vs_has_call: " << vs_has_call <<
                 " can_combine: " << can_combine << "\n";
 #endif
 
@@ -158,11 +160,11 @@ void VariantLocationAggregator::add(Variants const & vs)
         std::cerr << c << " ";
     }
     std::cerr << "\n";
-#endif    
+#endif
     if (combine.empty())
     {
         _impl->buffered_variants.push_back(vs);
-        return;        
+        return;
     }
 
     // simple case: can merge all calls from vs into back
@@ -250,7 +252,7 @@ void VariantLocationAggregator::add(Variants const & vs)
     // any calls remaining => add also
     for (size_t i = 0; i < remaining_calls.calls.size(); ++i)
     {
-        if (remaining_calls.calls[i].ngt > 0 
+        if (remaining_calls.calls[i].ngt > 0
          || (remaining_calls.ambiguous_alleles.size() > i && remaining_calls.ambiguous_alleles[i].size() > 0))
         {
             _impl->buffered_variants.push_back(remaining_calls);
@@ -281,7 +283,7 @@ bool VariantLocationAggregator::advance()
     {
         _impl->vs = _impl->buffered_variants.front();
         _impl->buffered_variants.pop_front();
-        return true;        
+        return true;
     }
 }
 

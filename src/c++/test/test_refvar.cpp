@@ -116,6 +116,37 @@ BOOST_AUTO_TEST_CASE(testRefVarShiftNs)
     BOOST_CHECK_EQUAL(r.alt, "TT");
 }
 
+BOOST_AUTO_TEST_CASE(testRefVarShift_HAP_64)
+{
+    boost::filesystem::path p(__FILE__);
+    boost::filesystem::path tp = p.parent_path()
+                                   .parent_path()   // test
+                                   .parent_path()   // c++
+                                    / boost::filesystem::path("data") 
+                                    / boost::filesystem::path("chrQ.fa");
+
+    FastaFile f(tp.c_str());
+
+    RefVar r;
+    r.start = 23;
+    r.end = 23;
+    r.alt = "C";
+
+    leftShift(f, "chrU", r);
+    BOOST_CHECK_EQUAL(r.start, 23);
+    BOOST_CHECK_EQUAL(r.end, 23);
+    BOOST_CHECK_EQUAL(r.alt, "C");
+
+    r.start = 23;
+    r.end = 23;
+    r.alt = "C";
+
+    // limit shift distance
+    rightShift(f, "chrU", r);
+    BOOST_CHECK_EQUAL(r.start, 23);
+    BOOST_CHECK_EQUAL(r.end, 23);
+    BOOST_CHECK_EQUAL(r.alt, "C");
+}
 
 BOOST_AUTO_TEST_CASE(testRefVarLeftShiftList)
 {

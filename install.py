@@ -160,6 +160,8 @@ def build_haplotypes(source_dir, build_dir, args):
         boost_prefix = ""
     config_command = "%s/configure.sh %s %s %s" % (source_dir, args.configuration, args.setup,
                                                    args.targetdir)
+    if args.sge:
+        config_command += " -DUSE_SGE=ON"
 
     to_run = boost_prefix + "cd %s && %s %s" % (build_dir, boost_prefix, config_command)
     print >>sys.stderr, to_run
@@ -197,6 +199,13 @@ def main():
     parser = argparse.ArgumentParser("hap.py installer")
     parser.add_argument("targetdir", help="Target installation directory")
 
+    parser.add_argument("--sge-mode",
+                        dest="sge",
+                        action="store_true",
+                        default=False,
+                        help="Enable SGE mode, which will require an additional command "
+                             "line option \"--force-interactive\" to run interactively.")
+
     parser.add_argument("--python",
                         dest="python",
                         choices=["system", "virtualenv"],
@@ -228,7 +237,7 @@ def main():
 
     # C++ compile options
     setups=map(lambda x: os.path.basename(x).replace("-setup.sh", ""),
-                glob.glob(os.path.join(source_dir, "src","sh", "*-setup.sh")))
+               glob.glob(os.path.join(source_dir, "src","sh", "*-setup.sh")))
 
     setups.insert(0, "auto")
 

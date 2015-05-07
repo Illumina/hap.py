@@ -65,11 +65,11 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
     tfe.close()
     with open(tfo.name) as f:
         for l in f:
-            logging.info(l.replace("\n", ""))
+            logging.info("[stdout] " + l.replace("\n", ""))
     os.unlink(tfo.name)
     with open(tfe.name) as f:
         for l in f:
-            logging.warn(l.replace("\n", ""))
+            logging.info("[stderr] " + l.replace("\n", ""))
     os.unlink(tfe.name)
 
     if write_vcf:
@@ -105,7 +105,10 @@ def simplify_counts(counts, snames=None):
         "Alleles.DEL" : copy.copy(counter_dict),
         "Alleles.other" : copy.copy(counter_dict),
         "Locations" : copy.copy(counter_dict),
-        "Locations.NOGT" : copy.copy(counter_dict),
+        "Locations.het" : copy.copy(counter_dict),
+        "Locations.homalt" : copy.copy(counter_dict),
+        "Locations.hetalt" : copy.copy(counter_dict),
+        "Locations.unknown" : copy.copy(counter_dict),
         "Locations.SNP" : copy.copy(counter_dict),
         "Locations.SNP.het" : copy.copy(counter_dict),
         "Locations.SNP.homalt" : copy.copy(counter_dict),
@@ -151,11 +154,6 @@ def simplify_counts(counts, snames=None):
                 atype = "Alleles"
             elif atype == "locations":
                 atype = "Locations"
-            elif atype == "unknown_gt":
-                if tq == "TRUTH":
-                    continue
-                else:
-                    atype = "Locations.NOGT"
             elif atype == "snp":
                 if gt:
                     atype = "Locations.SNP"
@@ -166,6 +164,9 @@ def simplify_counts(counts, snames=None):
                     atype = "Locations.INDEL"
                 else:
                     atype = "Alleles." + atype.upper()
+            elif atype in ["het", "hetalt", "homalt", "unknown_gt"]: # for alleles, split out ins / del
+                gt = atype
+                atype = "Locations"
             else:
                 if gt:
                     atype = "Locations.INDEL"

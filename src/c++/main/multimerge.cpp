@@ -25,8 +25,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /**
- *  \brief Merge many VCF/BCF files into one. 
- *  
+ *  \brief Merge many VCF/BCF files into one.
+ *
  *  \details Mainly a test for VariantReader and VariantWriter
  *
  *
@@ -43,10 +43,12 @@
 
 #include "variant/VariantAlleleRemover.hh"
 #include "variant/VariantAlleleSplitter.hh"
+#include "variant/VariantTee.hh"
 #include "variant/VariantAlleleNormalizer.hh"
 #include "variant/VariantLocationAggregator.hh"
 #include "variant/VariantHomrefSplitter.hh"
 #include "variant/VariantAlleleUniq.hh"
+#include "variant/VariantCallsOnly.hh"
 
 #include "helpers/StringUtil.hh"
 
@@ -85,8 +87,9 @@ int main(int argc, char* argv[]) {
     bool splitalleles = false;
     int mergebylocation = false;
     bool uniqalleles = false;
-    bool norm_return_homref = true;
+    bool calls_only = true;
     bool homref_split = false;
+    std::string homref_vcf = "";
 
     bool process_formats = false;
 
@@ -96,7 +99,7 @@ int main(int argc, char* argv[]) {
         po::options_description desc("Allowed options");
         desc.add_options()
             ("help,h", "produce help message")
-            ("version", "Show version")            
+            ("version", "Show version")
             ("input-file", po::value<std::vector< std::string> >(), "The input files")
             ("output-file,o", po::value<std::string>(), "The output file name.")
             ("reference,r", po::value<std::string>(), "The reference fasta file.")
@@ -112,7 +115,8 @@ int main(int argc, char* argv[]) {
             ("merge-by-location", po::value<int>(), "Merge calls at the same location.")
             ("unique-alleles", po::value<bool>(), "Make alleles unique across a single line.")
             ("homref-split", po::value<bool>(), "Split homref blocks into per-nucleotide blocks.")
-            ("normalize-return-homref", po::value<bool>(), "Remove homref blocks.")
+            ("homref-vcf-out", po::value<std::string>(), "Output split homref blocks as BCF/VCF.")
+            ("calls-only", po::value<bool>(), "Remove homref blocks.")
             ("process-split", po::value<bool>(), "Enables splitalleles, trimalleles, unique-alleles, leftshift.")
             ("process-full", po::value<bool>(), "Enables splitalleles, trimalleles, unique-alleles, leftshift, mergebylocation.")
             ("process-formats", po::value<bool>(), "Process GQ/DP/AD format fields.")
@@ -127,18 +131,18 @@ int main(int argc, char* argv[]) {
         ;
 
         po::variables_map vm;
-        
+
         po::store(po::command_line_parser(argc, argv).
                   options(cmdline_options).positional(popts).run(), vm);
-        po::notify(vm); 
+        po::notify(vm);
 
-        if (vm.count("version")) 
+        if (vm.count("version"))
         {
             std::cout << "multimerge version " << HAPLOTYPES_VERSION << "\n";
             return 0;
         }
 
-        if (vm.count("help")) 
+        if (vm.count("help"))
         {
             std::cout << desc << "\n";
             return 1;
@@ -218,14 +222,20 @@ int main(int argc, char* argv[]) {
             uniqalleles = vm["unique-alleles"].as< bool >();
         }
 
-        if (vm.count("normalize-return-homref"))
+        if (vm.count("calls-only"))
         {
-            norm_return_homref = vm["normalize-return-homref"].as< bool >();
+            calls_only = vm["calls-only"].as< bool >();
         }
 
         if (vm.count("homref-split"))
         {
             homref_split = vm["homref-split"].as< bool >();
+        }
+
+        if (vm.count("homref-vcf-out"))
+        {
+            homref_split = 1;
+            homref_vcf = vm["homref-vcf-out"].as< std::string >();
         }
 
         if (vm.count("process-split"))
@@ -235,7 +245,7 @@ int main(int argc, char* argv[]) {
             splitalleles = true;
             uniqalleles = true;
             leftshift = true;
-            norm_return_homref = false;
+            calls_only = true;
         }
 
         if (vm.count("process-full"))
@@ -245,7 +255,7 @@ int main(int argc, char* argv[]) {
             splitalleles = true;
             uniqalleles = true;
             leftshift = true;
-            norm_return_homref = false;
+            calls_only = true;
             mergebylocation = 2;
         }
 
@@ -263,9 +273,9 @@ int main(int argc, char* argv[]) {
         if (output == "")
         {
             std::cerr << "Please specify an output file.\n";
-            return 1;            
+            return 1;
         }
-    } 
+    }
     catch (po::error & e)
     {
         std::cerr << e.what() << "\n";
@@ -285,7 +295,17 @@ int main(int argc, char* argv[]) {
         }
 
         VariantWriter w(output.c_str(), ref_fasta.c_str());
+        std::shared_ptr<VariantWriter> p_homref_writer;
+        if (homref_vcf.size() != 0)
+        {
+            p_homref_writer = std::make_shared<VariantWriter>(homref_vcf.c_str(), ref_fasta.c_str());
+        }
+
         w.setWriteFormats(process_formats);
+        if (p_homref_writer)
+        {
+            p_homref_writer->setWriteFormats(process_formats);
+        }
 
         r.setApplyFilters(apply_filters);
 
@@ -335,9 +355,17 @@ int main(int argc, char* argv[]) {
             samplenames.insert(sname);
             std::cerr << "Writing '" << p.first << ":" << p.second << "' as sample '" << sname << "'" << "\n";
             w.addSample(sname.c_str());
+            if (p_homref_writer)
+            {
+                p_homref_writer->addSample(sname.c_str());
+            }
         }
 
         w.addHeader(r);
+        if (p_homref_writer)
+        {
+            p_homref_writer->addHeader(r);
+        }
         r.rewind(chr.c_str(), start);
 
         VariantProcessor proc;
@@ -347,7 +375,41 @@ int main(int argc, char* argv[]) {
         {
             p_homref_splitter = std::move(std::unique_ptr<VariantHomrefSplitter>(new VariantHomrefSplitter()));
             proc.addStep(*p_homref_splitter);
-        }        
+        }
+
+        std::unique_ptr<VariantTee> p_tee;
+        std::unique_ptr<VariantProcessor> p_proc_homref;
+        std::unique_ptr<VariantInjectorStep> p_homref_filter;
+        std::unique_ptr<VariantLocationAggregator> p_homref_merger;
+        if(p_homref_writer)
+        {
+            p_tee = std::move(std::unique_ptr<VariantTee>(new VariantTee()));
+            proc.addStep(*p_tee);
+            p_proc_homref = std::move(std::unique_ptr<VariantProcessor>(new VariantProcessor()));
+            p_proc_homref->addStep(p_tee->secondOutput());
+
+            p_homref_filter = std::move(std::unique_ptr<VariantInjectorStep>(new VariantInjectorStep()));
+
+            struct hr_filter : public VariantFilterInterface
+            {
+                bool test(Variants const & v) { return v.anyHomref(); }
+            };
+
+            std::shared_ptr<VariantFilterInterface> p_filter(new hr_filter());
+
+            p_homref_filter->addFilter(p_filter);
+            p_proc_homref->addStep(*p_homref_filter);
+
+            p_homref_merger = std::move(std::unique_ptr<VariantLocationAggregator>(new VariantLocationAggregator()));
+            p_proc_homref->addStep(*p_homref_merger);
+        }
+
+        std::unique_ptr<VariantCallsOnly> p_calls_only;
+        if (calls_only)
+        {
+            p_calls_only = std::move(std::unique_ptr<VariantCallsOnly>(new VariantCallsOnly()));
+            proc.addStep(*p_calls_only);
+        }
 
         std::unique_ptr<VariantAlleleRemover> p_allele_remover;
         if (trimalleles)
@@ -369,7 +431,7 @@ int main(int argc, char* argv[]) {
             p_allele_normalizer = std::move(std::unique_ptr<VariantAlleleNormalizer>(new VariantAlleleNormalizer()));
             p_allele_normalizer->setReference(ref_fasta.c_str());
             p_allele_normalizer->setEnableRefPadding(true);
-            p_allele_normalizer->setEnableHomrefVariants(norm_return_homref);
+            p_allele_normalizer->setEnableHomrefVariants(true);
             proc.addStep(*p_allele_normalizer);
         }
 
@@ -398,36 +460,56 @@ int main(int argc, char* argv[]) {
         proc.setReader(r, VariantBufferMode::buffer_block, 100);
 
         int64_t rcount = 0;
-        bool cont = true;
 
-        while(cont && proc.advance())
+        bool advance1 = proc.advance();
+        bool advance2 = p_proc_homref ? p_proc_homref->advance() : false;
+
+        while(advance1 || advance2)
         {
-            Variants & v = proc.current();
-
             if(rlimit != -1)
             {
                 if(rcount >= rlimit)
                 {
-                    cont = false;
                     break;
                 }
             }
-            
-            if(end != -1 && v.pos > end)
+
+            if (advance1)
             {
-                cont = false;
-                break;
+                Variants & v = proc.current();
+                if (chr.size() != 0 && chr != v.chr)
+                {
+                    // chromosome changed and location was given => abort
+                    while(advance2)
+                    {
+                        Variants & v = p_proc_homref->current();
+                        p_homref_writer->put(v);
+                        advance2 = p_proc_homref ? p_proc_homref->advance() : false;
+                    }
+                    break;
+                }
+                if(end != -1 && v.pos > end)
+                {
+                    break;
+                }
+                w.put(v);
+                if(message > 0 && (rcount % message) == 0)
+                {
+                    std::cout << stringutil::formatPos(v.chr.c_str(), v.pos) << ": " << v << "\n";
+                }
             }
 
-            w.put(v);
-
-            if(message > 0 && (rcount % message) == 0)
+            if (advance2)
             {
-                std::cout << stringutil::formatPos(v.chr.c_str(), v.pos) << ": " << v << "\n";
+                Variants & v = p_proc_homref->current();
+                p_homref_writer->put(v);
             }
+
+            advance1 = proc.advance();
+            advance2 = p_proc_homref ? p_proc_homref->advance() : false;
             ++rcount;
-        }       
-    } 
+        }
+    }
     catch(std::runtime_error & e)
     {
         std::cerr << e.what() << std::endl;

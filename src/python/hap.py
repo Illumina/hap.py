@@ -209,7 +209,7 @@ def main():
 
     parser.add_argument("--scratch-prefix", dest="scratch_prefix",
                         default=None,
-                        help="Filename prefix for scratch report output.")
+                        help="Directory for scratch files.")
 
     parser.add_argument("--keep-scratch", dest="delete_scratch",
                         default=True, action="store_false",
@@ -262,24 +262,42 @@ def main():
                         default=multiprocessing.cpu_count(), type=int,
                         help="Number of threads to use.")
 
-    parser.add_argument("--force-interactive", dest="force_interactive",
-                        default=False, action="store_true",
-                        help="Force running interactively (i.e. when JOB_ID is not in the environment)")
+    if Tools.has_sge:
+        parser.add_argument("--force-interactive", dest="force_interactive",
+                            default=False, action="store_true",
+                            help="Force running interactively (i.e. when JOB_ID is not in the environment)")
 
     parser.add_argument("_vcfs", help="Two VCF files.", default=[], nargs="*")
 
     parser.add_argument("--logfile", dest="logfile", default=None,
                         help="Write logging information into file rather than to stderr")
 
+    verbosity_options = parser.add_mutually_exclusive_group(required=False)
+
+    verbosity_options.add_argument("--verbose", dest="verbose", default=False, action="store_true",
+                                   help="Raise logging level from warning to info.")
+
+    verbosity_options.add_argument("--quiet", dest="quiet", default=False, action="store_true",
+                                   help="Set logging level to output errors only.")
+
     args, _ = parser.parse_known_args()
 
-    if args.logfile:
-        for handler in logging.root.handlers[:]:
-            logging.root.removeHandler(handler)
-        logging.basicConfig(filename=args.logfile,
-                            format='%(asctime)s %(levelname)-8s %(message)s',
-                            level=logging.INFO)
+    if not Tools.has_sge:
+        args.force_interactive = True
 
+    if args.verbose:
+        loglevel = logging.INFO
+    elif args.quiet:
+        loglevel = logging.ERROR
+    else:
+        loglevel = logging.WARNING
+
+    ## reinitialize logging
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+    logging.basicConfig(filename=args.logfile,
+                        format='%(asctime)s %(levelname)-8s %(message)s',
+                        level=loglevel)
 
     if len(sys.argv) < 2:
         parser.print_help()
@@ -469,6 +487,11 @@ def main():
             h2["tabix"]["chromosomes"] = []
 
         for xc in args.locations:
+            if xc not in h1["tabix"]["chromosomes"]:
+                logging.warn("No calls for location %s in truth!" % xc)
+            if xc not in h2["tabix"]["chromosomes"]:
+                logging.warn("No calls for location %s in query!" % xc)
+
             if (xc not in h1["tabix"]["chromosomes"]) and (xc not in h2["tabix"]["chromosomes"]):
                 logging.warn("Removing location %s because neither input file has calls there." % xc)
             else:
@@ -693,6 +716,11 @@ def main():
              "Locations.SNP.homalt",])]
 
         logging.info("\n" + str(essential_numbers))
+
+        # in default mode, print result summary to stdout
+        if not args.quiet and not args.verbose:
+            print "Benchmarking Summary:"
+            print str(essential_numbers)
 
         with open(args.reports_prefix + ".metrics.json", "w") as fp:
             json.dump(metrics_output, fp)

@@ -126,14 +126,29 @@ def main():
     parser.add_argument("--logfile", dest="logfile", default=None,
                         help="Write logging information into file rather than to stderr")
 
+    verbosity_options = parser.add_mutually_exclusive_group(required=False)
+
+    verbosity_options.add_argument("--verbose", dest="verbose", default=False, action="store_true",
+                                   help="Raise logging level from warning to info.")
+
+    verbosity_options.add_argument("--quiet", dest="quiet", default=False, action="store_true",
+                                   help="Set logging level to output errors only.")
+
     args = parser.parse_args()
 
-    if args.logfile:
-        for handler in logging.root.handlers[:]:
-            logging.root.removeHandler(handler)
-        logging.basicConfig(filename=args.logfile,
-                            format='%(asctime)s %(levelname)-8s %(message)s',
-                            level=logging.INFO)
+    if args.verbose:
+        loglevel = logging.INFO
+    elif args.quiet:
+        loglevel = logging.ERROR
+    else:
+        loglevel = logging.WARNING
+
+    ## reinitialize logging
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+    logging.basicConfig(filename=args.logfile,
+                        format='%(asctime)s %(levelname)-8s %(message)s',
+                        level=loglevel)
 
 
     if args.normalize_all:
@@ -379,6 +394,9 @@ def main():
         res["ambiguous"] = res["ambi"] / res["total.query"]
 
         logging.info("\n" + res.to_string())
+        # in default mode, print result summary to stdout
+        if not args.quiet and not args.verbose:
+            print "\n" + res.to_string()
 
         if args.ambi and args.explain_ambiguous:
             ac = list(ambiClasses.iteritems())
@@ -392,6 +410,11 @@ def main():
                 logging.info("FP/ambiguity classes with info (multiple classes can "
                              "overlap):\n" + ambie.to_string(
                              index=False))
+                # in default mode, print result summary to stdout
+                if not args.quiet and not args.verbose:
+                    print "FP/ambiguity classes with info (multiple classes can " \
+                          "overlap):\n" + ambie.to_string(
+                          index=False)
                 ambie.to_csv(args.output + ".ambiclasses.csv")
             else:
                 logging.info("No ambiguous variants.")
@@ -406,6 +429,10 @@ def main():
                 pandas.set_option("display.height", 1100)
                 logging.info("Reasons for defining as ambiguous (multiple reasons can overlap):\n" + ambie.to_string(
                     formatters={'reason':'{{:<{}s}}'.format(ambie['reason'].str.len().max()).format}, index=False))
+                # in default mode, print result summary to stdout
+                if not args.quiet and not args.verbose:
+                    print "Reasons for defining as ambiguous (multiple reasons can overlap):\n" + ambie.to_string(
+                        formatters={'reason':'{{:<{}s}}'.format(ambie['reason'].str.len().max()).format}, index=False)
                 ambie.to_csv(args.output + ".ambireasons.csv")
             else:
                 logging.info("No ambiguous variants.")

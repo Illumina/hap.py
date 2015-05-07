@@ -43,7 +43,9 @@
 #include "variant/VariantAlleleSplitter.hh"
 #include "variant/VariantAlleleNormalizer.hh"
 #include "variant/VariantLocationAggregator.hh"
+#include "variant/VariantHomrefSplitter.hh"
 #include "variant/VariantAlleleUniq.hh"
+#include "variant/VariantCallsOnly.hh"
 
 #include "denovo/MarkDenovo.hh"
 
@@ -294,6 +296,14 @@ int main(int argc, char* argv[]) {
         }
 
         VariantProcessor proc;
+
+        // split homref blocks
+        VariantHomrefSplitter homref_splitter;
+        proc.addStep(homref_splitter);
+
+        VariantCallsOnly calls_only;
+        proc.addStep(calls_only);
+
         VariantAlleleRemover allele_remover;
         proc.addStep(allele_remover);
 

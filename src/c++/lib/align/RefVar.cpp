@@ -97,6 +97,23 @@ void leftShift(FastaFile & f, const char * chr, RefVar & rv, int64_t pos_min)
     trimLeft(f, chr, rv);
     trimRight(f, chr, rv);
 
+    reflen = rv.end - rv.start + 1;
+    // check for all ref match (HAP-64)
+    if (reflen < 0 && rv.alt.size() == 0)
+    {
+        // no inserted allele and ref length < 0
+        return;
+    }
+
+    if (reflen >= 0 && reflen == (signed)rv.alt.size())
+    {
+        std::string ref = f.query(chr, rv.start, rv.end);
+        if(ref == rv.alt)
+        {
+            return;
+        }
+    }
+
     while(!done)
     {
         done = true;
@@ -163,6 +180,23 @@ void rightShift(FastaFile & f, const char * chr, RefVar & rv, int64_t pos_max)
 
     trimLeft(f, chr, rv);
     trimRight(f, chr, rv);
+
+    reflen = rv.end - rv.start + 1;
+    // check for all ref match (HAP-64)
+    if (reflen < 0 && rv.alt.size() == 0)
+    {
+        // no inserted allele and ref length < 0
+        return;
+    }
+
+    if (reflen >= 0 && reflen == (signed)rv.alt.size())
+    {
+        std::string ref = f.query(chr, rv.start, rv.end);
+        if(ref == rv.alt)
+        {
+            return;
+        }
+    }
 
     // adapted from
     // http://genome.sph.umich.edu/wiki/File:Variant_normalization_algorithm.png

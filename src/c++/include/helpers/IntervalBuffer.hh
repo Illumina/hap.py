@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -26,11 +26,11 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-
 /**
- * VariantProcessor to remove unused alleles
+ * \brief Buffer for sorted intervals
  *
- * \file VariantAlleleRemover.hh
+ *
+ * \file IntervalBuffer.hh
  * \author Peter Krusche
  * \email pkrusche@illumina.com
  *
@@ -38,66 +38,52 @@
 
 #pragma once
 
-#include "Variant.hh"
+#include <cstddef>
+#include <cstdint>
+#include <list>
+#include <utility>
 
-namespace variant
+namespace intervals
 {
 
-/**
- * @brief Remove unused alleles
- */
-void trimAlleles(Variants & vars);
-
-class VariantAlleleRemover : public AbstractVariantProcessingStep
+class IntervalBuffer
 {
 public:
-    VariantAlleleRemover() : firstone(false) {}
-    ~VariantAlleleRemover() {}
-
-    /** Variant input **/
-    /** enqueue a set of variants */
-    void add(Variants const & vs) { 
-        if (buffer.empty())
-        {
-            firstone = true;
-        }
-        buffer.push_back(vs); 
-        trimAlleles(buffer.back()); 
-    }
-    
-    /** Variant output **/
-    /**
-     * @brief Return variant block at current position
-     **/
-    Variants & current() { if( buffer.empty() ) { return tmp; } else { return buffer.front(); }  }
+    /** tracks intervals over a number of lanes */
+    IntervalBuffer();
+    IntervalBuffer(IntervalBuffer const & rhs);
+    ~IntervalBuffer();
+    IntervalBuffer & operator=(IntervalBuffer const & rhs);
 
     /**
-     * @brief Advance one line
-     * @return true if a variant was retrieved, false otherwise
+     * @brief Add an interval to a lane
+     *
+     * @param start interval coordinates
+     * @param end interval coordinates
+     * @param lane lane to add to
      */
-    bool advance() { 
-        if (firstone && !buffer.empty())
-        {
-            firstone = false;
-            return true;
-        }
-        else
-        {
-            if(!buffer.empty()) 
-            {
-                buffer.pop_front();
-            }
-            return !buffer.empty(); 
-        }
-    }
+    void addInterval(int64_t start, int64_t end, size_t lane);
 
-    /** empty internal buffer */
-    void flush() { buffer.clear(); }
+    /**
+     * @brief Advance buffer, discarding all intervals with end < to
+     *
+     * @param to interval minimum end position; pass -1 to clear buffer
+     */
+    void advance(int64_t to);
+
+    /**
+     * @brief Check if interval is fully covered in a given lane
+     */
+    bool isCovered(int64_t start, int64_t end, size_t lane);
+
+    /**
+     * @brief Check if interval is partially covered in a given lane
+     */
+    bool hasOverlap(int64_t start, int64_t end, size_t lane);
 
 private:
-    std::list<Variants> buffer; 
-    Variants tmp;
-    bool firstone;
+    struct IntervalBufferImpl;
+    IntervalBufferImpl * _impl;
 };
 
 }

@@ -13,7 +13,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 echo "Running Multimerge test (1)"
 TF="${DIR}/../data/temp.vcf"
-bin/multimerge ${DIR}/../data/merge1.vcf.gz:NA12877 ${DIR}/../data/merge2.vcf.gz:NA12878 -o ${TF} -r ${DIR}/../data/microhg19.fa --trimalleles=1 --merge-by-location=1 --unique-alleles=1
+${HCDIR}/multimerge ${DIR}/../data/merge1.vcf.gz:NA12877 ${DIR}/../data/merge2.vcf.gz:NA12878 -o ${TF} -r ${DIR}/../data/microhg19.fa --trimalleles=1 --merge-by-location=1 --unique-alleles=1
 
 diff ${TF} ${DIR}/../data/expected_merge.vcf
 
@@ -31,7 +31,7 @@ TF="${DIR}/../data/temp.vcf"
 cat ${DIR}/../data/import_errors.vcf | bgzip > ${DIR}/../data/import_errors.vcf.gz
 tabix -p vcf ${DIR}/../data/import_errors.vcf.gz
 
-bin/multimerge ${DIR}/../data/import_errors.vcf.gz:NA12877 -o ${TF} -r ${DIR}/../data/chrQ.fa
+${HCDIR}/multimerge ${DIR}/../data/import_errors.vcf.gz:NA12877 -o ${TF} -r ${DIR}/../data/chrQ.fa
 
 diff ${TF} ${DIR}/../data/expected_importtest.vcf
 
@@ -55,9 +55,9 @@ if [[ -f "$HG19" ]]; then
 	cat $HF2 | bgzip > $HF2.gz
 	tabix -p vcf $HF2.gz
 
-	TF=`mktemp -p /tmp multimerge.XXXXXXXXXX`.vcf
+	TF=`mktemp -t multimerge.XXXXXXXXXX`.vcf
 	echo "Output is in $TF"
-	bin/multimerge $HF1.gz $HF2.gz -r $HG19 -o $TF --leftshift=1 --splitalleles=1
+	${HCDIR}/multimerge $HF1.gz $HF2.gz -r $HG19 -o $TF --leftshift=1 --splitalleles=1
 
 	diff -I^# ${TF} ${DIR}/../../example/multimerge/hap_alleles_leftshifted.vcf
 
@@ -79,9 +79,9 @@ if [[ -f "$HG19" ]]; then
 	cat $HF | bgzip > $HF.gz
 	tabix -p vcf $HF.gz
 
-	TF=`mktemp -p /tmp multimerge.XXXXXXXXXX`.vcf
+	TF=`mktemp -t multimerge.XXXXXXXXXX`.vcf
 	echo "Output is in $TF"
-	bin/multimerge $HF.gz -r $HG19 -o $TF --leftshift=0
+	${HCDIR}/multimerge $HF.gz -r $HG19 -o $TF --leftshift=0
 
 	diff -I^# ${TF} ${DIR}/../../example/multimerge/allele_test.vcf
 
@@ -102,9 +102,9 @@ if [[ -f "$HG19" ]]; then
 	cat $HF | bgzip > $HF.gz
 	tabix -f -p vcf $HF.gz
 
-	TF=`mktemp -p /tmp multimerge.XXXXXXXXXX`.vcf
+	TF=`mktemp -t multimerge.XXXXXXXXXX`.vcf
 	echo "Output is in $TF"
-	bin/multimerge $HF.gz -r $HG19 -o $TF --trimalleles=1 --splitalleles=1 --leftshift=1
+	${HCDIR}/multimerge $HF.gz -r $HG19 -o $TF --trimalleles=1 --splitalleles=1 --leftshift=1
 
 	diff -I^# ${TF} ${DIR}/../../example/multimerge/allele_test.sorted.vcf
 
@@ -125,9 +125,9 @@ if [[ -f "$HG19" ]]; then
 	cat $HF | bgzip > $HF.gz
 	tabix -f -p vcf $HF.gz
 
-	TF=`mktemp -p /tmp multimerge.XXXXXXXXXX`.vcf
+	TF=`mktemp -t multimerge.XXXXXXXXXX`.vcf
 	echo "Output is in $TF"
-	bin/multimerge $HF.gz:* -r $HG19 -o $TF --process-formats=1
+	${HCDIR}/multimerge $HF.gz:* -r $HG19 -o $TF --process-formats=1
 
 	diff -I^# ${TF} ${DIR}/../../example/multimerge/features.processed.vcf
 
@@ -148,9 +148,9 @@ if [[ -f "$HG19" ]]; then
 	cat $HF | bgzip > $HF.gz
 	tabix -f -p vcf $HF.gz
 
-	TF=`mktemp -p /tmp multimerge.XXXXXXXXXX`.vcf
+	TF=`mktemp -t multimerge.XXXXXXXXXX`.vcf
 	echo "Output is in $TF"
-	bin/multimerge $HF.gz:* -r $HG19 -o $TF --process-formats=1 --process-split=1
+	${HCDIR}/multimerge $HF.gz:* -r $HG19 -o $TF --process-formats=1 --process-split=1
 
 	diff -I^# ${TF} ${DIR}/../../example/multimerge/features.processed.split.vcf
 

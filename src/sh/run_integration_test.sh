@@ -16,7 +16,7 @@ cat ${DIR}/../../example/integration/integrationtest_rhs.vcf | bgzip > ${DIR}/..
 tabix -f -p vcf ${DIR}/../../example/integration/integrationtest_lhs.vcf.gz
 tabix -f -p vcf ${DIR}/../../example/integration/integrationtest_rhs.vcf.gz
 
-TMP_OUT=`mktemp`
+TMP_OUT=`mktemp -t happy.XXXXXXXXXX`
 
 # fallback HG19 locations
 if [[ ! -f "$HG19" ]]; then
@@ -28,9 +28,9 @@ if [[ ! -f "$HG19" ]]; then
 fi
 
 if [[ -f "$HG19" ]]; then
-	TMP_OUT0=`mktemp`
+	TMP_OUT0=`mktemp -t multimerge.XXXXXXXXXX`
 	# multimerge and compare
-	bin/multimerge ${DIR}/../../example/integration/integrationtest_lhs.vcf.gz  ${DIR}/../../example/integration/integrationtest_rhs.vcf.gz \
+	${HCDIR}/multimerge ${DIR}/../../example/integration/integrationtest_lhs.vcf.gz  ${DIR}/../../example/integration/integrationtest_rhs.vcf.gz \
 		-o $TMP_OUT0.vcf -r $HG19 --trimalleles=1 --splitalleles=1 --leftshift=1 --unique-alleles=1 --merge-by-location=2
 
 	diff -I '^#' ${TMP_OUT0}.vcf ${DIR}/../../example/integration/integrationtest_merged.vcf

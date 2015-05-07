@@ -18,7 +18,7 @@ TF_e="${DIR}/../data/expected_hapcmp.bed"
 if [[ -f "$HG19" ]]; then
 	ID="${DIR}/../../example/"
 	H_VERSION=$(bin/hapcmp --version)
-	bin/hapcmp -r $HG19 \
+	${HCDIR}/hapcmp -r $HG19 \
 		$ID/hc.bed \
 		$ID/hc.vcf.gz \
 		$ID/PG_hc.vcf.gz \
@@ -35,7 +35,7 @@ if [[ -f "$HG19" ]]; then
 	else
 		echo "hapcmp test SUCCEEDED."
 		rm ${TF_r}
-	fi	
+	fi
 else
 	echo "hapcmp test SKIPPED. Set the HG19 environment variable to point to a hg19 reference with '>chr21 ...' naming."
 fi

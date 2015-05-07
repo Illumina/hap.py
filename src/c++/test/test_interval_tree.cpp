@@ -2,7 +2,7 @@
 //
 // Adapted from interval_tree_test.cpp from https://github.com/ekg/intervaltree
 // Converted to boost test framework.
-// 
+//
 // Copyright (c) 2011 Erik Garrison
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -45,6 +45,7 @@
 #include <random>
 #include <time.h>
 #include <assert.h>
+
 #include "IntervalTree.h"
 
 using namespace std;
@@ -90,15 +91,15 @@ BOOST_AUTO_TEST_CASE(testIntervalTreeSpeed)
 
     intervalVector intervals;
     intervalVector queries;
-    
+
     // generate a test set of target intervals
-    for (int i = 0; i < 10000; ++i) 
+    for (int i = 0; i < 10000; ++i)
     {
         intervals.push_back(randomInterval<bool>(100000, 1000, 100000 + 1, true));
     }
-    
+
     // and queries
-    for (int i = 0; i < 5000; ++i) 
+    for (int i = 0; i < 5000; ++i)
     {
         queries.push_back(randomInterval<bool>(100000, 1000, 100000 + 1, true));
     }
@@ -109,12 +110,12 @@ BOOST_AUTO_TEST_CASE(testIntervalTreeSpeed)
     // using brute-force search
     countsVector bruteforcecounts;
     Clock::time_point t0 = Clock::now();
-    for (intervalVector::iterator q = queries.begin(); q != queries.end(); ++q) 
+    for (intervalVector::iterator q = queries.begin(); q != queries.end(); ++q)
     {
         intervalVector results;
-        for (intervalVector::iterator i = intervals.begin(); i != intervals.end(); ++i) 
+        for (intervalVector::iterator i = intervals.begin(); i != intervals.end(); ++i)
         {
-            if (i->start >= q->start && i->stop <= q->stop) 
+            if (i->start >= q->start && i->stop <= q->stop)
             {
                 results.push_back(*i);
             }
@@ -130,7 +131,7 @@ BOOST_AUTO_TEST_CASE(testIntervalTreeSpeed)
     intervalTree tree = intervalTree(intervals);
     countsVector treecounts;
     t0 = Clock::now();
-    for (intervalVector::iterator q = queries.begin(); q != queries.end(); ++q) 
+    for (intervalVector::iterator q = queries.begin(); q != queries.end(); ++q)
     {
         intervalVector results;
         tree.findContained(q->start, q->stop, results);
@@ -142,7 +143,7 @@ BOOST_AUTO_TEST_CASE(testIntervalTreeSpeed)
 
     // check that the same number of results are returned
     countsVector::iterator b = bruteforcecounts.begin();
-    for (countsVector::iterator t = treecounts.begin(); t != treecounts.end(); ++t, ++b) 
+    for (countsVector::iterator t = treecounts.begin(); t != treecounts.end(); ++t, ++b)
     {
         BOOST_CHECK_EQUAL(*b, *t);
     }

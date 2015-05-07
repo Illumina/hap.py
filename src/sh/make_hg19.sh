@@ -20,6 +20,6 @@ fi
 for x in "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "14" "15" "16" "17" "18" "19" "20" "21" "22" "X" "Y" "M" ; do
 	echo "wget ${PREFIX}/chr${x}.fa.gz -O chr${x}.fa.gz"
 	wget ${PREFIX}/chr${x}.fa.gz -O chr${x}.fa.gz
-	zcat "chr${x}.fa.gz" >> hg19.fa
+	gunzip -c "chr${x}.fa.gz" >> hg19.fa
 	rm "chr${x}.fa.gz"
 done

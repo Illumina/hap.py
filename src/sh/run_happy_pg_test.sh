@@ -12,7 +12,7 @@ echo "PG evaluation test for ${HCVERSION} from ${HCDIR}"
 
 HG19=${DIR}/../../example/chr21.fa
 
-TMP_OUT=`mktemp`
+TMP_OUT=`mktemp -t happy.XXXXXXXXXX`
 
 # run hap.py
 ${PYTHON} ${HCDIR}/hap.py \

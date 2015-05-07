@@ -10,7 +10,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 echo "GiaB / RTG test for ${HCVERSION} from ${HCDIR}"
 
-TMP_OUT=`mktemp`
+TMP_OUT=`mktemp -t happy.XXXXXXXXXX`
 
 # run hap.py
 ${PYTHON} ${HCDIR}/hap.py \

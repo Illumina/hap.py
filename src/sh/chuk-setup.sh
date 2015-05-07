@@ -14,3 +14,5 @@ export PATH=/illumina/development/haplocompare/hc-virtualenv/bin:/illumina/third
 
 export PYTHONHOME=/illumina/thirdparty/python/python-2.7.5
 unset PYTHONUSERBASE
+
+export EXTRA_CMAKE_OPTS="-DUSE_SGE=ON"

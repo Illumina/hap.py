@@ -25,7 +25,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /**
- * \brief Helper class to buffer RefVar objects into 'loci' 
+ * \brief Helper class to buffer RefVar objects into 'loci'
  *        (i.e. aggregate RefVar records by position)
  *
  * \file VariantAlleleSplitter.cpp
@@ -91,7 +91,9 @@ VariantAlleleSplitter const & VariantAlleleSplitter::operator=(VariantAlleleSpli
 /** enqueue a set of variants */
 void VariantAlleleSplitter::add(Variants const & vs)
 {
-    if (vs.chr == _impl->vs.chr && vs.pos < _impl->vs.pos)
+    if (_impl->buffered_variants.size() > 0 &&
+        vs.chr == _impl->buffered_variants.back().chr &&
+        vs.pos < _impl->buffered_variants.back().pos)
     {
         error("Variant added out of order at %s:%i / %i", vs.chr.c_str(), vs.pos, _impl->vs.pos);
     }
@@ -101,9 +103,9 @@ void VariantAlleleSplitter::add(Variants const & vs)
 
 /**
  * @brief Return variant block at current position
- * 
- * get_calls set to true to also retrieve GT information 
- * 
+ *
+ * get_calls set to true to also retrieve GT information
+ *
  * @param v Variant record to populate
  */
 Variants & VariantAlleleSplitter::current()
@@ -147,7 +149,7 @@ bool VariantAlleleSplitter::advance()
             int ad_ref, ad_other;
             int dp;
             size_t nfilter;
-            std::string filter[MAX_FILTER];            
+            std::string filter[MAX_FILTER];
         };
 
         // "half-call" -- one allele of a call
@@ -226,7 +228,7 @@ bool VariantAlleleSplitter::advance()
                         loc_alleles.push_back(HCall{v.variation[i-1], -1, true, false, sample, CallInfo()});
                     }
                 }
-                ++sample;      
+                ++sample;
             }
 
             ++pos;
@@ -244,15 +246,15 @@ bool VariantAlleleSplitter::advance()
                 if (l.rv.start < r.rv.start)
                 {
                     result =  true;
-                } 
+                }
                 else if (l.rv.start > r.rv.start)
                 {
                     result =  false;
-                } 
+                }
                 else if (l.rv.end > r.rv.end)
                 {
                     result =  true;
-                } 
+                }
                 else if (l.rv.end < r.rv.end)
                 {
                     result =  false;
@@ -311,7 +313,7 @@ bool VariantAlleleSplitter::advance()
                 }
                 else
                 {
-                    cur.variation.resize(0);                    
+                    cur.variation.resize(0);
                 }
                 cur.pos = p.rv.start;
                 cur.len = p.rv.end - p.rv.start + 1;
@@ -343,7 +345,7 @@ bool VariantAlleleSplitter::advance()
             else
             {
                 cur.calls[p.sample].gt[0] = 1;
-                cur.calls[p.sample].gt[1] = 1;                
+                cur.calls[p.sample].gt[1] = 1;
                 cur.calls[p.sample].ad[0] = p.ad;
                 cur.calls[p.sample].ad[1] = p.ad;
             }

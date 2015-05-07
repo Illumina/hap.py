@@ -9,7 +9,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 echo "Somatic comparison test for ${HCVERSION} from ${HCDIR}"
 
-TMP_OUT=`mktemp`
+TMP_OUT=`mktemp -t sompy.XXXXXXXXXX`
 
 # run som.py
 ${PYTHON} ${HCDIR}/som.py \
@@ -30,7 +30,7 @@ fi
 
 echo "Somatic comparison test with FP regions for ${HCVERSION} from ${HCDIR}"
 
-TMP_OUT=`mktemp`
+TMP_OUT=`mktemp -t sompy.XXXXXXXXXX`
 
 # run som.py
 ${PYTHON} ${HCDIR}/som.py \

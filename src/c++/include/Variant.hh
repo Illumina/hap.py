@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -72,7 +72,7 @@ enum gttype
  * @brief Variant call for a given location
  */
 struct Call {
-    Call() : ad_ref(-1), ad_other(-1), ngt(0), phased(false), nfilter(0), gq(0), dp(-1), qual(0) 
+    Call() : ad_ref(-1), ad_other(-1), ngt(0), phased(false), nfilter(0), gq(0), dp(-1), qual(0)
     {
         for(int i = 0; i < MAX_GT; ++i)
         {
@@ -134,23 +134,22 @@ struct Call {
 
 /**
  * @brief Classify a variant's GT type
- * 
+ *
  */
 extern gttype getGTType(Call const& var);
 
 /**
  * @brief Stores multiple VCF/BCF Variant records
  * @details Performs basic validation
- * 
+ *
  */
 struct Variants
 {
     std::string chr;
 
     std::vector<RefVar> variation;
-    std::vector<int> ad;
 
-    // these are the resulting variant calls 
+    // these are the resulting variant calls
     // for the given location
     std::vector<Call> calls;
 
@@ -161,14 +160,48 @@ struct Variants
     // We also store shared info for these variants
     std::string info;
 
-    // We collect all the alleles called in each sample. 
-    // This captures cases where cannot resolve a diploid 
+    // We collect all the alleles called in each sample.
+    // This captures cases where cannot resolve a diploid
     // genotype
     std::vector< std::list<int> > ambiguous_alleles;
+
+    /* return if any calls are homref */
+    inline bool anyHomref() const {
+        for(Call const & c : calls) {
+            if (c.isHomref())
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /* return if all calls are homref */
+    inline bool allHomref() const {
+        for(Call const & c : calls) {
+            if (!c.isHomref())
+            {
+                return false;
+            }
+        }
+        return calls.size() > 0;
+    }
+
+    /* return if any calls are homref */
+    inline bool anyAmbiguous() const {
+        for(std::list<int> const & c : ambiguous_alleles) {
+            if (!c.empty())
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
 };
 
-/** find/replace wrapper to set INFO fields via info string. 
- *  Warning: doens't work for flags (needs the '='). 
+/** find/replace wrapper to set INFO fields via info string.
+ *  Warning: doens't work for flags (needs the '=').
  *  Pass an empty string to remove the field.
  **/
 void setVariantInfo(Variants & v, std::string const & name, std::string const & value=".");
@@ -200,7 +233,7 @@ public:
     /** Variant input **/
     /** enqueue a set of variants */
     virtual void add(Variants const & vs) = 0;
-    
+
     /** Variant output **/
 
     /**
@@ -212,7 +245,7 @@ public:
      * @brief Advance one line
      * @return true if a variant was retrieved, false otherwise
      */
-    virtual bool advance() = 0; 
+    virtual bool advance() = 0;
 
     /** Flush internal buffers */
     virtual void flush() = 0;
@@ -220,14 +253,14 @@ public:
     /**
      * @brief Add variants from a VariantReader (see above for VariantBufferMode and param)
      */
-    bool add(VariantReader & source, 
-            VariantBufferMode bt, 
+    bool add(VariantReader & source,
+            VariantBufferMode bt,
             int64_t param = 0
            );
 
     /** add refvar record to a given variant */
     void add_variant(int sample, const char * chr, RefVar const & rv, bool het);
-    
+
     /** enqueue homref block */
     void add_homref(int sample, const char * chr, int64_t start, int64_t end, bool het);
 

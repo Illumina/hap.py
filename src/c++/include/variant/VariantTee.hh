@@ -1,6 +1,5 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -26,11 +25,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-
 /**
- * VariantProcessor to remove unused alleles
  *
- * \file VariantAlleleRemover.hh
+ * \file VariantTee.hh
  * \author Peter Krusche
  * \email pkrusche@illumina.com
  *
@@ -40,31 +37,50 @@
 
 #include "Variant.hh"
 
+#include <memory>
+
 namespace variant
 {
 
-/**
- * @brief Remove unused alleles
- */
-void trimAlleles(Variants & vars);
-
-class VariantAlleleRemover : public AbstractVariantProcessingStep
+/** Interface for filtering variants in stream */
+class VariantFilterInterface
 {
 public:
-    VariantAlleleRemover() : firstone(false) {}
-    ~VariantAlleleRemover() {}
+    virtual bool test(Variants const & v) = 0;
+};
+
+/** Step that simply buffers variants and returns them
+ *  This is useful below to inject variants into a
+ *  VariantProcessor
+ */
+class VariantInjectorStep : public AbstractVariantProcessingStep
+{
+public:
+    VariantInjectorStep() : firstone(false) {}
+    ~VariantInjectorStep() {}
+
+    void addFilter(std::shared_ptr<VariantFilterInterface> fi)
+    {
+        filters.push_back(fi);
+    }
 
     /** Variant input **/
     /** enqueue a set of variants */
-    void add(Variants const & vs) { 
+    void add(Variants const & vs) {
+        for (auto & p : filters)
+        {
+            if(!p->test(vs))
+            {
+                return;
+            }
+        }
         if (buffer.empty())
         {
             firstone = true;
         }
-        buffer.push_back(vs); 
-        trimAlleles(buffer.back()); 
+        buffer.push_back(vs);
     }
-    
+
     /** Variant output **/
     /**
      * @brief Return variant block at current position
@@ -75,7 +91,7 @@ public:
      * @brief Advance one line
      * @return true if a variant was retrieved, false otherwise
      */
-    bool advance() { 
+    bool advance() {
         if (firstone && !buffer.empty())
         {
             firstone = false;
@@ -83,11 +99,11 @@ public:
         }
         else
         {
-            if(!buffer.empty()) 
+            if(!buffer.empty())
             {
                 buffer.pop_front();
             }
-            return !buffer.empty(); 
+            return !buffer.empty();
         }
     }
 
@@ -95,9 +111,69 @@ public:
     void flush() { buffer.clear(); }
 
 private:
-    std::list<Variants> buffer; 
+    std::list<Variants> buffer;
     Variants tmp;
     bool firstone;
+    std::vector< std::shared_ptr<VariantFilterInterface> > filters;
+};
+
+
+/** Duplicate output variants into another VariantProcessor */
+class VariantTee : public AbstractVariantProcessingStep
+{
+public:
+    VariantTee() : firstone(false) {}
+    ~VariantTee() {}
+
+    /** Variant input **/
+    /** enqueue a set of variants */
+    void add(Variants const & vs) {
+        if (buffer.empty())
+        {
+            firstone = true;
+        }
+        buffer.push_back(vs);
+        vis.add(vs);
+    }
+
+    /** Variant output **/
+    /**
+     * @brief Return variant block at current position
+     **/
+    Variants & current() { if( buffer.empty() ) { return tmp; } else { return buffer.front(); }  }
+
+    /**
+     * @brief Advance one line
+     * @return true if a variant was retrieved, false otherwise
+     */
+    bool advance() {
+        if (firstone && !buffer.empty())
+        {
+            firstone = false;
+            return true;
+        }
+        else
+        {
+            if(!buffer.empty())
+            {
+                buffer.pop_front();
+            }
+            return !buffer.empty();
+        }
+    }
+
+    /** empty internal buffer */
+    void flush() { buffer.clear(); vis.flush(); }
+
+    /** second output, can be added to a VariantProcessor */
+    AbstractVariantProcessingStep & secondOutput() { return vis; }
+
+private:
+    std::list<Variants> buffer;
+    Variants tmp;
+    bool firstone;
+
+    VariantInjectorStep vis;
 };
 
 }

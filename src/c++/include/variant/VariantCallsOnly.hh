@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -25,12 +25,10 @@
 // OR TORT INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
-
 /**
- * VariantProcessor to remove unused alleles
+ * \brief Return Variant Calls only, resolve homref vs. no-call across samples
  *
- * \file VariantAlleleRemover.hh
+ * \file VariantCallsOnly.hh
  * \author Peter Krusche
  * \email pkrusche@illumina.com
  *
@@ -40,64 +38,36 @@
 
 #include "Variant.hh"
 
-namespace variant
-{
+namespace variant {
 
-/**
- * @brief Remove unused alleles
- */
-void trimAlleles(Variants & vars);
+    class VariantCallsOnly : public AbstractVariantProcessingStep
+    {
+    public:
+        VariantCallsOnly();
+        VariantCallsOnly(VariantCallsOnly const & );
+        ~VariantCallsOnly();
+        VariantCallsOnly const & operator=(VariantCallsOnly const & );
 
-class VariantAlleleRemover : public AbstractVariantProcessingStep
-{
-public:
-    VariantAlleleRemover() : firstone(false) {}
-    ~VariantAlleleRemover() {}
+        /** enqueue a set of variants */
+        void add(Variants const & vs);
 
-    /** Variant input **/
-    /** enqueue a set of variants */
-    void add(Variants const & vs) { 
-        if (buffer.empty())
-        {
-            firstone = true;
-        }
-        buffer.push_back(vs); 
-        trimAlleles(buffer.back()); 
-    }
-    
-    /** Variant output **/
-    /**
-     * @brief Return variant block at current position
-     **/
-    Variants & current() { if( buffer.empty() ) { return tmp; } else { return buffer.front(); }  }
+        /**
+         * @brief Return variant block at current position
+         **/
+        Variants & current();
 
-    /**
-     * @brief Advance one line
-     * @return true if a variant was retrieved, false otherwise
-     */
-    bool advance() { 
-        if (firstone && !buffer.empty())
-        {
-            firstone = false;
-            return true;
-        }
-        else
-        {
-            if(!buffer.empty()) 
-            {
-                buffer.pop_front();
-            }
-            return !buffer.empty(); 
-        }
-    }
+        /**
+         * @brief Advance one line
+         * @return true if a variant was retrieved, false otherwise
+         */
+        bool advance();
 
-    /** empty internal buffer */
-    void flush() { buffer.clear(); }
+        /** empty internal buffer */
+        void flush();
 
-private:
-    std::list<Variants> buffer; 
-    Variants tmp;
-    bool firstone;
-};
+    private:
+        struct VariantCallsOnlyImpl;
+        VariantCallsOnlyImpl * _impl;
+    };
 
 }

@@ -13,3 +13,5 @@ export BOOST_ROOT=/illumina/thirdparty/boost/el5/boost_1_55_0_python2.4
 export PATH=/illumina/development/haplocompare/hc-virtualenv/bin:/illumina/thirdparty/gcc/el5/gcc-4.9.2/bin:/illumina/thirdparty/cmake/cmake-2.8.8/bin:/illumina/thirdparty/binutils/binutils-2.24/bin:$PATH
 
 export LD_LIBRARY_PATH=/illumina/thirdparty/gcc/el5/gcc-4.9.2/lib
+
+export EXTRA_CMAKE_OPTS="-DUSE_SGE=ON"

@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -37,13 +37,30 @@
 #include "variant/VariantHomrefSplitter.hh"
 #include "Error.hh"
 
+#include <queue>
 #include <vector>
 #include <list>
 
-#define DEBUG_VARIANTHOMREFSPLITTER
+// #define DEBUG_VARIANTHOMREFSPLITTER
 
 namespace variant {
 
+namespace ns_varianthomrefsplitter
+{
+    struct VariantCompare
+    {
+        bool operator() (Variants const & v1, Variants const & v2)
+        {
+            return v1.pos > v2.pos;
+        }
+    };
+
+    typedef std::priority_queue<
+        Variants,
+        std::vector<Variants>,
+        ns_varianthomrefsplitter::VariantCompare
+    > VariantQueue;
+}
 
 struct VariantHomrefSplitter::VariantHomrefSplitterImpl
 {
@@ -55,10 +72,12 @@ struct VariantHomrefSplitter::VariantHomrefSplitterImpl
         output_variants = rhs.output_variants;
         vs = rhs.vs;
     }
-    std::vector<Variants> buffered_variants;
-    std::list<Variants> output_variants;
-    Variants vs;
 
+    std::vector<Variants> buffered_variants;
+
+    ns_varianthomrefsplitter::VariantQueue output_variants;
+
+    Variants vs;
 };
 
 
@@ -88,11 +107,13 @@ VariantHomrefSplitter const & VariantHomrefSplitter::operator=(VariantHomrefSpli
     _impl = new VariantHomrefSplitterImpl(*rhs._impl);
     return *this;
 }
-        
+
 /** enqueue a set of variants */
 void VariantHomrefSplitter::add(Variants const & vs)
 {
-    if (vs.chr == _impl->vs.chr && vs.pos < _impl->vs.pos)
+    if (_impl->buffered_variants.size() > 0 &&
+        vs.chr == _impl->buffered_variants.back().chr &&
+        vs.pos < _impl->buffered_variants.back().pos)
     {
         error("Variant added out of order at %s:%i / %i", vs.chr.c_str(), vs.pos, _impl->vs.pos);
     }
@@ -105,6 +126,9 @@ void VariantHomrefSplitter::add(Variants const & vs)
  **/
 Variants & VariantHomrefSplitter::current()
 {
+#ifdef DEBUG_VARIANTHOMREFSPLITTER
+    std::cerr << "VHRS-output: " << _impl->vs << "\n";
+#endif
     return _impl->vs;
 }
 
@@ -115,13 +139,63 @@ Variants & VariantHomrefSplitter::current()
 bool VariantHomrefSplitter::advance()
 {
     // refill output buffer?
-    if (_impl->output_variants.empty()) {
+    if (_impl->output_variants.empty())
+    {
         for (Variants & v : _impl->buffered_variants)
         {
+            if (v.anyHomref())
+            {
+                Variants non_hr = v;
+                int n_non_hr = v.calls.size();
+                for (size_t q = 0; q < v.calls.size(); ++q)
+                {
+                    if(v.calls[q].isHomref())
+                    {
+                        non_hr.calls[q] = Call();
+                        --n_non_hr;
+                    }
+                    else if(v.calls[q].isNocall())
+                    {
+                        --n_non_hr;
+                    }
+                    else
+                    {
+                        v.calls[q] = Call();
+                    }
+                }
+                if (n_non_hr || non_hr.anyAmbiguous())
+                {
 #ifdef DEBUG_VARIANTHOMREFSPLITTER
-            std::cerr << "VHRS: " << v << "\n";
+                    std::cerr << "VHRS-non-hr-pass-on: " << v << "\n";
 #endif
-            _impl->output_variants.push_back(v);
+                    _impl->output_variants.push(non_hr);
+                }
+
+                v.variation.clear();
+                for(auto & l : v.ambiguous_alleles)
+                {
+                    l.clear();
+                }
+
+#ifdef DEBUG_VARIANTHOMREFSPLITTER
+                std::cerr << "VHRS-hr-split: " << v << "\n";
+#endif
+                // TODO handle very long blocks?
+                int64_t end_pos = v.pos + v.len;
+                v.len = 1;
+                while(v.pos < end_pos)
+                {
+                    _impl->output_variants.push(v);
+                    ++v.pos;
+                }
+            }
+            else
+            {
+#ifdef DEBUG_VARIANTHOMREFSPLITTER
+                std::cerr << "VHRS-pass-on: " << v << "\n";
+#endif
+                _impl->output_variants.push(v);
+            }
         }
         _impl->buffered_variants.clear();
     }
@@ -130,8 +204,8 @@ bool VariantHomrefSplitter::advance()
     {
         return false;
     }
-    _impl->vs = _impl->output_variants.front();
-    _impl->output_variants.pop_front();
+    _impl->vs = _impl->output_variants.top();
+    _impl->output_variants.pop();
     return true;
 }
 
@@ -139,7 +213,7 @@ bool VariantHomrefSplitter::advance()
 void VariantHomrefSplitter::flush()
 {
     _impl->buffered_variants.clear();
-    _impl->output_variants.clear();
+    _impl->output_variants = ns_varianthomrefsplitter::VariantQueue();
     _impl->vs = Variants();
 }
 

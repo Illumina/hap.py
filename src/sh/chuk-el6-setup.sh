@@ -16,3 +16,5 @@ export PYTHONHOME=/illumina/thirdparty/python/python-2.7.8
 unset PYTHONUSERBASE
 
 export LD_RUN_PATH=$LD_LIBRARY_PATH:/illumina/thirdparty/gcc/gcc-4.9.2/lib64:/illumina/thirdparty/gcc/gcc-4.9.2/lib
+
+export EXTRA_CMAKE_OPTS="-DUSE_SGE=ON"

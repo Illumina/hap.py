@@ -43,7 +43,7 @@ namespace variant
 
 /**
  * @brief Classify a variant's GT type
- * 
+ *
  */
 gttype getGTType(Call const& var)
 {
@@ -129,7 +129,7 @@ std::ostream & operator<<(std::ostream &o, Call const & v)
         }
         o << v.gt[i];
     }
-    
+
     if(v.qual > 0)
     {
         o << " " << v.qual;
@@ -144,7 +144,7 @@ std::ostream & operator<<(std::ostream &o, Call const & v)
             {
                 o << ",";
             }
-            o << v.filter[i];            
+            o << v.filter[i];
         }
     }
 
@@ -168,7 +168,7 @@ std::ostream & operator<<(std::ostream &o, Variants const & v)
     bool any_ambiguous = false;
     for (auto & x : v.ambiguous_alleles)
     {
-        if(!x.empty()) 
+        if(!x.empty())
         {
             any_ambiguous = true;
             break;
@@ -179,7 +179,7 @@ std::ostream & operator<<(std::ostream &o, Variants const & v)
     {
         o << "ambig[";
         for (auto & x : v.ambiguous_alleles)
-        {   
+        {
             for(auto y : x)
             {
                 o << y << " ";
@@ -234,7 +234,7 @@ void setVariantInfo(Variants & v, std::string const & name, std::string const & 
     v.info = resulting_info;
 }
 
-VariantReader::VariantReader() 
+VariantReader::VariantReader()
 {
     _impl = new VariantReaderImpl();
 }
@@ -244,7 +244,7 @@ VariantReader::VariantReader(VariantReader const & rhs)
     _impl = new VariantReaderImpl();
     for (size_t i = 0; i < rhs._impl->samples.size(); ++i)
     {
-        addSample(rhs._impl->samples[i].filename.c_str(), 
+        addSample(rhs._impl->samples[i].filename.c_str(),
                   rhs._impl->samples[i].sample.c_str());
     }
     if (rhs._impl->regions != "")
@@ -277,7 +277,7 @@ VariantReader const & VariantReader::operator=(VariantReader const & rhs)
     _impl = new VariantReaderImpl();
     for (size_t i = 0; i < rhs._impl->samples.size(); ++i)
     {
-        addSample(rhs._impl->samples[i].filename.c_str(), 
+        addSample(rhs._impl->samples[i].filename.c_str(),
                   rhs._impl->samples[i].sample.c_str());
     }
     if (rhs._impl->regions != "")
@@ -311,21 +311,21 @@ void VariantReader::setApplyFilters(bool filters, int sample)
     }
 }
 
-bool VariantReader::getApplyFilters(int sample) const 
+bool VariantReader::getApplyFilters(int sample) const
 {
     if(sample < 0)
     {
         return _impl->applyFilters;
     }
-    else 
+    else
     {
         return _impl->applyFilters || (int(_impl->applyFiltersPerSample.size()) > sample && _impl->applyFiltersPerSample[sample]);
     }
 }
 
 /**
- * @brief Return homref/no-calls 
- * 
+ * @brief Return homref/no-calls
+ *
  */
 void VariantReader::setReturnHomref(bool homref)
 {
@@ -365,7 +365,7 @@ int VariantReader::addSample(const char * filename, const char * sname)
         si.ireader = _impl->files->nreaders - 1;
         _impl->filename_mapping[filename] = si.ireader;
     }
-    
+
     if(sname && strlen(sname) > 0)
     {
         if (std::string(sname) == "*")
@@ -387,8 +387,8 @@ int VariantReader::addSample(const char * filename, const char * sname)
         }
         else
         {
-            si.isample = bcf_hdr_id2int(_impl->files->readers[si.ireader].header, 
-                                        BCF_DT_SAMPLE, 
+            si.isample = bcf_hdr_id2int(_impl->files->readers[si.ireader].header,
+                                        BCF_DT_SAMPLE,
                                         sname);
 
             if(si.isample < 0)
@@ -401,7 +401,7 @@ int VariantReader::addSample(const char * filename, const char * sname)
     }
     else
     {
-        si.isample = 0;        
+        si.isample = 0;
         si.end_in_vcf = -1;
         _impl->samples.push_back(si);
     }
@@ -424,7 +424,7 @@ void VariantReader::getSampleList(std::list< std::pair<std::string, std::string>
  */
 void VariantReader::setRegions(const char * regions, bool isFile)
 {
-    int result = bcf_sr_set_regions(_impl->files, 
+    int result = bcf_sr_set_regions(_impl->files,
                                     regions, isFile ? 1 : 0);
     if(result < 0)
     {
@@ -441,7 +441,7 @@ void VariantReader::setRegions(const char * regions, bool isFile)
  */
 void VariantReader::setTargets(const char * targets, bool isFile)
 {
-    int result = bcf_sr_set_targets(_impl->files, 
+    int result = bcf_sr_set_targets(_impl->files,
                                     targets, isFile ? 1 : 0, 0);
     if(result < 0)
     {
@@ -454,7 +454,7 @@ void VariantReader::setTargets(const char * targets, bool isFile)
 
 /**
  * @brief Rewind / set region to read
- * 
+ *
  * @param chr chromosome/contig name
  * @param startpos start position on chr (or -1 for entire chr)
  */
@@ -470,12 +470,12 @@ void VariantReader::rewind(const char * chr, int64_t startpos)
     if(startpos < 0)
     {
         returned = bcf_sr_seek(_impl->files, chr, 0);
-    } 
+    }
     else
     {
         returned = bcf_sr_seek(_impl->files, chr, startpos);
     }
-    if ( returned )
+    if (returned == -_impl->files->nreaders)
     {
         error("Could not seek to: %s", stringutil::formatPos(chr, startpos).c_str());
     }
@@ -484,7 +484,7 @@ void VariantReader::rewind(const char * chr, int64_t startpos)
 
 /**
  * @brief Return next variant and advance
- * 
+ *
  * @param v Variant record to populate
  */
 Variants & VariantReader::current()
@@ -539,9 +539,9 @@ bool VariantReader::advance(bool get_calls, bool get_info)
         bcf1_t *line = reader.buffer[0];
         bcf_unpack(line, BCF_UN_SHR);
 
-        if(get_info) 
+        if(get_info)
         {
-            // extract vcf info. 
+            // extract vcf info.
             // somewhat circular, when parsing a VCF, this has been read, parsed, and now we write it back
             kstring_t s;
             s.s = NULL;
@@ -654,7 +654,7 @@ bool VariantReader::advance(bool get_calls, bool get_info)
             {
                 vars.pos = rv.start;
             }
-            
+
             if (vend < rv.end)
             {
                 // use the maximum length over all variants starting at the final vars.pos
@@ -749,8 +749,8 @@ bool VariantReader::advance(bool get_calls, bool get_info)
 
             int ngt = 0;
             bcfhelpers::getGT(reader.header, line, isample,
-                              vars.calls[sid].gt, 
-                              ngt, 
+                              vars.calls[sid].gt,
+                              ngt,
                               vars.calls[sid].phased);
 
             if(ngt > MAX_GT)
@@ -781,7 +781,7 @@ bool VariantReader::advance(bool get_calls, bool get_info)
                 if(vars.calls[sid].gt[j] >= 0 && ad[vars.calls[sid].gt[j]] >= 0)
                 {
                     vars.calls[sid].ad[j] = ad[vars.calls[sid].gt[j]];
-                    ad[vars.calls[sid].gt[j]] = -1;                    
+                    ad[vars.calls[sid].gt[j]] = -1;
                 }
             }
 
@@ -861,7 +861,7 @@ bool VariantReader::advance(bool get_calls, bool get_info)
 /**
  * @brief Insert a Variants record into the stream
  * @details The next record returned will be this one
- * 
+ *
  * @param s Variants to put on top of stack
  * @param back enqueue at back or front of buffer
  */

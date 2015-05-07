@@ -50,7 +50,7 @@ public:
     VariantProcessor const & operator=(VariantProcessor const & rhs);
 
     /** set up processing */
-    void addStep(AbstractVariantProcessingStep &);
+    void addStep(AbstractVariantProcessingStep &, bool prepend=false);
     
     /** process a Variant Reader */
     void setReader(VariantReader & input, VariantBufferMode mode, int64_t param=0);

@@ -248,9 +248,16 @@ VariantProcessor const & VariantProcessor::operator=(VariantProcessor const & rh
 
 
 /** set up processing */
-void VariantProcessor::addStep(AbstractVariantProcessingStep & step)
+void VariantProcessor::addStep(AbstractVariantProcessingStep & step, bool prepend)
 {
-    _impl->processing_steps.push_back(&step);
+    if(!prepend)
+    {
+        _impl->processing_steps.push_back(&step);
+    }
+    else
+    {
+        _impl->processing_steps.push_front(&step);
+    }
 }
 
 /** process a Variant Reader */
@@ -273,10 +280,6 @@ void VariantProcessor::setReader(VariantReader & input, VariantBufferMode mode, 
  */
 void VariantProcessor::rewind(const char * chr, int64_t startpos)
 {
-    if (_impl->source == NULL)
-    {
-        error("No input reader.");
-    }
     if (!_impl->processing_steps.empty())
     {
         // flush starting at the end
@@ -285,7 +288,10 @@ void VariantProcessor::rewind(const char * chr, int64_t startpos)
             step->flush();
         }
     }
-    _impl->source->rewind(chr, startpos); 
+    if (_impl->source)
+    {
+        _impl->source->rewind(chr, startpos); 
+    }
 }
 
 /** Variant output **/
@@ -294,14 +300,14 @@ void VariantProcessor::rewind(const char * chr, int64_t startpos)
  **/
 Variants & VariantProcessor::current()
 {
-    if (_impl->source == NULL)
-    {
-        error("No input reader.");
-    }
     if (_impl->processing_steps.empty())
     {
+        if (!_impl->source)
+        {
+            error("No input reader and no processing steps.");
+        }
 #ifdef DEBUG_VARIANTPROCESSOR
-    std::cerr << "\t returning " << _impl->source->current() << "\n";
+        std::cerr << "\t returning " << _impl->source->current() << "\n";
 #endif
         return _impl->source->current();
     }
@@ -317,13 +323,12 @@ Variants & VariantProcessor::current()
  */
 bool VariantProcessor::advance()
 {
-    if (!_impl->source)
-    {
-        error("No input reader.");
-    }
-
     if (_impl->processing_steps.empty())
     {
+        if (!_impl->source)
+        {
+            error("No input reader and no processing steps.");
+        }
         return _impl->source->advance();
     }
 
@@ -340,8 +345,11 @@ bool VariantProcessor::advance()
 #ifdef DEBUG_VARIANTPROCESSOR
         std::cerr << "\t advance buffer refill\n";
 #endif
-        // feed from source
-        _impl->processing_steps.front()->add(*(_impl->source), _impl->mode, _impl->param);
+        // feed from source if we have one
+        if(_impl->source)
+        {
+            _impl->processing_steps.front()->add(*(_impl->source), _impl->mode, _impl->param);
+        }
         auto pstep = _impl->processing_steps.begin();    
         auto previous_step = pstep;
         bool advance_success;
