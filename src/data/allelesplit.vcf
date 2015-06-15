@@ -1,0 +1,99 @@
+##fileformat=VCFv4.1
+##FILTER=<ID=PASS,Description="All filters passed">
+##fileDate=20150422
+##source=IsaacVariantCaller
+##source_version=2.3.7
+##startTime=Wed Apr 22 18:33:44 2015
+##cmdline=/illumina/scratch/tmp/users/ahalpern/NSv3testruns/NA12878_Isis2.6.13_noSRPh/Starling/libexec/starling2 -clobber -min-paired-align-score 20 -min-single-align-score 20 -bam-seq-name chrM -report-range-begin 1 -report-range-end 16571 -samtools-reference /illumina/development/Isis/Genomes/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/genome.fa -max-window-mismatch 2 20 -genome-size 2858674665 -max-indel-size 50 --gvcf-file - --gvcf-min-gqx 30 --gvcf-max-snv-strand-bias 10 --gvcf-max-indel-ref-repeat -1 -min-qscore 17 -bsnp-ssd-no-mismatch 0.35 -bsnp-ssd-one-mismatch 0.6 -min-vexp 0.25 --calibration-model-file /illumina/scratch/tmp/users/ahalpern/NSv3testruns/NA12878_Isis2.6.13_noSRPh/Starling/share/config/model.json --scoring-model QScoreHPDRE100_v4 --indel-ref-error-factor 100 -bam-file /scratch/Isis/NA12878PG4L_Isis2.6.13_noSRPh/Analysis/NA12878PG4L_S1.bam --report-file /scratch/Isis/NA12878PG4L_Isis2.6.13_noSRPh/Analysis/StarlingTemp_NA12878PG4L_S1/workspace/genomeSegment.tmpdir/stats.chromId_000_chrM_0000.txt --chrom-depth-file /scratch/Isis/NA12878PG4L_Isis2.6.13_noSRPh/Analysis/StarlingTemp_NA12878PG4L_S1/workspace/chromDepth.txt --candidate-indel-input-vcf /scratch/Isis/NA12878PG4L_Isis2.6.13_noSRPh/Analysis/TempSVCandidateIndels/NA12878PG4L_S1.SV.IndelCandidates.vcf.gz --force-output-vcf /illumina/development/Isis/Genomes/Homo_sapiens/UCSC/hg19/Annotation/IsisClinicalIndelsv1.vcf.gz --nocompress-bed /illumina/development/Isis/Genomes/Homo_sapiens/UCSC/hg19/Annotation/RefMinorAllele.bed.gz --ploidy-region-bed /scratch/Isis/NA12878PG4L_Isis2.6.13_noSRPh/Analysis/ploidy0.bed.gz
+##reference=file:///illumina/sync/software/unofficial/Isis/Genomes/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/genome.fa
+##contig=<ID=chrM,length=16571>
+##contig=<ID=chr1,length=249250621>
+##contig=<ID=chr2,length=243199373>
+##contig=<ID=chr3,length=198022430>
+##contig=<ID=chr4,length=191154276>
+##contig=<ID=chr5,length=180915260>
+##contig=<ID=chr6,length=171115067>
+##contig=<ID=chr7,length=159138663>
+##contig=<ID=chr8,length=146364022>
+##contig=<ID=chr9,length=141213431>
+##contig=<ID=chr10,length=135534747>
+##contig=<ID=chr11,length=135006516>
+##contig=<ID=chr12,length=133851895>
+##contig=<ID=chr13,length=115169878>
+##contig=<ID=chr14,length=107349540>
+##contig=<ID=chr15,length=102531392>
+##contig=<ID=chr16,length=90354753>
+##contig=<ID=chr17,length=81195210>
+##contig=<ID=chr18,length=78077248>
+##contig=<ID=chr19,length=59128983>
+##contig=<ID=chr20,length=63025520>
+##contig=<ID=chr21,length=48129895>
+##contig=<ID=chr22,length=51304566>
+##contig=<ID=chrX,length=155270560>
+##contig=<ID=chrY,length=59373566>
+##content=IsaacVariantCaller small-variant calls
+##SnvTheta=0.001
+##IndelTheta=0.0001
+##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the region described in this record">
+##INFO=<ID=BLOCKAVG_min30p3a,Number=0,Type=Flag,Description="Non-variant site block. All sites in a block are constrained to be non-variant, have the same filter value, and have all sample values in range [x,y], y <= max(x+3,(x*1.3)). All printed site block sample values are the minimum observed in the region spanned by the block">
+##INFO=<ID=SNVSB,Number=1,Type=Float,Description="SNV site strand bias">
+##INFO=<ID=SNVHPOL,Number=1,Type=Integer,Description="SNV contextual homopolymer length">
+##INFO=<ID=CIGAR,Number=A,Type=String,Description="CIGAR alignment for each alternate indel allele">
+##INFO=<ID=RU,Number=A,Type=String,Description="Smallest repeating sequence unit extended or contracted in the indel allele relative to the reference. RUs are not reported if longer than 20 bases.">
+##INFO=<ID=REFREP,Number=A,Type=Integer,Description="Number of times RU is repeated in reference.">
+##INFO=<ID=IDREP,Number=A,Type=Integer,Description="Number of times RU is repeated in indel allele.">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=GQ,Number=1,Type=Float,Description="Genotype Quality">
+##FORMAT=<ID=GQX,Number=1,Type=Integer,Description="Empirically calibrated variant quality score for variant sites, otherwise Minimum of {Genotype quality assuming variant position,Genotype quality assuming non-variant position}">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Filtered basecall depth used for site genotyping">
+##FORMAT=<ID=DPF,Number=1,Type=Integer,Description="Basecalls filtered from input prior to site genotyping">
+##FORMAT=<ID=AD,Number=.,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed. For indels this value only includes reads which confidently support each allele (posterior prob 0.999 or higher that read contains indicated allele vs all other intersecting indel alleles)">
+##FORMAT=<ID=DPI,Number=1,Type=Integer,Description="Read depth associated with indel, taken from the site preceding the indel.">
+##VariantQualityScoringModel=QSCOREHPDRE100_V4
+##FILTER=<ID=IndelConflict,Description="Locus is in region with conflicting indel calls">
+##FILTER=<ID=SiteConflict,Description="Site genotype conflicts with proximal indel call. This is typically a heterozygous SNV call made inside of a heterozygous deletion">
+##FILTER=<ID=LowGQX,Description="Locus GQX is less than 30 or not present">
+##FILTER=<ID=HighDPFRatio,Description="The fraction of basecalls filtered out at a site is greater than 0.4">
+##FILTER=<ID=LowGQXHetSNP,Description="Locus GQX is less than 14 for het SNP">
+##FILTER=<ID=LowGQXHomSNP,Description="Locus GQX is less than 14 for hom SNP">
+##FILTER=<ID=LowGQXHetIns,Description="Locus GQX is less than 6 for het insertion">
+##FILTER=<ID=LowGQXHomIns,Description="Locus GQX is less than 6 for hom insertion">
+##FILTER=<ID=LowGQXHetAltIns,Description="Locus GQX is less than 6 for het-alt insertion">
+##FILTER=<ID=LowGQXHetDel,Description="Locus GQX is less than 6 for het deletion">
+##FILTER=<ID=LowGQXHomDel,Description="Locus GQX is less than 6 for hom deletion">
+##FILTER=<ID=LowGQXHetAltDel,Description="Locus GQX is less than 6 for het-alt deletion">
+##FILTER=<ID=HighDepth,Description="Locus depth is greater than 3x the mean chromosome depth">
+##MaxDepth_chr1=145.46
+##MaxDepth_chr10=164.44
+##MaxDepth_chr11=149.21
+##MaxDepth_chr12=148.44
+##MaxDepth_chr13=125.53
+##MaxDepth_chr14=125.16
+##MaxDepth_chr15=120.26
+##MaxDepth_chr16=151.35
+##MaxDepth_chr17=147.90
+##MaxDepth_chr18=153.46
+##MaxDepth_chr19=146.07
+##MaxDepth_chr2=153.77
+##MaxDepth_chr20=143.79
+##MaxDepth_chr21=127.13
+##MaxDepth_chr22=100.50
+##MaxDepth_chr3=150.14
+##MaxDepth_chr4=152.77
+##MaxDepth_chr5=150.13
+##MaxDepth_chr6=151.49
+##MaxDepth_chr7=152.33
+##MaxDepth_chr8=150.33
+##MaxDepth_chr9=133.51
+##MaxDepth_chrM=59078.61
+##MaxDepth_chrX=145.45
+##MaxDepth_chrY=12.12
+##FILTER=<ID=PLOIDY_CONFLICT,Description="Genotype call from variant caller not consistent with chromosome ploidy">
+##ExpectedSexChromosomeKaryotype=XX
+##bcftools_viewVersion=1.2+htslib-1.2.1
+##bcftools_viewCommand=view -o /home/pkrusche/workspace-is/haplotypes/src/data/allelesplit.vcf /illumina/scratch/tmp/users/ahalpern/NSv3testruns/NA12878PG4L_Isis2.6.13_noSRPh/Analysis/NA12878PG4L_S1.genome.vcf.gz chr21:10828760-10828770
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA12878
+chr21	10828573	.	A	.	.	PASS	END=10828764;BLOCKAVG_min30p3a	GT:GQX:DP:DPF	0/0:163:55:0
+chr21	10828764	.	ACTCA	AATGCAACCGAAAGGAATGGACTGGAATGGAATGGACTCG	3070	PASS	CIGAR=1M4D39I;RU=.;REFREP=.;IDREP=.	GT:GQ:GQX:DPI:AD	1/1:187:187:57:0,80
+chr21	10828765	.	C	.	.	LowGQX	END=10828768;BLOCKAVG_min30p3a	GT:GQX:DP:DPF	.:.:0:0
+chr21	10828769	.	A	.	.	PASS	END=10828796;BLOCKAVG_min30p3a	GT:GQX:DP:DPF	0/0:196:66:0

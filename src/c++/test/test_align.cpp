@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(alignKlibBasic)
     getCigarStats("AAATGACGGATTG",
                   "TGGGA",
                   r0, a0, icigar, ncigar,
-                  softclipped, matches, 
+                  softclipped, matches,
                   mismatches, ins, del);
 
     BOOST_CHECK_EQUAL(softclipped, 10);
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(alignKlibIndel)
     // ref del / alt ins
 
     // AAATGAC-----GGATTG
-    //      
+    //
     // AAATGACCACCAGGATTG
 
     aln->setRef("AAATGACGGATTG");
@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(alignKlibIndel)
     // ref ins / alt del
 
     // AAATGACCACCAGGATTG
-    //      
+    //
     // AAATGAC-----GGATTG
 
     aln->setRef("AAATGACCACCAGGATTG");
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(alignKlibIndel)
     aln->setQuery("AAATGACCACCAGGATTGCCA");
 
     // AAATGAC---GGGGCATTG
-    //      
+    //
     // AAATGACCACCAGG-ATTG
 
     aln->dump();
@@ -288,7 +288,7 @@ BOOST_AUTO_TEST_CASE(alignKlibIndel)
     getCigarStats("GAAGTACAGAGTCGATTTGGACGCTTTTCGATGAGCATCGTTCACGTACCGCGAGGACCCTCAGGGTGCCCAAGAGAAGCCCTACCGCTTGGATAGCACTCGTCAATCAGGCTCCATTGGGAATTCCCCGAGATTCTTGTCACAGGACGG",
                   "GAAGTACAGAGTCGATTTGGACGCTTTTCGATGAGCATCGTTCACGTACCGAGCCCACGGTGTTTTGCG",
                   r0, a0, icigar, ncigar,
-                  softclipped, matches, 
+                  softclipped, matches,
                   mismatches, ins, del);
 
     BOOST_CHECK_EQUAL(softclipped, 0);
@@ -351,7 +351,7 @@ BOOST_AUTO_TEST_CASE(alignPerformanceReads)
     const int N = 1;
     const int REPS = 16;
 #else
-    const int N = 100;    
+    const int N = 100;
     const int REPS = 32;
 #endif
     while(count++ < REPS)
@@ -378,7 +378,7 @@ BOOST_AUTO_TEST_CASE(alignPerformanceSquares)
     const int MAX = 260;
     const int I = 128;
 #else
-    const int N = 100;    
+    const int N = 100;
     const int MAX = 515;
     const int I = 64;
 #endif

@@ -34,6 +34,10 @@
  */
 
 #include "Variant.hh"
+#include "Fasta.hh"
+#include "Alignment.hh"
+
+#include <memory>
 
 // #define DEBUG_VARIANTSTATISTICS
 
@@ -49,11 +53,11 @@ static const uint64_t VT_SNP            = 1; // 0001b
 static const uint64_t VT_INS            = 2; // 0010b
 static const uint64_t VT_DEL            = 4; // 0100b
 static const uint64_t VT_BLOCK          = 8; // 1000b -- fourth bit indicates blocksubst
-static const uint64_t VT_BLOCKSUBST     = 9; // 1001b 
+static const uint64_t VT_BLOCKSUBST     = 9; // 1001b
 static const uint64_t VT_COMPLEXINS     = 10;// 1010b
 static const uint64_t VT_COMPLEXDEL     = 12;// 1100b
 
-/** counts and what they mean */ 
+/** counts and what they mean */
 static const int VS_COUNTS = 256;
 
 /** all alleles / refvars seen */
@@ -72,7 +76,7 @@ static const char * CT_NAMES [] = {
     "alleles",              // 0
     "locations",
     "homref",
-    "haploid", 
+    "haploid",
     "het",                  // 4
     "homalt",
     "hetalt",
@@ -96,85 +100,19 @@ static const char * CT_NAMES [] = {
     // ... now come combinations of 8+x and 4+y
 };
 
-/** RefVar classifier */
-static inline uint64_t classify(RefVar const & rhs)
-{
-    int64_t reflen = rhs.end - rhs.start + 1;
-    int64_t altlen = rhs.alt.size();
-
-    uint64_t type = 0;
-
-    if (reflen == 1)
-    {
-        if(altlen == 1)
-        {
-            type |= VT_SNP;
-        }
-        else if (altlen > 1)
-        {
-            type |= VT_INS;
-        }
-        else 
-        {
-            type |= VT_DEL;
-        }
-    } 
-    else if (altlen == 1)
-    {
-        if (reflen > 1)
-        {
-            type |= VT_DEL;
-        }
-        else  // reflen < 1
-        {
-            type |= VT_INS;
-        }
-    }
-    else if(reflen == altlen)
-    {
-        type |= VT_BLOCKSUBST;
-    }
-    else if(reflen < altlen)
-    {
-        if (reflen == 0)
-        {
-            type |= VT_INS;
-        }
-        else
-        {
-            type |= VT_COMPLEXINS;            
-        }
-    }
-    else // reflen > altlen
-    {
-        type |= VT_COMPLEXDEL;
-    }
-    return type;
-}
-
-/** Variants classifier */
-static inline uint64_t classify(Variants const & rhs, int sample)
-{    
-    gttype gtt = getGTType(rhs.calls[sample]);
-    uint64_t types = 0;
-
-    for(size_t i = 0; i < rhs.calls[sample].ngt; ++i)
-    {
-        if (rhs.calls[sample].gt[i] > 0)
-        {
-            types |= classify(rhs.variation[rhs.calls[sample].gt[i]-1]);
-        }
-    }
-
-    return types + (((uint64_t)gtt) << 4);
-}
 
 struct VariantStatisticsImpl
 {
-    VariantStatisticsImpl(bool _count_homref) : count_homref(_count_homref) { memset(counts, 0, sizeof(size_t)*VS_COUNTS); }
+    VariantStatisticsImpl(const char * ref_fasta, bool _count_homref) : ref(ref_fasta), count_homref(_count_homref),
+        alignment(makeAlignment("klibg"))
+    {
+        memset(counts, 0, sizeof(size_t)*VS_COUNTS);
+    }
+
     ~VariantStatisticsImpl() {}
 
-    VariantStatisticsImpl(VariantStatisticsImpl const & rhs) 
+    VariantStatisticsImpl(VariantStatisticsImpl const & rhs) : ref(rhs.ref),
+        alignment(makeAlignment("klibg"))
     {
         memcpy(counts, rhs.counts, sizeof(size_t)*VS_COUNTS);
         count_homref = rhs.count_homref;
@@ -182,12 +120,14 @@ struct VariantStatisticsImpl
 
     size_t counts[VS_COUNTS];
 
+    FastaFile ref;
     bool count_homref;
+    std::unique_ptr<Alignment> alignment;
 };
 
-VariantStatistics::VariantStatistics(bool count_homref)
+VariantStatistics::VariantStatistics(const char * ref_fasta, bool count_homref)
 {
-    _impl = new VariantStatisticsImpl(count_homref);
+    _impl = new VariantStatisticsImpl(ref_fasta, count_homref);
 }
 
 VariantStatistics::VariantStatistics(VariantStatistics const & rhs)
@@ -220,7 +160,7 @@ void VariantStatistics::read(Json::Value const & root)
         }
         else
         {
-            _impl->counts[i] = 0;            
+            _impl->counts[i] = 0;
         }
     }
     // we have 16 composite allele types, 5 location types.
@@ -292,7 +232,68 @@ void VariantStatistics::add(VariantStatistics const & rhs)
 
 void VariantStatistics::add(Variants const & rhs, int sample)
 {
-    uint64_t t = classify(rhs, sample);
+    size_t total_als = 0;
+    size_t total_snp = 0;
+    size_t total_del = 0;
+    size_t total_ins = 0;
+
+    auto add_rv = [this, rhs, &total_als, &total_snp, &total_del, &total_ins](RefVar const & rv)
+    {
+        ++total_als;
+        size_t tmp;
+        realignRefVar(_impl->ref, rhs.chr.c_str(), rv, _impl->alignment.get(),
+                      total_snp, total_ins, total_del, tmp);
+    };
+    // count hom-alt alleles only once
+    if(rhs.calls[sample].isHomalt())
+    {
+        add_rv(rhs.variation[rhs.calls[sample].gt[0]-1]);
+    }
+    else
+    {
+        for(size_t i = 0; i < rhs.calls[sample].ngt; ++i)
+        {
+            if (rhs.calls[sample].gt[i] > 0)
+            {
+                add_rv(rhs.variation[rhs.calls[sample].gt[i]-1]);
+            }
+        }
+    }
+    for(auto i : rhs.ambiguous_alleles[sample])
+    {
+        if (i > 0)
+        {
+            add_rv(rhs.variation[i-1]);
+        }
+    }
+
+    _impl->counts[CT_ALLELES] += total_als;
+    _impl->counts[CT_ALLELES_BY_TYPE + VT_SNP] += total_snp;
+    _impl->counts[CT_ALLELES_BY_TYPE + VT_DEL] += total_del;
+    _impl->counts[CT_ALLELES_BY_TYPE + VT_INS] += total_ins;
+
+    gttype gtt = getGTType(rhs.calls[sample]);
+    uint64_t t = (((uint64_t)gtt) << 4);
+    int vts = 0;
+    if(total_snp)
+    {
+        t |= VT_SNP;
+        ++vts;
+    }
+    if(total_del)
+    {
+        t |= VT_DEL;
+        ++vts;
+    }
+    if(total_ins)
+    {
+        t |= VT_INS;
+        ++vts;
+    }
+    if(vts > 1)
+    {
+        t |= VT_BLOCK;
+    }
 
     if (!_impl->count_homref && (CT_LOCATIONS + (t >> 4) + 1 == 2))
     {
@@ -304,27 +305,17 @@ void VariantStatistics::add(Variants const & rhs, int sample)
     ++_impl->counts[CT_LOCATIONS + (t >> 4) + 1];
     ++_impl->counts[CT_LOCATIONS_BY_TYPE + t];
 
-    for(size_t i = 0; i < rhs.calls[sample].ngt; ++i)
-    {
-        if (rhs.calls[sample].gt[i] > 0)
-        {
-            add(rhs.variation[rhs.calls[sample].gt[i]-1]);
-        }
-    }
-
-    for(auto i : rhs.ambiguous_alleles[sample])
-    {
-        if (i > 0)
-        {
-            add(rhs.variation[i-1]);
-        }        
-    }
 }
 
-void VariantStatistics::add(RefVar const & rhs)
+void VariantStatistics::add(const char * chr, RefVar const & rhs)
 {
     ++_impl->counts[CT_ALLELES];
-    ++_impl->counts[CT_ALLELES_BY_TYPE + classify(rhs)];
+    size_t tmp;
+    realignRefVar(_impl->ref, chr, rhs, _impl->alignment.get(),
+            _impl->counts[CT_ALLELES_BY_TYPE + VT_SNP],
+            _impl->counts[CT_ALLELES_BY_TYPE + VT_INS],
+            _impl->counts[CT_ALLELES_BY_TYPE + VT_DEL],
+            tmp);
 }
 
 }

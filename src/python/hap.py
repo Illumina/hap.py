@@ -57,13 +57,13 @@ def blocksplitWrapper(location_str, args):
     tf.close()
 
     to_run = "blocksplit %s %s -l %s -o %s --window %i --nblocks %i -f %i" % \
-                (args.vcf1,
-                 args.vcf2,
-                 location_str,
-                 tf.name,
-                 args.window,
-                 args.pieces,
-                 0 if args.usefiltered else 1)
+             (args.vcf1,
+              args.vcf2,
+              location_str,
+              tf.name,
+              args.window,
+              args.pieces,
+              0 if args.usefiltered or args.usefiltered_truth else 1)
 
     tfe = tempfile.NamedTemporaryFile(delete=False,
                                       dir=args.scratch_prefix,
@@ -113,18 +113,20 @@ def xcmpWrapper(location_str, args):
     else:
         bname = ""
 
-    to_run = "xcmp %s %s -l %s -o %s %s -r %s -f %i -n %i -V %i --expand-hapblocks %i --window %i" % \
-                (args.vcf1,
-                 args.vcf2,
-                 location_str,
-                 tf.name,
-                 bname,
-                 args.ref,
-                 0 if args.usefiltered else 1,
-                 args.max_enum,
-                 1 if args.int_preprocessing else 0,
-                 args.hb_expand,
-                 args.window)
+    to_run = "xcmp %s %s -l %s -o %s %s -r %s -f %i --apply-filters-truth %i -n %i -V %i --leftshift %i --expand-hapblocks %i --window %i" % \
+             (args.vcf1,
+              args.vcf2,
+              location_str,
+              tf.name,
+              bname,
+              args.ref,
+              0 if args.usefiltered else 1,
+              0 if args.usefiltered_truth else 1,
+              args.max_enum,
+              1 if args.int_preprocessing else 0,
+              1 if args.int_preprocessing_ls else 0,
+              args.hb_expand,
+              args.window)
 
     # regions / targets already have been taken care of in blocksplit / preprocessing
 
@@ -174,7 +176,10 @@ def main():
                         help="Show version number and exit.")
 
     parser.add_argument("-P", "--include-nonpass", dest="usefiltered", action="store_true", default=False,
-                        help="Use to include failing variants in comparison.")
+                        help="Use to include failing query variants in comparison.")
+
+    parser.add_argument("--include-nonpass-truth", dest="usefiltered_truth", action="store_true", default=False,
+                        help="Include failing variants from the truth dataset.")
 
     parser.add_argument("-R", "--restrict-regions", dest="regions_bedfile",
                         default=None, type=str,
@@ -223,7 +228,8 @@ def main():
                         help="Perform VCF preprocessing using bcftools.")
 
     parser.add_argument("--bcftools-norm", dest="preprocessing_norm", action="store_true", default=False,
-                        help="Enable preprocessing through bcftools norm -c x -D (requires external preprocessing to be switched on).")
+                        help="Enable preprocessing through bcftools norm -c x -D (requires external "
+                             " preprocessing to be switched on).")
 
     parser.add_argument("--fixchr-truth", dest="fixchr_truth", action="store_true", default=None,
                         help="Add chr prefix to truth file (default: auto).")
@@ -237,7 +243,24 @@ def main():
     parser.add_argument("--no-fixchr-query", dest="fixchr_query", action="store_false",
                         help="Add chr prefix to query file (default: auto).")
 
-    parser.add_argument("--no-internal-preprocessing", dest="int_preprocessing", action="store_false", default=True,
+    parser.add_argument("--partial-credit", dest="partial_credit", action="store_true", default=True,
+                        help="give credit for partially matched variants. "
+                             "this is equivalent to --internal-leftshift and --internal-preprocessing.")
+
+    parser.add_argument("--no-partial-credit", dest="partial_credit", action="store_false",
+                        help="Give credit for partially matched variants. "
+                             "This is equivalent to --no-internal-leftshift and --no-internal-preprocessing.")
+
+    parser.add_argument("--internal-leftshift", dest="int_preprocessing_ls", action="store_true",
+                        help="Switch off xcmp's internal VCF leftshift preprocessing.")
+
+    parser.add_argument("--internal-preprocessing", dest="int_preprocessing", action="store_true",
+                        help="Switch off xcmp's internal VCF leftshift preprocessing.")
+
+    parser.add_argument("--no-internal-leftshift", dest="int_preprocessing_ls", action="store_false",
+                        help="Switch off xcmp's internal VCF leftshift preprocessing.")
+
+    parser.add_argument("--no-internal-preprocessing", dest="int_preprocessing", action="store_false",
                         help="Switch off xcmp's internal VCF leftshift preprocessing.")
 
     parser.add_argument("--no-auto-index", dest="auto_index", action="store_false", default=True,
@@ -292,7 +315,7 @@ def main():
     else:
         loglevel = logging.WARNING
 
-    ## reinitialize logging
+    # reinitialize logging
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
     logging.basicConfig(filename=args.logfile,
@@ -309,6 +332,19 @@ def main():
         else:
             print "Hap.py %s-no-muscle" % Tools.version
         exit(0)
+
+    # Counting with partial credit
+    if args.partial_credit:
+        # partial_credit switch is overridden by --no-* switches
+        if args.int_preprocessing is not None:
+            args.int_preprocessing = True
+        if args.int_preprocessing_ls is not None:
+            args.int_preprocessing_ls = True
+
+    if args.int_preprocessing is None:
+        args.int_preprocessing = False
+    if args.int_preprocessing_ls is None:
+        args.int_preprocessing_ls = False
 
     # sanity-check regions bed file (HAP-57)
     if args.regions_bedfile:
@@ -329,7 +365,7 @@ def main():
     tempfiles = []
 
     try:
-        if not args.force_interactive and not "JOB_ID" in os.environ:
+        if not args.force_interactive and "JOB_ID" not in os.environ:
             parser.print_help()
             raise Exception("Please qsub me so I get approximately 1 GB of RAM per thread.")
 
@@ -360,7 +396,8 @@ def main():
 
         h1 = vcfextract.extractHeadersJSON(args.vcf1)
         if args.auto_index and not h1["tabix"]:
-            logging.info("Creating indexed version of %s -- consider creating an index beforehand to save time here." % args.vcf1)
+            logging.info("Creating indexed version of %s -- consider creating an index beforehand to save time here." %
+                         args.vcf1)
             vtf = tempfile.NamedTemporaryFile(delete=False,
                                               dir=args.scratch_prefix,
                                               prefix="truth.ix",
@@ -373,7 +410,8 @@ def main():
 
         h2 = vcfextract.extractHeadersJSON(args.vcf2)
         if args.auto_index and not h2["tabix"]:
-            logging.info("Creating indexed version of %s -- consider creating an index beforehand to save time here." % args.vcf2)
+            logging.info("Creating indexed version of %s -- consider creating an index beforehand to save time here." %
+                         args.vcf2)
             vtf = tempfile.NamedTemporaryFile(delete=False,
                                               dir=args.scratch_prefix,
                                               prefix="query.ix",
@@ -400,7 +438,7 @@ def main():
         elif args.fixchr_truth is None:
             # autodetect chr naming
             count_with_fix = len([__ for __ in h1["tabix"]["chromosomes"]
-                                     if ("chr%s" % str(_)) in args.locations])
+                                 if ("chr%s" % str(_)) in args.locations])
             count_no_fix = len([__ for __ in h1["tabix"]["chromosomes"] if str(_) in args.locations])
             logging.info("Truth: Number of chromosome names matching with / without renaming : %i / %i " % (
                 count_with_fix, count_no_fix))
@@ -420,7 +458,7 @@ def main():
         elif args.fixchr_query is None:
             # autodetect chr naming
             count_with_fix = len([__ for __ in h2["tabix"]["chromosomes"]
-                                   if ("chr%s" % str(_)) in args.locations])
+                                 if ("chr%s" % str(_)) in args.locations])
             count_no_fix = len([__ for __ in h2["tabix"]["chromosomes"] if str(_) in args.locations])
             logging.info("Query: Number of chromosome names matching with / without renaming : %i / %i " % (
                 count_with_fix, count_no_fix))
@@ -445,7 +483,7 @@ def main():
             vtf.close()
             tempfiles.append(vtf.name)
             preprocessVCF(args.vcf1, vtf.name, ",".join(args.locations),
-                          not args.usefiltered,     # pass_only
+                          not args.usefiltered_truth,     # pass_only
                           args.fixchr_truth,        # chrprefix
                           args.preprocessing_norm,  # norm,
                           args.regions_bedfile,
@@ -530,9 +568,8 @@ def main():
         else:
             pool = None
 
-
         # count variants before normalisation
-        if not "samples" in h1 or not h1["samples"]:
+        if "samples" not in h1 or not h1["samples"]:
             raise Exception("Cannot read sample names from truth input file")
         counts_truth = Haplo.quantify.run_quantify(args.vcf1,
                                                    None,
@@ -541,7 +578,7 @@ def main():
                                                    args.ref,
                                                    h1["samples"][0])
 
-        if not "samples" in h2 or not h2["samples"]:
+        if "samples" not in h2 or not h2["samples"]:
             raise Exception("Cannot read sample names from truth input file")
         counts_query = Haplo.quantify.run_quantify(args.vcf2,
                                                    None,
@@ -637,43 +674,56 @@ def main():
                 try:
                     simplified_numbers[vtype]["METRIC.Recall" + suffix] = \
                         float(simplified_numbers[vtype]["TRUTH.TP" + suffix]) / \
-                        float(simplified_numbers[vtype]["TRUTH.TP" + suffix] + simplified_numbers[vtype]["TRUTH.FN" + suffix])
+                        float(simplified_numbers[vtype]["TRUTH.TP" + suffix] + simplified_numbers[vtype]["TRUTH.FN" +
+                                                                                                         suffix])
                 except:
                     pass
 
                 try:
                     simplified_numbers[vtype]["METRIC.Recall2" + suffix] = \
-                        float(simplified_numbers[vtype]["TRUTH.TP" + suffix]) / float(simplified_numbers[vtype]["TRUTH.TOTAL"])
+                        float(simplified_numbers[vtype]["TRUTH.TP" + suffix]) / \
+                        float(simplified_numbers[vtype]["TRUTH.TOTAL"])
                 except:
                     pass
 
                 try:
                     simplified_numbers[vtype]["METRIC.Precision" + suffix] = \
                         float(simplified_numbers[vtype]["QUERY.TP" + suffix]) / \
-                        float(simplified_numbers[vtype]["QUERY.TP" + suffix] + simplified_numbers[vtype]["QUERY.FP" + suffix])
+                        float(simplified_numbers[vtype]["QUERY.TP" + suffix] + simplified_numbers[vtype]["QUERY.FP" +
+                                                                                                         suffix])
                 except:
                     pass
 
                 try:
                     simplified_numbers[vtype]["METRIC.Frac_NA" + suffix] = \
-                        float(simplified_numbers[vtype]["QUERY.UNK" + suffix]) / float(simplified_numbers[vtype]["QUERY.TOTAL"])
+                        float(simplified_numbers[vtype]["QUERY.UNK" + suffix]) / \
+                        float(simplified_numbers[vtype]["QUERY.TOTAL"])
                 except:
                     pass
 
                 try:
-                    simplified_numbers[vtype]["TRUTH.TOTAL.RAW"] = simplified_truth_counts[vtype][h1["samples"][0] + ".TOTAL"]
+                    simplified_numbers[vtype]["TRUTH.TOTAL.RAW"] = simplified_truth_counts[vtype][h1["samples"][0] +
+                                                                                                  ".TOTAL"]
                 except:
                     pass
 
                 try:
-                    simplified_numbers[vtype]["QUERY.TOTAL.RAW"] = simplified_query_counts[vtype][h2["samples"][0] + ".TOTAL"]
+                    simplified_numbers[vtype]["QUERY.TOTAL.RAW"] = simplified_query_counts[vtype][h2["samples"][0] +
+                                                                                                  ".TOTAL"]
                 except:
                     pass
-
 
         pandas.set_option("display.width", 120)
         pandas.set_option("display.max_columns", 1000)
         df = pandas.DataFrame(simplified_numbers).transpose()
+        if Tools.has_muscle:
+            vstring = "hap.py-%s-muscle" % Tools.version
+        else:
+            vstring = "hap.py-%s-no-muscle" % Tools.version
+
+        vstring += " ".join(sys.argv)
+
+        df.loc[vstring] = 0
 
         for x in df:
             # everything not a metric is a count
@@ -685,7 +735,7 @@ def main():
             "METRIC.Recall.HC",
             "METRIC.Recall2.HC",
             "METRIC.Precision.HC",
-            "METRIC.Frac_NA.HC",]].to_csv(args.reports_prefix + ".summary.csv")
+            "METRIC.Frac_NA.HC"]].to_csv(args.reports_prefix + ".summary.csv")
 
         metrics_output["metrics"].append(dataframeToMetricsTable("summary.metrics",
                                          df[["TRUTH.TOTAL",
@@ -693,7 +743,7 @@ def main():
                                              "METRIC.Recall.HC",
                                              "METRIC.Recall2.HC",
                                              "METRIC.Precision.HC",
-                                             "METRIC.Frac_NA.HC",]]))
+                                             "METRIC.Frac_NA.HC"]]))
 
         if args.write_counts:
             df.to_csv(args.reports_prefix + ".extended.csv")
@@ -703,7 +753,7 @@ def main():
                                 "QUERY.TOTAL",
                                 "METRIC.Recall.HC",
                                 "METRIC.Precision.HC",
-                                "METRIC.Frac_NA.HC",]]
+                                "METRIC.Frac_NA.HC"]]
 
         pandas.set_option('display.max_columns', 500)
         pandas.set_option('display.width', 1000)
@@ -713,7 +763,7 @@ def main():
              "Alleles.INS",
              "Alleles.DEL",
              "Locations.SNP.het",
-             "Locations.SNP.homalt",])]
+             "Locations.SNP.homalt"])]
 
         logging.info("\n" + str(essential_numbers))
 

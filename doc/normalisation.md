@@ -20,6 +20,12 @@ and the results might differ due to the nature of the normalisation process
 described below. It is possible to only use specific steps of this process, run
 `multimerge -h` for a list of command line switches.
 
+## Step 0 (optional): Realign and split into allelic primitives
+
+This operation will realign complex alleles against the reference sequence and
+output primitive alleles. It is part of hap.py's "partial credit" mode, in which
+we are able to match complex alleles partially.
+
 ## Step 1: Remove unused alleles
 
 This removes alleles not seen in any genotype:
@@ -55,7 +61,7 @@ We re-implemented the algorithm from here: [http://genome.sph.umich.edu/wiki/Var
 
 ## Step 4: Aggregate Calls at the same location
 
-There are multiple levels for doing this (`multimerge --merge-by-location X` 
+There are multiple levels for doing this (`multimerge --merge-by-location X`
 where `X` is 0, 1, or 2). Level 2 is used inside hap.py.
 
 Level 0 disables this step.

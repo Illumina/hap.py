@@ -18,7 +18,9 @@ Matching haplotype sequences rather than VCF records is more accurate. It allows
    (see [ls_example.md](ls_example.md)).
 
 The inputs to hap.py are two VCF files (a "truth" and a "query" file), and an
-optional "confident call region" bed file.
+optional "confident call region" bed file (NOTE: bed files with
+[track information](https://genome.ucsc.edu/goldenPath/help/customTrack.html)
+are not supported, all input bed or bed.gz files must only contain bed records).
 
 Hap.py will report counts of
 
@@ -300,10 +302,27 @@ Normally this is detected automatically from the VCF headers / tabix indexes.
 ### Internal Variant Normalisation
 
 ```
+  --partial-credit      give credit for partially matched variants. this is
+                        equivalent to --internal-leftshift and --internal-
+                        preprocessing.
+  --no-partial-credit   Give credit for partially matched variants. This is
+                        equivalent to --no-internal-leftshift and --no-
+                        internal-preprocessing.
+  --internal-leftshift  Switch off xcmp's internal VCF leftshift
+                        preprocessing.
+  --internal-preprocessing
+                        Switch off xcmp's internal VCF leftshift
+                        preprocessing.
+  --no-internal-leftshift
+                        Switch off xcmp's internal VCF leftshift
+                        preprocessing.
   --no-internal-preprocessing
+                        Switch off xcmp's internal VCF leftshift
+                        preprocessing.
 ```
 
-Switch off xcmp's internal VCF [leftshifting preprocessing](normalisation.md).
+These switches control xcmp's internal VCF [leftshifting preprocessing](normalisation.md).
+The partial credit switch jointly enables / disables preprocessing and left shifting.
 
 ### Haplotype Comparison Parameters
 

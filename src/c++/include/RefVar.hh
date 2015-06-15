@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -55,21 +55,24 @@ namespace variant {
 typedef struct _RefVar
 {
     _RefVar() : flags(0) {}
+    _RefVar(int64_t _start, int64_t _end, std::string _alt, int64_t _flags=0) :
+        start(_start), end(_end), alt(_alt), flags(_flags) {}
+
     int64_t start, end;
     std::string alt;
 
     int64_t flags;
-    
+
     inline std::string repr() const
     {
         return std::to_string(start) + "-" + std::to_string(end) + ":" + alt;
     }
 
-    /** apply and retrieve modified reference sequence between start and end 
+    /** apply and retrieve modified reference sequence between start and end
      *  Note that _start and _end will be extended if they aren't contained within
      *  [start, end]
      */
-    inline std::string apply(FastaFile & ref, std::string const & chr, int64_t & _start, int64_t & _end) const 
+    inline std::string apply(FastaFile & ref, std::string const & chr, int64_t & _start, int64_t & _end) const
     {
         if(_start > start)
         {
@@ -110,7 +113,7 @@ static inline std::ostream & operator<<(std::ostream & o, RefVar const & r)
 
 /**
  * @brief Trim reference bases at left/right end of variant
- * 
+ *
  * @param f fasta file
  * @param chr chromosome in fasta file
  * @param rv RefVar record
@@ -121,20 +124,20 @@ void trimRight(FastaFile & f, const char * chr, RefVar & rv, bool refpadding=tru
 
 /**
  * @brief Left/right shifting w.r.t reference fasta
- * 
+ *
  * Left/right boundary position can be given to prevent overlap with other variation
- * 
+ *
  */
 extern void leftShift(FastaFile & f, const char * chr, RefVar & rv, int64_t pos_min=-1);
 extern void rightShift(FastaFile & f, const char * chr, RefVar & rv, int64_t pos_max=std::numeric_limits<int64_t>::max());
 
 /**
  * @brief List functions making sure variants aren't pushed past each other.
- * 
+ *
  * variants in the input list must be sorted by starting position
- * 
+ *
  * Functions templated so they work on things derived from RefVar
- * 
+ *
  */
 template<class RefVar_t>
 static inline void leftShift(FastaFile & f, const char * chr, std::list<RefVar_t> & rv, int64_t pos_min=-1)
@@ -169,18 +172,60 @@ static inline void rightShift(FastaFile & f, const char * chr, std::list<RefVar_
 extern void rightShift(FastaFile & f, const char * chr, std::list<RefVar> & rv, int64_t pos_max=std::numeric_limits<int64_t>::max());
 
 /**
+ * @brief Quickly decompose a RefVar into primitive variants (subst / ins / del)
+ *
+ * This function will output matches / mismatches first, and then
+ * finish with the insertion / deletion part. The alignment is assumed to be
+ * like this for a complex insertion:
+ *
+ * (reflen < altlen)
+ * REF:  XXXYY-----YYZZZ
+ *       |||||iiiii
+ * ALT:  AAAAABBBBB
+ *
+ * Or like this for a complex deletion
+ *
+ * (reflen > altlen)
+ * REF:  XXXYY--ZZZ
+ *       |||||dd
+ * ALT:  AAAAA--
+ *
+ * To realign variants that do not follow this scheme, see realignRefvar in Alignment.hh
+ *
+ * @param f reference sequence fasta
+ * @param chr the chromosome to use
+ * @param rv the RefVar record
+ * @param vars the primitive records
+ */
+extern void toPrimitives(FastaFile & f, const char * chr, RefVar const & rv, std::list<variant::RefVar> & vars);
+
+/**
+ * @brief Decompose a RefVar into primitive variants (subst / ins / del) by means of realigning
+ *
+ * @param f reference sequence fasta
+ * @param chr the chromosome to use
+ * @param rv the RefVar record
+ * @param snps the number of snps
+ * @param ins the number of insertions
+ * @param dels the number of deletions
+ * @param homref the number of calls with no variation
+ */
+void countRefVarPrimitives(FastaFile & f, const char * chr, variant::RefVar const & rv,
+                           size_t & snps, size_t & ins, size_t & dels, size_t & homref);
+
+/**
  * Convert a list of RefVar records to allele strings
  */
-extern void toAlleles(FastaFile & f, 
-                      const char * chr, 
-                      std::vector<RefVar> const & in, 
+extern void toAlleles(FastaFile & f,
+                      const char * chr,
+                      std::vector<RefVar> const & in,
                       std::vector<std::string> & out);
 
 /**
  * Helper to aggregate reference variants base by base
- * 
+ *
  * Refpos must be > vars.back().end ; variants with different flags will not be combined
- * 
+ *
  */
 void appendToVarList(int64_t refpos, char refchr, char altchr, std::list<variant::RefVar> & vars, int flags=0);
 

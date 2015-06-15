@@ -32,6 +32,7 @@
 
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+MYDIR=$DIR
 
 unset SPECIALCONFIG
 
@@ -64,7 +65,7 @@ else
 fi
 
 # DIR gets overwritten above
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR=$MYDIR
 
 if [[ -z $1 ]]; then
     BT=Debug

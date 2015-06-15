@@ -42,7 +42,7 @@
 #include "variant/VariantAlleleSplitter.hh"
 #include "Error.hh"
 
-// #define DEBUG_VARIANTALLELESPLITTER
+/* #define DEBUG_VARIANTALLELESPLITTER */
 
 namespace variant {
 
@@ -138,7 +138,6 @@ bool VariantAlleleSplitter::advance()
 
             CallInfo(Call const & c) : qual(c.qual), gq(c.gq), ad_ref(c.ad_ref), ad_other(c.ad_other), dp(c.dp), nfilter(c.nfilter)
             {
-
                 for (size_t i = 0; i < nfilter; ++i)
                 {
                     filter[i] = c.filter[i];
@@ -298,13 +297,7 @@ bool VariantAlleleSplitter::advance()
                 }
                 for (size_t i = 0; i < cur.calls.size(); ++i)
                 {
-                    cur.calls[i].ngt = 0;
-                    for (int j = 0; j < MAX_GT; ++j) cur.calls[i].gt[j] = -1;
-                    for (int j = 0; j < MAX_GT; ++j) cur.calls[i].ad[j] = -1;
-                    cur.calls[i].gq = 0;
-                    cur.calls[i].dp = -1;
-                    cur.calls[i].ad_ref = -1;
-                    cur.calls[i].ad_other = -1;
+                    cur.calls[i] = Call();
                 }
                 if (!p.is_homref)
                 {

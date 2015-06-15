@@ -32,13 +32,13 @@ fi
 
 diff -I fileDate -I source_version ${TMP_OUT}.counts.json ${DIR}/../../example/happy/expected.counts.json
 if [[ $? != 0 ]]; then
-	echo "Counts differ!"
+	echo "Counts differ! -- diff ${TMP_OUT}.counts.json ${DIR}/../../example/happy/expected.counts.json"
 	exit 1
 fi
 
-diff -I fileDate -I source_version ${TMP_OUT}.summary.csv ${DIR}/../../example/happy/expected.summary.csv
+diff -I hap.py ${TMP_OUT}.summary.csv ${DIR}/../../example/happy/expected.summary.csv
 if [[ $? != 0 ]]; then
-	echo "Summary differs!"
+	echo "Summary differs! -- diff ${TMP_OUT}.summary.csv ${DIR}/../../example/happy/expected.summary.csv"
 	exit 1
 fi
 

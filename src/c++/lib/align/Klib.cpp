@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -68,7 +68,7 @@ void KlibAlignment::getParameters(AlignmentParameters & ap)
         ap.subs_mat[i] = _impl->mat[i];
     }
     ap.gapo = _impl->gapo;
-    ap.gape = _impl->gape;    
+    ap.gape = _impl->gape;
 }
 
 /**
@@ -87,7 +87,7 @@ void KlibAlignment::setRef(const char * seq)
  */
 void KlibAlignment::setQuery(const char * seq)
 {
-    if(_impl->qprofile) 
+    if(_impl->qprofile)
     {
         free(_impl->qprofile);
         _impl->qprofile = NULL;
@@ -150,9 +150,9 @@ void  KlibAlignment::getCigar(int &r0, int & r1, int &a0, int & a1, int & n_ciga
 void KlibAlignment::update()
 {
     _impl->result = ksw_align(
-        _impl->reflen, _impl->ref.get(), 
-        _impl->altlen, _impl->alt.get(), 
-        5, _impl->mat, _impl->gapo, _impl->gape, 
+        _impl->reflen, _impl->ref.get(),
+        _impl->altlen, _impl->alt.get(),
+        5, _impl->mat, _impl->gapo, _impl->gape,
         KSW_XSTART,     // add flags here
         &(_impl->qprofile));
 
@@ -165,11 +165,11 @@ void KlibAlignment::update()
 
     ksw_global(
         _impl->result.qe - _impl->result.qb + 1,
-        _impl->ref.get() + _impl->result.qb, 
+        _impl->ref.get() + _impl->result.qb,
         _impl->result.te - _impl->result.tb + 1,
-        _impl->alt.get() + _impl->result.tb, 
-        5, _impl->mat, _impl->gapo, _impl->gape, 
-        _impl->altlen, 
+        _impl->alt.get() + _impl->result.tb,
+        5, _impl->mat, _impl->gapo, _impl->gape,
+        _impl->altlen,
         &_impl->cigar_len, &_impl->cigar);
 
     _impl->valid_result = true;

@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -48,7 +48,7 @@ struct VariantStatisticsImpl;
 class VariantStatistics
 {
 public:
-    VariantStatistics(bool count_homref=false);
+    VariantStatistics(const char * ref_fasta, bool count_homref=false);
     VariantStatistics(VariantStatistics const & rhs);
     ~VariantStatistics();
     VariantStatistics const & operator=(VariantStatistics const & rhs);
@@ -64,7 +64,7 @@ public:
      */
     void add(VariantStatistics const & rhs);
     void add(Variants const & rhs, int sample);
-    void add(RefVar const & rhs);
+    void add(const char * chr, RefVar const & rhs);
 private:
     VariantStatisticsImpl * _impl;
 };

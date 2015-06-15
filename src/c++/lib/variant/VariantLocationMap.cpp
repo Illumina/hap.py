@@ -41,7 +41,7 @@ namespace variant
 
 /**
  * @brief Combine alleles in a single Variants record
- * 
+ *
  */
 void addAlleleToVariant(Variants & target, int sample, RefVar const & rv, bool is_het, int ad)
 {
@@ -51,7 +51,7 @@ void addAlleleToVariant(Variants & target, int sample, RefVar const & rv, bool i
     target.len = new_end - new_start + 1;
     target.variation.push_back(rv);
     size_t gt_id = target.variation.size();
-    
+
     if ((int)target.calls.size() <= sample)
     {
         target.calls.resize(sample+1);
@@ -79,7 +79,7 @@ void addAlleleToVariant(Variants & target, int sample, RefVar const & rv, bool i
         {
             // het -> find last gtt that is zero
             int zix = -1;
-            // at least one 
+            // at least one
             call.ngt = std::min(static_cast<size_t>(MAX_GT), std::max(static_cast<size_t>(2), call.ngt + 1));
             for (int i = 0; i < MAX_GT; ++i)
             {
@@ -95,9 +95,9 @@ void addAlleleToVariant(Variants & target, int sample, RefVar const & rv, bool i
             if (zix < 0)
             {
 #ifdef VARIANTLOCATIONMAP_WARN_AMBIGUOUS
-                fprintf(stderr, "[W] Too many het alleles at %s:%i (%i)\n", 
+                fprintf(stderr, "[W] Too many het alleles at %s:%i (%i)\n",
                         target.chr.c_str(), (int)target.pos, (int)call.ngt + 1);
-#endif                
+#endif
                 call.ad_other = std::max(0, ad);
                 for (size_t i = 0; i < call.ngt; ++i)
                 {
@@ -117,13 +117,13 @@ void addAlleleToVariant(Variants & target, int sample, RefVar const & rv, bool i
                 call.ad[zix] = ad;
             }
         }
-        else 
+        else
         {
             // hom -> this needs to be the only refvar here
             if (call.ngt > 0)
             {
 #ifdef VARIANTLOCATIONMAP_WARN_AMBIGUOUS
-                fprintf(stderr, "[W] Too many hom alleles at %s:%i / %i (%i)\n", 
+                fprintf(stderr, "[W] Too many hom alleles at %s:%i / %i (%i)\n",
                         target.chr.c_str(), (int)target.pos, (int)sample, (int)call.ngt + 1);
 #endif
                 call.ad_other = std::max(0, ad);
@@ -144,12 +144,12 @@ void addAlleleToVariant(Variants & target, int sample, RefVar const & rv, bool i
             {
                 call.ngt = 2;
                 call.gt[0] = gt_id;
-                call.gt[1] = gt_id;            
+                call.gt[1] = gt_id;
                 call.ad[0] = ad;
                 call.ad[1] = ad;
             }
         }
-    }    
+    }
 }
 
 /**
@@ -160,7 +160,7 @@ void addRefAlleleToVariant(Variants & target, int sample, int64_t start, int64_t
     int64_t new_start = std::min(start, target.pos);
     int64_t new_end = std::max(end, target.pos + target.len - 1);
     target.pos = new_start;
-    target.len = new_end - new_start + 1;   
+    target.len = new_end - new_start + 1;
 
     if ((int)target.calls.size() <= sample)
     {
@@ -208,7 +208,7 @@ void addRefAlleleToVariant(Variants & target, int sample, int64_t start, int64_t
             if (zix < 0)
             {
 #ifdef VARIANTLOCATIONMAP_WARN_AMBIGUOUS
-                fprintf(stderr, "[W] Too many het alleles at %s:%i (%i)\n", 
+                fprintf(stderr, "[W] Too many het alleles at %s:%i (%i)\n",
                         target.chr.c_str(), (int)target.pos, (int)call.ngt + 1);
 #endif
                 call.ad_other = std::max(ad, 0);
@@ -230,13 +230,13 @@ void addRefAlleleToVariant(Variants & target, int sample, int64_t start, int64_t
                 call.ad[zix] = ad;
             }
         }
-        else 
+        else
         {
             // hom -> this needs to be the only refvar here
             if (call.ngt > 0)
             {
 #ifdef VARIANTLOCATIONMAP_WARN_AMBIGUOUS
-                fprintf(stderr, "[W] Too many hom alleles at %s:%i / %i (%i)\n", 
+                fprintf(stderr, "[W] Too many hom alleles at %s:%i / %i (%i)\n",
                         target.chr.c_str(), (int)target.pos, (int)sample, (int)call.ngt + 1);
 #endif
                 call.ad_other = std::max(ad, 0);
@@ -255,19 +255,19 @@ void addRefAlleleToVariant(Variants & target, int sample, int64_t start, int64_t
             }
             else
             {
-                // at least one 
+                // at least one
                 call.ngt = 2;
                 call.gt[0] = 0;
-                call.gt[1] = 0;            
+                call.gt[1] = 0;
                 call.ad[0] = ad;
                 call.ad[1] = ad;
             }
         }
-    }    
+    }
 }
 
 VariantLocationMap::iterator addToLocationMap(
-    VariantLocationMap & locmap, int sample, 
+    VariantLocationMap & locmap, int sample,
     RefVar const & rv, bool is_het)
 {
     auto cit = locmap.find(rv.start);

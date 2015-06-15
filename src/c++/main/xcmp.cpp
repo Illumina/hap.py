@@ -36,20 +36,15 @@
  */
 
 #include <boost/program_options.hpp>
- 
+
 #include "Version.hh"
 #include "SimpleDiploidCompare.hh"
 #include "Variant.hh"
+#include "VariantInput.hh"
 #include "helpers/StringUtil.hh"
 #include "helpers/GraphUtil.hh"
 #include "GraphReference.hh"
 #include "DiploidCompare.hh"
-
-#include "variant/VariantAlleleRemover.hh"
-#include "variant/VariantAlleleSplitter.hh"
-#include "variant/VariantAlleleNormalizer.hh"
-#include "variant/VariantLocationAggregator.hh"
-#include "variant/VariantAlleleUniq.hh"
 
 #include <iostream>
 #include <fstream>
@@ -57,10 +52,10 @@
 #include <limits>
 #include <memory>
 
-// error needs to come after boost headers. 
+// error needs to come after boost headers.
 #include "Error.hh"
 
-// #define DEBUG_XCMP
+/* #define DEBUG_XCMP */
 
 using namespace variant;
 using namespace haplotypes;
@@ -95,7 +90,8 @@ int main(int argc, char* argv[]) {
 
     bool apply_filters_query = false;
     bool apply_filters_truth = true;
-    bool preprocess = true;
+    bool preprocess = false;
+    bool leftshift = false;
     bool always_hapcmp = false;
 
     try
@@ -104,7 +100,7 @@ int main(int argc, char* argv[]) {
         po::options_description desc("Allowed options");
         desc.add_options()
             ("help,h", "produce help message")
-            ("version", "Show version")            
+            ("version", "Show version")
             ("input-vcfs", po::value<std::vector<std::string> >(), "Two VCF files to compare (use file:sample for a specific sample column).")
             ("output-vcf,o", po::value<std::string>(), "Output variant comparison results to VCF.")
             ("output-errors,e", po::value<std::string>(), "Output failure information.")
@@ -120,7 +116,8 @@ int main(int argc, char* argv[]) {
             ("limit", po::value<int64_t>(), "Maximum number of haplotype blocks to process.")
             ("apply-filters-truth", po::value<bool>(), "Apply filtering in truth VCF (on by default).")
             ("apply-filters-query,f", po::value<bool>(), "Apply filtering in query VCF (off by default).")
-            ("preprocess-variants,V", po::value<bool>(), "Apply indel normalsations (on by default).")
+            ("preprocess-variants,V", po::value<bool>(), "Apply variant normalisations, trimming, realignment for complex variants (off by default).")
+            ("leftshift", po::value<bool>(), "Left-shift indel alleles (off by default).")
             ("always-hapcmp", po::value<bool>(), "Always compare haplotype blocks (even if they match). Testing use only/slow.")
         ;
 
@@ -133,24 +130,24 @@ int main(int argc, char* argv[]) {
         ;
 
         po::variables_map vm;
-        
+
         po::store(po::command_line_parser(argc, argv).
                   options(cmdline_options).positional(popts).run(), vm);
-        po::notify(vm); 
+        po::notify(vm);
 
-        if (vm.count("version")) 
+        if (vm.count("version"))
         {
             std::cout << "xcmp version " << HAPLOTYPES_VERSION << "\n";
             return 0;
         }
 
-        if (vm.count("help")) 
+        if (vm.count("help"))
         {
             std::cout << desc << "\n";
             return 1;
         }
 
-        if (vm.count("input-vcfs")) 
+        if (vm.count("input-vcfs"))
         {
             std::vector<std::string> vr = vm["input-vcfs"].as< std::vector<std::string> >();
 
@@ -197,6 +194,11 @@ int main(int argc, char* argv[]) {
         if (vm.count("preprocess-variants"))
         {
             preprocess = vm["preprocess-variants"].as< bool >();
+        }
+
+        if (vm.count("leftshift"))
+        {
+            leftshift = vm["leftshift"].as< bool >();
         }
 
         if (vm.count("location"))
@@ -268,7 +270,7 @@ int main(int argc, char* argv[]) {
             always_hapcmp = vm["always-hapcmp"].as< bool >();
         }
 
-    } 
+    }
     catch (po::error & e)
     {
         std::cerr << e.what() << "\n";
@@ -301,41 +303,28 @@ int main(int argc, char* argv[]) {
 
         int r1 = vr.addSample(file1.c_str(), sample1.c_str());
         int r2 = vr.addSample(file2.c_str(), sample2.c_str());
-        
+
         vr.setApplyFilters(apply_filters_truth, r1);
         vr.setApplyFilters(apply_filters_query, r2);
 
-        VariantProcessor vp;
+        VariantInput vi(
+            ref_fasta.c_str(),
+            preprocess || leftshift,          // bool leftshift
+            preprocess || leftshift,          // bool refpadding
+            true,                // bool trimalleles = false, (remove unused alleles)
+            preprocess || leftshift,      // bool splitalleles = false,
+            ( preprocess || leftshift ) ? 2 : 0,  // int mergebylocation = false,
+            true,                // bool uniqalleles = false,
+            true,                // bool calls_only = true,
+            false,               // bool homref_split = false // this is handled by calls_only
+            preprocess,          // bool primitives = false
+            false,               // bool homref_output
+            leftshift ? hb_window-1 : 0   // int64_t leftshift_limit
+            );
 
-        // preprocessing steps
-        std::unique_ptr<VariantAlleleRemover> p_allele_remover;
-        std::unique_ptr<VariantAlleleSplitter> p_allele_splitter;
-        std::unique_ptr<VariantAlleleNormalizer> p_allele_normalizer;
-        std::unique_ptr<VariantLocationAggregator> p_merger;
-        std::unique_ptr<VariantAlleleUniq> p_allele_uniq;
+        VariantProcessor & vp = vi.getProcessor();
 
-        if (preprocess)
-        {
-            p_allele_remover = std::move(std::unique_ptr<VariantAlleleRemover>(new VariantAlleleRemover()));
-            vp.addStep(*p_allele_remover);
-            
-            p_allele_splitter = std::move(std::unique_ptr<VariantAlleleSplitter>(new VariantAlleleSplitter()));
-            vp.addStep(*p_allele_splitter);
-            
-            p_allele_normalizer = std::move(std::unique_ptr<VariantAlleleNormalizer>(new VariantAlleleNormalizer()));
-            p_allele_normalizer->setReference(ref_fasta.c_str());
-            p_allele_normalizer->setEnableRefPadding(true);
-            vp.addStep(*p_allele_normalizer);
-
-            p_merger = std::move(std::unique_ptr<VariantLocationAggregator>(new VariantLocationAggregator()));
-            p_merger->setAggregationType(VariantLocationAggregator::aggregate_hetalt);
-            vp.addStep(*p_merger);
-
-            p_allele_uniq = std::move(std::unique_ptr<VariantAlleleUniq>(new VariantAlleleUniq()));
-            vp.addStep(*p_allele_uniq);
-        }
-
-        vp.setReader(vr, VariantBufferMode::buffer_block, 100);
+        vp.setReader(vr, VariantBufferMode::buffer_block, 10*hb_window);
 
         bool stop_after_chr_change = false;
         if(chr != "")
@@ -354,7 +343,7 @@ int main(int argc, char* argv[]) {
             pvw->addHeader("##INFO=<ID=type,Number=1,Type=String,Description=\"Decision for call (TP/FP/FN/N)\">");
             pvw->addHeader("##INFO=<ID=kind,Number=1,Type=String,Description=\"Sub-type for decision (match/mismatch type)\">");
             pvw->addHeader("##INFO=<ID=ctype,Number=1,Type=String,Description=\"Type of comparison performed\">");
-            pvw->addHeader("##INFO=<ID=HapMatch,Number=0,Type=Flag,Description=\"Variant is in matching haplotype block\">"); 
+            pvw->addHeader("##INFO=<ID=HapMatch,Number=0,Type=Flag,Description=\"Variant is in matching haplotype block\">");
             pvw->addSample("TRUTH");
             pvw->addSample("QUERY");
         }
@@ -374,7 +363,7 @@ int main(int argc, char* argv[]) {
 
         int64_t nhb = 0;
         int64_t last_pos = std::numeric_limits<int64_t>::max();
-        
+
         // hap-block status + update
         std::list<Variants> block_variants;
         int64_t block_start = -1;
@@ -383,9 +372,9 @@ int main(int argc, char* argv[]) {
         bool has_mismatch = false;
 
         const auto finish_block = [&block_variants, r1, r2,
-                                   &chr, 
-                                   &block_start, 
-                                   &block_end, 
+                                   &chr,
+                                   &block_start,
+                                   &block_end,
                                    &n_nonsnp, &calls_1, &calls_2,
                                    &has_mismatch,
                                    &pvw, &error_out_stream,
@@ -437,8 +426,8 @@ int main(int argc, char* argv[]) {
                 }
                 else
                 {
-                    result = "simple:";                    
-                } 
+                    result = "simple:";
+                }
             }
             else
             {
@@ -486,12 +475,12 @@ int main(int argc, char* argv[]) {
             }
             else
             {
-                result += "mismatch";                    
+                result += "mismatch";
             }
 
             if(error_out_stream)
             {
-                *error_out_stream << chr << "\t" << block_start << "\t" << block_end+1 << "\t" << result << "\t" 
+                *error_out_stream << chr << "\t" << block_start << "\t" << block_end+1 << "\t" << result << "\t"
                                   << has_mismatch << ":" << hap_match << ":" << hap_fail << ":"
                                   << calls_1 << ":" << calls_2 << ":" << n_nonsnp << "\n";
             }
@@ -514,7 +503,7 @@ int main(int argc, char* argv[]) {
 
             block_variants.clear();
             block_start = -1;
-            block_end = -1;            
+            block_end = -1;
             n_nonsnp = 0;
             calls_1 = 0;
             calls_2 = 0;
@@ -534,7 +523,7 @@ int main(int argc, char* argv[]) {
 
             if(end != -1 && (v.pos > end || (chr.size() != 0 && chr != v.chr)))
             {
-                // reached end 
+                // reached end
                 break;
             }
 
@@ -607,7 +596,7 @@ int main(int argc, char* argv[]) {
                     }
                     else
                     {
-                        last_pos = v.pos;                            
+                        last_pos = v.pos;
                     }
                     last_time = end_time;
 

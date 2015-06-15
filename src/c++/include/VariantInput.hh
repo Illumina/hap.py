@@ -26,9 +26,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /**
- * \brief Homref interval splitter processor
+ * \brief Wrapper class that creates a Variant Processor and various processing steps
  *
- * \file VariantHomrefSplitter.hh
+ * \file VariantInput.hh
  * \author Peter Krusche
  * \email pkrusche@illumina.com
  *
@@ -37,37 +37,42 @@
 #pragma once
 
 #include "Variant.hh"
+#include "variant/VariantProcessor.hh"
+
+#include <list>
 
 namespace variant {
-
-    class VariantHomrefSplitter : public AbstractVariantProcessingStep
-    {
+    class VariantInput {
     public:
-        VariantHomrefSplitter();
-        VariantHomrefSplitter(VariantHomrefSplitter const & );
-        ~VariantHomrefSplitter();
-        VariantHomrefSplitter const & operator=(VariantHomrefSplitter const & );
+        VariantInput(
+            const char * _ref_fasta,
+            bool leftshift = false,
+            bool refpadding = true,
+            bool trimalleles = false,
+            bool splitalleles = false,
+            int mergebylocation = false,
+            bool uniqalleles = false,
+            bool calls_only = true,
+            bool homref_split = false,
+            bool primitive_split = false,
+            bool homref_output = false,
+            int64_t leftshift_limit = -1
+        );
+        ~VariantInput();
 
-        /** enqueue a set of variants */
-        void add(Variants const & vs);
+        /** Read variants from a block into a list */
+        void get(const char * chr, int64_t start, int64_t end, std::list<Variants> & output);
 
-        /**
-         * @brief Return variant block at current position
-         **/
-        Variants & current();
-
-        /**
-         * @brief Advance one line
-         * @return true if a variant was retrieved, false otherwise
-         */
-        bool advance();
-
-        /** empty internal buffer */
-        void flush();
+        enum processor_id { variants, homref };
+        /** Direct access to variant processor */
+        VariantProcessor & getProcessor(processor_id id = variants);
 
     private:
-        struct VariantHomrefSplitterImpl;
-        VariantHomrefSplitterImpl * _impl;
-    };
+        // prevent copy construction and assignment
+        VariantInput(VariantInput const & ) {}
+        VariantInput & operator=(VariantInput const & ) {return *this;}
 
+        struct VariantInputImpl;
+        VariantInputImpl * _impl;
+    };
 }

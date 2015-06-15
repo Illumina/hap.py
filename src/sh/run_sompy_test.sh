@@ -22,7 +22,7 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-diff  ${TMP_OUT}.stats.csv ${DIR}/../../example/sompy/stats.csv
+cat ${TMP_OUT}.stats.csv | perl -pe 's/som.py.*$/som.py/' | diff ${DIR}/../../example/sompy/stats.csv -
 if [[ $? != 0 ]]; then
 	echo "Output counts differ diff  ${TMP_OUT}.stats.csv ${DIR}/../../example/sompy/stats.csv !"
 	exit 1
@@ -43,7 +43,7 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-diff  ${TMP_OUT}.stats.csv ${DIR}/../../example/sompy/stats_fpr.csv
+cat ${TMP_OUT}.stats.csv | perl -pe 's/som.py.*$/som.py/' | diff ${DIR}/../../example/sompy/stats_fpr.csv -
 if [[ $? != 0 ]]; then
 	echo "Output counts differ diff  ${TMP_OUT}.stats.csv ${DIR}/../../example/sompy/stats_fpr.csv !"
 	exit 1
@@ -65,7 +65,7 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-diff  ${TMP_OUT}.stats.csv ${DIR}/../../example/sompy/stats.csv
+cat ${TMP_OUT}.stats.csv | perl -pe 's/som.py.*$/som.py/' | diff ${DIR}/../../example/sompy/stats.csv -
 if [[ $? != 0 ]]; then
 	echo "Output counts differ diff  ${TMP_OUT}.stats.csv ${DIR}/../../example/sompy/stats.csv !"
 	exit 1

@@ -28,7 +28,7 @@ fi
 
 diff ${TMP_OUT}.counts.csv ${DIR}/../../example/GiaB/expected.counts.csv
 if [[ $? != 0 ]]; then
-	echo "Counts differ!"
+	echo "Counts differ! diff ${TMP_OUT}.counts.csv ${DIR}/../../example/GiaB/expected.counts.csv"
 	exit 1
 fi
 

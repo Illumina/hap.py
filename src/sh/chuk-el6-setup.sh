@@ -9,12 +9,13 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 export BOOST_ROOT=/illumina/thirdparty/boost/boost_1_57_0_python2.7-fPIC
 
-# use GCC 4.8.2 + matching binutils and gdb
-export PATH=/illumina/development/haplocompare/hc-virtualenv/bin:/illumina/thirdparty/gcc/gcc-4.9.2/bin:/illumina/thirdparty/gdb/gdb-7.9/bin:/illumina/thirdparty/binutils/binutils-2.25/bin:/illumina/thirdparty/cmake/cmake-3.1.3/bin:$PATH
-
-export PYTHONHOME=/illumina/thirdparty/python/python-2.7.8
-unset PYTHONUSERBASE
-
-export LD_RUN_PATH=$LD_LIBRARY_PATH:/illumina/thirdparty/gcc/gcc-4.9.2/lib64:/illumina/thirdparty/gcc/gcc-4.9.2/lib
+module purge
+unset MODULEPATH
+module use /illumina/sync/software/thirdparty/HPCBIOS.20150417/modules/all
+module load CMake
+module unload GCC
+module load GCC/4.9.2
+module unload zlib
+module unload ncurses
 
 export EXTRA_CMAKE_OPTS="-DUSE_SGE=ON"

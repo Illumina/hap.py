@@ -39,12 +39,13 @@
 #include "Variant.hh"
 #include "Haplotype.hh"
 #include "DiploidReference.hh"
+#include "VariantInput.hh"
 #include "helpers/StringUtil.hh"
 #include "helpers/GraphUtil.hh"
 
 #include <fstream>
 
-// error needs to come after program_options. 
+// error needs to come after program_options.
 #include "Error.hh"
 
 using namespace variant;
@@ -67,6 +68,8 @@ int main(int argc, char* argv[]) {
     // = max 12 unphased hets in segment
     int max_n_haplotypes = 4096;
 
+    bool apply_filters = true;
+
     try
     {
         // Declare the supported options.
@@ -79,6 +82,7 @@ int main(int argc, char* argv[]) {
             ("location,l", po::value<std::string>(), "The location / subset.")
             ("reference,r", po::value<std::string>(), "The reference fasta file.")
             ("max-n-haplotypes", po::value<int>(), "Maximum number of haplotypes to enumerate.")
+            ("apply-filters,f", po::value<int>(), "Apply filters in VCF (default to 1)")
         ;
 
         po::positional_options_description popts;
@@ -90,18 +94,18 @@ int main(int argc, char* argv[]) {
         ;
 
         po::variables_map vm;
-        
+
         po::store(po::command_line_parser(argc, argv).
                   options(cmdline_options).positional(popts).run(), vm);
-        po::notify(vm); 
+        po::notify(vm);
 
-        if (vm.count("version")) 
+        if (vm.count("version"))
         {
             std::cout << "dipenum version " << HAPLOTYPES_VERSION << "\n";
             return 0;
         }
 
-        if (vm.count("help")) 
+        if (vm.count("help"))
         {
             std::cout << desc << "\n";
             return 1;
@@ -154,7 +158,11 @@ int main(int argc, char* argv[]) {
             max_n_haplotypes = vm["max-n-haplotypes"].as< int >();
         }
 
-    } 
+        if (vm.count("apply-filters"))
+        {
+            apply_filters = vm["apply-filters"].as< int >() != 0;
+        }
+    }
     catch (po::error & e)
     {
         std::cerr << e.what() << "\n";
@@ -173,7 +181,23 @@ int main(int argc, char* argv[]) {
 
     try
     {
-        DiploidReference dr(file.c_str(), sample.c_str(), ref_fasta.c_str());
+        VariantReader r;
+        r.setApplyFilters(apply_filters);
+        int ix = r.addSample(file.c_str(), sample.c_str());
+        VariantInput vi(
+            ref_fasta.c_str(),
+            true,           // bool leftshift
+            true,           // bool refpadding
+            false,          // bool trimalleles = false,
+            false,          // bool splitalleles = false,
+            0,              // int mergebylocation = false,
+            true,           // bool uniqalleles = false,
+            false,          // bool calls_only = true,
+            false           // bool homref_split = false
+        );
+        vi.getProcessor().setReader(r, VariantBufferMode::buffer_block, 100);
+
+        DiploidReference dr(ref_fasta.c_str());
         dr.setNPaths(max_n_haplotypes);
 
         std::ostream * out;
@@ -186,7 +210,9 @@ int main(int argc, char* argv[]) {
             out = &std::cout;
         }
 
-        dr.setRegion(chr.c_str(), start, end);
+        std::list<Variants> vars;
+        vi.get(chr.c_str(), start, end, vars);
+        dr.setRegion(chr.c_str(), start, end, vars, ix);
 
         while(dr.hasNext())
         {
@@ -196,7 +222,7 @@ int main(int argc, char* argv[]) {
 
             dr.advance();
         }
-                
+
 
         if(out_fasta != "" && out_fasta != "-")
         {

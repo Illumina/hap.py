@@ -47,7 +47,15 @@ using namespace variant;
 
 BOOST_AUTO_TEST_CASE(testVariantStatisticsCountRefvar)
 {
-    VariantStatistics vs;
+    boost::filesystem::path p(__FILE__);
+    boost::filesystem::path ptp = p.parent_path()
+                                   .parent_path()   // test
+                                   .parent_path()   // c++
+                                   .parent_path()   // src
+                                    / boost::filesystem::path("example")
+                                    / boost::filesystem::path("chr21.fa");
+
+    VariantStatistics vs(ptp.c_str());
 
     RefVar rv;
 
@@ -55,37 +63,37 @@ BOOST_AUTO_TEST_CASE(testVariantStatisticsCountRefvar)
     rv.start = 10;
     rv.end = 10;
     rv.alt = "T";
-    vs.add(rv);
+    vs.add("chr21", rv);
 
     // del
     rv.start = 20;
     rv.end = 30;
     rv.alt = "A";
-    vs.add(rv);
+    vs.add("chr21", rv);
 
     // del2
     rv.start = 20;
     rv.end = 21;
     rv.alt = "A";
-    vs.add(rv);
+    vs.add("chr21", rv);
 
     // ins
     rv.start = 30;
     rv.end = 30;
     rv.alt = "AA";
-    vs.add(rv);
+    vs.add("chr21", rv);
 
     // ins
     rv.start = 40;
     rv.end = 39;
     rv.alt = "AA";
-    vs.add(rv);
+    vs.add("chr21", rv);
 
     // ins
     rv.start = 50;
     rv.end = 49;
     rv.alt = "A";
-    vs.add(rv);
+    vs.add("chr21", rv);
 
     for (int i = 0; i < 5; ++i)
     {
@@ -93,7 +101,7 @@ BOOST_AUTO_TEST_CASE(testVariantStatisticsCountRefvar)
         rv.start = 50*i;
         rv.end = 50*i + 2;
         rv.alt = "AAA";
-        vs.add(rv);
+        vs.add("chr21", rv);
     }
 
     for (int i = 0; i < 10; ++i)
@@ -102,7 +110,7 @@ BOOST_AUTO_TEST_CASE(testVariantStatisticsCountRefvar)
         rv.start = 50*i;
         rv.end = 50*i + 2;
         rv.alt = "AA";
-        vs.add(rv);
+        vs.add("chr21", rv);
     }
 
     for (int i = 0; i < 20; ++i)
@@ -111,31 +119,32 @@ BOOST_AUTO_TEST_CASE(testVariantStatisticsCountRefvar)
         rv.start = 50*i;
         rv.end = 50*i + 3;
         rv.alt = "AAAAAAAAAA";
-        vs.add(rv);
+        vs.add("chr21", rv);
     }
 
     Json::Value result(vs.write());
     BOOST_CHECK_EQUAL(result["alleles"].asUInt64(), (uint64_t)41);
-    BOOST_CHECK_EQUAL(result["snp"].asUInt64(), (uint64_t)1);
-    BOOST_CHECK_EQUAL(result["del"].asUInt64(), (uint64_t)2);
-    BOOST_CHECK_EQUAL(result["ins"].asUInt64(), (uint64_t)3);
-    BOOST_CHECK_EQUAL(result["blocksubst"].asUInt64(), (uint64_t)5);
-    BOOST_CHECK_EQUAL(result["blocksubst_del"].asUInt64(), (uint64_t)10);
-    BOOST_CHECK_EQUAL(result["blocksubst_ins"].asUInt64(), (uint64_t)20);
+    BOOST_CHECK_EQUAL(result["snp"].asUInt64(), (uint64_t)119);
+    BOOST_CHECK_EQUAL(result["del"].asUInt64(), (uint64_t)21);
+    BOOST_CHECK_EQUAL(result["ins"].asUInt64(), (uint64_t)123);
+    BOOST_CHECK_EQUAL(result["blocksubst"].asUInt64(), (uint64_t)0);
+    BOOST_CHECK_EQUAL(result["blocksubst_del"].asUInt64(), (uint64_t)0);
+    BOOST_CHECK_EQUAL(result["blocksubst_ins"].asUInt64(), (uint64_t)0);
 }
 
 BOOST_AUTO_TEST_CASE(testVariantStatisticsCountVariants)
 {
     boost::filesystem::path p(__FILE__);
-    boost::filesystem::path tp = p.parent_path()
+    boost::filesystem::path ptp = p.parent_path()
                                    .parent_path()   // test
                                    .parent_path()   // c++
                                    .parent_path()   // src
-                                    / boost::filesystem::path("example") 
-                                    / boost::filesystem::path("hc.vcf.gz");
+                                    / boost::filesystem::path("example");
+    boost::filesystem::path tp = ptp / boost::filesystem::path("hc.vcf.gz");
+    boost::filesystem::path ftp = ptp / boost::filesystem::path("chr21.fa");
 
     VariantReader r;
-    VariantStatistics vs(true);
+    VariantStatistics vs(ftp.c_str(), true);
     int s = r.addSample(tp.c_str(), "NA12878");
 
     size_t count = 0;
@@ -150,7 +159,7 @@ BOOST_AUTO_TEST_CASE(testVariantStatisticsCountVariants)
     Json::Value result = vs.write();
 
     BOOST_CHECK_EQUAL(result["het"].asUInt64(), (uint64_t)2518);
-    BOOST_CHECK_EQUAL(result["homalt"].asUInt64(), (uint64_t)2194);    
+    BOOST_CHECK_EQUAL(result["homalt"].asUInt64(), (uint64_t)2194);
     BOOST_CHECK_EQUAL(result["homref"].asUInt64(), (uint64_t)79057);
     BOOST_CHECK_EQUAL(result["haploid"].asUInt64(), (uint64_t)4);
     BOOST_CHECK_EQUAL(result["hetalt"].asUInt64(), (uint64_t)66);
@@ -177,17 +186,17 @@ BOOST_AUTO_TEST_CASE(testVariantStatisticsCountVariants)
         BOOST_CHECK_EQUAL(result[vt].asUInt64(), count);
     }
 
-    BOOST_CHECK_EQUAL(result["del"].asUInt64(), (uint64_t)548);
-    BOOST_CHECK_EQUAL(result["ins"].asUInt64(), (uint64_t)569);
-    BOOST_CHECK_EQUAL(result["snp"].asUInt64(), (uint64_t)5888);
+    BOOST_CHECK_EQUAL(result["del"].asUInt64(), (uint64_t)1329);
+    BOOST_CHECK_EQUAL(result["ins"].asUInt64(), (uint64_t)1169);
+    BOOST_CHECK_EQUAL(result["snp"].asUInt64(), (uint64_t)3991);
     BOOST_CHECK_EQUAL(result["het"].asUInt64(), (uint64_t)2518);
 
-    BOOST_CHECK_EQUAL(result["locations"].asUInt64(), 
-                      result["het"].asUInt64() + 
-                      result["homalt"].asUInt64() + 
-                      result["hetalt"].asUInt64() + 
-                      result["homref"].asUInt64() + 
-                      result["haploid"].asUInt64() + 
+    BOOST_CHECK_EQUAL(result["locations"].asUInt64(),
+                      result["het"].asUInt64() +
+                      result["homalt"].asUInt64() +
+                      result["hetalt"].asUInt64() +
+                      result["homref"].asUInt64() +
+                      result["haploid"].asUInt64() +
                       result["unknown_gt"].asUInt64());
 
     BOOST_CHECK(count > 0);

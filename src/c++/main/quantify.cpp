@@ -64,7 +64,7 @@ namespace std
     unique_ptr<T> make_unique( Args&& ...args )
     {
         return unique_ptr<T>( new T( forward<Args>(args)... ) );
-    }    
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
     std::string output;
     std::string output_vcf;
     std::string ref_fasta;
-    
+
     std::map<std::string, IntervalTree<std::string, int64_t> > regions;
     std::set<std::string> region_names;
 
@@ -96,13 +96,13 @@ int main(int argc, char* argv[]) {
         po::options_description desc("Allowed options");
         desc.add_options()
             ("help,h", "produce help message")
-            ("version", "Show version")            
+            ("version", "Show version")
             ("input-file", po::value<std::vector< std::string> >(), "The input files")
             ("output-file,o", po::value<std::string>(), "The output file name (JSON Format).")
             ("output-vcf,v", po::value<std::string>(), "Annotated VCF file (with bed annotations).")
             ("reference,r", po::value<std::string>(), "The reference fasta file (needed only for VCF output).")
             ("location,l", po::value<std::string>(), "Start location.")
-            ("regions,R", po::value< std::vector<std::string> >(), 
+            ("regions,R", po::value< std::vector<std::string> >(),
                 "Region bed file. You can attach a label by prefixing with a colon, e.g. -R FP2:false-positives-type2.bed")
             ("limit-records", po::value<int64_t>(), "Maximum umber of records to process")
             ("message-every", po::value<int64_t>(), "Print a message every N records.")
@@ -119,18 +119,18 @@ int main(int argc, char* argv[]) {
         ;
 
         po::variables_map vm;
-        
+
         po::store(po::command_line_parser(argc, argv).
                   options(cmdline_options).positional(popts).run(), vm);
-        po::notify(vm); 
+        po::notify(vm);
 
-        if (vm.count("version")) 
+        if (vm.count("version"))
         {
             std::cout << "quantify version " << HAPLOTYPES_VERSION << "\n";
             return 0;
         }
 
-        if (vm.count("help")) 
+        if (vm.count("help"))
         {
             std::cout << desc << "\n";
             return 1;
@@ -194,7 +194,7 @@ int main(int argc, char* argv[]) {
         if (output == "")
         {
             std::cerr << "Please specify an output file.\n";
-            return 1;            
+            return 1;
         }
 
         if (vm.count("regions"))
@@ -235,9 +235,9 @@ int main(int argc, char* argv[]) {
                 }
                 else
                 {
-                    bedfile = hts_open(filename.c_str(), "r");                    
+                    bedfile = hts_open(filename.c_str(), "r");
                 }
-                
+
                 size_t icount = 0;
                 kstring_t l;
                 l.l = l.m = 0; l.s = NULL;
@@ -253,7 +253,7 @@ int main(int argc, char* argv[]) {
                         if (chr_it == intervals.end())
                         {
                             chr_it = intervals.emplace(
-                                v[0], 
+                                v[0],
                                 std::vector< Interval<std::string, int64_t > >()).first;
                         }
                         // intervals are both zero-based
@@ -281,7 +281,7 @@ int main(int argc, char* argv[]) {
             }
         }
 
-    } 
+    }
     catch (po::error & e)
     {
         std::cerr << e.what() << "\n";
@@ -343,9 +343,9 @@ int main(int argc, char* argv[]) {
             writer->addHeader(r);
             writer->addHeader("##INFO=<ID=Regions,Number=.,Type=String,Description=\"Tags for regions.\">");
         }
-        
+
         /** local function to count variants in all samples */
-        const auto count_variants = [&count_map, &samples, count_homref](std::string const & name, Variants & vars)
+        const auto count_variants = [ref_fasta, &count_map, &samples, count_homref](std::string const & name, Variants & vars)
         {
             int i = 0;
             for (auto const & s : samples)
@@ -359,11 +359,11 @@ int main(int argc, char* argv[]) {
                 {
                     key = name + ":" + s.second;
                 }
-                
+
                 auto it = count_map.find(key);
                 if (it == count_map.end())
                 {
-                    it = count_map.emplace(key, VariantStatistics(count_homref)).first;
+                    it = count_map.emplace(key, VariantStatistics(ref_fasta.c_str(), count_homref)).first;
                 }
                 it->second.add(vars, i);
                 ++i;
@@ -386,7 +386,7 @@ int main(int argc, char* argv[]) {
                     break;
                 }
             }
-            
+
             if(end != -1 && v.pos > end)
             {
                 break;
@@ -491,7 +491,7 @@ int main(int argc, char* argv[]) {
             std::ofstream o(output);
             o << fastWriter.write(counts);
         }
-    } 
+    }
     catch(std::runtime_error & e)
     {
         std::cerr << e.what() << std::endl;

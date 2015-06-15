@@ -46,9 +46,10 @@ namespace variant
 
 struct VariantAlleleNormalizer::VariantAlleleNormalizerImpl
 {
-    VariantAlleleNormalizerImpl() : refpadding(false), homref(false) {}
-    VariantAlleleNormalizerImpl(VariantAlleleNormalizerImpl const & rhs) : 
-        buffered_variants(rhs.buffered_variants), reference(rhs.reference), refpadding(rhs.refpadding), homref(rhs.homref)
+    VariantAlleleNormalizerImpl() : refpadding(false), homref(false), limit(-1) {}
+    VariantAlleleNormalizerImpl(VariantAlleleNormalizerImpl const & rhs) :
+        buffered_variants(rhs.buffered_variants), reference(rhs.reference), refpadding(rhs.refpadding), homref(rhs.homref),
+        limit(rhs.limit)
     {
         if (reference != "")
         {
@@ -58,7 +59,7 @@ struct VariantAlleleNormalizer::VariantAlleleNormalizerImpl
 
     struct Variants_less
     {
-        bool operator() (Variants const & l, Variants const & r) 
+        bool operator() (Variants const & l, Variants const & r)
         {
             if(l.pos != r.pos)
             {
@@ -91,6 +92,7 @@ struct VariantAlleleNormalizer::VariantAlleleNormalizerImpl
 
     bool refpadding;
     bool homref;
+    int64_t limit;
 
     Variants vs;
 };
@@ -120,17 +122,17 @@ VariantAlleleNormalizer const & VariantAlleleNormalizer::operator=(VariantAllele
     _impl = new VariantAlleleNormalizerImpl(*rhs._impl);
     return *this;
 }
- 
+
 void VariantAlleleNormalizer::setReference(std::string const & fasta)
 {
     _impl->reference = fasta;
-    _impl->ref_fasta = std::move( std::unique_ptr<FastaFile>(new FastaFile(_impl->reference.c_str() ) ) );  
+    _impl->ref_fasta = std::move( std::unique_ptr<FastaFile>(new FastaFile(_impl->reference.c_str() ) ) );
 }
 
 
 /**
  * @brief Enable / disable reference padding
- * 
+ *
  * RefVars can be trimmed to include / not include reference bases
  */
 bool VariantAlleleNormalizer::getEnableRefPadding() const
@@ -145,7 +147,22 @@ void VariantAlleleNormalizer::setEnableRefPadding(bool padding)
 
 /**
  * @brief Enable / disable returning of homref intervals
- * 
+ *
+ * TODO : output homref as intervals
+ */
+int64_t VariantAlleleNormalizer::getLeftshiftLimit() const
+{
+    return _impl->limit;
+}
+
+void VariantAlleleNormalizer::setLeftshiftLimit(int64_t limit)
+{
+    _impl->limit = limit;
+}
+
+/**
+ * @brief Enable / disable returning of homref intervals
+ *
  */
 bool VariantAlleleNormalizer::getEnableHomrefVariants() const
 {
@@ -175,7 +192,7 @@ void VariantAlleleNormalizer::add(Variants const & vs)
         if(!x.empty())
         {
             all_homref = false;
-            break;                    
+            break;
         }
     }
 
@@ -199,9 +216,17 @@ void VariantAlleleNormalizer::add(Variants const & vs)
 
         for (size_t rvc = 0; rvc < nv.variation.size(); ++rvc)
         {
-            leftShift(*(_impl->ref_fasta), nv.chr.c_str(), nv.variation[rvc]);
+            if(_impl->limit < 0)
+            {
+                leftShift(*(_impl->ref_fasta), nv.chr.c_str(), nv.variation[rvc]);
+            }
+            if(_impl->limit > 0)
+            {
+                leftShift(*(_impl->ref_fasta), nv.chr.c_str(), nv.variation[rvc], nv.pos - _impl->limit);
+            }
+
             trimLeft(*(_impl->ref_fasta), nv.chr.c_str(), nv.variation[rvc], _impl->refpadding);
-            trimRight(*(_impl->ref_fasta), nv.chr.c_str(), nv.variation[rvc], _impl->refpadding);            
+            trimRight(*(_impl->ref_fasta), nv.chr.c_str(), nv.variation[rvc], _impl->refpadding);
             if(new_start < 0 || new_start > nv.variation[rvc].start)
             {
                 new_start = nv.variation[rvc].start;
@@ -255,7 +280,7 @@ bool VariantAlleleNormalizer::advance()
 #ifdef DEBUG_VARIANTNORMALIZER
         std::cerr << "Variants left: " << _impl->buffered_variants.size() << " / empty: " << _impl->buffered_variants.empty() <<  "\n";
 #endif
-        return true;        
+        return true;
     }
 }
 

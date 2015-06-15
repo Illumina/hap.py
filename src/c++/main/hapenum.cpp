@@ -38,6 +38,7 @@
 
 #include "Version.hh"
 #include "Variant.hh"
+#include "VariantInput.hh"
 #include "Haplotype.hh"
 #include "GraphReference.hh"
 #include "helpers/StringUtil.hh"
@@ -45,7 +46,7 @@
 
 #include <fstream>
 
-// error needs to come after program_options. 
+// error needs to come after program_options.
 #include "Error.hh"
 
 using namespace variant;
@@ -55,7 +56,7 @@ using namespace haplotypes;
 namespace graphutil
 {
 
-template <> 
+template <>
 struct dotFormatter<ReferenceNode>
 {
     void operator()(std::ostream & o, ReferenceNode const & rn)
@@ -63,17 +64,17 @@ struct dotFormatter<ReferenceNode>
         switch(rn.type)
         {
             case ReferenceNode::source:
-                o << "label=\"start: " 
+                o << "label=\"start: "
                   << stringutil::formatPos(rn.chr.c_str(), rn.end)
                   << "\", shape=diamond, ";
                 break;
             case ReferenceNode::sink:
-                o << "label=\"end: " 
+                o << "label=\"end: "
                   << stringutil::formatPos(rn.chr.c_str(), rn.end)
                   << "\", shape=triangle, ";
                 break;
             case ReferenceNode::alternative:
-                o << "label=\"alt: " 
+                o << "label=\"alt: "
                   << rn.alt << " "
                   << stringutil::formatPos(rn.chr.c_str(), rn.start, rn.end)
                   << "\", shape=parallelogram, ";
@@ -94,10 +95,10 @@ struct dotFormatter<ReferenceNode>
         {
             case ReferenceNode::red:
                 o << "color=red";
-                break;            
+                break;
             case ReferenceNode::blue:
                 o << "color=blue";
-                break;            
+                break;
             case ReferenceNode::black:
                 o << "color=black";
                 break;
@@ -154,18 +155,18 @@ int main(int argc, char* argv[]) {
         ;
 
         po::variables_map vm;
-        
+
         po::store(po::command_line_parser(argc, argv).
                   options(cmdline_options).positional(popts).run(), vm);
-        po::notify(vm); 
+        po::notify(vm);
 
-        if (vm.count("version")) 
+        if (vm.count("version"))
         {
             std::cout << "hapenum version " << HAPLOTYPES_VERSION << "\n";
             return 0;
         }
 
-        if (vm.count("help")) 
+        if (vm.count("help"))
         {
             std::cout << desc << "\n";
             return 1;
@@ -228,7 +229,7 @@ int main(int argc, char* argv[]) {
             max_n_haplotypes = vm["max-n-haplotypes"].as< int >();
         }
 
-    } 
+    }
     catch (po::error & e)
     {
         std::cerr << e.what() << "\n";
@@ -247,13 +248,29 @@ int main(int argc, char* argv[]) {
 
     try
     {
-        GraphReference gr(file.c_str(), sample.c_str(), ref_fasta.c_str());
-        gr.setApplyFilters(apply_filters);
+        VariantReader r;
+        r.setApplyFilters(apply_filters);
+        int ix = r.addSample(file.c_str(), sample.c_str());
+        VariantInput vi(
+            ref_fasta.c_str(),
+            true,           // bool leftshift
+            true,           // bool refpadding
+            false,          // bool trimalleles = false,
+            false,          // bool splitalleles = false,
+            0,              // int mergebylocation = false,
+            true,           // bool uniqalleles = false,
+            false,          // bool calls_only = true,
+            false           // bool homref_split = false
+        );
+        vi.getProcessor().setReader(r, VariantBufferMode::buffer_block, 100);
 
+        std::list<Variants> vars;
+        vi.get(chr.c_str(), start, end, vars);
         std::vector<ReferenceNode> nodes;
         std::vector<ReferenceEdge> edges;
 
-        gr.makeGraph(chr.c_str(), start, end, nodes, edges);
+        GraphReference gr(ref_fasta.c_str());
+        gr.makeGraph(vars, ix, nodes, edges);
 
         if(out_dotfile != "")
         {
@@ -270,7 +287,7 @@ int main(int argc, char* argv[]) {
             int i = 0;
             for(Haplotype const & hap : haps)
             {
-                fout << ">hap_" << i++ << ":" << stringutil::formatPos(chr, start, end) 
+                fout << ">hap_" << i++ << ":" << stringutil::formatPos(chr, start, end)
                      << ":hb=" << stringutil::formatPos(hap.chr(), hap.start(), hap.end())
                      << "\n";
                 fout << hap.seq(start, end) << "\n";

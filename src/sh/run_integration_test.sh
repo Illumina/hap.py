@@ -85,37 +85,37 @@ fi
 
 diff -I fileDate -I source_version ${TMP_OUT}.pass.vcf ${DIR}/../../example/integration/integrationtest.pass.vcf
 if [[ $? != 0 ]]; then
-	echo "Pass output variants differ -- vimdiff ${TMP_OUT}.vcf ${DIR}/../../example/integration/integrationtest.pass.vcf !"
+	echo "Pass output variants differ -- vimdiff ${TMP_OUT}.pass.vcf ${DIR}/../../example/integration/integrationtest.pass.vcf !"
 	exit 1
 fi
 
 diff -I fileDate -I source_version ${TMP_OUT}.blocks.bed ${DIR}/../../example/integration/integrationtest.blocks.bed
 if [[ $? != 0 ]]; then
-	echo "Haplotype blocks differ!"
+	echo "Haplotype blocks differ! diff ${TMP_OUT}.blocks.bed ${DIR}/../../example/integration/integrationtest.blocks.bed"
 	exit 1
 fi
 
 diff -I fileDate -I source_version ${TMP_OUT}.counts.json ${DIR}/../../example/integration/integrationtest.counts.json
 if [[ $? != 0 ]]; then
-	echo "Counts differ!"
+	echo "Counts differ! ${TMP_OUT}.counts.json ${DIR}/../../example/integration/integrationtest.counts.json "
 	exit 1
 fi
 
-diff -I fileDate -I source_version ${TMP_OUT}.summary.csv ${DIR}/../../example/integration/integrationtest.summary.csv
+diff -I hap.py ${TMP_OUT}.summary.csv ${DIR}/../../example/integration/integrationtest.summary.csv
 if [[ $? != 0 ]]; then
-	echo "Summary differs!"
+	echo "Summary differs! ${TMP_OUT}.summary.csv ${DIR}/../../example/integration/integrationtest.summary.csv"
 	exit 1
 fi
 
 diff -I fileDate -I source_version ${TMP_OUT}.pass.counts.json ${DIR}/../../example/integration/integrationtest.counts.pass.json
 if [[ $? != 0 ]]; then
-	echo "Pass counts differ!"
+	echo "Pass counts differ! ${TMP_OUT}.pass.counts.json ${DIR}/../../example/integration/integrationtest.counts.pass.json"
 	exit 1
 fi
 
-diff -I fileDate -I source_version ${TMP_OUT}.pass.summary.csv ${DIR}/../../example/integration/integrationtest.summary.pass.csv
+diff -I hap.py ${TMP_OUT}.pass.summary.csv ${DIR}/../../example/integration/integrationtest.summary.pass.csv
 if [[ $? != 0 ]]; then
-	echo "Pass summary differs!"
+	echo "Pass summary differs! ${TMP_OUT}.pass.summary.csv ${DIR}/../../example/integration/integrationtest.summary.pass.csv"
 	exit 1
 fi
 
@@ -154,7 +154,7 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-diff ${TMP_OUT}.performance.summary.csv ${DIR}/../../example/integration/integrationtest.performance.summary.csv
+diff -I hap.py ${TMP_OUT}.performance.summary.csv ${DIR}/../../example/integration/integrationtest.performance.summary.csv
 if [[ $? != 0 ]]; then
 	echo "Pass summary differs! vimdiff ${TMP_OUT}.performance.summary.csv ${DIR}/../../example/integration/integrationtest.performance.summary.csv"
 	exit 1
@@ -189,7 +189,7 @@ cat ${TMP_OUT}.performance.t1.vcf.gz | gunzip | grep -v ^# > ${TMP_OUT}.performa
 echo "Comparing vcfs"
 diff -I ^# ${TMP_OUT}.performance.t1.vcf ${DIR}/../../example/integration/integrationtest.performance.vcf
 if [[ $? != 0 ]]; then
-	echo "Performance output variants differ! vimdiff ${TMP_OUT}.performance.t1.vcf ${DIR}/../../example/integration/integrationtest.performance.vcf "
+    echo "Performance output variants differ (t1)! vimdiff ${TMP_OUT}.performance.t1.vcf ${DIR}/../../example/integration/integrationtest.performance.vcf "
 	exit 1
 fi
 
@@ -201,11 +201,11 @@ fi
 
 diff ${TMP_OUT}.performance.t1.counts.pretty.json ${DIR}/../../example/integration/integrationtest.performance.counts.json
 if [[ $? != 0 ]]; then
-	echo "Performance counts differ! vimdiff ${TMP_OUT}.performance.t1.counts.pretty.json ${DIR}/../../example/integration/integrationtest.performance.counts.json "
+    echo "Performance counts differ (t1)! vimdiff ${TMP_OUT}.performance.t1.counts.pretty.json ${DIR}/../../example/integration/integrationtest.performance.counts.json "
 	exit 1
 fi
 
-diff ${TMP_OUT}.performance.t1.summary.csv ${DIR}/../../example/integration/integrationtest.performance.summary.csv
+diff -I hap.py ${TMP_OUT}.performance.t1.summary.csv ${DIR}/../../example/integration/integrationtest.performance.summary.csv
 if [[ $? != 0 ]]; then
 	echo "Pass summary differs! vimdiff ${TMP_OUT}.performance.t1.summary.csv ${DIR}/../../example/integration/integrationtest.performance.summary.csv"
 	exit 1

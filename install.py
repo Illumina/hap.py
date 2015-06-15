@@ -119,7 +119,7 @@ def replace_shebang(filename, shebang):
         print >> f, shebang
         for i, l in enumerate(lines):
             if not removed and l.startswith("#!") and i < 10:
-                removed= True
+                removed = True
             else:
                 f.write(l)
 
@@ -134,7 +134,7 @@ def build_external(source_dir, args):
 
     setupscript = ""
     if args.setup != "auto":
-        setupscript = " . %s && " % os.path.join(source_dir, "src","sh", args.setup + "-setup.sh")
+        setupscript = " . %s && " % os.path.join(source_dir, "src", "sh", args.setup + "-setup.sh")
 
     setupscript += boost_prefix
 
@@ -169,7 +169,7 @@ def build_haplotypes(source_dir, build_dir, args):
 
     setupscript = ""
     if args.setup != "auto":
-        setupscript = " . %s && " % os.path.join(source_dir, "src","sh", args.setup + "-setup.sh")
+        setupscript = " . %s && " % os.path.join(source_dir, "src", "sh", args.setup + "-setup.sh")
 
     setupscript += boost_prefix
 
@@ -236,8 +236,8 @@ def main():
                              " which have an outdated certificate file which makes pip fail.")
 
     # C++ compile options
-    setups=map(lambda x: os.path.basename(x).replace("-setup.sh", ""),
-               glob.glob(os.path.join(source_dir, "src","sh", "*-setup.sh")))
+    setups = map(lambda x: os.path.basename(x).replace("-setup.sh", ""),
+                 glob.glob(os.path.join(source_dir, "src", "sh", "*-setup.sh")))
 
     setups.insert(0, "auto")
 

@@ -79,18 +79,10 @@ std::ostream & operator<<(std::ostream & o, DiploidRef const & r)
 
 struct DiploidReferenceImpl
 {
-    DiploidReferenceImpl(const char * _vcfname, 
-                         const char * _sample,
-                         const char * _ref_fasta) : 
-        vcfname(_vcfname ? _vcfname : ""), sample(_sample ? _sample : ""), ref_fasta(_ref_fasta),
+    DiploidReferenceImpl(GraphReference const & _gr) :
         chr(""), start(-1), end(-1), max_n_paths(-1),
-        gr(_vcfname, _sample, _ref_fasta)
+        gr(_gr)
         {}
-    
-    /* copyables */
-    std::string vcfname;
-    std::string sample;
-    std::string ref_fasta;
 
     std::string chr;
     int64_t start;
@@ -106,28 +98,13 @@ struct DiploidReferenceImpl
     std::list< DiploidRef > :: iterator pos;
 };
 
-DiploidReference::DiploidReference(GraphReference const & gr) : 
-    _impl(new DiploidReferenceImpl(gr.getVCFName().c_str(), gr.getSample().c_str(), gr.getFastaName().c_str()))
-{
-    _impl->gr.setApplyFilters(gr.getApplyFilters());
-}
-
-
-DiploidReference::DiploidReference(
-    const char * vcfname, 
-    const char * sample,
-    const char * ref_fasta) : _impl(new DiploidReferenceImpl(vcfname, sample, ref_fasta))
+DiploidReference::DiploidReference(GraphReference const & gr) :
+    _impl(new DiploidReferenceImpl(gr))
 {
 }
 
-DiploidReference::DiploidReference(DiploidReference const & rhs)
+DiploidReference::DiploidReference(DiploidReference const & rhs) : _impl(new DiploidReferenceImpl(rhs._impl->gr))
 {
-
-    _impl = new DiploidReferenceImpl(rhs._impl->vcfname.c_str(), 
-                                     rhs._impl->sample.c_str(), 
-                                     rhs._impl->ref_fasta.c_str());  
-
-    _impl->gr.setApplyFilters(rhs._impl->gr.getApplyFilters());
 }
 
 DiploidReference const & DiploidReference::operator=(DiploidReference const & rhs)
@@ -138,13 +115,9 @@ DiploidReference const & DiploidReference::operator=(DiploidReference const & rh
     }
     delete _impl;
 
-    DiploidReferenceImpl * t_impl = new DiploidReferenceImpl(rhs._impl->vcfname.c_str(), 
-                                                             rhs._impl->sample.c_str(), 
-                                                             rhs._impl->ref_fasta.c_str());
-
+    DiploidReferenceImpl * t_impl = new DiploidReferenceImpl(rhs._impl->gr);
     _impl = t_impl;
 
-    _impl->gr.setApplyFilters(rhs._impl->gr.getApplyFilters());
     return *this;
 }
 
@@ -181,7 +154,7 @@ void DiploidReference::setRegion(
     const char * chr,
     int64_t start,
     int64_t end,
-    std::list<variant::Variants> const * vars,
+    std::list<variant::Variants> const & vars,
     int sample_ix)
 {
     _impl->chr = chr;
@@ -195,14 +168,7 @@ void DiploidReference::setRegion(
         std::vector<ReferenceEdge> edges;
 
         size_t nhets = 0;
-        if (vars)
-        {
-            _impl->gr.makeGraph(*vars, sample_ix, nodes, edges, &nhets);
-        }
-        else
-        {
-            _impl->gr.makeGraph(chr, start, end, nodes, edges, &nhets);
-        }
+        _impl->gr.makeGraph(vars, sample_ix, nodes, edges, &nhets);
 
 #ifdef _DEBUG_DIPLOIDREFERENCE
         std::cerr << "nhets : " << nhets << " mp: " << _impl->max_n_paths << "\n";
@@ -211,16 +177,16 @@ void DiploidReference::setRegion(
         if(_impl->max_n_paths > 0 && pow(2.0, (double)nhets) > _impl->max_n_paths)
         {
             error("Too many het nodes (%i) at %s:%i-%i", nhets, chr, start, end);
-        } 
+        }
 
-        std::string refsq = getRefFasta().query(chr, start, end);
+        std::string refsq = _impl->gr.getRefFasta().query(chr, start, end);
 
         std::vector<Haplotype> target;
         std::vector<std::string> nodes_used;
 
-        _impl->gr.enumeratePaths(chr, start, end, 
-                          nodes, edges, target, 
-                          0, _impl->max_n_paths, -1, 
+        _impl->gr.enumeratePaths(chr, start, end,
+                          nodes, edges, target,
+                          0, _impl->max_n_paths, -1,
                           &nodes_used);
 
 #ifdef _DEBUG_DIPLOIDREFERENCE
@@ -240,10 +206,10 @@ void DiploidReference::setRegion(
         std::list<size_t> hom_nodes;
         for(size_t n = 0; n < nodes.size(); ++n)
         {
-            if (nodes[n].type == ReferenceNode::alternative) 
+            if (nodes[n].type == ReferenceNode::alternative)
             {
                 if(   nodes[n].het
-                   || nodes[n].color == ReferenceNode::red 
+                   || nodes[n].color == ReferenceNode::red
                    || nodes[n].color == ReferenceNode::blue )
                 {
                     het_nodes.push_back(n);
@@ -261,7 +227,7 @@ void DiploidReference::setRegion(
             if(_impl->max_n_paths > 0 && pow(2, het_nodes.size()) > _impl->max_n_paths)
             {
                 error("Too many het nodes (%i) at %s:%i-%i", het_nodes.size(), chr, start, end);
-            } 
+            }
             for (size_t p1 = 0; p1 < nodes_used.size(); ++p1)
             {
                 for (size_t p2 = p1; p2 < nodes_used.size(); ++p2) // we allow matching up p1 with p1 to allow creation of hom blocks via filtered variants
@@ -289,7 +255,7 @@ void DiploidReference::setRegion(
                         }
 #ifdef _DEBUG_DIPLOIDREFERENCE
                         std::cerr << "n: " << n << " p1:" << p1 << "(" << nodes_used[p1][nodes.size() - 1 - n] << ")"
-                                  << " p2:" << p2 << "(" <<  nodes_used[p2][nodes.size() - 1 - n] << ")" 
+                                  << " p2:" << p2 << "(" <<  nodes_used[p2][nodes.size() - 1 - n] << ")"
                                   << " filtered: " << nodes[n].filtered << " nf: " << fn_used << " nfu: " << fn_unused
                                   << "\n";
 #endif
@@ -323,23 +289,23 @@ void DiploidReference::setRegion(
                               << "p2: " << p2 << "/" << nodes_used[p2] << " "
                               << "\n";
 
-                    std::cerr << " -- found: " << hn_found << " fn unused: " << fn_unused << " hns: " << het_nodes.size() 
+                    std::cerr << " -- found: " << hn_found << " fn unused: " << fn_unused << " hns: " << het_nodes.size()
                               << " hom_conflict: " << hom_conflict << "\n";
 #endif
                     // covering all hets?
                     if(hn_found + fn_unused == het_nodes.size() && !hom_conflict)
                     {
                         DiploidRef r = {
-                            p1 != p2, 
+                            p1 != p2,
                             false,
-                            target[p1].seq(start, end), 
+                            target[p1].seq(start, end),
                             target[p2].seq(start, end),
                             refsq
                         };
 
-                        /** homref in the het case means that we have a het+homref call vs. 
-                            a het+het call. the two sequences are different by design of the 
-                            GraphReference::enumeratePaths function, so if one of them is 
+                        /** homref in the het case means that we have a het+homref call vs.
+                            a het+het call. the two sequences are different by design of the
+                            GraphReference::enumeratePaths function, so if one of them is
                             equal to the reference, the other one can't be.
                          */
                         if(r.h1 == refsq || r.h2 == refsq)

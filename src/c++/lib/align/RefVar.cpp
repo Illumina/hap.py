@@ -52,7 +52,7 @@ void trimLeft(FastaFile & f, const char * chr, RefVar & rv, bool refpadding)
     int64_t rel_start = 0;
     size_t ref_min = refpadding ? 1 : 0;
 
-    while( ref.size() - rel_start > ref_min 
+    while( ref.size() - rel_start > ref_min
         && rv.alt.size() - rel_start > ref_min
         && ref[rel_start] == rv.alt[rel_start])
     {
@@ -60,7 +60,7 @@ void trimLeft(FastaFile & f, const char * chr, RefVar & rv, bool refpadding)
         rv.start++;
     }
     if(rel_start > 0)
-    {        
+    {
         rv.alt = rv.alt.substr(rel_start);
     }
 }
@@ -73,7 +73,7 @@ void trimRight(FastaFile & f, const char * chr, RefVar & rv, bool refpadding)
     int64_t rpos = ref.size() - 1;
     int64_t ref_min = refpadding ? 1 : 0;
 
-    while( apos > ref_min 
+    while( apos > ref_min
         && rpos > ref_min
         && ref[rpos] == rv.alt[apos])
     {
@@ -87,7 +87,7 @@ void leftShift(FastaFile & f, const char * chr, RefVar & rv, int64_t pos_min)
 {
     int64_t rstart = -1, rend = -1, reflen;
 
-    // vaguely like 
+    // vaguely like
     // http://genome.sph.umich.edu/wiki/File:Variant_normalization_algorithm.png
     bool done = false;
     std::string ref;
@@ -144,7 +144,7 @@ void leftShift(FastaFile & f, const char * chr, RefVar & rv, int64_t pos_min)
 
         int64_t rel_start = rv.start - rstart;
 
-        if(rel_start < 1 || 
+        if(rel_start < 1 ||
            ref.size() == 0 || ((signed)ref.size()) < rel_start + reflen ||
            ref[rel_start-1] == 'N') // don't shift over Ns
         {
@@ -232,7 +232,7 @@ void rightShift(FastaFile & f, const char * chr, RefVar & rv, int64_t pos_max)
 
         int64_t rel_start = rv.start - rstart;
 
-        if(    ref.size() == 0 
+        if(    ref.size() == 0
             || ((signed)ref.size()) <= rel_start + reflen
             || ref[rel_start+reflen] == 'N')
         {
@@ -268,9 +268,9 @@ void rightShift(FastaFile & f, const char * chr, RefVar & rv, int64_t pos_max)
 /**
  * Convert a list of RefVar records to allele strings
  */
-extern void toAlleles(FastaFile & f, 
-                      const char * chr, 
-                      std::vector<RefVar> const & in, 
+extern void toAlleles(FastaFile & f,
+                      const char * chr,
+                      std::vector<RefVar> const & in,
                       std::vector<std::string> & out)
 {
     int64_t minpos = std::numeric_limits<int64_t>::max(), maxpos = 0;
@@ -297,7 +297,7 @@ extern void toAlleles(FastaFile & f,
     out[0] = ref;
     for (size_t i = 0; i < in.size(); ++i)
     {
-        // ref allele for this one: 
+        // ref allele for this one:
         // ref.substr(in[i].start - minpos, in[i].end - in[i].start + 1);
         int64_t refstart = in[i].start - minpos;
         int64_t reflen = in[i].end - in[i].start + 1;
@@ -334,18 +334,18 @@ void mkRefVar(int64_t refpos, char refchr, char altchr, RefVar &rv)
     else if(altchr == '-')
     {
         // ref deletion
-        rv.alt = "";            
+        rv.alt = "";
     }
     else
     {
         // snp
-        rv.alt = altchr;        
-    } 
+        rv.alt = altchr;
+    }
 }
 
 /**
  * Append 1 char to RefVar.
- * 
+ *
  * Return false if this is not possible because the variants are incompatible
  */
 bool appendToRefVar(int64_t refpos, char refchr, char altchr, RefVar &rv)
@@ -356,12 +356,12 @@ bool appendToRefVar(int64_t refpos, char refchr, char altchr, RefVar &rv)
     if(refchr == altchr)
     {
         // already checked in function just below actually
-        // we test anyway in case we ever want to expose this 
+        // we test anyway in case we ever want to expose this
         // function
         return false;
     }
     // see what we have currently
-    if((refpos == rv.start-1 || refpos == rv.start) 
+    if((refpos == rv.start-1 || refpos == rv.start)
      && rv.end == rv.start-1 && rv.alt.size() > 0)   // rv is an insertion just before refpos, or a complex insertion ending at refpos
     {
         // we've been passed an insertion and we can extend?
@@ -380,7 +380,7 @@ bool appendToRefVar(int64_t refpos, char refchr, char altchr, RefVar &rv)
             }
             else
             {
-                rv.end++;                
+                rv.end++;
             }
             rv.alt += altchr;
         }
@@ -395,7 +395,7 @@ bool appendToRefVar(int64_t refpos, char refchr, char altchr, RefVar &rv)
             }
             else
             {
-                rv.end++;                
+                rv.end++;
             }
         }
         else
@@ -460,16 +460,139 @@ bool appendToRefVar(int64_t refpos, char refchr, char altchr, RefVar &rv)
     return true;
 }
 
+/**
+ * @brief Decompose a RefVar into primitive variants (subst / ins / del)
+ *
+ * @param rv the RefVar record
+ * @param vars the primitive records
+ */
+void toPrimitives(FastaFile & f, const char * chr, RefVar const & rv, std::list<variant::RefVar> & vars)
+{
+    int64_t rstart = rv.start, rend = rv.end, reflen = rend - rstart + 1;
+    int64_t altlen = (int64_t)rv.alt.size();
+
+    // this is a bit of a special case, basically it's a ref-deletion that we can't easily take apart if
+    // the alt NT isn't equal to the first ref NT.
+    if(reflen > 1 && altlen == 1)
+    {
+        vars.push_back(rv);
+    }
+
+    std::string refseq;
+    std::string altseq(rv.alt);
+
+    if(reflen > 0)
+    {
+        refseq = f.query(chr, rstart, rend);
+    }
+
+    // from the left, split off SNPs / matches
+    size_t pos = 0;
+
+    while(reflen > 0 && altlen > 0)
+    {
+        char r = refseq[pos];
+        char a = altseq[pos];
+        if (r != a)
+        {
+            vars.push_back(RefVar{rstart, rstart, std::string(1, a), rv.flags});
+        }
+        ++rstart;
+        ++pos;
+        --reflen;
+        --altlen;
+    }
+    // now either reflen == 0 or altlen == 0
+    if(reflen > 0)
+    {
+        // del
+        vars.push_back(RefVar{rstart, rend, "", rv.flags});
+    }
+    else if(altlen > 0)
+    {
+        // ins
+        vars.push_back(RefVar{rstart, rstart-1, altseq.substr(pos), rv.flags});
+    }
+    // else nothing left
+}
+
+/**
+ * @brief Decompose a RefVar into primitive variants (subst / ins / del) by means of realigning
+ *
+ * @param f reference sequence fasta
+ * @param chr the chromosome to use
+ * @param rv the RefVar record
+ * @param snps the number of snps
+ * @param ins the number of insertions
+ * @param dels the number of deletions
+ * @param homref the number of calls with no variation
+ */
+void countRefVarPrimitives(FastaFile & f, const char * chr, variant::RefVar const & rv,
+                           size_t & snps, size_t & ins, size_t & dels, size_t & homref)
+{
+    int64_t rstart = rv.start, rend = rv.end, reflen = rend - rstart + 1;
+    int64_t altlen = (int64_t)rv.alt.size();
+
+    std::string refseq;
+    std::string altseq(rv.alt);
+
+    if(reflen <= 0)
+    {
+        if(altlen > 0)
+        {
+            ++ins;
+        }
+        else
+        {
+            ++homref;
+        }
+        return;
+    }
+    // reflen > 0
+    refseq = f.query(chr, rstart, rend);
+
+    // from the left, split off SNPs / matches
+    size_t pos = 0;
+    while(reflen > 0 && altlen > 0)
+    {
+        char r = refseq[pos];
+        char a = altseq[pos];
+        if (r != a)
+        {
+            ++snps;
+        }
+        else
+        {
+            ++homref;
+        }
+        ++rstart;
+        ++pos;
+        --reflen;
+        --altlen;
+    }
+    // now either reflen == 0 or altlen == 0
+    if(reflen > 0)
+    {
+        // del
+        dels += reflen;
+    }
+    if(altlen > 0)
+    {
+        // ins
+        ins += altlen;
+    }
+    // else nothing left
+}
 
 /**
  * Helper to aggregate reference variants base by base
- * 
+ *
  * Refpos must be > vars.back().end
- * 
+ *
  */
-void appendToVarList(int64_t refpos, 
-                     char refchr, 
-                     char altchr, 
+void appendToVarList(int64_t refpos,
+                     char refchr,
+                     char altchr,
                      std::list<variant::RefVar> & vars,
                      int flags
                      )
@@ -491,7 +614,7 @@ void appendToVarList(int64_t refpos,
     else
     {
         RefVar & xrv = vars.back();
-        if(flags != xrv.flags || 
+        if(flags != xrv.flags ||
            !appendToRefVar(refpos, refchr, altchr, xrv))
         {
             RefVar rv;

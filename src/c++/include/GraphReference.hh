@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -27,7 +27,7 @@
 
 
 /**
- * \brief Graph reference class to store diploid haplotype alternatives
+ * \brief Graph reference class to provide functions for creating graphs from a VCF.
  *
  * \file GraphReference.hh
  * \author Peter Krusche
@@ -53,57 +53,17 @@ struct GraphReferenceImpl;
 class GraphReference
 {
 public:
-    GraphReference(
-        const char * vcfname, 
-        const char * sample,
-        const char * ref_fasta);
-    
+    GraphReference(const char * ref_fasta);
+
     GraphReference(GraphReference const &);
-    GraphReference const & operator=(GraphReference const &);
+    GraphReference & operator=(GraphReference const &);
     ~GraphReference();
-
-    std::string const & getVCFName() const;
-    std::string const & getSample() const;
-    std::string const & getFastaName() const;
-
-    /**
-     * @brief Apply filters in the input VCF
-     * 
-     */
-    bool getApplyFilters() const;
-    void setApplyFilters(bool filters=false);
 
     /**
      * Get reference fasta file
      */
     FastaFile & getRefFasta();
     FastaFile const & getRefFasta() const;
-
-    /**
-     * @brief Enumerate all possible paths, return haplotype candidates
-     * 
-     */
-    void enumeratePaths(
-        std::vector<Haplotype> & target,
-        const char * chr,
-        int64_t start,
-        int64_t end,
-        int max_n_paths=-1
-    );
-
-    /**
-     * Create a diploid reference graph for a region of a VCF
-     * Optionally, will return the number of unphased het variants
-     * (proxy for number of paths)
-     */
-    void makeGraph(
-        const char * chr,
-        int64_t start,
-        int64_t end,
-        std::vector<ReferenceNode> & nodes,
-        std::vector<ReferenceEdge> & edges,
-        size_t * nhets=NULL
-    );
 
     /**
      * Create a diploid reference graph from a list of Variants records
@@ -119,25 +79,25 @@ public:
 
     /**
      * Enumerate paths for a graph
-     * 
+     *
      * Core function for traversing the reference graph
-     * 
+     *
      * Parameters:
-     * 
+     *
      * chr, start and end are used to restrict the range of traversal and to make haplotypes unique by their representation
      * in that range.
-     * 
+     *
      * nodes and edges are the graph as created by makeGraph()
-     * 
+     *
      * target receives the enumerated haplotype blocks
-     * 
+     *
      * Graph traversal can be controlled by specifying a source and a sink (this will only enumerate paths starting at source
      * and optionally ending at sink), and by limiting the number of paths that are output.
-     * 
-     * Finally, each Haplotype block corresponds to traversing a set of nodes, which can be returned for each haplotype 
+     *
+     * Finally, each Haplotype block corresponds to traversing a set of nodes, which can be returned for each haplotype
      * in the nodes_used vector. This is used in DiploidReference to find the pairs of haplotype blocks in a diploid setting
      * (pairs of haplotypes that cover the whole graph).
-     * 
+     *
      */
     void enumeratePaths(
         const char * chr,
@@ -176,10 +136,10 @@ struct ReferenceNode : public variant::RefVar
         blue = 3,
     } color_t;
 
-    ReferenceNode(const char * _chr=NULL, int64_t _start = -1, int64_t _end = -1, 
+    ReferenceNode(const char * _chr=NULL, int64_t _start = -1, int64_t _end = -1,
                   ReferenceNode::nodetype_t _type = ReferenceNode::invalid,
                   ReferenceNode::color_t _color = ReferenceNode::grey) :
-        chr(_chr == NULL ? "unknown" : _chr), filtered(false), het(false), 
+        chr(_chr == NULL ? "unknown" : _chr), filtered(false), het(false),
         type(_type), color(_color)
     {
         start = _start;
@@ -188,26 +148,26 @@ struct ReferenceNode : public variant::RefVar
 
     /**
      * @brief Append a ReferenceNode to a haplotype block
-     * 
+     *
      * @param ht Haplotype block with end() < start
      */
     void appendToHaplotype(Haplotype & ht)  const;
 
     std::string chr;
 
-    /* we keep track of filtered calls since these may 
+    /* we keep track of filtered calls since these may
      * overlap with other calls */
     bool filtered;
 
     /* remember if nodes are half of a het or hetalt call  */
     bool het;
-    
+
     nodetype_t type;
     color_t color;
 };
 
 struct ReferenceEdge
-{   
+{
     ReferenceEdge(size_t _u, size_t _v) :
         u(_u), v(_v) {}
     size_t u;

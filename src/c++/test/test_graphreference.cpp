@@ -41,6 +41,12 @@
 #include "GraphReference.hh"
 #include "helpers/GraphUtil.hh"
 
+#include "variant/VariantAlleleRemover.hh"
+#include "variant/VariantAlleleSplitter.hh"
+#include "variant/VariantAlleleNormalizer.hh"
+#include "variant/VariantLocationAggregator.hh"
+#include "variant/VariantAlleleUniq.hh"
+
 #include <iostream>
 #include <vector>
 #include <set>
@@ -48,6 +54,103 @@
 using namespace variant;
 using namespace haplotypes;
 
+struct GraphReferenceTester
+{
+    GraphReferenceTester(const char * vcfname, const char * samplename, const char * fastaname) :
+        gr(fastaname)
+    {
+        ix = vr.addSample(vcfname, samplename);
+        r.addStep(allele_remover);
+        allele_normalizer.setReference(fastaname);
+        allele_normalizer.setEnableRefPadding(true);
+        r.addStep(allele_normalizer);
+        r.addStep(allele_uniq);
+        r.setReader(vr, VariantBufferMode::buffer_block, 100);
+    }
+
+    /**
+     * Create a reference graph for a region of a VCF
+     */
+    void makeGraph(
+        const char * _chr,
+        int64_t start,
+        int64_t end,
+        std::vector<ReferenceNode> & nodes,
+        std::vector<ReferenceEdge> & edges,
+        size_t * nhets=NULL
+    )
+    {
+        std::string chr;
+        if(!_chr)
+        {
+            chr = "";
+        }
+        else
+        {
+            chr = _chr;
+        }
+
+        r.rewind(chr.c_str(), start);
+
+        std::list<Variants> vlist;
+        while(r.advance())
+        {
+            Variants & vars = r.current();
+            if(chr == "")
+            {
+                chr = vars.chr;
+            }
+            else if(chr != vars.chr)
+            {
+                // break on change of chr
+                break;
+            }
+            if(end >= 0 && vars.pos > end)
+            {
+                break;
+            }
+
+            vlist.push_back(vars);
+        }
+        gr.makeGraph(vlist, ix, nodes, edges, nhets);
+    }
+
+    void enumeratePaths(
+        std::vector<Haplotype> & target,
+        const char * chr,
+        int64_t start,
+        int64_t end
+        )
+    {
+        std::vector<ReferenceNode> nodes;
+        std::vector<ReferenceEdge> edges;
+        makeGraph(chr, start, end, nodes, edges, NULL);
+        enumeratePaths(chr, start, end, nodes, edges, target);
+    }
+
+    void enumeratePaths(
+        const char * chr,
+        int64_t start,
+        int64_t end,
+        std::vector<ReferenceNode> const & nodes,
+        std::vector<ReferenceEdge> const & edges,
+        std::vector<Haplotype> & target,
+        size_t source=0,
+        int max_n_paths=-1,
+        size_t sink=(size_t)-1,
+        std::vector<std::string> * nodes_used = NULL
+    ) {
+        gr.enumeratePaths(chr, start, end, nodes, edges, target, source, max_n_paths, sink, nodes_used);
+    }
+
+    GraphReference gr;
+    VariantReader vr;
+    VariantProcessor r;
+    VariantAlleleRemover allele_remover;
+    VariantAlleleNormalizer allele_normalizer;
+    VariantAlleleUniq allele_uniq;
+    int ix;
+};
 
 BOOST_AUTO_TEST_CASE(graphReferenceBasic)
 {
@@ -59,9 +162,9 @@ BOOST_AUTO_TEST_CASE(graphReferenceBasic)
 
     std::string datapath = tp.string();
 
-    GraphReference gr((datapath + "/refgraph1.vcf.gz").c_str(), 
-                      "NA12877", (datapath + "/chrQ.fa").c_str());
-    
+    GraphReferenceTester gr((datapath + "/refgraph1.vcf.gz").c_str(),
+                            "NA12877", (datapath + "/chrQ.fa").c_str());
+
     std::vector<Haplotype> target;
     gr.enumeratePaths(target, "chrQ", 0, 24);
 
@@ -109,9 +212,9 @@ BOOST_AUTO_TEST_CASE(graphReferencePhased)
 
     std::string datapath = tp.string();
 
-    GraphReference gr((datapath + "/refgraph1.vcf.gz").c_str(), 
-                      "NA12877", (datapath + "/chrQ.fa").c_str());
-    
+    GraphReferenceTester gr((datapath + "/refgraph1.vcf.gz").c_str(),
+                            "NA12877", (datapath + "/chrQ.fa").c_str());
+
     std::vector<Haplotype> target;
 
     // in this region, we only have phased variants.
@@ -140,13 +243,13 @@ BOOST_AUTO_TEST_CASE(graphReferenceWithSink)
 
     std::string datapath = tp.string();
 
-    GraphReference gr((datapath + "/refgraph1.vcf.gz").c_str(), 
-                      "NA12877", (datapath + "/chrQ.fa").c_str());
-    
+    GraphReferenceTester gr((datapath + "/refgraph1.vcf.gz").c_str(),
+                         "NA12877", (datapath + "/chrQ.fa").c_str());
+
     std::vector<ReferenceNode> nodes;
     std::vector<ReferenceEdge> edges;
     gr.makeGraph("chrQ", 0, 24, nodes, edges);
-    
+
     std::vector<Haplotype> target;
 
     gr.enumeratePaths("chrQ", 0, 24, nodes, edges, target, 0, -1, 6);
@@ -188,9 +291,9 @@ BOOST_AUTO_TEST_CASE(graphNodesUsed)
 
     std::string datapath = tp.string();
 
-    GraphReference gr((datapath + "/refgraph1.vcf.gz").c_str(), 
-                      "NA12877", (datapath + "/chrQ.fa").c_str());
-    
+    GraphReferenceTester gr((datapath + "/refgraph1.vcf.gz").c_str(),
+                            "NA12877", (datapath + "/chrQ.fa").c_str());
+
     std::vector<ReferenceNode> nodes;
     std::vector<ReferenceEdge> edges;
     size_t nhets = 0;
@@ -198,14 +301,14 @@ BOOST_AUTO_TEST_CASE(graphNodesUsed)
     gr.makeGraph("chrQ", 0, 24, nodes, edges, &nhets);
 
     BOOST_CHECK_EQUAL(nhets, (size_t)2);
-    
+
     std::vector<Haplotype> target;
     std::vector<std::string> nodes_used;
 
     gr.enumeratePaths("chrQ", 0, 24, nodes, edges, target, 0, -1, -1, &nodes_used);
 
     std::set<std::string> expected;
-    
+
     expected.insert("chrQ:0-20:ACCGGGAAACCCTAACCCGGC:101010101011101");
     expected.insert("chrQ:0-20:ACCGGGAAACTTGAACCCGGT:110101010011101");
     expected.insert("chrQ:0-20:ACCGGGAAAGCCTAACCCGGC:101010101101101");
@@ -235,13 +338,13 @@ BOOST_AUTO_TEST_CASE(graphNodesUsedPhased)
 
     std::string datapath = tp.string();
 
-    GraphReference gr((datapath + "/refgraph1.vcf.gz").c_str(), 
-                      "NA12877", (datapath + "/chrQ.fa").c_str());
-    
+    GraphReferenceTester gr((datapath + "/refgraph1.vcf.gz").c_str(),
+                            "NA12877", (datapath + "/chrQ.fa").c_str());
+
     std::vector<ReferenceNode> nodes;
     std::vector<ReferenceEdge> edges;
     gr.makeGraph("chrQ", 11, 24, nodes, edges);
-    
+
     std::vector<Haplotype> target;
     std::vector<std::string> nodes_used;
 
@@ -272,14 +375,14 @@ BOOST_AUTO_TEST_CASE(graphHomref)
 
     std::string datapath = tp.string();
 
-    GraphReference gr((datapath + "/refgraph1.vcf.gz").c_str(), 
-                      "NA12877", (datapath + "/chrQ.fa").c_str());
-    
+    GraphReferenceTester gr((datapath + "/refgraph1.vcf.gz").c_str(),
+                            "NA12877", (datapath + "/chrQ.fa").c_str());
+
     std::vector<ReferenceNode> nodes;
     std::vector<ReferenceEdge> edges;
     // this region is homref
     gr.makeGraph("chrQ", 27, 36, nodes, edges);
-    
+
     std::vector<Haplotype> target;
     std::vector<std::string> nodes_used;
 

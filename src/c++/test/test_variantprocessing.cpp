@@ -25,8 +25,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /**
- * Test bulk variant preprocessing 
- * 
+ * Test bulk variant preprocessing
+ *
  * \file test_variantprocessing.cpp
  * \author Peter Krusche
  * \email pkrusche@illumina.com
@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(testProcessingAlleleRemover)
     boost::filesystem::path tp = p.parent_path()
                                    .parent_path()   // test
                                    .parent_path()   // c++
-                                    / boost::filesystem::path("data") 
+                                    / boost::filesystem::path("data")
                                     / boost::filesystem::path("test.vcf.gz");
 
     std::cout << "Reading " << tp << std::endl;
@@ -137,8 +137,8 @@ BOOST_AUTO_TEST_CASE(testPreprocessingSplit)
                                    .parent_path()   // test
                                    .parent_path()   // c++
                                    .parent_path()   // src
-                                    / boost::filesystem::path("example") 
-                                    / boost::filesystem::path("multimerge") 
+                                    / boost::filesystem::path("example")
+                                    / boost::filesystem::path("multimerge")
                                     / boost::filesystem::path("hap_alleles_");
 
     VariantReader r;
@@ -180,8 +180,8 @@ BOOST_AUTO_TEST_CASE(testPreprocessingMerge)
                                    .parent_path()   // test
                                    .parent_path()   // c++
                                    .parent_path()   // src
-                                    / boost::filesystem::path("example") 
-                                    / boost::filesystem::path("multimerge") 
+                                    / boost::filesystem::path("example")
+                                    / boost::filesystem::path("multimerge")
                                     / boost::filesystem::path("hap_alleles_leftshifted.vcf.gz");
 
     VariantReader r;

@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -49,16 +49,16 @@ namespace variant {
         VariantAlleleNormalizer(VariantAlleleNormalizer const & );
         ~VariantAlleleNormalizer();
         VariantAlleleNormalizer const & operator=(VariantAlleleNormalizer const & );
-        
+
         /**
          * @brief Reference for shifting
-         * 
+         *
          */
         void setReference(std::string const & fasta);
 
         /**
          * @brief Enable / disable reference padding
-         * 
+         *
          * RefVars can be trimmed to include / not include reference bases
          */
         bool getEnableRefPadding() const;
@@ -66,20 +66,24 @@ namespace variant {
 
         /**
          * @brief Enable / disable returning of homref intervals
-         * 
+         *
          * TODO : output homref as intervals
          */
+        int64_t getLeftshiftLimit() const;
+        void setLeftshiftLimit(int64_t limit=-1);
+
+        /** return homref variants */
         bool getEnableHomrefVariants() const;
-        void setEnableHomrefVariants(bool homref=false);
+        void setEnableHomrefVariants(bool homref=true);
 
         /** enqueue a set of variants */
         void add(Variants const & vs);
-        
+
         /**
          * @brief Return variant block at current position
          **/
         Variants & current();
-    
+
         /**
          * @brief Advance one line
          * @return true if a variant was retrieved, false otherwise

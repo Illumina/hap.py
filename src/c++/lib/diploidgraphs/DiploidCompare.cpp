@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -55,14 +55,14 @@
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
 #endif
- 
+
 namespace haplotypes
 {
 
 struct DiploidCompareImpl
 {
-    DiploidCompareImpl(const char * ref_fasta) : 
-            dr(NULL, NULL, ref_fasta),
+    DiploidCompareImpl(const char * ref_fasta) :
+            dr(ref_fasta),
             nhap(4096),
             doAlignments(true),
 #ifdef HAS_MUSCLE
@@ -74,8 +74,8 @@ struct DiploidCompareImpl
         matchScore = hcomp.getAlignment()->bestScore(1);
     }
 
-    DiploidCompareImpl(DiploidCompareImpl const & rhs) : 
-            dr(NULL, NULL, rhs.dr.getRefFasta().getFilename().c_str()),
+    DiploidCompareImpl(DiploidCompareImpl const & rhs) :
+            dr(rhs.dr),
             nhap(rhs.nhap),
             doAlignments(rhs.doAlignments),
 #ifdef HAS_MUSCLE
@@ -84,7 +84,7 @@ struct DiploidCompareImpl
             doSharedVar(false)
 #endif
     {
-        matchScore = hcomp.getAlignment()->bestScore(1);        
+        matchScore = hcomp.getAlignment()->bestScore(1);
     }
 
     // diploid reference object
@@ -171,7 +171,7 @@ bool DiploidCompare::getDoSharedVar()
 
 /**
  * @brief Set the region to compare in and reset the enumeration.
- * 
+ *
  */
 void DiploidCompare::setRegion(const char * chr, int64_t start, int64_t end,
                                std::list<variant::Variants> const & vars, int ix1, int ix2)
@@ -199,9 +199,9 @@ void DiploidCompare::setRegion(const char * chr, int64_t start, int64_t end,
         return;
     }
     _impl->dr.setNPaths(_impl->nhap);
-    _impl->dr.setRegion(chr, start, end, &vars, ix1);
+    _impl->dr.setRegion(chr, start, end, vars, ix1);
     std::list<DiploidRef> di_haps1(_impl->dr.result());
-    _impl->dr.setRegion(chr, start, end, &vars, ix2);
+    _impl->dr.setRegion(chr, start, end, vars, ix2);
     std::list<DiploidRef> di_haps2(_impl->dr.result());
 
     if(di_haps1.empty() || di_haps2.empty())
@@ -212,7 +212,7 @@ void DiploidCompare::setRegion(const char * chr, int64_t start, int64_t end,
     _impl->cr.n_paths2 = 2*di_haps2.size();
 
     // this should be equal across all enumerated haps
-    std::string refsq = di_haps1.front().refsq; 
+    std::string refsq = di_haps1.front().refsq;
     _impl->cr.refsq = refsq;
 
     // this is where we store the haplotype sequences we have matched up
@@ -434,7 +434,7 @@ void DiploidCompare::setRegion(const char * chr, int64_t start, int64_t end,
                         best.haps2[0] = d2_alt;
                     }
                 }
-                else if(best.aln_count != 1) // case 2: two alignments, 
+                else if(best.aln_count != 1) // case 2: two alignments,
                                              // and we haven't found a single-pair alignment yet
                 {
                     std::string d1_alt[2];
@@ -460,10 +460,10 @@ void DiploidCompare::setRegion(const char * chr, int64_t start, int64_t end,
                         d2_alt[1] = d2.h1;
                     }
 
-                    // compare pairs avoiding duplicate matches to 
+                    // compare pairs avoiding duplicate matches to
                     // one element
                     static const int ij[][4] = {
-                        {0, 0, 1, 1}, 
+                        {0, 0, 1, 1},
                         {0, 1, 1, 0}
                     };
 
@@ -524,18 +524,18 @@ void DiploidCompare::setRegion(const char * chr, int64_t start, int64_t end,
             hd.e2 = best.alns[i].e2;
 
             hd.cigar = makeCigar(hd.s2, hd.e2, (int)hd.hap2.size(), best.alns[i].n_cigar, best.alns[i].cigar);
-            
+
             getCigarStats(hd.hap1,
-                          hd.hap2, 
-                          hd.s1, hd.s2, 
+                          hd.hap2,
+                          hd.s1, hd.s2,
                           best.alns[i].cigar, best.alns[i].n_cigar,
-                          hd.softclipped, 
-                          hd.matches, 
-                          hd.mismatches, 
+                          hd.softclipped,
+                          hd.matches,
+                          hd.mismatches,
                           hd.ins, hd.del);
 
 
-            getVariantsFromCigar(hd.hap1, hd.hap2, hd.s1, hd.s2, 
+            getVariantsFromCigar(hd.hap1, hd.hap2, hd.s1, hd.s2,
                                  best.alns[i].cigar, best.alns[i].n_cigar,
                                  hd.vdiff);
         }
@@ -553,19 +553,19 @@ void DiploidCompare::setRegion(const char * chr, int64_t start, int64_t end,
     // find shared and unique variants
 
     // basically, we need to find shared and common variants
-    // for both haplotypes and see if they are seen as het 
+    // for both haplotypes and see if they are seen as het
     // or hom.
     std::map<std::string, variant::RefVar> shared_set;
     std::map<std::string, variant::RefVar> o1_set;
     std::map<std::string, variant::RefVar> o2_set;
 
     // insertion function
-    auto insert_into = [](std::map<std::string, variant::RefVar> & set, 
-                          variant::RefVar & r, 
+    auto insert_into = [](std::map<std::string, variant::RefVar> & set,
+                          variant::RefVar & r,
                           int flags)
     {
         r.flags = flags;
-        // insert 
+        // insert
         std::string rp = r.repr();
         auto pos = set.find(rp);
         if(pos == set.end())
@@ -573,7 +573,7 @@ void DiploidCompare::setRegion(const char * chr, int64_t start, int64_t end,
             pos = set.insert(std::make_pair(rp, r)).first;
         }
         // or the flags
-        pos->second.flags |= r.flags;        
+        pos->second.flags |= r.flags;
     };
 
     for (int i = 0; i < matched_hap_count; ++i)
@@ -581,7 +581,7 @@ void DiploidCompare::setRegion(const char * chr, int64_t start, int64_t end,
         std::list<variant::RefVar> vars;
         _impl->shvar.splitVar(
             start,
-            refsq, matched_haplotypes_1[i], matched_haplotypes_2[i], 
+            refsq, matched_haplotypes_1[i], matched_haplotypes_2[i],
             vars
         );
         variant::leftShift(_impl->dr.getRefFasta(), chr, vars, start);
@@ -596,13 +596,13 @@ void DiploidCompare::setRegion(const char * chr, int64_t start, int64_t end,
             else if (r.flags == 1)
             {
                 r.flags = 0;
-                insert_into(o1_set, r, _impl->cr.type1 == dt_hom ? 3 : (1 << i));                
-            }        
+                insert_into(o1_set, r, _impl->cr.type1 == dt_hom ? 3 : (1 << i));
+            }
             else if (r.flags == 2)
             {
                 r.flags = 0;
                 insert_into(o2_set, r, _impl->cr.type2 == dt_hom ? 3 : (1 << i));
-            }        
+            }
             else
             {
                 error("Unknown flag '%i' returned from splitVar() at %s", r.flags, r.repr().c_str());

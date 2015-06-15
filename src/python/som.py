@@ -32,6 +32,7 @@ import tempfile
 import shutil
 import pandas
 import gzip
+import json
 from collections import Counter
 
 scriptDir = os.path.abspath(os.path.dirname(__file__))
@@ -42,6 +43,7 @@ from Tools.bcftools import runBcftools, parseStats, preprocessVCF, countVCFRows
 from Tools.bamstats import bamStats
 from Tools.bedintervaltree import BedIntervalTree
 from Tools.roc import ROC
+from Tools.metric import makeMetricsObject, dataframeToMetricsTable
 
 import Somatic
 
@@ -393,10 +395,24 @@ def main():
         res["na"] = res["unk"] / (res["total.query"])
         res["ambiguous"] = res["ambi"] / res["total.query"]
 
+        metrics_output = makeMetricsObject("som.py.comparison")
+        metrics_output["metrics"].append(dataframeToMetricsTable("result", res))
+
+        if Tools.has_muscle:
+            vstring = "som.py-%s-muscle" % Tools.version
+        else:
+            vstring = "som.py-%s-no-muscle" % Tools.version
+
         logging.info("\n" + res.to_string())
         # in default mode, print result summary to stdout
         if not args.quiet and not args.verbose:
             print "\n" + res.to_string()
+
+        res["sompyversion"] = vstring
+
+        vstring = " ".join(sys.argv)
+        res["sompycmd"] = vstring
+
 
         if args.ambi and args.explain_ambiguous:
             ac = list(ambiClasses.iteritems())
@@ -416,6 +432,7 @@ def main():
                           "overlap):\n" + ambie.to_string(
                           index=False)
                 ambie.to_csv(args.output + ".ambiclasses.csv")
+                metrics_output["metrics"].append(dataframeToMetricsTable("ambiclasses", ambie))
             else:
                 logging.info("No ambiguous variants.")
 
@@ -434,10 +451,14 @@ def main():
                     print "Reasons for defining as ambiguous (multiple reasons can overlap):\n" + ambie.to_string(
                         formatters={'reason':'{{:<{}s}}'.format(ambie['reason'].str.len().max()).format}, index=False)
                 ambie.to_csv(args.output + ".ambireasons.csv")
+                metrics_output["metrics"].append(dataframeToMetricsTable("ambireasons", ambie))
             else:
                 logging.info("No ambiguous variants.")
 
         res.to_csv(args.output + ".stats.csv")
+
+        with open(args.output + ".metrics.json", "w") as fp:
+            json.dump(metrics_output, fp)
 
         if args.features:
             logging.info("Extracting features...")

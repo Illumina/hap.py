@@ -1,5 +1,5 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -116,13 +116,13 @@ public:
     /**
      * @brief Debug dump, optional
      */
-    virtual void dump() 
+    virtual void dump()
     {
         int r0, r1, a0, a1;
         std::string cig;
         getCigar(r0, r1, a0, a1, cig);
-        std::cerr 
-            << "Score: " << getScore() << "\n" 
+        std::cerr
+            << "Score: " << getScore() << "\n"
             << "ref: " << r0 << "-" << r1 << "\n"
             << "alt: " << a0 << "-" << a1 << "\n"
             << "Cigar: " << cig << "\n";
@@ -145,7 +145,7 @@ struct AlignmentResult
     AlignmentResult() : cigar(NULL) {}
     ~AlignmentResult() { if(cigar) { delete [] cigar; } }
     AlignmentResult(AlignmentResult const & rhs) :
-        score(rhs.score), hap1(rhs.hap1), hap2(rhs.hap2), 
+        score(rhs.score), hap1(rhs.hap1), hap2(rhs.hap2),
         s1(rhs.s1), e1(rhs.e1), s2(rhs.s2), e2(rhs.e2),
         n_cigar(rhs.n_cigar)
     {
@@ -160,15 +160,15 @@ struct AlignmentResult
         }
     }
 
-    AlignmentResult const & operator=(AlignmentResult const & rhs) 
+    AlignmentResult const & operator=(AlignmentResult const & rhs)
     {
         if(&rhs == this)
         {
             return *this;
         }
-        if(cigar) 
-        { 
-            delete [] cigar; 
+        if(cigar)
+        {
+            delete [] cigar;
         }
         score = rhs.score;
         hap1 = rhs.hap1;
@@ -201,33 +201,62 @@ struct AlignmentResult
 
 
 /**
- * @brief Factory interface. Caller has to delete the returned 
+ * @brief Factory interface. Caller has to delete the returned
  * pointer
  */
 extern Alignment * makeAlignment(const char * type);
 
 /**
  * @brief Format int encoded Cigar string
- * 
+ *
  * @param tb for padding with "S" : begin
  * @param te for padding with "S" : end
  * @param altlen for padding with "S" : length of alternate sequence
  * @param n_cigar length of cigar
  * @param cigar int* to cigar entries
- * 
+ *
  */
 std::string makeCigar(int tb, int te, int altlen, int n_cigar, uint32_t * cigar);
 
 /** make variants from a cigar string */
 extern void getVariantsFromCigar(std::string const & ref, std::string const & alt,
-                                 int r0, int a0, 
+                                 int r0, int a0,
                                  uint32_t * cigar, int n_cigar,
                                  std::list<variant::RefVar> & target);
 
 /** get stats from a cigar string */
 extern void getCigarStats(std::string const & ref, std::string const & alt,
-                          int r0, int a0, 
+                          int r0, int a0,
                           uint32_t * cigar, int n_cigar,
-                          int & softclipped, int & matches, 
+                          int & softclipped, int & matches,
                           int & mismatches, int & ins, int & del);
+
+
+/**
+ * @brief Decompose a RefVar into primitive variants (subst / ins / del) by means of realigning
+ *
+ * @param f reference sequence fasta
+ * @param chr the chromosome to use
+ * @param rv the RefVar record
+ * @param aln the alignment interface to use
+ * @param vars the primitive records
+ */
+void realignRefVar(FastaFile & f, const char * chr, variant::RefVar const & rv, Alignment * aln,
+                   std::list<variant::RefVar> & vars);
+
+/**
+ * @brief Decompose a RefVar into primitive variants (subst / ins / del) by means of realigning
+ *
+ * @param f reference sequence fasta
+ * @param chr the chromosome to use
+ * @param rv the RefVar record
+ * @param aln the alignment interface to use
+ * @param snps the number of snps
+ * @param ins the number of insertions
+ * @param dels the number of deletions
+ * @param homref the number of calls with no variation
+ */
+void realignRefVar(FastaFile & f, const char * chr, variant::RefVar const & rv, Alignment * aln,
+                   size_t & snps, size_t & ins, size_t & dels, size_t & homref);
+
 

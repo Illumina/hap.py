@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -49,15 +49,15 @@ namespace variant {
         VariantAlleleSplitter(VariantAlleleSplitter const & );
         ~VariantAlleleSplitter();
         VariantAlleleSplitter const & operator=(VariantAlleleSplitter const & );
-        
+
         /** enqueue a set of variants */
         void add(Variants const & vs);
-        
+
         /**
          * @brief Return variant block at current position
          **/
         Variants & current();
-    
+
         /**
          * @brief Advance one line
          * @return true if a variant was retrieved, false otherwise

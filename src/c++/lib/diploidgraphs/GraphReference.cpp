@@ -71,92 +71,32 @@ namespace haplotypes
 
 struct GraphReferenceImpl
 {
-    GraphReferenceImpl(const char * _vcfname, 
-                       const char * _samplename,
-                       const char * _ref_fasta) : 
-        refsq(_ref_fasta), 
-        fastaname(_ref_fasta)
+    GraphReferenceImpl( const char * _ref_fasta) : refsq(_ref_fasta)
     {
-        if (_vcfname)
-        {
-            vcfname = _vcfname;
-            sample = _samplename;
-            ix = vr.addSample(_vcfname, _samplename);
-            setupVariantProcessing();
-        }
-        else
-        {
-            vcfname = "";
-            ix = -1;
-        }
     }
 
-    GraphReferenceImpl const & operator=(GraphReferenceImpl const & rhs) 
+    GraphReferenceImpl const & operator=(GraphReferenceImpl const & rhs)
     {
         if(this == &rhs)
         {
             return *this;
         }
-        vr = VariantReader();
-        vr.setApplyFilters(rhs.vr.getApplyFilters());
-        refsq = FastaFile(rhs.fastaname.c_str());
-        vcfname = rhs.vcfname;
-        sample = rhs.sample;
-        fastaname = rhs.fastaname;
-        if(vcfname != "")
-        {
-            ix = vr.addSample(vcfname.c_str(), sample.c_str());
-            setupVariantProcessing();            
-        }
+        refsq = FastaFile(rhs.refsq.getFilename().c_str());
         return *this;
     }
 
-    void setupVariantProcessing() 
-    {
-        r = VariantProcessor();
-        allele_remover = VariantAlleleRemover();
-        // allele_splitter = VariantAlleleSplitter();
-        allele_normalizer = VariantAlleleNormalizer();
-        // merger = VariantLocationAggregator();
-        allele_uniq = VariantAlleleUniq();
-        // r = VariantPrefetch();
-        // setinput clears this
-
-        r.addStep(allele_remover);
-        allele_normalizer.setReference(fastaname.c_str());
-        allele_normalizer.setEnableRefPadding(true);
-        r.addStep(allele_normalizer);
-        r.addStep(allele_uniq);
-        r.setReader(vr, VariantBufferMode::buffer_block, 100);
-    }
-
-    VariantReader vr;
-
-    VariantProcessor r;
-    VariantAlleleRemover allele_remover;
-    VariantAlleleNormalizer allele_normalizer;
-    VariantAlleleUniq allele_uniq;
-
-    int ix;
     FastaFile refsq;
-    std::string vcfname;
-    std::string sample;
-    std::string fastaname;
 };
 
-GraphReference::GraphReference(
-    const char * vcfname, 
-    const char * sample,
-    const char * ref_fasta) :
-        _impl(new GraphReferenceImpl(vcfname, sample, ref_fasta)) {}
+GraphReference::GraphReference(const char * ref_fasta) :
+        _impl(new GraphReferenceImpl(ref_fasta)) {}
 
-GraphReference::GraphReference(GraphReference const & rhs) : 
-    _impl(new GraphReferenceImpl(rhs._impl->vcfname.c_str(), rhs._impl->sample.c_str(), rhs._impl->fastaname.c_str()))
+GraphReference::GraphReference(GraphReference const & rhs) :
+    _impl(new GraphReferenceImpl(rhs._impl->refsq.getFilename().c_str()))
 {
-    _impl->vr.setApplyFilters(rhs._impl->vr.getApplyFilters());
 }
 
-GraphReference const & GraphReference::operator=(GraphReference const & rhs)
+GraphReference & GraphReference::operator=(GraphReference const & rhs)
 {
     if(this == &rhs)
     {
@@ -171,21 +111,6 @@ GraphReference::~GraphReference()
     delete _impl;
 }
 
-std::string const & GraphReference::getVCFName() const
-{
-    return _impl->vcfname;
-}
-
-std::string const & GraphReference::getSample() const
-{
-    return _impl->sample;
-}
-
-std::string const & GraphReference::getFastaName() const
-{
-    return _impl->fastaname;
-}
-
 FastaFile & GraphReference::getRefFasta()
 {
     return _impl->refsq;
@@ -194,89 +119,6 @@ FastaFile & GraphReference::getRefFasta()
 FastaFile const & GraphReference::getRefFasta() const
 {
     return _impl->refsq;
-}
-
-/**
- * @brief Apply filters in the input VCF
- * 
- */
-
-bool GraphReference::getApplyFilters() const
-{
-    return _impl->vr.getApplyFilters();
-}
-
-void GraphReference::setApplyFilters(bool filters)
-{
-    _impl->vr.setApplyFilters(filters);
-}
-
-/**
- * @brief Enumerate all possible paths, return haplotype candidates
- * 
- * We will assume that we start with an UNKNOWN node at start.
- * 
- */
-void GraphReference::enumeratePaths(
-    std::vector<Haplotype> & target,
-    const char * chr,
-    int64_t start,
-    int64_t end,
-    int max_n_paths
-)
-{
-    std::vector<ReferenceNode> nodes;
-    std::vector<ReferenceEdge> edges;
-
-    makeGraph(chr, start, end, nodes, edges);
-    enumeratePaths(chr, start, end, nodes, edges, target, 0, max_n_paths);
-}
-
-/**
- * Create a reference graph for a region of a VCF
- */
-void GraphReference::makeGraph(
-    const char * _chr,
-    int64_t start,
-    int64_t end,
-    std::vector<ReferenceNode> & nodes,
-    std::vector<ReferenceEdge> & edges,
-    size_t * nhets
-)
-{
-    std::string chr;
-    if(!_chr)
-    {
-        chr = "";
-    }
-    else
-    {
-        chr = _chr;
-    }
-
-    _impl->r.rewind(chr.c_str(), start);
-
-    std::list<Variants> vlist;
-    while(_impl->r.advance())
-    {
-        Variants & vars = _impl->r.current();
-        if(chr == "")
-        {
-            chr = vars.chr;
-        }
-        else if(chr != vars.chr)
-        {
-            // break on change of chr
-            break;
-        }
-        if(end >= 0 && vars.pos > end)
-        {
-            break;
-        }
-
-        vlist.push_back(vars);
-    }
-    makeGraph(vlist, _impl->ix, nodes, edges, nhets);
 }
 
 /**
@@ -305,7 +147,7 @@ void GraphReference::makeGraph(
     std::string chr;
     int64_t start = 0;
 
-    if (!input.empty()) 
+    if (!input.empty())
     {
         chr = input.front().chr;
         start = input.front().pos;
@@ -327,7 +169,7 @@ void GraphReference::makeGraph(
 #ifdef _DEBUG_GRAPHREFERENCE
         std::cerr << stringutil::formatPos(chr, vars.pos) << ": " << vars << "\n";
 #endif
-        
+
         Call const & call = vars.calls[ix];
 
         for(int j = 0; j < 2; ++j)
@@ -383,7 +225,7 @@ void GraphReference::makeGraph(
                     }
                 }
                 break;
-            case gt_homref: 
+            case gt_homref:
                 // do not generate homref nodes -- when they overlap, things go bad downstream
                 // also, we don't really use homref information in the graph.
                 // current[0].color = ReferenceNode::black;
@@ -453,9 +295,9 @@ void GraphReference::makeGraph(
                 // the colors must be "compatible":
                 // Black and grey (both haplotypes, known/unknown phasing) connect to everything
                 // Red and blue do not connect to each other
-                if( node.type == ReferenceNode::source || 
-                   (node.end < current[j].start && 
-                   (   node.color <= ReferenceNode::black 
+                if( node.type == ReferenceNode::source ||
+                   (node.end < current[j].start &&
+                   (   node.color <= ReferenceNode::black
                     || current[j].color <= ReferenceNode::black
                     || node.color == current[j].color) ) )
                 {
@@ -472,7 +314,7 @@ void GraphReference::makeGraph(
         }
         previous = next_previous;
 
-        // if variants are out of order, we might need to 
+        // if variants are out of order, we might need to
         // find a predecessor
         for(int j = 0; j < 2; ++j)
         {
@@ -481,11 +323,11 @@ void GraphReference::makeGraph(
                 ReferenceNode & node = nodes[current_pos[j]];
                 // search backwards
                 size_t k = current_pos[j]-1;
-                
+
                 while(k != (size_t) -1)
                 {
                     if(nodes[k].end < node.start &&
-                       (   node.color <= ReferenceNode::black 
+                       (   node.color <= ReferenceNode::black
                         || nodes[k].color <= ReferenceNode::black
                         || node.color == nodes[k].color)
                     )
@@ -552,11 +394,11 @@ void GraphReference::enumeratePaths(
     // otherwise, this doesn't really work
     typedef struct _branchpoint
     {
-        _branchpoint(size_t _node, 
+        _branchpoint(size_t _node,
                      std::list<size_t>::iterator _next_choice,
-                     unique_hap_map_t::iterator _up_to_here, 
-                     std::bitset<MAX_GRAPHREFERENCE_NODES> const & _nodes_used) : 
-            node(_node), color(ReferenceNode::grey), next_choice(_next_choice), 
+                     unique_hap_map_t::iterator _up_to_here,
+                     std::bitset<MAX_GRAPHREFERENCE_NODES> const & _nodes_used) :
+            node(_node), color(ReferenceNode::grey), next_choice(_next_choice),
             up_to_here(_up_to_here), nodes_used(_nodes_used)
 #ifdef _DEBUG_GRAPHREFERENCE
             , bp_id(bp_id_ctr++)
@@ -582,17 +424,17 @@ void GraphReference::enumeratePaths(
     // this map gives the nodes (indexed by canonical haplotype representation).
     unique_hap_map_t unique_haps;
     hapinfo_map_t hapinfos;
-    
+
     // list of hap ids we get after finishing traversal
     std::set<std::string> final_haps;
 
     // generate starting hap block
-    std::unique_ptr<Haplotype> ph0 (new Haplotype(chr, _impl->fastaname.c_str()));
+    std::unique_ptr<Haplotype> ph0 (new Haplotype(chr, _impl->refsq.getFilename().c_str()));
     Haplotype & h0(*ph0);
     nodes[source].appendToHaplotype(h0);
     std::string current_rp(h0.repr(start, end));
     std::string first_rp(current_rp);
-    
+
     std::bitset<MAX_GRAPHREFERENCE_NODES> initial_bitset;
     initial_bitset[0] = 1;
 
@@ -603,7 +445,7 @@ void GraphReference::enumeratePaths(
     branchpoint bp(source, adj[source].begin(), unique_haps.find(current_rp), initial_bitset);
     hlist.push_back(bp);
 
-    while(!hlist.empty() && final_haps.size() < ((size_t)max_n_paths)) 
+    while(!hlist.empty() && final_haps.size() < ((size_t)max_n_paths))
     {
         branchpoint & current(hlist.front());
 
@@ -611,7 +453,7 @@ void GraphReference::enumeratePaths(
         while(current.next_choice != adj[current.node].end())
         {
             size_t nextone = *current.next_choice;
-            // remember for next time we come here that we've gone 
+            // remember for next time we come here that we've gone
             // through the first branch
             current.next_choice++;
 
@@ -622,7 +464,7 @@ void GraphReference::enumeratePaths(
 
 #ifdef _DEBUG_GRAPHREFERENCE
             std::cerr << "(Re)starting at bp " << current.bp_id << ": "
-                                               << current.up_to_here->first 
+                                               << current.up_to_here->first
                                                << " / " << current.up_to_here->second->repr() << "\n";
 #endif
             bool cont = true;
@@ -643,7 +485,7 @@ void GraphReference::enumeratePaths(
                 // == make sure paths which contain a red node will never contain a blue one
                 //    and vice versa
                 //    implemented by checking color compatibility of current path and next node
-                if(   nodes[nextone].color > ReferenceNode::black 
+                if(   nodes[nextone].color > ReferenceNode::black
                    && current_path_color > ReferenceNode::black
                    && nodes[nextone].color != current_path_color)
                 {
@@ -667,7 +509,7 @@ void GraphReference::enumeratePaths(
 #endif
                 current_rp = h0.repr(start, end);
 
-                if(nextone == sink || adj[nextone].size() != 1)    
+                if(nextone == sink || adj[nextone].size() != 1)
                                          // end of path, Haplotype block is complete
                                          // or more than one choice: insert a haplotype block node if necessary
                                          // and link up to previous
@@ -689,7 +531,7 @@ void GraphReference::enumeratePaths(
 #endif
                     }
                     if(nextone != sink && adj[nextone].size() > 1) // more than 1 choice => create branch point
-                    {   // more than one choice: create branchpoint                   
+                    {   // more than one choice: create branchpoint
                         branchpoint bp(nextone, std::next(adj[nextone].begin()), pos, nodes_used);
                         bp.color = current_path_color;
                         hlist.push_back(bp);
@@ -711,7 +553,7 @@ void GraphReference::enumeratePaths(
                         {
 #ifdef _DEBUG_GRAPHREFERENCE
                             std::cerr << "Finished path from BP" << current.bp_id << " at " << ht_rp << " (no sink)\n";
-#endif                            
+#endif
                         }
                         break;
                     }
@@ -735,7 +577,7 @@ void GraphReference::enumeratePaths(
     // no final haps because all is homref?
     if(target.empty())
     {
-        target.push_back(Haplotype(chr, _impl->fastaname.c_str()));
+        target.push_back(Haplotype(chr, _impl->refsq.getFilename().c_str()));
 
         if(nodes_used_vec != NULL)
         {
@@ -746,7 +588,7 @@ void GraphReference::enumeratePaths(
 
 /**
  * @brief Append a ReferenceNode to a haplotype block
- * 
+ *
  * @param ht Haplotype block with end() < start
  */
 void ReferenceNode::appendToHaplotype(Haplotype & ht) const

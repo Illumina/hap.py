@@ -41,14 +41,7 @@
 #include "Version.hh"
 #include "Variant.hh"
 
-#include "variant/VariantAlleleRemover.hh"
-#include "variant/VariantAlleleSplitter.hh"
-#include "variant/VariantTee.hh"
-#include "variant/VariantAlleleNormalizer.hh"
-#include "variant/VariantLocationAggregator.hh"
-#include "variant/VariantHomrefSplitter.hh"
-#include "variant/VariantAlleleUniq.hh"
-#include "variant/VariantCallsOnly.hh"
+#include "VariantInput.hh"
 
 #include "helpers/StringUtil.hh"
 
@@ -89,6 +82,7 @@ int main(int argc, char* argv[]) {
     bool uniqalleles = false;
     bool calls_only = true;
     bool homref_split = false;
+    bool primitives = false;
     std::string homref_vcf = "";
 
     bool process_formats = false;
@@ -117,6 +111,7 @@ int main(int argc, char* argv[]) {
             ("homref-split", po::value<bool>(), "Split homref blocks into per-nucleotide blocks.")
             ("homref-vcf-out", po::value<std::string>(), "Output split homref blocks as BCF/VCF.")
             ("calls-only", po::value<bool>(), "Remove homref blocks.")
+            ("primitives", po::value<bool>(), "Split complex alleles into primitives via realignment.")
             ("process-split", po::value<bool>(), "Enables splitalleles, trimalleles, unique-alleles, leftshift.")
             ("process-full", po::value<bool>(), "Enables splitalleles, trimalleles, unique-alleles, leftshift, mergebylocation.")
             ("process-formats", po::value<bool>(), "Process GQ/DP/AD format fields.")
@@ -232,6 +227,11 @@ int main(int argc, char* argv[]) {
             homref_split = vm["homref-split"].as< bool >();
         }
 
+        if (vm.count("primitives"))
+        {
+            primitives = vm["primitives"].as< bool >();
+        }
+
         if (vm.count("homref-vcf-out"))
         {
             homref_split = 1;
@@ -257,6 +257,7 @@ int main(int argc, char* argv[]) {
             leftshift = true;
             calls_only = true;
             mergebylocation = 2;
+            primitives = true;
         }
 
         if (vm.count("process-formats"))
@@ -368,101 +369,29 @@ int main(int argc, char* argv[]) {
         }
         r.rewind(chr.c_str(), start);
 
-        VariantProcessor proc;
+        VariantInput vi(
+            ref_fasta.c_str(),
+            leftshift,           // bool leftshift
+            true,                // bool refpadding
+            trimalleles,         // bool trimalleles = false,
+            splitalleles,        // bool splitalleles = false,
+            mergebylocation,     // int mergebylocation = false,
+            uniqalleles,         // bool uniqalleles = false,
+            calls_only,          // bool calls_only = true,
+            homref_split,        // bool homref_split = false
+            primitives,          // bool primitives = false
+            (bool)p_homref_writer// homref output
+            );
 
-        std::unique_ptr<VariantHomrefSplitter> p_homref_splitter;
-        if (homref_split)
-        {
-            p_homref_splitter = std::move(std::unique_ptr<VariantHomrefSplitter>(new VariantHomrefSplitter()));
-            proc.addStep(*p_homref_splitter);
-        }
+        vi.getProcessor().setReader(r, VariantBufferMode::buffer_block, 100);
 
-        std::unique_ptr<VariantTee> p_tee;
-        std::unique_ptr<VariantProcessor> p_proc_homref;
-        std::unique_ptr<VariantInjectorStep> p_homref_filter;
-        std::unique_ptr<VariantLocationAggregator> p_homref_merger;
-        if(p_homref_writer)
-        {
-            p_tee = std::move(std::unique_ptr<VariantTee>(new VariantTee()));
-            proc.addStep(*p_tee);
-            p_proc_homref = std::move(std::unique_ptr<VariantProcessor>(new VariantProcessor()));
-            p_proc_homref->addStep(p_tee->secondOutput());
-
-            p_homref_filter = std::move(std::unique_ptr<VariantInjectorStep>(new VariantInjectorStep()));
-
-            struct hr_filter : public VariantFilterInterface
-            {
-                bool test(Variants const & v) { return v.anyHomref(); }
-            };
-
-            std::shared_ptr<VariantFilterInterface> p_filter(new hr_filter());
-
-            p_homref_filter->addFilter(p_filter);
-            p_proc_homref->addStep(*p_homref_filter);
-
-            p_homref_merger = std::move(std::unique_ptr<VariantLocationAggregator>(new VariantLocationAggregator()));
-            p_proc_homref->addStep(*p_homref_merger);
-        }
-
-        std::unique_ptr<VariantCallsOnly> p_calls_only;
-        if (calls_only)
-        {
-            p_calls_only = std::move(std::unique_ptr<VariantCallsOnly>(new VariantCallsOnly()));
-            proc.addStep(*p_calls_only);
-        }
-
-        std::unique_ptr<VariantAlleleRemover> p_allele_remover;
-        if (trimalleles)
-        {
-            p_allele_remover = std::move(std::unique_ptr<VariantAlleleRemover>(new VariantAlleleRemover()));
-            proc.addStep(*p_allele_remover);
-        }
-
-        std::unique_ptr<VariantAlleleSplitter> p_allele_splitter;
-        if (splitalleles)
-        {
-            p_allele_splitter = std::move(std::unique_ptr<VariantAlleleSplitter>(new VariantAlleleSplitter()));
-            proc.addStep(*p_allele_splitter);
-        }
-
-        std::unique_ptr<VariantAlleleNormalizer> p_allele_normalizer;
-        if (leftshift)
-        {
-            p_allele_normalizer = std::move(std::unique_ptr<VariantAlleleNormalizer>(new VariantAlleleNormalizer()));
-            p_allele_normalizer->setReference(ref_fasta.c_str());
-            p_allele_normalizer->setEnableRefPadding(true);
-            p_allele_normalizer->setEnableHomrefVariants(true);
-            proc.addStep(*p_allele_normalizer);
-        }
-
-        std::unique_ptr<VariantLocationAggregator> p_merger;
-        if (mergebylocation)
-        {
-            p_merger = std::move(std::unique_ptr<VariantLocationAggregator>(new VariantLocationAggregator()));
-            if (mergebylocation == 2)
-            {
-                p_merger->setAggregationType(VariantLocationAggregator::aggregate_hetalt);
-            }
-            else if (mergebylocation == 3)
-            {
-                p_merger->setAggregationType(VariantLocationAggregator::aggregate_ambigous);
-            }
-            proc.addStep(*p_merger);
-        }
-
-        std::unique_ptr<VariantAlleleUniq> p_allele_uniq;
-        if (uniqalleles)
-        {
-            p_allele_uniq = std::move(std::unique_ptr<VariantAlleleUniq>(new VariantAlleleUniq()));
-            proc.addStep(*p_allele_uniq);
-        }
-
-        proc.setReader(r, VariantBufferMode::buffer_block, 100);
+        VariantProcessor & proc = vi.getProcessor();
+        VariantProcessor & proc_homref = vi.getProcessor(VariantInput::homref);
 
         int64_t rcount = 0;
 
         bool advance1 = proc.advance();
-        bool advance2 = p_proc_homref ? p_proc_homref->advance() : false;
+        bool advance2 = p_homref_writer ? proc_homref.advance() : false;
 
         while(advance1 || advance2)
         {
@@ -482,9 +411,9 @@ int main(int argc, char* argv[]) {
                     // chromosome changed and location was given => abort
                     while(advance2)
                     {
-                        Variants & v = p_proc_homref->current();
+                        Variants & v = proc_homref.current();
                         p_homref_writer->put(v);
-                        advance2 = p_proc_homref ? p_proc_homref->advance() : false;
+                        advance2 = homref_split ? proc_homref.advance() : false;
                     }
                     break;
                 }
@@ -499,14 +428,15 @@ int main(int argc, char* argv[]) {
                 }
             }
 
-            if (advance2)
+            // make sure our homref variant output doesn't fill up all memory
+            while(advance2 && p_homref_writer)
             {
-                Variants & v = p_proc_homref->current();
+                Variants & v = proc_homref.current();
                 p_homref_writer->put(v);
+                advance2 = proc_homref.advance();
             }
 
             advance1 = proc.advance();
-            advance2 = p_proc_homref ? p_proc_homref->advance() : false;
             ++rcount;
         }
     }

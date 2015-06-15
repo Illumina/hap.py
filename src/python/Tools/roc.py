@@ -120,7 +120,18 @@ class StrelkaSNVRoc(ROC):
         return tableROC(tbl, "tag",
                         "QSS_NT", "FILTER", "QSS_ref")
 
-ROC.register("strelka.snv", "hcc.strelka.snv", StrelkaSNVRoc)
+ROC.register("strelka.snv.qss", "hcc.strelka.snv", StrelkaSNVRoc)
+
+
+class StrelkaSNVVQSRRoc(ROC):
+    """ROC calculator for Strelka SNVs (newer versions which use VQSR)"""
+
+    def from_table(self, tbl):
+        tbl.loc[tbl["NT"] != "ref", "VQSR"] = 0
+        return tableROC(tbl, "tag",
+                        "VQSR", "FILTER", "LowQscore")
+
+ROC.register("strelka.snv", "hcc.strelka.snv", StrelkaSNVVQSRRoc)
 
 
 class StrelkaIndelRoc(ROC):

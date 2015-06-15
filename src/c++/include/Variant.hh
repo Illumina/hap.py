@@ -115,6 +115,11 @@ struct Call {
         return ngt == 2 && gt[0] == gt[1] && gt[1] > 0;
     }
 
+    inline bool isHemi() const
+    {
+        return ngt == 1;
+    }
+
     int gt[MAX_GT];
 
     // we keep ref and sum of other ADs + AD for the alleles we see

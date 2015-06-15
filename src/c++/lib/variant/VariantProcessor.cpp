@@ -37,15 +37,16 @@
 
 #include <boost/range/adaptor/reversed.hpp>
 
-// #define DEBUG_VARIANTPROCESSOR
+/* #define DEBUG_VARIANTPROCESSOR */
+/* #define DEBUG_VARIANTPROCESSOR_STEPS */
 
 namespace variant {
 
 /**
  * @brief Add variants from a VariantReader (see above for VariantBufferMode and param)
  */
-bool AbstractVariantProcessingStep::add(VariantReader & source, 
-        VariantBufferMode bt, 
+bool AbstractVariantProcessingStep::add(VariantReader & source,
+        VariantBufferMode bt,
         int64_t param
        )
 {
@@ -66,11 +67,13 @@ bool AbstractVariantProcessingStep::add(VariantReader & source,
     std::string chr = "";
     int64_t last_end = -1;
     int64_t count = 0;
-    bool advance_success = true;
+    bool advance_success = false;
     bool any_calls = false;
-    while((advance_success = source.advance()) == true)
+    while(source.advance() == true)
     {
         Variants & v = source.current();
+        // return true if any variants still in source
+        advance_success = true;
         if (bt == VariantBufferMode::buffer_count && count+1 > param)
         {
             // put last variant back
@@ -91,6 +94,8 @@ bool AbstractVariantProcessingStep::add(VariantReader & source,
         if (end >= 0 && ((chr != "" && v.chr != chr) || v.pos > end))
         {
             source.enqueue(v);
+            // stop at end -> no more variants
+            advance_success = false;
             break;
         }
         // block mode: must not just have no-calls
@@ -153,7 +158,7 @@ bool AbstractVariantProcessingStep::add(VariantReader & source,
         ++count;
     }
 #ifdef DEBUG_VARIANTPROCESSOR
-    std::cerr << "\tend of block (" << advance_success << ")" << "\n";
+    std::cerr << "\tend of block (variants still present: " << advance_success << ")" << "\n";
 #endif
     return advance_success;
 }
@@ -162,7 +167,7 @@ bool AbstractVariantProcessingStep::add(VariantReader & source,
 /** enqueue a RefVar */
 void AbstractVariantProcessingStep::add_variant(int sample, const char * chr, RefVar const & rv, bool het)
 {
-    Variants vs;    
+    Variants vs;
     vs.chr = chr;
     vs.pos = rv.start;
     vs.len = rv.end - rv.start + 1;
@@ -178,7 +183,7 @@ void AbstractVariantProcessingStep::add_variant(int sample, const char * chr, Re
     else
     {
         vs.calls[sample].gt[0] = 1;
-        vs.calls[sample].gt[1] = 1;        
+        vs.calls[sample].gt[1] = 1;
     }
     add(vs);
 }
@@ -208,7 +213,7 @@ void AbstractVariantProcessingStep::add_homref(int sample, const char * chr, int
 struct VariantProcessor::VariantProcessorImpl
 {
     VariantProcessorImpl() : source(NULL) {}
-    VariantProcessorImpl(VariantProcessorImpl const & rhs) : 
+    VariantProcessorImpl(VariantProcessorImpl const & rhs) :
         mode(rhs.mode),
         param(rhs.param),
         source(rhs.source),
@@ -270,12 +275,12 @@ void VariantProcessor::setReader(VariantReader & input, VariantBufferMode mode, 
 
 /**
  * @brief Rewind / set region to read
- * 
+ *
  * @param chr chromosome/contig name
  * @param startpos start position on chr (or -1 for entire chr)
- * 
- * 
- * Note that this involves clearing internal buffers, which might be slow if 
+ *
+ *
+ * Note that this involves clearing internal buffers, which might be slow if
  * the lots of variants are in the pipeline still.
  */
 void VariantProcessor::rewind(const char * chr, int64_t startpos)
@@ -290,7 +295,7 @@ void VariantProcessor::rewind(const char * chr, int64_t startpos)
     }
     if (_impl->source)
     {
-        _impl->source->rewind(chr, startpos); 
+        _impl->source->rewind(chr, startpos);
     }
 }
 
@@ -345,38 +350,60 @@ bool VariantProcessor::advance()
 #ifdef DEBUG_VARIANTPROCESSOR
         std::cerr << "\t advance buffer refill\n";
 #endif
-        // feed from source if we have one
-        if(_impl->source)
+        bool advance_success = false;
+        bool any_variants_left = true;
+        while(!advance_success && any_variants_left)
         {
-            _impl->processing_steps.front()->add(*(_impl->source), _impl->mode, _impl->param);
-        }
-        auto pstep = _impl->processing_steps.begin();    
-        auto previous_step = pstep;
-        bool advance_success;
-
-#ifdef DEBUG_VARIANTPROCESSOR
-        int step = 1;
-#endif
-
-        while((++pstep) != _impl->processing_steps.end())
-        {
-            while((advance_success = (*previous_step)->advance()) == true)
+            // feed from source if we have one
+            if(_impl->source)
             {
-                (*pstep)->add((*previous_step)->current());
-#ifdef DEBUG_VARIANTPROCESSOR
-                std::cerr << "\t advancing step " << step << " / success: " << advance_success << "\n";
-#endif
+                any_variants_left = _impl->processing_steps.front()->add(*(_impl->source), _impl->mode, _impl->param);
             }
+            else
+            {
+                any_variants_left = false;
+            }
+            auto pstep = _impl->processing_steps.begin();
+            auto previous_step = pstep;
+
 #ifdef DEBUG_VARIANTPROCESSOR
-            ++step;
+            int step = 1;
 #endif
-            previous_step = pstep;
+#ifdef DEBUG_VARIANTPROCESSOR_STEPS
+            std::cerr << "Starting to buffer..." << "\n";
+            int istep = 1;
+#endif
+            while((++pstep) != _impl->processing_steps.end())
+            {
+
+#ifdef DEBUG_VARIANTPROCESSOR_STEPS
+                std::cerr << "Starting step " << istep << "\n";
+#endif
+                while((*previous_step)->advance() == true)
+                {
+#ifdef DEBUG_VARIANTPROCESSOR_STEPS
+                    std::cerr << "Adding " << (*previous_step)->current() << "\n";
+#endif
+                    (*pstep)->add((*previous_step)->current());
+#ifdef DEBUG_VARIANTPROCESSOR
+                    std::cerr << "\t advancing step " << step << " / success: " << advance_success << "\n";
+#endif
+                }
+#ifdef DEBUG_VARIANTPROCESSOR_STEPS
+                std::cerr << "Finished step " << istep++ << "\n";
+#endif
+#ifdef DEBUG_VARIANTPROCESSOR
+                ++step;
+#endif
+                previous_step = pstep;
+            }
+            // advance final step
+            advance_success = (*previous_step)->advance();
+#ifdef DEBUG_VARIANTPROCESSOR
+            std::cerr << "\t advance after refill: " << advance_success << "\n";
+#endif
         }
-        advance_success = (*previous_step)->advance();
-#ifdef DEBUG_VARIANTPROCESSOR
-        std::cerr << "\t advance after refill: " << advance_success << "\n";
-#endif
-        return advance_success; 
+        return advance_success;
     }
 }
 
@@ -400,6 +427,16 @@ void trimAlleles(Variants & vars)
             if (c.gt[igt] > 0)
             {
                 used |= (((uint64_t)1) << int8_t(c.gt[igt] - 1));
+            }
+        }
+    }
+
+    for (auto const & l : vars.ambiguous_alleles)
+    {
+        for(int i : l) {
+            if (i > 0)
+            {
+                used |= (((uint64_t)1) << int8_t(i - 1));
             }
         }
     }
@@ -438,7 +475,7 @@ void trimAlleles(Variants & vars)
                 c.gt[igt] = al_remap[c.gt[igt]-1] + 1;
             }
         }
-    }    
+    }
 }
 
 

@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -56,15 +56,15 @@ public:
 
     /** Variant input **/
     /** enqueue a set of variants */
-    void add(Variants const & vs) { 
+    void add(Variants const & vs) {
         if (buffer.empty())
         {
             firstone = true;
         }
-        buffer.push_back(vs); 
-        trimAlleles(buffer.back()); 
+        buffer.push_back(vs);
+        trimAlleles(buffer.back());
     }
-    
+
     /** Variant output **/
     /**
      * @brief Return variant block at current position
@@ -75,7 +75,7 @@ public:
      * @brief Advance one line
      * @return true if a variant was retrieved, false otherwise
      */
-    bool advance() { 
+    bool advance() {
         if (firstone && !buffer.empty())
         {
             firstone = false;
@@ -83,11 +83,11 @@ public:
         }
         else
         {
-            if(!buffer.empty()) 
+            if(!buffer.empty())
             {
                 buffer.pop_front();
             }
-            return !buffer.empty(); 
+            return !buffer.empty();
         }
     }
 
@@ -95,7 +95,7 @@ public:
     void flush() { buffer.clear(); }
 
 private:
-    std::list<Variants> buffer; 
+    std::list<Variants> buffer;
     Variants tmp;
     bool firstone;
 };

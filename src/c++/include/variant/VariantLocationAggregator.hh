@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -49,25 +49,26 @@ namespace variant
         VariantLocationAggregator(VariantLocationAggregator const & );
         ~VariantLocationAggregator();
         VariantLocationAggregator const & operator=(VariantLocationAggregator const & );
-        
-        enum AggregationType { 
+
+        enum AggregationType {
         	aggregate_nocall,	// aggregate only no call in the same sample
         	aggregate_hetalt,	// aggregate multiple het calls into het-alt when possible
+            aggregate_across_types, // aggregate variants even if they are of different types
         	aggregate_ambigous	// aggregate and mark conflicts as no-call with ambiguous alleles
         };
 
         /** decide how to aggregate */
         AggregationType getAggregationType() const;
-        void setAggregationType(AggregationType at=aggregate_nocall); 
+        void setAggregationType(AggregationType at=aggregate_nocall);
 
         /** enqueue a set of variants */
         void add(Variants const & vs);
-        
+
         /**
          * @brief Return variant block at current position
          **/
         Variants & current();
-    
+
         /**
          * @brief Advance one line
          * @return true if a variant was retrieved, false otherwise

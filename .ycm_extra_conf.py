@@ -57,6 +57,8 @@ flags = [
 '-I',
 '/illumina/thirdparty/boost/boost_1_55_0_python2.4/include',
 '-I',
+'/opt/boost_1_55_0/include',
+'-I',
 '.',
 # ...and the same thing goes for the magic -x option which specifies the
 # language that the files to be compiled are written in. This is mostly

@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -27,7 +27,7 @@
 
 
 /**
- * Partially phased diploid reference representation
+ * Partially phased diploid reference class. Enumerates possible haplotype pairs.
  *
  * \file DiploidReference.hh
  * \author Peter Krusche
@@ -61,12 +61,6 @@ class DiploidReference
 {
 public:
     DiploidReference(GraphReference const & gr);
-
-    DiploidReference(
-        const char * vcfname, 
-        const char * sample,
-        const char * ref_fasta);
-    
     DiploidReference(DiploidReference const &);
     DiploidReference const & operator=(DiploidReference const &);
     ~DiploidReference();
@@ -89,15 +83,15 @@ public:
         const char * chr,
         int64_t start,
         int64_t end,
-        std::list<variant::Variants> const * vars = NULL,
+        std::list<variant::Variants> const & vars,
         int sample_ix = 0
     );
 
     /**
      * Enumeration: advance and return true if current is valid.
-     * 
+     *
      * Use like this:
-     * 
+     *
      * while(dr.hasNext())
      * {
      *     DiploidRef & hp (dr.next());
@@ -105,7 +99,7 @@ public:
      *     ...
      *     dr.advance();
      * }
-     * 
+     *
      */
     bool hasNext();
     DiploidRef & next();

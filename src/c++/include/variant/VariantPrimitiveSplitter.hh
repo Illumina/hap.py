@@ -26,9 +26,10 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /**
- * \brief Homref interval splitter processor
+ * \brief Class to split complex alleles into primitive blocks
  *
- * \file VariantHomrefSplitter.hh
+ *
+ * \file VariantPrimitiveSplitter.hh
  * \author Peter Krusche
  * \email pkrusche@illumina.com
  *
@@ -40,13 +41,19 @@
 
 namespace variant {
 
-    class VariantHomrefSplitter : public AbstractVariantProcessingStep
+    class VariantPrimitiveSplitter : public AbstractVariantProcessingStep
     {
     public:
-        VariantHomrefSplitter();
-        VariantHomrefSplitter(VariantHomrefSplitter const & );
-        ~VariantHomrefSplitter();
-        VariantHomrefSplitter const & operator=(VariantHomrefSplitter const & );
+        VariantPrimitiveSplitter();
+        VariantPrimitiveSplitter(VariantPrimitiveSplitter const & );
+        ~VariantPrimitiveSplitter();
+        VariantPrimitiveSplitter & operator=(VariantPrimitiveSplitter const & );
+
+        /**
+         * @brief Reference for splitting
+         *
+         */
+        void setReference(std::string const & fasta);
 
         /** enqueue a set of variants */
         void add(Variants const & vs);
@@ -66,8 +73,8 @@ namespace variant {
         void flush();
 
     private:
-        struct VariantHomrefSplitterImpl;
-        VariantHomrefSplitterImpl * _impl;
+        struct VariantPrimitiveSplitterImpl;
+        VariantPrimitiveSplitterImpl * _impl;
     };
 
 }

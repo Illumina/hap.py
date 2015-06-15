@@ -1,5 +1,5 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -51,18 +51,18 @@ public:
 
     /** set up processing */
     void addStep(AbstractVariantProcessingStep &, bool prepend=false);
-    
+
     /** process a Variant Reader */
     void setReader(VariantReader & input, VariantBufferMode mode, int64_t param=0);
 
     /**
      * @brief Rewind / set region to read
-     * 
+     *
      * @param chr chromosome/contig name
      * @param startpos start position on chr (or -1 for entire chr)
-     * 
-     * 
-     * Note that this involves clearing internal buffers, which might be slow if 
+     *
+     *
+     * Note that this involves clearing internal buffers, which might be slow if
      * the lots of variants are in the pipeline still.
      */
     void rewind(const char * chr=NULL, int64_t startpos=-1);

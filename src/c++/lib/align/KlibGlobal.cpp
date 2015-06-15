@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -59,11 +59,11 @@ void KlibGlobalAlignment::update()
 
 	_impl->result.score = ksw_global(
 		_impl->result.qe - _impl->result.qb + 1,
-		_impl->ref.get() + _impl->result.qb, 
+		_impl->ref.get() + _impl->result.qb,
 		_impl->result.te - _impl->result.tb + 1,
-		_impl->alt.get() + _impl->result.tb, 
-		5, _impl->mat, _impl->gapo, _impl->gape, 
-		std::max(_impl->reflen, _impl->altlen), 
+		_impl->alt.get() + _impl->result.tb,
+		5, _impl->mat, _impl->gapo, _impl->gape,
+		std::max(_impl->reflen, _impl->altlen),
 		&_impl->cigar_len, &_impl->cigar);
 
 	if(_impl->result.score <= MINUS_INF)

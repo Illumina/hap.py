@@ -50,6 +50,9 @@
 
 #include "RefVar.hh"
 
+// for testing realignRefVar
+#include "Alignment.hh"
+
 using namespace variant;
 
 BOOST_AUTO_TEST_CASE(testRefVarLeftShiftSimple)
@@ -58,7 +61,7 @@ BOOST_AUTO_TEST_CASE(testRefVarLeftShiftSimple)
     boost::filesystem::path tp = p.parent_path()
                                    .parent_path()   // test
                                    .parent_path()   // c++
-                                    / boost::filesystem::path("data") 
+                                    / boost::filesystem::path("data")
                                     / boost::filesystem::path("chrQ.fa");
 
     FastaFile f(tp.c_str());
@@ -90,7 +93,7 @@ BOOST_AUTO_TEST_CASE(testRefVarShiftNs)
     boost::filesystem::path tp = p.parent_path()
                                    .parent_path()   // test
                                    .parent_path()   // c++
-                                    / boost::filesystem::path("data") 
+                                    / boost::filesystem::path("data")
                                     / boost::filesystem::path("chrQ.fa");
 
     FastaFile f(tp.c_str());
@@ -122,7 +125,7 @@ BOOST_AUTO_TEST_CASE(testRefVarShift_HAP_64)
     boost::filesystem::path tp = p.parent_path()
                                    .parent_path()   // test
                                    .parent_path()   // c++
-                                    / boost::filesystem::path("data") 
+                                    / boost::filesystem::path("data")
                                     / boost::filesystem::path("chrQ.fa");
 
     FastaFile f(tp.c_str());
@@ -154,7 +157,7 @@ BOOST_AUTO_TEST_CASE(testRefVarLeftShiftList)
     boost::filesystem::path tp = p.parent_path()
                                    .parent_path()   // test
                                    .parent_path()   // c++
-                                    / boost::filesystem::path("data") 
+                                    / boost::filesystem::path("data")
                                     / boost::filesystem::path("chrQ.fa");
 
     FastaFile f(tp.c_str());
@@ -188,7 +191,7 @@ BOOST_AUTO_TEST_CASE(testRefVarLeftShiftList)
             case 0:
                 BOOST_CHECK_EQUAL(r.start, 5);
                 BOOST_CHECK_EQUAL(r.end, 6);
-                BOOST_CHECK_EQUAL(r.alt, "C");    
+                BOOST_CHECK_EQUAL(r.alt, "C");
                 break;
             case 1:
                 BOOST_CHECK_EQUAL(r.start, 7);
@@ -213,7 +216,7 @@ BOOST_AUTO_TEST_CASE(testRefVarRightShiftSimple)
     boost::filesystem::path tp = p.parent_path()
                                    .parent_path()   // test
                                    .parent_path()   // c++
-                                    / boost::filesystem::path("data") 
+                                    / boost::filesystem::path("data")
                                     / boost::filesystem::path("chrQ.fa");
 
     FastaFile f(tp.c_str());
@@ -245,7 +248,7 @@ BOOST_AUTO_TEST_CASE(testRefVarRightShiftList)
     boost::filesystem::path tp = p.parent_path()
                                    .parent_path()   // test
                                    .parent_path()   // c++
-                                    / boost::filesystem::path("data") 
+                                    / boost::filesystem::path("data")
                                     / boost::filesystem::path("chrQ.fa");
 
     FastaFile f(tp.c_str());
@@ -304,7 +307,7 @@ BOOST_AUTO_TEST_CASE(testRefVarRightShiftMulti)
     boost::filesystem::path tp = p.parent_path()
                                    .parent_path()   // test
                                    .parent_path()   // c++
-                                    / boost::filesystem::path("data") 
+                                    / boost::filesystem::path("data")
                                     / boost::filesystem::path("chrQ.fa");
 
     FastaFile f(tp.c_str());
@@ -425,7 +428,7 @@ BOOST_AUTO_TEST_CASE(testRefVarAlleles)
     boost::filesystem::path tp = p.parent_path()
                                    .parent_path()   // test
                                    .parent_path()   // c++
-                                    / boost::filesystem::path("data") 
+                                    / boost::filesystem::path("data")
                                     / boost::filesystem::path("chrQ.fa");
 
     FastaFile f(tp.c_str());
@@ -435,7 +438,7 @@ BOOST_AUTO_TEST_CASE(testRefVarAlleles)
     // chrQ: AAACCCAAACCCAAACCCGGGTTTGGGTTTGGGTTT
 
     RefVar r;
-    
+
     // long del
     r.start = 6;
     r.end = 11;
@@ -463,23 +466,23 @@ BOOST_AUTO_TEST_CASE(testAppendToVarList)
     std::list<RefVar> rvlist2;
     std::list<RefVar> rvlist3;
 
-    // Alignment matrix:               
-    //   0     .    :              
-    // REF AACACAC-AT              
-    //     ||||  | ||              
-    // PG  AATGTGCAAT              
-    //     ||||||  ||              
-    // QRY AACATGA-AT                                              
+    // Alignment matrix:
+    //   0     .    :
+    // REF AACACAC-AT
+    //     ||||  | ||
+    // PG  AATGTGCAAT
+    //     ||||||  ||
+    // QRY AACATGA-AT
 
     appendToVarList(1, 'A', 'A', rvlist1);
     appendToVarList(2, 'A', 'A', rvlist1);
-    
+
     appendToVarList(3, 'C', 'T', rvlist2);
     appendToVarList(3, 'C', 'C', rvlist3);
-    
+
     appendToVarList(4, 'A', 'G', rvlist2);
     appendToVarList(4, 'A', 'A', rvlist3);
-    
+
     appendToVarList(5, 'C', 'T', rvlist1);
     appendToVarList(6, 'A', 'G', rvlist1);
 
@@ -600,10 +603,10 @@ BOOST_AUTO_TEST_CASE(testRefVarApply)
     boost::filesystem::path tp = p.parent_path()
                                    .parent_path()   // test
                                    .parent_path()   // c++
-                                    / boost::filesystem::path("data") 
+                                    / boost::filesystem::path("data")
                                     / boost::filesystem::path("chrQ.fa");
 
-    FastaFile f(tp.c_str());    
+    FastaFile f(tp.c_str());
 
     RefVar rv;
     int64_t s, e;
@@ -632,5 +635,166 @@ BOOST_AUTO_TEST_CASE(testRefVarApply)
 
     res = rv.apply(f, "chrT", s, e);
     BOOST_CHECK_EQUAL(res, "ATTCTGACAAACCCCAGGT");
+}
+
+
+BOOST_AUTO_TEST_CASE(testRefVarPrimitives)
+{
+    boost::filesystem::path p(__FILE__);
+    boost::filesystem::path tp = p.parent_path()
+                                   .parent_path()   // test
+                                   .parent_path()   // c++
+                                    / boost::filesystem::path("data")
+                                    / boost::filesystem::path("chrQ.fa");
+
+    FastaFile f(tp.c_str());
+
+    //>chrS:10-15
+    //CGACT
+
+    RefVar rv;
+    rv.start = 9;
+    rv.end = 14;
+    // complex insertion
+    rv.alt = "TGCCTTT";
+
+    std::list<RefVar> rvl;
+    toPrimitives(f, "chrS", rv, rvl);
+
+    {
+        std::ostringstream oss;
+        for(auto & x : rvl)
+        {
+            oss << x << "; ";
+        }
+        BOOST_CHECK_EQUAL(oss.str(), "9-9:T; 11-11:C; 15-14:T; ");
+    }
+
+    rv.start = 9;
+    rv.end = 14;
+    // complex deletion
+    rv.alt = "TGCC";
+
+    rvl.clear();
+    toPrimitives(f, "chrS", rv, rvl);
+
+    {
+        std::ostringstream oss;
+        for(auto & x : rvl)
+        {
+            oss << x << "; ";
+        }
+        BOOST_CHECK_EQUAL(oss.str(), "9-9:T; 11-11:C; 13-14:; ");
+    }
+}
+
+BOOST_AUTO_TEST_CASE(testRefVarPrimitiveAlign)
+{
+    boost::filesystem::path p(__FILE__);
+    boost::filesystem::path tp = p.parent_path()
+                                   .parent_path()   // test
+                                   .parent_path()   // c++
+                                    / boost::filesystem::path("data")
+                                    / boost::filesystem::path("chrQ.fa");
+
+    FastaFile f(tp.c_str());
+    Alignment * aln = makeAlignment("klibg");
+
+    //>chrS
+    //CGACT
+
+    RefVar rv;
+    rv.start = 9;
+    rv.end = 14;
+    // complex insertion
+    rv.alt = "TGCCTTT";
+
+    std::list<RefVar> rvl;
+    realignRefVar(f, "chrS", rv, aln, rvl);
+
+    {
+        std::ostringstream oss;
+        for(auto & x : rvl)
+        {
+            oss << x << "; ";
+        }
+        BOOST_CHECK_EQUAL(oss.str(), "9-9:T; 11-11:C; 15-14:T; ");
+    }
+
+    rv.start = 9;
+    rv.end = 14;
+    // complex deletion
+    rv.alt = "TGCC";
+
+    rvl.clear();
+    realignRefVar(f, "chrS", rv, aln, rvl);
+
+    {
+        std::ostringstream oss;
+        for(auto & x : rvl)
+        {
+            oss << x << "; ";
+        }
+        BOOST_CHECK_EQUAL(oss.str(), "9-9:T; 11-11:C; 13-14:; ");
+    }
+    delete aln;
+}
+
+BOOST_AUTO_TEST_CASE(testRefVarPrimitiveAlign2)
+{
+    boost::filesystem::path p(__FILE__);
+    boost::filesystem::path tp = p.parent_path()
+                                   .parent_path()   // test
+                                   .parent_path()   // c++
+                                    / boost::filesystem::path("data")
+                                    / boost::filesystem::path("chrQ.fa");
+
+    FastaFile f(tp.c_str());
+    Alignment * aln = makeAlignment("klibg");
+
+    //>chrS:10
+    //CGACTTGAGACATACACCTGCGCCTAATCACTTCAGAG...
+
+    RefVar rv;
+    rv.start = 9;
+    rv.end = 40;
+    // complex insertion
+    rv.alt = "CGACTAGAGTCATACCCCCGCGCCTAATCACTTCACAGCTAATCACTAATCA";
+
+    std::list<RefVar> rvl;
+    realignRefVar(f, "chrS", rv, aln, rvl);
+
+    {
+        std::ostringstream oss;
+        for(auto & x : rvl)
+        {
+            oss << x << "; ";
+        }
+        // REF: CGACTTGAGACATACACCTGCGCCTAATCACTTCAGAG--------------
+        //           *   *     *  *                   iiiiiiiiiiiiii
+        // ALT: CGACTAGAGTCATACCCCCGCGCCTAATCACTTCACAGCTAATCACTAATCA
+        BOOST_CHECK_EQUAL(oss.str(), "14-14:A; 18-18:T; 24-24:C; 27-27:C; 41-40:TCACAGCTAATCACTAATCA; ");
+    }
+
+    rv.start = 9;
+    rv.end = 47;
+    // complex deletion
+    rv.alt = "CGAACCGAGACATACAGCCTACTTCACAT";
+
+    rvl.clear();
+    realignRefVar(f, "chrS", rv, aln, rvl);
+
+    {
+        std::ostringstream oss;
+        for(auto & x : rvl)
+        {
+            oss << x << "; ";
+        }
+        // REF: CGACTTGAGACATACA CCTGC GCCTA ATCA CTTCAGAGG
+        //         ***           ddddd       dddd      * *
+        // ALT: CGAACCGAGACATACA ----- GCCTA ---- CTTCACAT-
+        BOOST_CHECK_EQUAL(oss.str(), "12-12:A; 13-13:C; 14-14:C; 25-29:; 35-38:; 44-44:C; 46-46:T; 47-47:; ");
+    }
+    delete aln;
 }
 
