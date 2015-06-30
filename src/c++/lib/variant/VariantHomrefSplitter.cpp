@@ -47,18 +47,10 @@ namespace variant {
 
 namespace ns_varianthomrefsplitter
 {
-    struct VariantCompare
-    {
-        bool operator() (Variants const & v1, Variants const & v2)
-        {
-            return v1.pos > v2.pos;
-        }
-    };
-
     typedef std::priority_queue<
         Variants,
         std::vector<Variants>,
-        ns_varianthomrefsplitter::VariantCompare
+        VariantCompare
     > VariantQueue;
 }
 

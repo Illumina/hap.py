@@ -46,6 +46,15 @@
 #include "GraphReference.hh"
 #include "DiploidCompare.hh"
 
+#include "variant/VariantAlleleRemover.hh"
+#include "variant/VariantAlleleSplitter.hh"
+#include "variant/VariantTee.hh"
+#include "variant/VariantAlleleNormalizer.hh"
+#include "variant/VariantLocationAggregator.hh"
+#include "variant/VariantHomrefSplitter.hh"
+#include "variant/VariantAlleleUniq.hh"
+#include "variant/VariantCallsOnly.hh"
+
 #include <iostream>
 #include <fstream>
 #include <chrono>
@@ -93,6 +102,7 @@ int main(int argc, char* argv[]) {
     bool preprocess = false;
     bool leftshift = false;
     bool always_hapcmp = false;
+    bool compare_raw = false;
 
     try
     {
@@ -119,6 +129,7 @@ int main(int argc, char* argv[]) {
             ("preprocess-variants,V", po::value<bool>(), "Apply variant normalisations, trimming, realignment for complex variants (off by default).")
             ("leftshift", po::value<bool>(), "Left-shift indel alleles (off by default).")
             ("always-hapcmp", po::value<bool>(), "Always compare haplotype blocks (even if they match). Testing use only/slow.")
+            ("compare-raw", po::value<bool>(), "Compare raw calls also to maximize chances of matching difficult regions.")
         ;
 
         po::positional_options_description popts;
@@ -270,6 +281,11 @@ int main(int argc, char* argv[]) {
             always_hapcmp = vm["always-hapcmp"].as< bool >();
         }
 
+        if (vm.count("compare-raw"))
+        {
+            compare_raw = vm["compare-raw"].as< bool >();
+        }
+
     }
     catch (po::error & e)
     {
@@ -310,7 +326,7 @@ int main(int argc, char* argv[]) {
         VariantInput vi(
             ref_fasta.c_str(),
             preprocess || leftshift,          // bool leftshift
-            preprocess || leftshift,          // bool refpadding
+            false,          // bool refpadding
             true,                // bool trimalleles = false, (remove unused alleles)
             preprocess || leftshift,      // bool splitalleles = false,
             ( preprocess || leftshift ) ? 2 : 0,  // int mergebylocation = false,
@@ -319,10 +335,45 @@ int main(int argc, char* argv[]) {
             false,               // bool homref_split = false // this is handled by calls_only
             preprocess,          // bool primitives = false
             false,               // bool homref_output
-            leftshift ? hb_window-1 : 0   // int64_t leftshift_limit
+            leftshift ? hb_window-1 : 0,   // int64_t leftshift_limit
+            compare_raw         // collect_raw
             );
 
         VariantProcessor & vp = vi.getProcessor();
+
+        std::unique_ptr<VariantAlleleRemover> p_raw_allele_remover;
+        std::unique_ptr<VariantAlleleSplitter> p_raw_allele_splitter;
+        std::unique_ptr<VariantAlleleNormalizer> p_raw_allele_normalizer;
+        std::unique_ptr<VariantLocationAggregator> p_raw_aggregator;
+        std::unique_ptr<VariantAlleleUniq> p_raw_allele_uniq;
+        std::unique_ptr<VariantCallsOnly> p_raw_callsonly;
+        if(compare_raw)
+        {
+            p_raw_allele_remover = std::move(std::unique_ptr<VariantAlleleRemover>(new VariantAlleleRemover()));
+            vi.getProcessor(VariantInput::raw).addStep(*p_raw_allele_remover);
+
+            p_raw_allele_splitter = std::move(std::unique_ptr<VariantAlleleSplitter>(new VariantAlleleSplitter()));
+            vi.getProcessor(VariantInput::raw).addStep(*p_raw_allele_splitter);
+
+            if(leftshift)
+            {
+                p_raw_allele_normalizer = std::move(std::unique_ptr<VariantAlleleNormalizer>(new VariantAlleleNormalizer()));
+                p_raw_allele_normalizer->setReference(ref_fasta);
+                p_raw_allele_normalizer->setEnableRefPadding(false);
+                p_raw_allele_normalizer->setLeftshiftLimit(hb_window - 1);
+                p_raw_allele_normalizer->setEnableHomrefVariants(false);
+                vi.getProcessor(VariantInput::raw).addStep(*p_raw_allele_normalizer);
+            }
+
+            p_raw_aggregator = std::move(std::unique_ptr<VariantLocationAggregator>(new VariantLocationAggregator()));
+            vi.getProcessor(VariantInput::raw).addStep(*p_raw_aggregator);
+
+            p_raw_allele_uniq = std::move(std::unique_ptr<VariantAlleleUniq>(new VariantAlleleUniq()));
+            vi.getProcessor(VariantInput::raw).addStep(*p_raw_allele_uniq);
+
+            p_raw_callsonly = std::move(std::unique_ptr<VariantCallsOnly>(new VariantCallsOnly()));
+            vi.getProcessor(VariantInput::raw).addStep(*p_raw_callsonly);
+        }
 
         vp.setReader(vr, VariantBufferMode::buffer_block, 10*hb_window);
 
@@ -371,7 +422,8 @@ int main(int argc, char* argv[]) {
         int n_nonsnp = 0, calls_1 = 0, calls_2 = 0;
         bool has_mismatch = false;
 
-        const auto finish_block = [&block_variants, r1, r2,
+        const auto finish_block = [&vi,
+                                   &block_variants, r1, r2,
                                    &chr,
                                    &block_start,
                                    &block_end,
@@ -379,37 +431,81 @@ int main(int argc, char* argv[]) {
                                    &has_mismatch,
                                    &pvw, &error_out_stream,
                                    &hc,
-                                   hb_expand, always_hapcmp] ()
+                                   hb_expand, always_hapcmp, compare_raw] ()
         {
-            bool hap_match = false, hap_fail = false, hap_run = false;
+            bool hap_match = false, hap_fail = false, hap_run = false, raw_match = false;
             // try HC if we have mismatches, and if the number of calls is > 0
             if (always_hapcmp || (has_mismatch && calls_1 > 0 && calls_2 > 0 && n_nonsnp > 0))
             {
-                try
+                if(compare_raw)
                 {
-                    hap_run = true;
-                    hap_fail = true;
-                    hc.setRegion(chr.c_str(), std::max(int64_t(0), block_start-hb_expand), block_end + hb_expand,
-                                 block_variants, r1, r2);
-                    DiploidComparisonResult const & hcr = hc.getResult();
-#ifdef DEBUG_XCMP
-                    std::cerr << hcr << "\n";
-#endif
-                    hap_match = hcr.outcome == dco_match;
-                    hap_fail = !(hcr.outcome == dco_match || hcr.outcome == dco_mismatch);
-                }
-                catch(std::runtime_error &e)
-                {
-                    if (error_out_stream)
+                    std::list<Variants> raw_variants;
+                    while(vi.getProcessor(VariantInput::raw).advance())
                     {
-                        *error_out_stream << chr << "\t" << block_start << "\t" << block_end+1 << "\t" << "hap_error\t" << e.what() << "\n";
+                        Variants & vars = vi.getProcessor(VariantInput::raw).current();
+                        raw_variants.push_back(vars);
+                    }
+
+                    try
+                    {
+                        hap_run = true;
+                        hap_fail = true;
+                        hc.setRegion(chr.c_str(), std::max(int64_t(0), block_start-hb_expand), block_end + hb_expand,
+                                     raw_variants, r1, r2);
+                        DiploidComparisonResult const & hcr = hc.getResult();
+#ifdef DEBUG_XCMP
+                        std::cerr << chr << ":" << block_start << "-" << block_end << " variants: " << "\n";
+                        for(auto const & x : block_variants)
+                        {
+                            std::cerr << x << "\n";
+                        }
+                        std::cerr << "Block result: " << "\n";
+                        std::cerr << hcr << "\n";
+#endif
+                        raw_match = hap_match = hcr.outcome == dco_match;
+                        hap_fail = !(hcr.outcome == dco_match || hcr.outcome == dco_mismatch);
+                    }
+                    catch(std::runtime_error &e)
+                    {
+                    }
+                    catch(std::logic_error &e)
+                    {
                     }
                 }
-                catch(std::logic_error &e)
+                if(!hap_match)
                 {
-                    if (error_out_stream)
+                    try
                     {
-                        *error_out_stream << chr << "\t" << block_start << "\t" << block_end+1 << "\t" << "hap_error\t" << e.what() << "\n";
+                        hap_run = true;
+                        hap_fail = true;
+                        hc.setRegion(chr.c_str(), std::max(int64_t(0), block_start-hb_expand), block_end + hb_expand,
+                                     block_variants, r1, r2);
+                        DiploidComparisonResult const & hcr = hc.getResult();
+#ifdef DEBUG_XCMP
+                        std::cerr << chr << ":" << block_start << "-" << block_end << " variants: " << "\n";
+                        for(auto const & x : block_variants)
+                        {
+                            std::cerr << x << "\n";
+                        }
+                        std::cerr << "Block result: " << "\n";
+                        std::cerr << hcr << "\n";
+#endif
+                        hap_match = hcr.outcome == dco_match;
+                        hap_fail = !(hcr.outcome == dco_match || hcr.outcome == dco_mismatch);
+                    }
+                    catch(std::runtime_error &e)
+                    {
+                        if (error_out_stream)
+                        {
+                            *error_out_stream << chr << "\t" << block_start << "\t" << block_end+1 << "\t" << "hap_error\t" << e.what() << "\n";
+                        }
+                    }
+                    catch(std::logic_error &e)
+                    {
+                        if (error_out_stream)
+                        {
+                            *error_out_stream << chr << "\t" << block_start << "\t" << block_end+1 << "\t" << "hap_error\t" << e.what() << "\n";
+                        }
                     }
                 }
             }
@@ -476,6 +572,11 @@ int main(int argc, char* argv[]) {
             else
             {
                 result += "mismatch";
+            }
+
+            if(raw_match)
+            {
+                result += "_raw";
             }
 
             if(error_out_stream)

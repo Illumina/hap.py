@@ -120,62 +120,70 @@ void VariantLocationAggregator::add(Variants const & vs)
     Variants & back = _impl->buffered_variants.back();
     std::list<size_t> combine;
     size_t nsamples = std::max(vs.calls.size(), back.calls.size());
+
+    // check if we need to merge across types
+    bool vs_has_snps = false, vs_has_indels = false;
+    bool back_has_snps = false, back_has_indels = false;
+
+    for (size_t i = 0; i < nsamples; ++i)
+    {
+        for(size_t ci = 0; ci < vs.calls[i].ngt; ++ci)
+        {
+            if(vs.calls[i].gt[ci] > 0)
+            {
+                RefVar const & rv = vs.variation[vs.calls[i].gt[ci]-1];
+                int64_t reflen = rv.end - rv.start + 1;
+                int64_t altlen = (int64_t)rv.alt.size();
+                if(reflen == 1 && altlen == 1)
+                {
+                    vs_has_snps = true;
+                }
+                else
+                {
+                    vs_has_indels = true;
+                }
+            }
+        }
+        for(size_t ci = 0; ci < back.calls[i].ngt; ++ci)
+        {
+            if(back.calls[i].gt[ci] > 0)
+            {
+                RefVar const & rv = back.variation[back.calls[i].gt[ci]-1];
+                int64_t reflen = rv.end - rv.start + 1;
+                int64_t altlen = (int64_t)rv.alt.size();
+                if(reflen == 1 && altlen == 1)
+                {
+                    back_has_snps = true;
+                }
+                else
+                {
+                    back_has_indels = true;
+                }
+            }
+        }
+    }
+
+    bool compatible_vartype = true;
+    if(( vs_has_snps && back_has_indels ) || ( vs_has_indels && back_has_snps ))
+    {
+        compatible_vartype = false;
+    }
+    if ( _impl->aggregationtype == aggregate_across_types )
+    {
+        compatible_vartype = true;
+    }
+
+    if(!compatible_vartype)
+    {
+        _impl->buffered_variants.push_back(vs);
+        return;
+    }
+
     for (size_t i = 0; i < nsamples; ++i)
     {
         bool can_combine = false;
         bool vs_has_call = (i < vs.calls.size()) && (!vs.calls[i].isNocall());
         bool back_has_call = (i < back.calls.size()) && (!back.calls[i].isNocall());
-        bool compatible_vartype = true;
-        if(vs_has_call && back_has_call)
-        {
-            bool vs_has_snps = false, vs_has_indels = false;
-            bool back_has_snps = false, back_has_indels = false;
-
-            for(size_t ci = 0; ci < vs.calls[i].ngt; ++ci)
-            {
-                if(vs.calls[i].gt[ci] > 0)
-                {
-                    RefVar const & rv = vs.variation[vs.calls[i].gt[ci]-1];
-                    int64_t reflen = rv.end - rv.start + 1;
-                    int64_t altlen = (int64_t)rv.alt.size();
-                    if(reflen == 1 && altlen == 1)
-                    {
-                        vs_has_snps = true;
-                    }
-                    else
-                    {
-                        vs_has_indels = true;
-                    }
-                }
-            }
-            for(size_t ci = 0; ci < back.calls[i].ngt; ++ci)
-            {
-                if(back.calls[i].gt[ci] > 0)
-                {
-                    RefVar const & rv = back.variation[back.calls[i].gt[ci]-1];
-                    int64_t reflen = rv.end - rv.start + 1;
-                    int64_t altlen = (int64_t)rv.alt.size();
-                    if(reflen == 1 && altlen == 1)
-                    {
-                        back_has_snps = true;
-                    }
-                    else
-                    {
-                        back_has_indels = true;
-                    }
-                }
-            }
-
-            if(( vs_has_snps && back_has_indels ) || ( vs_has_indels && back_has_snps ))
-            {
-                compatible_vartype = false;
-            }
-        }
-
-        if ( _impl->aggregationtype == aggregate_across_types )
-        {
-            compatible_vartype = true;
-        }
         switch(_impl->aggregationtype)
         {
             case aggregate_nocall:

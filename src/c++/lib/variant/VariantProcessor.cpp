@@ -38,7 +38,9 @@
 #include <boost/range/adaptor/reversed.hpp>
 
 /* #define DEBUG_VARIANTPROCESSOR */
+#ifdef _DEBUG
 /* #define DEBUG_VARIANTPROCESSOR_STEPS */
+#endif
 
 namespace variant {
 
@@ -217,12 +219,14 @@ struct VariantProcessor::VariantProcessorImpl
         mode(rhs.mode),
         param(rhs.param),
         source(rhs.source),
-        processing_steps(rhs.processing_steps) {}
+        processing_steps(rhs.processing_steps),
+        output_queue(rhs.output_queue) {}
 
     VariantBufferMode mode;
     int64_t param;
     VariantReader * source;
     std::list< AbstractVariantProcessingStep * > processing_steps;
+    std::list<Variants> output_queue;
 };
 
 VariantProcessor::VariantProcessor()
@@ -285,6 +289,7 @@ void VariantProcessor::setReader(VariantReader & input, VariantBufferMode mode, 
  */
 void VariantProcessor::rewind(const char * chr, int64_t startpos)
 {
+    _impl->output_queue.clear();
     if (!_impl->processing_steps.empty())
     {
         // flush starting at the end
@@ -305,6 +310,10 @@ void VariantProcessor::rewind(const char * chr, int64_t startpos)
  **/
 Variants & VariantProcessor::current()
 {
+    if(!_impl->output_queue.empty())
+    {
+        return _impl->output_queue.front();
+    }
     if (_impl->processing_steps.empty())
     {
         if (!_impl->source)
@@ -328,6 +337,14 @@ Variants & VariantProcessor::current()
  */
 bool VariantProcessor::advance()
 {
+    if(!_impl->output_queue.empty())
+    {
+        _impl->output_queue.pop_front();
+        if(!_impl->output_queue.empty())
+        {
+            return true;
+        }
+    }
     if (_impl->processing_steps.empty())
     {
         if (!_impl->source)
@@ -406,6 +423,13 @@ bool VariantProcessor::advance()
         return advance_success;
     }
 }
+
+/** put back a variant to the last stage */
+void VariantProcessor::putBack(Variants const & v)
+{
+    _impl->output_queue.push_front(v);
+}
+
 
 /**
  * @brief Remove unused alleles

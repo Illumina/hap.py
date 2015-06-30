@@ -45,7 +45,9 @@
 
 #include "Error.hh"
 
-// #define _DEBUG_DIPLOIDREFERENCE
+#ifdef _DEBUG
+/* #define _DEBUG_DIPLOIDREFERENCE */
+#endif
 
 namespace haplotypes
 {
@@ -193,7 +195,12 @@ void DiploidReference::setRegion(
         std::cerr << "Nodes: " << "\n";
         for (size_t i = 0; i < nodes.size(); ++i)
         {
-            std::cerr << i << ": " << nodes[i] << " het:" << nodes[i].het << " filtered: " << nodes[i].filtered << "\n";
+            std::cerr << i << ": " << nodes[i] << " het:" << nodes[i].het << " filtered: " << nodes[i].filtered << " type: " << nodes[i].type << "\n";
+        }
+        std::cerr << "Edges: " << "\n";
+        for (size_t i = 0; i < edges.size(); ++i)
+        {
+            std::cerr << i << ": " << edges[i].u << " -> " << edges[i].v << "\n";
         }
         std::cerr << "Haplotypes seen: " << "\n";
         for (size_t i = 0; i < target.size(); ++i)
@@ -233,22 +240,8 @@ void DiploidReference::setRegion(
                 for (size_t p2 = p1; p2 < nodes_used.size(); ++p2) // we allow matching up p1 with p1 to allow creation of hom blocks via filtered variants
                 {
                     size_t hn_found = 0;
-                    size_t fn_used = 0;
-                    size_t fn_unused = 0;
                     for(size_t n : het_nodes)
                     {
-                        if(nodes[n].filtered)
-                        {
-                            if(nodes_used[p1][nodes.size() - 1 - n] == '1' || nodes_used[p2][nodes.size() - 1 - n] == '1')
-                            {
-                                ++fn_used;
-                            }
-                            if(nodes_used[p1][nodes.size() - 1 - n] == '0' && nodes_used[p2][nodes.size() - 1 - n] == '0')
-                            {
-                                ++fn_unused;
-                            }
-                        }
-
                         if(nodes_used[p1][nodes.size() - 1 - n] + nodes_used[p2][nodes.size() - 1 - n] == '0' + '1')
                         {
                             ++hn_found;
@@ -256,7 +249,6 @@ void DiploidReference::setRegion(
 #ifdef _DEBUG_DIPLOIDREFERENCE
                         std::cerr << "n: " << n << " p1:" << p1 << "(" << nodes_used[p1][nodes.size() - 1 - n] << ")"
                                   << " p2:" << p2 << "(" <<  nodes_used[p2][nodes.size() - 1 - n] << ")"
-                                  << " filtered: " << nodes[n].filtered << " nf: " << fn_used << " nfu: " << fn_unused
                                   << "\n";
 #endif
                     }
@@ -265,22 +257,11 @@ void DiploidReference::setRegion(
                     bool hom_conflict = false;
                     for(size_t n : hom_nodes)
                     {
-                        if (nodes[n].filtered)
+                        // hom variants must be present in every path
+                        if(nodes_used[p1][nodes.size() - 1 - n] != nodes_used[p2][nodes.size() - 1 - n] ||
+                           nodes_used[p2][nodes.size() - 1 - n] != '1')
                         {
-                            // for filtered variants, we need them to either be present or gone!
-                            if(nodes_used[p1][nodes.size() - 1 - n] != nodes_used[p2][nodes.size() - 1 - n])
-                            {
-                                hom_conflict = true;
-                            }
-                        }
-                        else
-                        {
-                            // unfiltered hom variants must be present in every path
-                            if(nodes_used[p1][nodes.size() - 1 - n] != nodes_used[p2][nodes.size() - 1 - n] ||
-                               nodes_used[p2][nodes.size() - 1 - n] != '1')
-                            {
-                                hom_conflict = true;
-                            }
+                            hom_conflict = true;
                         }
                     }
 
@@ -289,11 +270,11 @@ void DiploidReference::setRegion(
                               << "p2: " << p2 << "/" << nodes_used[p2] << " "
                               << "\n";
 
-                    std::cerr << " -- found: " << hn_found << " fn unused: " << fn_unused << " hns: " << het_nodes.size()
+                    std::cerr << " -- found: " << hn_found << " hns: " << het_nodes.size()
                               << " hom_conflict: " << hom_conflict << "\n";
 #endif
                     // covering all hets?
-                    if(hn_found + fn_unused == het_nodes.size() && !hom_conflict)
+                    if(hn_found == het_nodes.size() && !hom_conflict)
                     {
                         DiploidRef r = {
                             p1 != p2,

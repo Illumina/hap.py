@@ -39,17 +39,17 @@
 #include <queue>
 #include <memory>
 
-// #define DEBUG_VARIANTNORMALIZER
+/* #define DEBUG_VARIANTNORMALIZER */
 
 namespace variant
 {
 
 struct VariantAlleleNormalizer::VariantAlleleNormalizerImpl
 {
-    VariantAlleleNormalizerImpl() : refpadding(false), homref(false), limit(-1) {}
+    VariantAlleleNormalizerImpl() : refpadding(false), homref(false), limit(-1), maxpos_chr(""), current_maxpos() {}
     VariantAlleleNormalizerImpl(VariantAlleleNormalizerImpl const & rhs) :
         buffered_variants(rhs.buffered_variants), reference(rhs.reference), refpadding(rhs.refpadding), homref(rhs.homref),
-        limit(rhs.limit)
+        limit(rhs.limit), maxpos_chr(rhs.maxpos_chr), current_maxpos(rhs.current_maxpos)
     {
         if (reference != "")
         {
@@ -57,35 +57,7 @@ struct VariantAlleleNormalizer::VariantAlleleNormalizerImpl
         }
     }
 
-    struct Variants_less
-    {
-        bool operator() (Variants const & l, Variants const & r)
-        {
-            if(l.pos != r.pos)
-            {
-                // std::priority_queue is a max-heap, we
-                // want items with lowest pos to come out first
-                return l.pos > r.pos;
-            }
-            else if (l.len != r.len)
-            {
-                // shorter ref allele comes out first
-                return l.len > r.len;
-            }
-            else if(l.variation.size() != 1 || r.variation.size() != 1)
-            {
-                // if we don't have exactly one allele sort by number of alleles
-                return l.variation.size() > r.variation.size();
-            }
-            else
-            {
-                // each one has exactly one allele, sort by this allele's alt
-                return l.variation[0].alt > r.variation[0].alt;
-            }
-        }
-    };
-
-    std::priority_queue<Variants, std::vector<Variants>, Variants_less > buffered_variants;
+    std::priority_queue<Variants, std::vector<Variants>, VariantCompare > buffered_variants;
 
     std::string reference;
     std::unique_ptr<FastaFile> ref_fasta;
@@ -93,6 +65,8 @@ struct VariantAlleleNormalizer::VariantAlleleNormalizerImpl
     bool refpadding;
     bool homref;
     int64_t limit;
+    std::string maxpos_chr;
+    std::vector<int64_t> current_maxpos;
 
     Variants vs;
 };
@@ -205,6 +179,8 @@ void VariantAlleleNormalizer::add(Variants const & vs)
     }
 
     Variants nv(vs);
+    size_t tmp = 0;
+    _impl->current_maxpos.resize(std::max(_impl->current_maxpos.size(), nv.calls.size()), tmp);
 
 #ifdef DEBUG_VARIANTNORMALIZER
     std::cerr << "before: " << nv << "\n";
@@ -213,17 +189,33 @@ void VariantAlleleNormalizer::add(Variants const & vs)
     {
         int64_t new_start = -1;
         int64_t new_end = -1;
+        int64_t leftshift_limit = -1;
+
+        if(_impl->limit >= 0)
+        {
+            leftshift_limit = nv.pos - _impl->limit;
+        }
 
         for (size_t rvc = 0; rvc < nv.variation.size(); ++rvc)
         {
-            if(_impl->limit < 0)
+            int64_t this_leftshift_limit = leftshift_limit;
+            if(nv.chr == _impl->maxpos_chr)
             {
-                leftShift(*(_impl->ref_fasta), nv.chr.c_str(), nv.variation[rvc]);
+                for(size_t j = 0; j < nv.calls.size(); ++j)
+                {
+                    for(size_t c = 0; c < nv.calls[j].ngt; ++c)
+                    {
+                        if(nv.calls[j].gt[c] - 1 == (int)rvc)
+                        {
+                            this_leftshift_limit = std::max(this_leftshift_limit, _impl->current_maxpos[j]);
+                        }
+                    }
+                }
             }
-            if(_impl->limit > 0)
-            {
-                leftShift(*(_impl->ref_fasta), nv.chr.c_str(), nv.variation[rvc], nv.pos - _impl->limit);
-            }
+#ifdef DEBUG_VARIANTNORMALIZER
+            std::cerr << "leftshift limit for " << nv.variation[rvc] << " is " << this_leftshift_limit << "\n";
+#endif
+            leftShift(*(_impl->ref_fasta), nv.chr.c_str(), nv.variation[rvc], this_leftshift_limit);
 
             trimLeft(*(_impl->ref_fasta), nv.chr.c_str(), nv.variation[rvc], _impl->refpadding);
             trimRight(*(_impl->ref_fasta), nv.chr.c_str(), nv.variation[rvc], _impl->refpadding);
@@ -241,10 +233,45 @@ void VariantAlleleNormalizer::add(Variants const & vs)
         {
             nv.pos = new_start;
             nv.len = new_end - new_start + 1;
+            // handle insertions
+            if (nv.len == 0)
+            {
+                --nv.pos;
+                nv.len = 1;
+            }
         }
     }
 #ifdef DEBUG_VARIANTNORMALIZER
     std::cerr << "after: " << nv << "\n";
+#endif
+    if(_impl->maxpos_chr != nv.chr)
+    {
+        for(size_t j = 0; j < nv.calls.size(); ++j)
+        {
+            if(!nv.calls[j].isNocall() && !nv.calls[j].isHomref())
+            {
+                _impl->current_maxpos[j] = nv.pos + nv.len - 1;
+            }
+        }
+    }
+    else
+    {
+        for(size_t j = 0; j < nv.calls.size(); ++j)
+        {
+            if(!nv.calls[j].isNocall() && !nv.calls[j].isHomref())
+            {
+                _impl->current_maxpos[j] = std::max(nv.pos + nv.len - 1, _impl->current_maxpos[j]);
+            }
+        }
+    }
+    _impl->maxpos_chr = nv.chr;
+#ifdef DEBUG_VARIANTNORMALIZER
+    std::cerr << "new max-shifting pos on " << _impl->maxpos_chr << " : ";
+    for(size_t s = 0; s < _impl->current_maxpos.size(); ++s)
+    {
+        std::cerr << " s" << s << ": " << _impl->current_maxpos[s] << "  ";
+    }
+    std::cerr << "\n";
 #endif
     _impl->buffered_variants.push(nv);
 }
@@ -287,8 +314,10 @@ bool VariantAlleleNormalizer::advance()
 /** empty internal buffer */
 void VariantAlleleNormalizer::flush()
 {
-    _impl->buffered_variants = std::priority_queue<Variants, std::vector<Variants>, VariantAlleleNormalizerImpl::Variants_less >();
+    _impl->buffered_variants = std::priority_queue<Variants, std::vector<Variants>, VariantCompare >();
     _impl->vs = Variants();
+    _impl->maxpos_chr = "";
+    _impl->current_maxpos.resize(0);
 }
 
 }

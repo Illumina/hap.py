@@ -50,20 +50,21 @@ namespace variant {
             bool refpadding = true,
             bool trimalleles = false,
             bool splitalleles = false,
-            int mergebylocation = false,
+            int mergebylocation = 0,
             bool uniqalleles = false,
             bool calls_only = true,
             bool homref_split = false,
             bool primitive_split = false,
             bool homref_output = false,
-            int64_t leftshift_limit = -1
+            int64_t leftshift_limit = -1,
+            bool collect_raw = false
         );
         ~VariantInput();
 
         /** Read variants from a block into a list */
         void get(const char * chr, int64_t start, int64_t end, std::list<Variants> & output);
 
-        enum processor_id { variants, homref };
+        enum processor_id { variants, homref, raw };
         /** Direct access to variant processor */
         VariantProcessor & getProcessor(processor_id id = variants);
 

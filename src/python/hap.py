@@ -61,7 +61,7 @@ def blocksplitWrapper(location_str, args):
               args.vcf2,
               location_str,
               tf.name,
-              args.window,
+              args.window*2,
               args.pieces,
               0 if args.usefiltered or args.usefiltered_truth else 1)
 
@@ -113,7 +113,7 @@ def xcmpWrapper(location_str, args):
     else:
         bname = ""
 
-    to_run = "xcmp %s %s -l %s -o %s %s -r %s -f %i --apply-filters-truth %i -n %i -V %i --leftshift %i --expand-hapblocks %i --window %i" % \
+    to_run = "xcmp %s %s -l %s -o %s %s -r %s -f %i --apply-filters-truth %i -n %i -V %i --leftshift %i --expand-hapblocks %i --window %i --compare-raw %i" % \
              (args.vcf1,
               args.vcf2,
               location_str,
@@ -126,7 +126,8 @@ def xcmpWrapper(location_str, args):
               1 if args.int_preprocessing else 0,
               1 if args.int_preprocessing_ls else 0,
               args.hb_expand,
-              args.window)
+              args.window,
+              1 if args.int_match_raw else 0)
 
     # regions / targets already have been taken care of in blocksplit / preprocessing
 
@@ -249,7 +250,7 @@ def main():
 
     parser.add_argument("--no-partial-credit", dest="partial_credit", action="store_false",
                         help="Give credit for partially matched variants. "
-                             "This is equivalent to --no-internal-leftshift and --no-internal-preprocessing.")
+                             "This is equivalent to --internal-leftshift and --no-internal-preprocessing.")
 
     parser.add_argument("--internal-leftshift", dest="int_preprocessing_ls", action="store_true",
                         help="Switch off xcmp's internal VCF leftshift preprocessing.")
@@ -263,6 +264,10 @@ def main():
     parser.add_argument("--no-internal-preprocessing", dest="int_preprocessing", action="store_false",
                         help="Switch off xcmp's internal VCF leftshift preprocessing.")
 
+    parser.add_argument("--match-raw", dest="int_match_raw", action="store_true", default=False,
+                        help="Add a matching step in xcmp which also matches raw variant calls. This helps"
+                             " when comparing files with very different representations.")
+
     parser.add_argument("--no-auto-index", dest="auto_index", action="store_false", default=True,
                         help="Disable automatic index creation for input files. "
                              "The index is only necessary at this stage if we want to auto-detect locations. "
@@ -270,17 +275,17 @@ def main():
                              "this is not needed and can be switched off to save time.")
 
     parser.add_argument("-w", "--window-size", dest="window",
-                        default=30, type=int,
-                        help="Window size for haplotype block finder.")
+                        default=50, type=int,
+                        help="Minimum distance between two variants such that they fall into different haplotype "
+                             "blocks")
 
     parser.add_argument("--enumeration-threshold", dest="max_enum",
-                        default=2048, type=int,
+                        default=16768, type=int,
                         help="Enumeration threshold / maximum number of sequences to enumerate per block.")
 
     parser.add_argument("-e", "--expand-hapblocks", dest="hb_expand",
                         default=30, type=int,
                         help="Expand haplotype blocks by this many basepairs left and right.")
-
     parser.add_argument("--threads", dest="threads",
                         default=multiprocessing.cpu_count(), type=int,
                         help="Number of threads to use.")
@@ -303,7 +308,7 @@ def main():
     verbosity_options.add_argument("--quiet", dest="quiet", default=False, action="store_true",
                                    help="Set logging level to output errors only.")
 
-    args, _ = parser.parse_known_args()
+    args, unknown_args = parser.parse_known_args()
 
     if not Tools.has_sge:
         args.force_interactive = True
@@ -322,7 +327,11 @@ def main():
                         format='%(asctime)s %(levelname)-8s %(message)s',
                         level=loglevel)
 
-    if len(sys.argv) < 2:
+    # remove some safe unknown args
+    unknown_args = [x for x in unknown_args if x not in ["--force-interactive"]]
+    if len(sys.argv) < 2 or len(unknown_args) > 0:
+        if unknown_args:
+            logging.error("Unknown arguments specified : %s " % str(unknown_args))
         parser.print_help()
         exit(0)
 
@@ -338,6 +347,11 @@ def main():
         # partial_credit switch is overridden by --no-* switches
         if args.int_preprocessing is not None:
             args.int_preprocessing = True
+        if args.int_preprocessing_ls is not None:
+            args.int_preprocessing_ls = True
+    elif args.partial_credit is not None:  # explicitly set to false
+        if args.int_preprocessing is not None:
+            args.int_preprocessing = False
         if args.int_preprocessing_ls is not None:
             args.int_preprocessing_ls = True
 
@@ -438,8 +452,8 @@ def main():
         elif args.fixchr_truth is None:
             # autodetect chr naming
             count_with_fix = len([__ for __ in h1["tabix"]["chromosomes"]
-                                 if ("chr%s" % str(_)) in args.locations])
-            count_no_fix = len([__ for __ in h1["tabix"]["chromosomes"] if str(_) in args.locations])
+                                 if ("chr%s" % str(__)) in args.locations])
+            count_no_fix = len([__ for __ in h1["tabix"]["chromosomes"] if str(__) in args.locations])
             logging.info("Truth: Number of chromosome names matching with / without renaming : %i / %i " % (
                 count_with_fix, count_no_fix))
             if count_with_fix > count_no_fix:
@@ -458,8 +472,8 @@ def main():
         elif args.fixchr_query is None:
             # autodetect chr naming
             count_with_fix = len([__ for __ in h2["tabix"]["chromosomes"]
-                                 if ("chr%s" % str(_)) in args.locations])
-            count_no_fix = len([__ for __ in h2["tabix"]["chromosomes"] if str(_) in args.locations])
+                                 if ("chr%s" % str(__)) in args.locations])
+            count_no_fix = len([__ for __ in h2["tabix"]["chromosomes"] if str(__) in args.locations])
             logging.info("Query: Number of chromosome names matching with / without renaming : %i / %i " % (
                 count_with_fix, count_no_fix))
             if count_with_fix > count_no_fix:

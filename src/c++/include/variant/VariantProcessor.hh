@@ -79,6 +79,8 @@ public:
      */
     bool advance();
 
+    /** put back a variant to the last stage */
+    void putBack(Variants const & v);
 private:
     struct VariantProcessorImpl;
     VariantProcessorImpl * _impl;

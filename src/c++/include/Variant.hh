@@ -205,6 +205,84 @@ struct Variants
 
 };
 
+/** variant comparison operator that makes sure indels go after SNPs
+ *  and that insertions go last (because they get ref-padded and actually
+ *  start after everything else) */
+struct VariantCompare
+{
+    bool operator() (Variants const & v1, Variants const & v2)
+    {
+        if(v1.pos == v2.pos)
+        {
+            // make sure indels come after SNPs
+            int v1_types = 0;
+            int v2_types = 0;
+            size_t v1_max_reflen = 0;
+            size_t v2_max_reflen = 0;
+            size_t v1_max_altlen = 0;
+            size_t v2_max_altlen = 0;
+            for(RefVar const & rv : v1.variation)
+            {
+                int64_t reflen = rv.end - rv.start + 1;
+                v1_max_reflen = std::max(reflen, (int64_t)v1_max_reflen);
+                v1_max_altlen = std::max(rv.alt.size(), v1_max_altlen);
+                if(rv.end - rv.start == 0 && rv.alt.size() == 1)
+                {
+                    v1_types = v1_types | 4;
+                }
+                else if(reflen == 0 && rv.alt.size() > 0)
+                {
+                    // insertions go last
+                    v1_types = v1_types | 1;
+                }
+                else // non-ref-padded stuff goes after snps, but before ref-padded variants
+                {
+                    v1_types = v1_types | 2;
+                }
+            }
+            for(RefVar const & rv : v2.variation)
+            {
+                int64_t reflen = rv.end - rv.start + 1;
+                v2_max_reflen = std::max(rv.end - rv.start + 1, (int64_t)v2_max_reflen);
+                v2_max_altlen = std::max(rv.alt.size(), v2_max_altlen);
+                if(rv.end - rv.start == 0 && rv.alt.size() == 1)
+                {
+                    v2_types = v2_types | 4;
+                }
+                else if(reflen == 0 && rv.alt.size() > 0)
+                {
+                    // insertions go last
+                    v2_types = v2_types | 1;
+                }
+                else // non-ref-padded stuff goes after snps, but before ref-padded variants
+                {
+                    v2_types = v2_types | 2;
+                }
+            }
+
+            if(v1_types == v2_types)
+            {
+                if(v1_max_reflen == v2_max_reflen)
+                {
+                    return v1_max_altlen > v2_max_altlen;
+                }
+                else
+                {
+                    return v1_max_reflen > v2_max_reflen;
+                }
+            }
+            else
+            {
+                return v1_types < v2_types;
+            }
+        }
+        else
+        {
+            return v1.pos > v2.pos;
+        }
+    }
+};
+
 /** find/replace wrapper to set INFO fields via info string.
  *  Warning: doens't work for flags (needs the '=').
  *  Pass an empty string to remove the field.

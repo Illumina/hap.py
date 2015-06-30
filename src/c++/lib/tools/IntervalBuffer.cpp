@@ -99,7 +99,7 @@ void IntervalBuffer::addInterval(int64_t start, int64_t end, size_t lane)
 {
     if (start > end)
     {
-        error("IntervalBuffer : cannot add interval with start %i < end %i", start, end);
+        return;
     }
     if (_impl->lanes.size() <= lane)
     {

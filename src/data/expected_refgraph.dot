@@ -1,13 +1,13 @@
 digraph G { 
-node_0  [label="start: chrQ", shape=diamond, penwidth=2, color=cadetblue4] ;
-node_1  [label="homref chrQ:1-4", shape=box, penwidth=2, color=cadetblue4] ;
-node_2  [label="alt: A chrQ:1-4", shape=parallelogram, penwidth=2, color=cadetblue4] ;
-node_3  [label="alt: CGGG chrQ:6-6", shape=parallelogram, penwidth=2, color=black] ;
-node_4  [label="homref chrQ:10-10", shape=box, penwidth=2, color=cadetblue4] ;
+node_0  [label="start: chrQ:1", shape=diamond, penwidth=2, color=cadetblue4] ;
+node_1  [label="homref chrQ:2-1", shape=box, penwidth=2, color=cadetblue4] ;
+node_2  [label="alt:  chrQ:2-4", shape=parallelogram, penwidth=2, color=cadetblue4] ;
+node_3  [label="alt: GGG chrQ:7-6", shape=parallelogram, penwidth=2, color=black] ;
+node_4  [label="homref chrQ:10-9", shape=box, penwidth=2, color=cadetblue4] ;
 node_5  [label="alt: G chrQ:10-10", shape=parallelogram, penwidth=2, color=cadetblue4] ;
-node_6  [label="homref chrQ:11-11", shape=box, penwidth=2, color=red] ;
+node_6  [label="homref chrQ:11-10", shape=box, penwidth=2, color=red] ;
 node_7  [label="alt: T chrQ:11-11", shape=parallelogram, penwidth=2, color=blue] ;
-node_8  [label="homref chrQ:12-12", shape=box, penwidth=2, color=red] ;
+node_8  [label="homref chrQ:12-11", shape=box, penwidth=2, color=red] ;
 node_9  [label="alt: T chrQ:12-12", shape=parallelogram, penwidth=2, color=blue] ;
 node_10  [label="alt: T chrQ:13-13", shape=parallelogram, penwidth=2, color=red] ;
 node_11  [label="alt: G chrQ:13-13", shape=parallelogram, penwidth=2, color=blue] ;

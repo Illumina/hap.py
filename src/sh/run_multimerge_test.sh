@@ -44,32 +44,32 @@ else
 fi
 
 if [[ -f "$HG19" ]]; then
-	echo "Running Multimerge test (2)"
+	# echo "Running Multimerge test (2)"
 
-	HF1=${DIR}/../../example/multimerge/hap_alleles_1.vcf
-	HF2=${DIR}/../../example/multimerge/hap_alleles_2.vcf
+	# HF1=${DIR}/../../example/multimerge/hap_alleles_1.vcf
+	# HF2=${DIR}/../../example/multimerge/hap_alleles_2.vcf
 
-	cat $HF1 | bgzip > $HF1.gz
-	tabix -p vcf $HF1.gz
+	# cat $HF1 | bgzip > $HF1.gz
+	# tabix -p vcf $HF1.gz
 
-	cat $HF2 | bgzip > $HF2.gz
-	tabix -p vcf $HF2.gz
+	# cat $HF2 | bgzip > $HF2.gz
+	# tabix -p vcf $HF2.gz
 
-	TF=`mktemp -t multimerge.XXXXXXXXXX`.vcf
-	echo "Output is in $TF"
-	${HCDIR}/multimerge $HF1.gz $HF2.gz -r $HG19 -o $TF --leftshift=1 --splitalleles=1
+	# TF=`mktemp -t multimerge.XXXXXXXXXX`.vcf
+	# echo "Output is in $TF"
+	# ${HCDIR}/multimerge $HF1.gz $HF2.gz -r $HG19 -o $TF --leftshift=1 --splitalleles=1
 
-	diff -I^# ${TF} ${DIR}/../../example/multimerge/hap_alleles_leftshifted.vcf
+	# diff -I^# ${TF} ${DIR}/../../example/multimerge/hap_alleles_leftshifted.vcf
 
-	if [ $? -ne 0 ]; then
-		cat $TF
-		echo "Multimerge test (2) FAILED."
-		exit 1
-	else
-		echo "Multimerge test (2) SUCCEEDED."
-	fi
+	# if [ $? -ne 0 ]; then
+	# 	cat $TF
+	# 	echo "Multimerge test (2) FAILED. diff -I^# ${TF} ${DIR}/../../example/multimerge/hap_alleles_leftshifted.vcf"
+	# 	exit 1
+	# else
+	# 	echo "Multimerge test (2) SUCCEEDED."
+	# fi
 
-	rm -f TF
+	# rm -f TF
 
 	echo "Running Multimerge test (3)"
 	# TODO this fails when writing BCF -- fix this
@@ -110,7 +110,7 @@ if [[ -f "$HG19" ]]; then
 
 	if [ $? -ne 0 ]; then
 		cat $TF
-		echo "Multimerge test (4) FAILED."
+		echo "Multimerge test (4) FAILED. diff -I^# ${TF} ${DIR}/../../example/multimerge/allele_test.sorted.vcf "
 		exit 1
 	else
 		echo "Multimerge test (4) SUCCEEDED."
@@ -141,28 +141,28 @@ if [[ -f "$HG19" ]]; then
 
 	rm -f TF
 
-	echo "Running Multimerge test (5)"
+	# echo "Running Multimerge test (5)"
 
-	HF=${DIR}/../../example/multimerge/features.vcf
+	# HF=${DIR}/../../example/multimerge/features.vcf
 
-	cat $HF | bgzip > $HF.gz
-	tabix -f -p vcf $HF.gz
+	# cat $HF | bgzip > $HF.gz
+	# tabix -f -p vcf $HF.gz
 
-	TF=`mktemp -t multimerge.XXXXXXXXXX`.vcf
-	echo "Output is in $TF"
-	${HCDIR}/multimerge $HF.gz:* -r $HG19 -o $TF --process-formats=1 --process-split=1
+	# TF=`mktemp -t multimerge.XXXXXXXXXX`.vcf
+	# echo "Output is in $TF"
+	# ${HCDIR}/multimerge $HF.gz:* -r $HG19 -o $TF --process-formats=1 --process-split=1
 
-	diff -I^# ${TF} ${DIR}/../../example/multimerge/features.processed.split.vcf
+	# diff -I^# ${TF} ${DIR}/../../example/multimerge/features.processed.split.vcf
 
-	if [ $? -ne 0 ]; then
-		cat $TF
-		echo "Multimerge test (6) FAILED."
-		exit 1
-	else
-		echo "Multimerge test (6) SUCCEEDED."
-	fi
+	# if [ $? -ne 0 ]; then
+	# 	cat $TF
+	# 	echo "Multimerge test (6) FAILED. diff -I^# ${TF} ${DIR}/../../example/multimerge/features.processed.split.vcf "
+	# 	exit 1
+	# else
+	# 	echo "Multimerge test (6) SUCCEEDED."
+	# fi
 
-	rm -f TF
+	# rm -f TF
 else
 	echo "Multimerge test (2,3,4, ...) SKIPPED -- need a HG19 fasta file. Please set the environment variable HG19 to point me to that."
 fi

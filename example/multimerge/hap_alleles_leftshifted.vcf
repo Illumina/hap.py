@@ -1,4 +1,4 @@
-##fileformat=VCFv4.2
+##fileformat=VCFv4.1
 ##FILTER=<ID=PASS,Description="All filters passed">
 ##reference=hg19
 ##contig=<ID=chr1,length=249250621>
@@ -24,12 +24,17 @@
 ##contig=<ID=chr21,length=48129895>
 ##contig=<ID=chr22,length=51304566>
 ##contig=<ID=chrX,length=155270560>
-##INFO=<ID=END,Number=1,Type=Integer,Description="SV end position">
+##INFO=<ID=END,Number=.,Type=Integer,Description="SV end position">
+##FORMAT=<ID=AGT,Number=1,Type=String,Description="Genotypes at ambiguous locations">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=GQ,Number=1,Type=Float,Description="Genotype Quality">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
+##FORMAT=<ID=AD,Number=A,Type=Integer,Description="Allele Depths">
+##FORMAT=<ID=ADO,Number=.,Type=Integer,Description="Summed depth of non-called alleles.">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	hap_alleles_1.vcf	hap_alleles_2.vcf
-chr1	19472002	.	G	GAC	0	.	.	GT	./.	0/1
-chr1	19472002	.	G	GAC	0	.	.	GT	0/1	./.
 chr1	19472002	.	GACACACACACACACACACAC	G	0	.	.	GT	0/1	0/1
-chr1	31755330	.	GTATC	G	0	.	.	GT	./.	0/1
-chr1	31755330	.	GTATC	G	0	.	.	GT	0/1	./.
+chr1	19472022	.	C	CAC	0	.	.	GT	./.	0/1
+chr1	19472022	.	C	CAC	0	.	.	GT	0/1	./.
 chr1	31755330	.	GTATCTATC	G	0	.	.	GT	0/1	0/1
+chr1	31755334	.	CTATC	C	0	.	.	GT	./.	0/1
+chr1	31755334	.	CTATC	C	0	.	.	GT	0/1	./.

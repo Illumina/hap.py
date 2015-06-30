@@ -1,0 +1,22 @@
+,TRUTH.TOTAL,QUERY.TOTAL,METRIC.Recall.HC,METRIC.Recall2.HC,METRIC.Precision.HC,METRIC.Frac_NA.HC
+Alleles,3996,4041,1.0,1.0,1.0,0.0
+Alleles.DEL,1939,1908,1.0,1.0,1.0,0.0
+Alleles.INS,1880,1839,1.0,1.0,1.0,0.0
+Alleles.SNP,2214,2309,1.0,1.0,1.0,0.0
+Alleles.other,0,0,0.0,0.0,0.0,0.0
+Locations,4405,4027,1.0,1.0,1.0,0.0
+Locations.INDEL,1773,1720,1.0,1.0,1.0,0.0
+Locations.INDEL.het,866,851,1.0,1.0,1.0,0.0
+Locations.INDEL.hetalt,9,13,1.0,1.0,1.0,0.0
+Locations.INDEL.homalt,898,856,1.0,1.0,1.0,0.0
+Locations.INDEL.unknown,0,0,0.0,0.0,0.0,0.0
+Locations.SNP,2214,2307,1.0,1.0,1.0,0.0
+Locations.SNP.het,1305,1342,1.0,1.0,1.0,0.0
+Locations.SNP.hetalt,0,1,0.0,0.0,1.0,0.0
+Locations.SNP.homalt,909,964,1.0,1.0,1.0,0.0
+Locations.SNP.unknown,0,0,0.0,0.0,0.0,0.0
+Locations.het,2171,2193,1.0,1.0,1.0,0.0
+Locations.hetalt,9,14,1.0,1.0,1.0,0.0
+Locations.homalt,1807,1820,1.0,1.0,1.0,0.0
+Locations.unknown,418,0,1.0,1.0,0.0,0.0
+hap.py-v0.2.0-public-no-muscle/Users/peterkrusche/workspace/hap.py-v0.2.1/bin/hap.py /Users/peterkrusche/Documents/Code/workspace/hap.py/src/sh/../../example/NIST_indels/Complex_1ormoreindels_NIST2.19.vcf.gz /Users/peterkrusche/Documents/Code/workspace/hap.py/src/sh/../../example/NIST_indels/Complex_1ormoreindels_RTG.vcf.gz -o /var/folders/9q/mlzvl1m94y7cb9zyftt5bxy40000gn/T/happy.XXXXXXXXXX.X78nynl4 -P -l chr21 -X --verbose --force-interactive,0,0,0.0,0.0,0.0,0.0

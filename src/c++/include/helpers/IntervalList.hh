@@ -101,7 +101,7 @@ public:
     {
         if (iv.start > iv.end)
         {
-            error("IntervalList : cannot add interval with start %i < end %i", iv.start, iv.end);
+            return;
         }
 
         // find first interval that ends after start - 1 (so we join adjacent intervals)

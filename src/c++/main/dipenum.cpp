@@ -69,6 +69,7 @@ int main(int argc, char* argv[]) {
     int max_n_haplotypes = 4096;
 
     bool apply_filters = true;
+    bool preprocess = true;
 
     try
     {
@@ -83,6 +84,7 @@ int main(int argc, char* argv[]) {
             ("reference,r", po::value<std::string>(), "The reference fasta file.")
             ("max-n-haplotypes", po::value<int>(), "Maximum number of haplotypes to enumerate.")
             ("apply-filters,f", po::value<int>(), "Apply filters in VCF (default to 1)")
+            ("preprocess,P", po::value<bool>(), "Preprocess variants")
         ;
 
         po::positional_options_description popts;
@@ -116,8 +118,6 @@ int main(int argc, char* argv[]) {
             file = vm["input-file"].as< std::string >();
             std::vector<std::string> v;
             stringutil::split(file, v, ":");
-
-            std::string filename, sample = "";
 
             // in case someone passes a ":"
             assert(v.size() > 0);
@@ -162,6 +162,11 @@ int main(int argc, char* argv[]) {
         {
             apply_filters = vm["apply-filters"].as< int >() != 0;
         }
+
+        if (vm.count("preprocess"))
+        {
+            preprocess = vm["preprocess"].as<bool>() != 0;
+        }
     }
     catch (po::error & e)
     {
@@ -186,12 +191,12 @@ int main(int argc, char* argv[]) {
         int ix = r.addSample(file.c_str(), sample.c_str());
         VariantInput vi(
             ref_fasta.c_str(),
-            true,           // bool leftshift
-            true,           // bool refpadding
+            preprocess,           // bool leftshift
+            false,           // bool refpadding
             false,          // bool trimalleles = false,
             false,          // bool splitalleles = false,
             0,              // int mergebylocation = false,
-            true,           // bool uniqalleles = false,
+            preprocess,           // bool uniqalleles = false,
             false,          // bool calls_only = true,
             false           // bool homref_split = false
         );

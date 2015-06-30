@@ -140,7 +140,7 @@ def simplify_counts(counts, snames=None):
             continue
 
         # turn FP outside of confident regions into UNK
-        if vtype == "FP" and not "CONF" in tags:
+        if vtype == "FP" and not "CONF" in tags and kind == "missing":
             vtype = "UNK"
 
         for k2, v2 in v.iteritems():

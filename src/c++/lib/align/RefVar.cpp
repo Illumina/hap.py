@@ -68,19 +68,38 @@ void trimLeft(FastaFile & f, const char * chr, RefVar & rv, bool refpadding)
 void trimRight(FastaFile & f, const char * chr, RefVar & rv, bool refpadding)
 {
     // trim right
-    std::string ref = f.query(chr, rv.start, rv.end);
-    int64_t apos = rv.alt.size() - 1;
-    int64_t rpos = ref.size() - 1;
-    int64_t ref_min = refpadding ? 1 : 0;
 
-    while( apos > ref_min
-        && rpos > ref_min
-        && ref[rpos] == rv.alt[apos])
+    int64_t reflen = rv.end - rv.start + 1;
+    int64_t altlen = (int64_t)rv.alt.size();
+    int64_t min_len = refpadding ? 1 : 0;
+
+    if(reflen <= min_len || altlen <= min_len)
     {
-        apos--;
-        rv.end--;
+        return;
     }
-    rv.alt = rv.alt.substr(0, apos+1);
+
+    std::string ref = f.query(chr, rv.start, rv.end);
+
+#ifdef DEBUG_REFVAR
+    std::cerr << rv << " -- ref sq = " << ref << "\n";
+#endif
+
+    while( reflen > min_len
+        && altlen > min_len
+        && ref[reflen - 1] == rv.alt[altlen - 1])
+    {
+        altlen--;
+        reflen--;
+    }
+    rv.end = rv.start + reflen - 1;
+    if(altlen > 0)
+    {
+        rv.alt = rv.alt.substr(0, altlen);
+    }
+    else
+    {
+        rv.alt = "";
+    }
 }
 
 void leftShift(FastaFile & f, const char * chr, RefVar & rv, int64_t pos_min)
@@ -285,8 +304,16 @@ extern void toAlleles(FastaFile & f,
         RefVar const & rv = in[s];
         minpos = std::min(minpos, rv.start);
         minpos = std::min(minpos, rv.end);
-        maxpos = std::max(maxpos, rv.start);
-        maxpos = std::max(maxpos, rv.end);
+        // insertions
+        if(rv.start > rv.end)
+        {
+            maxpos = std::max(maxpos, rv.end);
+        }
+        else
+        {
+            maxpos = std::max(maxpos, rv.start);
+            maxpos = std::max(maxpos, rv.end);
+        }
     }
     std::string ref = f.query(chr, minpos, maxpos);
     if((signed)ref.size() != maxpos - minpos + 1)
@@ -473,10 +500,11 @@ void toPrimitives(FastaFile & f, const char * chr, RefVar const & rv, std::list<
 
     // this is a bit of a special case, basically it's a ref-deletion that we can't easily take apart if
     // the alt NT isn't equal to the first ref NT.
-    if(reflen > 1 && altlen == 1)
-    {
-        vars.push_back(rv);
-    }
+    /* if(reflen > 1 && altlen == 1) */
+    /* { */
+    /*     vars.push_back(rv); */
+    /*     return; */
+    /* } */
 
     std::string refseq;
     std::string altseq(rv.alt);

@@ -309,19 +309,19 @@ BOOST_AUTO_TEST_CASE(graphNodesUsed)
 
     std::set<std::string> expected;
 
-    expected.insert("chrQ:0-20:ACCGGGAAACCCTAACCCGGC:101010101011101");
-    expected.insert("chrQ:0-20:ACCGGGAAACTTGAACCCGGT:110101010011101");
-    expected.insert("chrQ:0-20:ACCGGGAAAGCCTAACCCGGC:101010101101101");
-    expected.insert("chrQ:0-20:ACCGGGAAAGTTGAACCCGGT:110101010101101");
-    expected.insert("chrQ:5-20:CGGGAAACCCTAACCCGGC:101010101011011");
-    expected.insert("chrQ:5-20:CGGGAAACTTGAACCCGGT:110101010011011");
-    expected.insert("chrQ:5-20:CGGGAAAGCCTAACCCGGC:101010101101011");
-    expected.insert("chrQ:5-20:CGGGAAAGTTGAACCCGGT:110101010101011");
+    expected.insert("chrQ:1-20:CCGGGAAACCCTAACCCGGC:101010101011101");
+    expected.insert("chrQ:1-20:CCGGGAAACTTGAACCCGGT:110101010011101");
+    expected.insert("chrQ:1-20:CCGGGAAAGCCTAACCCGGC:101010101101101");
+    expected.insert("chrQ:1-20:CCGGGAAAGTTGAACCCGGT:110101010101101");
+    expected.insert("chrQ:6-20:GGGAAACCCTAACCCGGC:101010101011011");
+    expected.insert("chrQ:6-20:GGGAAACTTGAACCCGGT:110101010011011");
+    expected.insert("chrQ:6-20:GGGAAAGCCTAACCCGGC:101010101101011");
+    expected.insert("chrQ:6-20:GGGAAAGTTGAACCCGGT:110101010101011");
 
     size_t is = 0;
     for(std::string const & s : nodes_used)
     {
-        // std::cerr << target[is].repr() + ":" + s << "\n";
+        /* std::cerr << target[is].repr() + ":" + s << "\n"; */
         BOOST_CHECK_EQUAL(expected.count(target[is].repr() + ":" + s), (size_t)1);
         ++is;
     }

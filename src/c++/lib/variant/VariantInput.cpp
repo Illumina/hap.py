@@ -56,7 +56,9 @@ struct VariantInput::VariantInputImpl {
 
     std::unique_ptr<VariantHomrefSplitter> p_homref_splitter;
     std::unique_ptr<VariantTee> p_tee;
+    std::unique_ptr<VariantTee> p_tee_raw;
     std::unique_ptr<VariantProcessor> p_proc_homref;
+    std::unique_ptr<VariantProcessor> p_proc_raw;
     std::shared_ptr<VariantFilterInterface> p_filter;
     std::unique_ptr<VariantInjectorStep> p_homref_filter;
     std::unique_ptr<VariantLocationAggregator> p_homref_merger;
@@ -67,6 +69,7 @@ struct VariantInput::VariantInputImpl {
     std::unique_ptr<VariantAlleleUniq> p_allele_uniq;
     std::unique_ptr<VariantAlleleSplitter> p_allele_splitter;
     std::unique_ptr<VariantPrimitiveSplitter> p_primitive_splitter;
+    std::unique_ptr<VariantLocationAggregator> p_merger_p;
 };
 
 VariantInput::VariantInput(
@@ -81,10 +84,21 @@ VariantInput::VariantInput(
     bool homref_split,
     bool primitive_split,
     bool homref_output,
-    int64_t leftshift_limit
+    int64_t leftshift_limit,
+    bool collect_raw
     ) : _impl(new VariantInputImpl())
 {
     _impl->ref_fasta = _ref_fasta;
+
+    if(collect_raw)
+    {
+        _impl->p_tee_raw = std::move(std::unique_ptr<VariantTee>(new VariantTee()));
+        _impl->proc.addStep(*_impl->p_tee_raw);
+
+        _impl->p_proc_raw = std::move(std::unique_ptr<VariantProcessor>(new VariantProcessor()));
+        _impl->p_proc_raw->addStep(_impl->p_tee_raw->secondOutput());
+    }
+
     if (homref_split)
     {
         _impl->p_homref_splitter = std::move(std::unique_ptr<VariantHomrefSplitter>(new VariantHomrefSplitter()));
@@ -114,19 +128,6 @@ VariantInput::VariantInput(
         }
     }
 
-    if(primitive_split)
-    {
-        _impl->p_primitive_splitter = std::move(std::unique_ptr<VariantPrimitiveSplitter>(new VariantPrimitiveSplitter()));
-        _impl->p_primitive_splitter->setReference(_ref_fasta);
-        _impl->proc.addStep(*_impl->p_primitive_splitter);
-    }
-
-    if (calls_only)
-    {
-        _impl->p_calls_only = std::move(std::unique_ptr<VariantCallsOnly>(new VariantCallsOnly()));
-        _impl->proc.addStep(*_impl->p_calls_only);
-    }
-
     if (trimalleles)
     {
         _impl->p_allele_remover = std::move(std::unique_ptr<VariantAlleleRemover>(new VariantAlleleRemover()));
@@ -139,7 +140,7 @@ VariantInput::VariantInput(
         _impl->proc.addStep(*_impl->p_allele_splitter);
     }
 
-    if (leftshift)
+    if (leftshift && !primitive_split)
     {
         _impl->p_allele_normalizer = std::move(std::unique_ptr<VariantAlleleNormalizer>(new VariantAlleleNormalizer()));
         _impl->p_allele_normalizer->setReference(_ref_fasta);
@@ -149,7 +150,7 @@ VariantInput::VariantInput(
         _impl->proc.addStep(*_impl->p_allele_normalizer);
     }
 
-    if (mergebylocation)
+    if (mergebylocation && !primitive_split)
     {
         _impl->p_merger = std::move(std::unique_ptr<VariantLocationAggregator>(new VariantLocationAggregator()));
         if (mergebylocation == 2)
@@ -163,10 +164,37 @@ VariantInput::VariantInput(
         _impl->proc.addStep(*_impl->p_merger);
     }
 
+    if(primitive_split)
+    {
+        _impl->p_primitive_splitter = std::move(std::unique_ptr<VariantPrimitiveSplitter>(new VariantPrimitiveSplitter()));
+        _impl->p_primitive_splitter->setReference(_ref_fasta);
+        _impl->proc.addStep(*_impl->p_primitive_splitter);
+
+        if (leftshift)
+        {
+            _impl->p_allele_normalizer = std::move(std::unique_ptr<VariantAlleleNormalizer>(new VariantAlleleNormalizer()));
+            _impl->p_allele_normalizer->setReference(_ref_fasta);
+            _impl->p_allele_normalizer->setEnableRefPadding(refpadding);
+            _impl->p_allele_normalizer->setLeftshiftLimit(leftshift_limit);
+            _impl->p_allele_normalizer->setEnableHomrefVariants(true);
+            _impl->proc.addStep(*_impl->p_allele_normalizer);
+        }
+
+        _impl->p_merger_p = std::move(std::unique_ptr<VariantLocationAggregator>(new VariantLocationAggregator()));
+        _impl->p_merger_p->setAggregationType(VariantLocationAggregator::aggregate_hetalt);
+        _impl->proc.addStep(*_impl->p_merger_p);
+    }
+
     if (uniqalleles)
     {
         _impl->p_allele_uniq = std::move(std::unique_ptr<VariantAlleleUniq>(new VariantAlleleUniq()));
         _impl->proc.addStep(*_impl->p_allele_uniq);
+    }
+
+    if (calls_only)
+    {
+        _impl->p_calls_only = std::move(std::unique_ptr<VariantCallsOnly>(new VariantCallsOnly()));
+        _impl->proc.addStep(*_impl->p_calls_only);
     }
 }
 
@@ -220,6 +248,8 @@ VariantProcessor & VariantInput::getProcessor(processor_id id)
 {
     switch(id)
     {
+        case raw:
+            return *(_impl->p_proc_raw);
         case homref:
             return *(_impl->p_proc_homref);
         default:

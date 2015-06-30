@@ -44,7 +44,7 @@
 #include <vector>
 #include <list>
 
-// #define DEBUG_VARIANTCALLSONLY
+/* #define DEBUG_VARIANTCALLSONLY */
 
 namespace variant {
 

@@ -56,6 +56,8 @@
 #endif
 #endif
 
+/* #define DEBUG_DIPLOIDCOMPARE */
+
 namespace haplotypes
 {
 
@@ -203,6 +205,24 @@ void DiploidCompare::setRegion(const char * chr, int64_t start, int64_t end,
     std::list<DiploidRef> di_haps1(_impl->dr.result());
     _impl->dr.setRegion(chr, start, end, vars, ix2);
     std::list<DiploidRef> di_haps2(_impl->dr.result());
+
+#ifdef DEBUG_DIPLOIDCOMPARE
+    std::cerr << "Input variants: " << "\n";
+    for (auto const & v : vars) {
+        std::cerr << v << "\n";
+    }
+    std::cerr << "At " << chr << ":" << start << "-" << end << "\n";
+    std::cerr << "Pairs for truth: " << "\n";
+    for(auto const & x : di_haps1)
+    {
+        std::cerr << x << "\n";
+    }
+    std::cerr << "Pairs for query: " << "\n";
+    for(auto const & x : di_haps2)
+    {
+        std::cerr << x << "\n";
+    }
+#endif
 
     if(di_haps1.empty() || di_haps2.empty())
     {

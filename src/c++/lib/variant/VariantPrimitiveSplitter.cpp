@@ -42,26 +42,21 @@
 #include <memory>
 
 #include "Alignment.hh"
+#include "helpers/IntervalBuffer.hh"
 
+#ifdef _DEBUG
 /* #define DEBUG_VARIANTPRIMITIVESPLITTER */
+#endif
 
 namespace variant {
 
 
 namespace ns_variantprimitivesplitter
 {
-    struct VariantCompare
-    {
-        bool operator() (Variants const & v1, Variants const & v2)
-        {
-            return v1.pos > v2.pos;
-        }
-    };
-
     typedef std::priority_queue<
         Variants,
         std::vector<Variants>,
-        ns_variantprimitivesplitter::VariantCompare
+        VariantCompare
     > VariantQueue;
 }
 
@@ -87,117 +82,6 @@ struct VariantPrimitiveSplitter::VariantPrimitiveSplitterImpl
     std::string reference;
     std::unique_ptr<FastaFile> ref_fasta;
     std::unique_ptr<Alignment> aln;
-
-    /** Push a variant to output_variants
-     *
-     *  This is somewhat comples because we need to take apart a complex variant
-     *  into alt and homref calls here.
-     *  Some of the alleles might be deletions, we return the homref bits
-     *  independently.
-     */
-    void pushOutputVariant(Variants vs)
-    {
-#ifdef DEBUG_VARIANTPRIMITIVESPLITTER
-        std::cerr << "pov in: " << vs << "\n";
-#endif
-        for(size_t ci = 0; ci < vs.calls.size(); ++ci)
-        {
-            Call & c = vs.calls[ci];
-            for(size_t gti = 0; gti < c.ngt; ++gti)
-            {
-                if(c.gt[gti] > 0)
-                {
-#ifdef DEBUG_VARIANTPRIMITIVESPLITTER
-                    assert(vs.pos == std::min(vs.pos, vs.variation[c.gt[gti]-1].start));
-#endif
-                    vs.len = std::max(vs.len, vs.variation[c.gt[gti]-1].end - vs.variation[c.gt[gti]-1].start + 1);
-                }
-            }
-        }
-        // if length is 1, we can report the homref calls together with the SNPs
-        size_t homref_calls_total = 0, calls_total = 0;
-        if(vs.anyHomref())
-        {
-            if(vs.len == 1)
-            {
-                for(size_t ci = 0; ci < vs.calls.size(); ++ci)
-                {
-                    if(!vs.calls[ci].isNocall())
-                    {
-                        ++calls_total;
-                    }
-                    if(vs.calls[ci].isHomref() && vs.calls[ci].isHemi())
-                    {
-                        vs.calls[ci] = Call();
-                        homref_calls_total++;
-                    }
-                }
-                if(homref_calls_total != calls_total)
-                {
-#ifdef DEBUG_VARIANTPRIMITIVESPLITTER
-                    std::cerr << "out-push: " << vs << "\n";
-#endif
-                    output_variants.push(vs);
-                }
-            }
-            else
-            {
-                Variants vs_homref = vs;
-                int calls_added = 0;
-                for(size_t ci = 0; ci < vs.calls.size(); ++ci)
-                {
-                    if(!vs.calls[ci].isNocall())
-                    {
-                        ++calls_total;
-                    }
-                    if(vs.calls[ci].isHomref())
-                    {
-                        if(vs.calls[ci].isHemi())
-                        {
-                            vs_homref.calls[ci] = Call();
-                        }
-                        else
-                        {
-                            ++calls_added;
-                        }
-                        vs.calls[ci] = Call();
-                        ++homref_calls_total;
-                    }
-                    else
-                    {
-                        vs_homref.calls[ci] = Call();
-                    }
-                }
-#ifdef DEBUG_VARIANTPRIMITIVESPLITTER
-                std::cerr << "homref: " << vs_homref << "\n";
-#endif
-                if(calls_added > 0)
-                {
-                    vs_homref.len = 1;
-                    vs_homref.variation.clear();
-#ifdef DEBUG_VARIANTPRIMITIVESPLITTER
-                    std::cerr << "out-push: " << vs_homref << "\n";
-#endif
-                    output_variants.push(vs_homref);
-                }
-                // only add if we haven't actually added everything above already
-                if(homref_calls_total != calls_total)
-                {
-#ifdef DEBUG_VARIANTPRIMITIVESPLITTER
-                    std::cerr << "out-push: " << vs << "\n";
-#endif
-                    output_variants.push(vs);
-                }
-            }
-        }
-        else
-        {
-#ifdef DEBUG_VARIANTPRIMITIVESPLITTER
-            std::cerr << "out-push: " << vs << "\n";
-#endif
-            output_variants.push(vs);
-        }
-    }
 };
 
 
@@ -289,11 +173,15 @@ bool VariantPrimitiveSplitter::advance()
                 continue;
             }
             bool any_realignable = false;
-            for (size_t i = 0; i < v.variation.size(); ++i)
+            std::vector<RefVar> input_variation = v.variation;
+            for (RefVar & rv : input_variation)
             {
-                int64_t reflen = v.variation[i].end - v.variation[i].start + 1;
-                int64_t altlen = (int64_t)v.variation[i].alt.size();
-                if (reflen > 1 && altlen > 0)
+                variant::trimLeft(*_impl->ref_fasta, v.chr.c_str(), rv, false);
+                variant::trimRight(*_impl->ref_fasta, v.chr.c_str(), rv, false);
+
+                int64_t reflen = rv.end - rv.start + 1;
+                int64_t altlen = (int64_t)rv.alt.size();
+                if ( ( reflen >= 1 && altlen > 1  ) || ( reflen > 1 && altlen >= 1  ) )
                 {
                     any_realignable = true;
                     break;
@@ -331,20 +219,26 @@ bool VariantPrimitiveSplitter::advance()
             // push homref / ambiguous variant parts
             if (any_homref || v_homref.anyAmbiguous())
             {
+#ifdef DEBUG_VARIANTPRIMITIVESPLITTER
+                std::cerr << "pushing homref calls " << v_homref  << "\n";
+#endif
                 _impl->output_variants.push(v_homref);
             }
 
-            ns_variantprimitivesplitter::VariantQueue output_queue;
+            // we output separate records for SNPs and indels
+            ns_variantprimitivesplitter::VariantQueue output_queue_for_snps, output_queue_for_indels;
 
-            std::vector< std::list<RefVar> > rvlists(v.variation.size());
+            // produce realigned refvar records
+            std::vector< std::list<RefVar> > rvlists(input_variation.size());
 #ifdef DEBUG_VARIANTPRIMITIVESPLITTER
             std::cerr << "at " << v.pos  << "\n";
 #endif
-            for (size_t i = 0; i < v.variation.size(); ++i)
+            for (size_t i = 0; i < input_variation.size(); ++i)
             {
-                realignRefVar(*(_impl->ref_fasta), v.chr.c_str(), v.variation[i],
+                realignRefVar(*(_impl->ref_fasta), v.chr.c_str(), input_variation[i],
                               _impl->aln.get(), rvlists[i]);
 #ifdef DEBUG_VARIANTPRIMITIVESPLITTER
+                std::cerr << "Before realignment: " << input_variation[i] << "\n";
                 for(auto const & rv : rvlists[i])
                 {
                     std::cerr << "realigned RV " << i << " : " << rv << "\n";
@@ -361,10 +255,6 @@ bool VariantPrimitiveSplitter::advance()
             vnew.calls.resize(v.calls.size());
             for(size_t ci = 0; ci < v.calls.size(); ++ci)
             {
-                if(ci > 0)
-                {
-                    v.calls[ci-1] = Call();
-                }
                 Call & c = v.calls[ci];
 
                 if (c.isNocall())
@@ -372,6 +262,9 @@ bool VariantPrimitiveSplitter::advance()
                     continue;
                 }
 
+#ifdef DEBUG_VARIANTPRIMITIVESPLITTER
+                std::cerr << "pos: " << v.pos << " - primitive-split for call " << ci << " / " << c << "\n";
+#endif
                 for(size_t xci = 0; xci < vnew.calls.size(); ++xci)
                 {
                     vnew.calls[xci] = Call();
@@ -379,33 +272,19 @@ bool VariantPrimitiveSplitter::advance()
 
                 for(size_t gti = 0; gti < c.ngt; ++gti)
                 {
+                    if(c.isHomalt() && gti > 0)
+                    {
+                        // add hom-alts only once
+                        break;
+                    }
                     int rvallele = -1;
                     int dp = 0;
-                    if(c.gt[gti] < 0)
+                    if(c.gt[gti] <= 0)
                     {
                         continue;
                     }
-                    else if(c.gt[gti] == 0)
-                    {
-                        dp = c.ad_ref;
-                    }
-                    else if(c.gt[gti] > 0)
-                    {
-                        rvallele = c.gt[gti] - 1;
-                        dp = c.ad[gti];
-                    }
-
-                    Call refCall;
-                    refCall.ngt = 1;
-                    refCall.gt[0] = 0;
-                    refCall.ad[0] = dp;
-                    refCall.ad_ref = c.ad_ref;
-                    refCall.ad_other = c.ad_other;
-                    for(size_t ff = 0; ff < c.nfilter; ++ff)
-                    {
-                        refCall.filter[ff] = c.filter[ff];
-                    }
-                    refCall.nfilter = c.nfilter;
+                    rvallele = c.gt[gti] - 1;
+                    dp = c.ad[gti];
 
                     Call altCall;
                     altCall.ngt = 1;
@@ -419,87 +298,110 @@ bool VariantPrimitiveSplitter::advance()
                     }
                     altCall.nfilter = c.nfilter;
 
+                    // for het calls, add reference haplotype
+                    if(c.isHet())
+                    {
+                        altCall.ngt = 2;
+                        altCall.gt[1] = 0;
+                        altCall.ad[1] = c.ad_ref;
+                    }
+                    else if (c.isHomalt())
+                    {
+                        altCall.ngt = 2;
+                        altCall.gt[1] = 1;
+                        altCall.ad[1] = dp;
+                    }
+
                     std::list<RefVar>::const_iterator rvx;
                     if((size_t)rvallele < rvlists.size())
                     {
                         rvx = rvlists[rvallele].begin();
                     }
-                    int64_t start = v.pos, end = v.pos + v.len - 1;
-                    while(start <= end)
+
+                    // write records for length of original allele
+                    while((size_t)rvallele < rvlists.size() &&
+                          rvx != rvlists[rvallele].end())
                     {
-                        if((size_t)rvallele < rvlists.size() &&
-                            rvx != rvlists[rvallele].end() && start >= std::min(rvx->end, rvx->start))
+                        vnew.variation.resize(1);
+                        vnew.variation[0] = *rvx;
+                        vnew.pos = rvx->start;
+                        vnew.len = rvx->end - rvx->start + 1;
+                        // handle insertions
+                        if(vnew.len == 0)
                         {
-                            vnew.variation.resize(1);
-                            vnew.variation[0] = *rvx;
-                            vnew.pos = rvx->start;
-                            vnew.len = std::max(int64_t(1), rvx->end - rvx->start + 1);
-                            vnew.calls[ci] = altCall;
 #ifdef DEBUG_VARIANTPRIMITIVESPLITTER
-                            std::cerr << "pushing : " << vnew << "\n";
+                            std::cerr << "*insertion*" << "\n";
 #endif
-                            output_queue.push(vnew);
-                            start = rvx->end + 1;
-                            ++rvx;
+                            vnew.len = 1;
+                            --vnew.pos;
+                        }
+
+                        vnew.calls[ci] = altCall;
+#ifdef DEBUG_VARIANTPRIMITIVESPLITTER
+                        std::cerr << "pushing : " << vnew << "\n";
+#endif
+                        if(rvx->end - rvx->start == 0 && rvx->alt.size() == 1)
+                        {
+#ifdef DEBUG_VARIANTPRIMITIVESPLITTER
+                            std::cerr << "pushing snp: " << vnew << "\n";
+#endif
+                            output_queue_for_snps.push(vnew);
                         }
                         else
                         {
-                            vnew.pos = start;
-                            vnew.len = 1;
-                            vnew.len = 1;
-                            vnew.variation.clear();
-                            vnew.calls[ci] = refCall;
 #ifdef DEBUG_VARIANTPRIMITIVESPLITTER
-                            std::cerr << "pushing : " << vnew << "\n";
+                            std::cerr << "pushing indel: " << vnew << "\n";
 #endif
-                            output_queue.push(vnew);
-
-                            start += 1;
+                            output_queue_for_indels.push(vnew);
                         }
+                        ++rvx;
                     }
                 }
             }
 
-            Variants vs;
-            vs.pos = -1;
-            vs.calls.resize(v.calls.size());
-            bool has_vs = false;
-            // go through output queue and merge calls by location
+            // go through output queues and merge calls by location
             //
-
-            while(!output_queue.empty())
+            for(int oq = 0; oq < 2; ++oq)
             {
-                Variants vs2 = output_queue.top();
-                output_queue.pop();
-                if(vs2.pos != vs.pos || !has_vs)
+                ns_variantprimitivesplitter::VariantQueue & output_queue = (oq ? output_queue_for_indels : output_queue_for_snps);
+
+                Variants vs;
+                vs.pos = -1;
+                vs.calls.resize(v.calls.size());
+                bool has_vs = false;
+
+                while(!output_queue.empty())
                 {
-                    if(has_vs)
+                    Variants vs2 = output_queue.top();
+                    output_queue.pop();
+                    if(vs2.pos != vs.pos || !has_vs)
                     {
-                        _impl->pushOutputVariant(vs);
+                        if(has_vs)
+                        {
+                            _impl->output_variants.push(vs);
+                        }
+                        vs = vs2;
+                        has_vs = true;
+                        continue;
                     }
-                    vs = vs2;
-                    has_vs = true;
-                    continue;
-                }
 
 #ifdef DEBUG_VARIANTPRIMITIVESPLITTER
-                assert(vs2.calls.size() == vs.calls.size());
-                assert(vs2.calls.size() == v.calls.size());
+                    assert(vs2.calls.size() == vs.calls.size());
+                    assert(vs2.calls.size() == v.calls.size());
 #endif
-                size_t gt_ofs = vs.variation.size();
-                for(auto const & var : vs2.variation)
-                {
-                    vs.variation.push_back(var);
-                }
-
-                // go through calls. If the positions match, we should be able to merge
-                for(size_t ci = 0; ci < vs.calls.size(); ++ci)
-                {
-                    Call & c1 = vs.calls[ci];
-                    Call const & c2 = vs2.calls[ci];
-
-                    static const auto combine_filters = [](Call & c1, Call const& c2)
+                    size_t gt_ofs = vs.variation.size();
+                    for(auto const & var : vs2.variation)
                     {
+                        vs.variation.push_back(var);
+                    }
+
+                    // go through calls. If the positions match, we should be able to merge
+                    for(size_t ci = 0; ci < vs.calls.size(); ++ci)
+                    {
+                        Call & c1 = vs.calls[ci];
+                        Call const & c2 = vs2.calls[ci];
+
+                        // combine filters
                         for (size_t q = 0; q < c2.nfilter; ++q)
                         {
                             bool found = false;
@@ -517,137 +419,104 @@ bool VariantPrimitiveSplitter::advance()
                                 ++c1.nfilter;
                             }
                         }
-                    };
 
-                    // no-calls can be overwritten
-                    if(c1.isNocall())
-                    {
-                        c1 = c2;
-                        // remap GT
-                        for(size_t j = 0; j < c1.ngt; ++j)
+                        int vgts[MAX_GT*2];
+                        int vdps[MAX_GT*2];
+
+                        size_t nvgt = 0, g2 = 0;
+                        bool has_ref = false;
+                        int dp_ref = c1.ad_ref;
+                        while(g2 < c1.ngt)
                         {
-                            if(c1.gt[j] > 0)
+                            if(c1.gt[g2] > 0)
                             {
-                                c1.gt[j] += gt_ofs;
+                                vgts[nvgt] = c1.gt[g2];
+                                vdps[nvgt] = c1.ad[g2];
+                                nvgt++;
+                            }
+                            else
+                            {
+                                has_ref = true;
+                                dp_ref = c1.ad_ref;
+                            }
+                            ++g2;
+                        }
+                        g2 = 0;
+                        while(g2 < c2.ngt)
+                        {
+                            if(c2.gt[g2] > 0)
+                            {
+                                vgts[nvgt] = c2.gt[g2] + gt_ofs;
+                                vdps[nvgt] = c2.ad[g2];
+                                nvgt++;
+                            }
+                            else
+                            {
+                                has_ref = true;
+                                dp_ref = c2.ad_ref;
+                            }
+                            ++g2;
+                        }
+                        c1.ad_ref = dp_ref;
+                        c1.ad_ref = std::max(c1.ad_other, c2.ad_other);
+
+                        // in case we merged two 0/1 -type things, remove the ref-gts
+                        size_t sgtt = 0;
+                        while(sgtt < nvgt && nvgt > 2)
+                        {
+                            if(vgts[sgtt] < 1)
+                            {
+                                vgts[sgtt] = vgts[nvgt-1];
+                                vdps[sgtt] = vdps[nvgt-1];
+                                --nvgt;
+                                continue;
+                            }
+                            ++sgtt;
+                        }
+
+                        if(nvgt == 0)
+                        {
+                            continue;
+                        }
+
+                        has_vs = true;
+                        c1.ngt = nvgt;
+                        if(nvgt == 1)
+                        {
+                            if(has_ref || v.calls[ci].ngt == 2)
+                            {
+                                c1.ad[0] = dp_ref;
+                                c1.gt[0] = 0;
+                                c1.ad[1] = vdps[0];
+                                c1.gt[1] = vgts[0];
+                                c1.ngt = 2;
+                            }
+                            else
+                            {
+                                c1.ad[0] = vdps[0];
+                                c1.gt[0] = 1;
                             }
                         }
-                        continue;
-                    }
-
-                    if(c2.isNocall())
-                    {
-                        // ignore nocalls
-                        continue;
-                    }
-
-                    // merge two hemi-alleles into one het(-alt)
-                    if (c1.isHemi() && c2.isHemi())
-                    {
-                        c1.ngt = 2;
-                        c1.gt[1] = c2.gt[0];
-                        if(c1.gt[1] > 0)
-                        {
-                            c1.gt[1] += gt_ofs;
-                        }
-                        c1.ad[1] = c2.ad[0];
-                        combine_filters(c1, c2);
-                        continue;
-                    }
-
-                    // now that we know that c2 isn't a no-call, we can overwrite c1 with it if c1 is homref
-                    if(c1.isHomref())
-                    {
-                        c1 = c2;
-                        // remap GT
-                        for(size_t j = 0; j < c1.ngt; ++j)
-                        {
-                            if(c1.gt[j] > 0)
-                            {
-                                c1.gt[j] += gt_ofs;
-                            }
-                        }
-                        combine_filters(c1, c2);
-                        continue;
-                    }
-
-                    // c1 isn't no-call or homref, so it will still have the reference information in it. No need to add hr again
-                    // except in the case where both are hemi, which is handled above
-                    if(c2.isHomref())
-                    {
-                        combine_filters(c1, c2);
-                        continue;
-                    }
-
-                    int vgts[MAX_GT*2];
-                    int vdps[MAX_GT*2];
-
-                    size_t nvgt = 0, g2 = 0;
-                    bool has_ref = false;
-                    int dp_ref = c1.ad_ref;
-                    while(g2 < c1.ngt)
-                    {
-                        if(c1.gt[g2] > 0)
-                        {
-                            vgts[nvgt] = c1.gt[g2];
-                            vdps[nvgt] = c1.ad[g2];
-                            nvgt++;
-                        }
-                        else
-                        {
-                            has_ref = true;
-                            dp_ref = c1.ad_ref;
-                        }
-                        ++g2;
-                    }
-                    g2 = 0;
-                    while(g2 < c2.ngt)
-                    {
-                        if(c2.gt[g2] > 0)
-                        {
-                            vgts[nvgt] = c2.gt[g2] + gt_ofs;
-                            vdps[nvgt] = c2.ad[g2];
-                            nvgt++;
-                        }
-                        else
-                        {
-                            has_ref = true;
-                            dp_ref = c2.ad_ref;
-                        }
-                        ++g2;
-                    }
-                    c1.ad_ref = dp_ref;
-                    if(nvgt == 1)
-                    {
-                        if(has_ref)
-                        {
-                            c1.ad[0] = dp_ref;
-                            c1.gt[0] = 0;
-                            c1.ad[1] = vdps[0];
-                            c1.gt[1] = vgts[0];
-                        }
-                        else
+                        else if(nvgt == 2)
                         {
                             c1.ad[0] = vdps[0];
-                            c1.gt[0] = 1;
+                            c1.gt[0] = vgts[0];
+                            c1.ad[1] = vdps[1];
+                            c1.gt[1] = vgts[1];
+                        }
+                        else
+                        {
+#ifdef DEBUG_VARIANTPRIMITIVESPLITTER
+                            std::cerr << c1 << " -- " << c2 << "\n";
+#endif
+                            error("Allele split resolved to ambiguous calls (%i) at %s:%i", nvgt, vs.chr.c_str(), vs.pos);
                         }
                     }
-                    else if(nvgt == 2)
-                    {
-                        c1.ad[0] = vdps[0];
-                        c1.gt[0] = vgts[0];
-                        c1.ad[1] = vdps[1];
-                        c1.gt[1] = vgts[1];
-                    }
-                    else
-                    {
-                        error("Allele split resolved to ambiguous calls at %s:%i", vs.chr.c_str(), vs.pos);
-                    }
-                    combine_filters(c1, c2);
                 }
-            }
-            if(has_vs)
-            {
-                _impl->pushOutputVariant(vs);
+                if(has_vs)
+                {
+                    _impl->output_variants.push(vs);
+                }
             }
         }
         _impl->buffered_variants.clear();

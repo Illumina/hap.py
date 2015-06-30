@@ -55,7 +55,7 @@
 #include <set>
 #include <bitset>
 
-// #define _DEBUG_GRAPHREFERENCE
+/* #define _DEBUG_GRAPHREFERENCE */
 
 #ifndef MAX_GRAPHREFERENCE_NODES
 #define MAX_GRAPHREFERENCE_NODES 4096
@@ -164,10 +164,12 @@ void GraphReference::makeGraph(
     previous.push_back(0);
 
     ReferenceNode current[2];
+    // dynamically build adjacency list
+    std::vector< std::set <size_t> > adj;
     for(Variants const & vars : input)
     {
 #ifdef _DEBUG_GRAPHREFERENCE
-        std::cerr << stringutil::formatPos(chr, vars.pos) << ": " << vars << "\n";
+        std::cerr << "VAR: " << stringutil::formatPos(chr, vars.pos) << ": " << vars << "\n";
 #endif
 
         Call const & call = vars.calls[ix];
@@ -207,32 +209,54 @@ void GraphReference::makeGraph(
                 {
                     ++*nhets;
                 }
-                for(int j = 0; j < 2; ++j)
+
+                if(call.isHet())
                 {
-                    if(call.gt[j] == 0)
+                    size_t j = 0;
+                    if(call.gt[j] <= 0)
                     {
-                        current[j].type = ReferenceNode::homref;
-                        current[j].start = vars.pos;
-                        current[j].end = vars.pos + vars.len - 1;
-                        current[j].alt = refal;
+                        j = 1;
                     }
-                    else
+                    RefVar rv = vars.variation[call.gt[j]-1];
+                    // remove reference padding
+#ifdef _DEBUG_GRAPHREFERENCE
+                    std::cerr << "RV before trimming: " << rv << "\n";
+#endif
+                    variant::trimLeft(_impl->refsq, vars.chr.c_str(), rv, false);
+                    variant::trimRight(_impl->refsq, vars.chr.c_str(), rv, false);
+#ifdef _DEBUG_GRAPHREFERENCE
+                    std::cerr << "RV after trimming: " << rv << "\n";
+#endif
+                    current[j].type = ReferenceNode::alternative;
+                    current[j].start = rv.start;
+                    current[j].end = rv.end;
+                    current[j].alt = rv.alt;
+
+                    current[j ^ 1].type = ReferenceNode::homref;
+                    current[j ^ 1].start = rv.start;
+                    current[j ^ 1].end = rv.start - 1;
+                    current[j ^ 1].alt = "";
+                }
+                else // het-alt
+                {
+                    for(size_t j = 0; j < call.ngt; ++j)
                     {
+                        RefVar rv = vars.variation[call.gt[j]-1];
+                        // remove referencbeforee padding
+#ifdef _DEBUG_GRAPHREFERENCE
+                        std::cerr << "RV before trimming: " << rv << "\n";
+#endif
+                        variant::trimLeft(_impl->refsq, vars.chr.c_str(), rv, false);
+                        variant::trimRight(_impl->refsq, vars.chr.c_str(), rv, false);
+#ifdef _DEBUG_GRAPHREFERENCE
+                        std::cerr << "RV after trimming: " << rv << "\n";
+#endif
                         current[j].type = ReferenceNode::alternative;
-                        current[j].start = vars.variation[call.gt[j]-1].start;
-                        current[j].end = vars.variation[call.gt[j]-1].end;
-                        current[j].alt = vars.variation[call.gt[j]-1].alt;
+                        current[j].start = rv.start;
+                        current[j].end = rv.end;
+                        current[j].alt = rv.alt;
                     }
                 }
-                break;
-            case gt_homref:
-                // do not generate homref nodes -- when they overlap, things go bad downstream
-                // also, we don't really use homref information in the graph.
-                // current[0].color = ReferenceNode::black;
-                // current[0].type = ReferenceNode::homref;
-                // current[0].start = vars.pos;
-                // current[0].end = vars.pos + vars.len - 1;
-                // current[0].alt = refal;
                 break;
             case gt_haploid:
                 // TODO: we might want to pass on some information into the reference graph here
@@ -243,18 +267,33 @@ void GraphReference::makeGraph(
                 }
                 current[0].color = ReferenceNode::black;
                 current[0].type = ReferenceNode::alternative;
-                current[0].start = vars.variation[call.gt[0]-1].start;
-                current[0].end = vars.variation[call.gt[0]-1].end;
-                current[0].alt = vars.variation[call.gt[0]-1].alt;
+                {
+                    RefVar rv = vars.variation[call.gt[0]-1];
+#ifdef _DEBUG_GRAPHREFERENCE
+                    std::cerr << "RV before trimming: " << rv << "\n";
+#endif
+                    variant::trimLeft(_impl->refsq, vars.chr.c_str(), rv, false);
+                    variant::trimRight(_impl->refsq, vars.chr.c_str(), rv, false);
+#ifdef _DEBUG_GRAPHREFERENCE
+                    std::cerr << "RV after trimming: " << rv << "\n";
+#endif
+                    current[0].start = rv.start;
+                    current[0].end = rv.end;
+                    current[0].alt = rv.alt;
+                }
                 current[0].het = false;
                 break;
+            case gt_homref:
             default:
                 // all other records are ignored
                 break;
         }
 
+        // List of "previous nodes" to connect
         // TODO: We can probably do better than reassigning each time.
         std::list<size_t> next_previous;
+
+        // determine list ids for the generated nodes
         size_t current_pos[2];
         for (int j = 0; j < 2; ++j)
         {
@@ -273,6 +312,8 @@ void GraphReference::makeGraph(
                 current_pos[j] = (size_t)-1;
             }
         }
+        // make sure adjacency list is large enough
+        adj.resize(nodes.size());
 
         bool has_predecessor[2] = {false,false};
 
@@ -302,7 +343,7 @@ void GraphReference::makeGraph(
                     || node.color == current[j].color) ) )
                 {
                     has_predecessor[j] = true;
-                    edges.push_back(ReferenceEdge(x, current_pos[j]));
+                    adj[x].insert(current_pos[j]);
                     superseeded = true;
                 }
             }
@@ -332,7 +373,7 @@ void GraphReference::makeGraph(
                         || node.color == nodes[k].color)
                     )
                     {
-                        edges.push_back(ReferenceEdge(k, current_pos[j]));
+                        adj[k].insert(current_pos[j]);
                         has_predecessor[j] = true;
                         break;
                     }
@@ -341,7 +382,7 @@ void GraphReference::makeGraph(
                 // technically, we should have gotten here in the loop above already.
                 if(!has_predecessor[j])
                 {
-                    edges.push_back(ReferenceEdge(0, current_pos[j]));
+                    adj[0].insert(current_pos[j]);
                 }
             }
         }
@@ -349,17 +390,52 @@ void GraphReference::makeGraph(
 
     // insert sink
     int64_t max_end = 0;
+    adj.resize(nodes.size());
     for(size_t x : previous)
     {
         ReferenceNode & node(nodes[x]);
         max_end = std::max(node.end, max_end);
-        edges.push_back(ReferenceEdge(x, nodes.size()));
+        adj[x].insert(nodes.size());
     }
     ReferenceNode rs(
         chr.c_str(), max_end, max_end,
         ReferenceNode::sink
     );
     nodes.push_back(rs);
+
+    // alternate paths for het nodes
+
+    /* std::list< std::pair<size_t, size_t> > current_nodes; */
+    /* current_nodes.push_back(std::make_pair(size_t(0), size_t(-1))); */
+    /* while(!current_nodes.empty()) */
+    /* { */
+    /*     std::pair<size_t, size_t> & n = current_nodes.front(); */
+    /*     if(adj.size() <= n.first) */
+    /*     { */
+    /*         current_nodes.pop_front(); */
+    /*         continue; */
+    /*     } */
+    /*     ReferenceNode & nn = nodes[n.first]; */
+
+    /*     for(size_t succ : adj[n.first]) */
+    /*     { */
+    /*         // add bypass edge for hets */
+    /*         if(n.second != ( (size_t)-1 ) && nn.het) */
+    /*         { */
+    /*             adj[n.second].insert(succ); */
+    /*         } */
+    /*         current_nodes.push_back(std::make_pair(succ, n.first)); */
+    /*     } */
+    /*     current_nodes.pop_front(); */
+    /* } */
+
+    for(size_t from = 0; from < adj.size(); ++from)
+    {
+        for(size_t succ : adj[from])
+        {
+            edges.push_back(ReferenceEdge(from, succ));
+        }
+    }
 }
 
 

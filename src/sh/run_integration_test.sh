@@ -31,7 +31,7 @@ if [[ -f "$HG19" ]]; then
 	TMP_OUT0=`mktemp -t multimerge.XXXXXXXXXX`
 	# multimerge and compare
 	${HCDIR}/multimerge ${DIR}/../../example/integration/integrationtest_lhs.vcf.gz  ${DIR}/../../example/integration/integrationtest_rhs.vcf.gz \
-		-o $TMP_OUT0.vcf -r $HG19 --trimalleles=1 --splitalleles=1 --leftshift=1 --unique-alleles=1 --merge-by-location=2
+		-o $TMP_OUT0.vcf -r $HG19 --process-full 1
 
 	diff -I '^#' ${TMP_OUT0}.vcf ${DIR}/../../example/integration/integrationtest_merged.vcf
 	if [[ $? != 0 ]]; then
