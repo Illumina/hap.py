@@ -6,7 +6,7 @@
 # The full text can be found here (and in LICENSE.txt in the root folder of
 # this distribution):
 #
-# https://github.com/sequencing/licenses/blob/master/Simplified-BSD-License.txt
+# https://github.com/Illumina/licenses/blob/master/Simplified-BSD-License.txt
 
 import gzip
 from bx.intervals.intersection import Interval

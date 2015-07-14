@@ -6,7 +6,7 @@
 # The full text can be found here (and in LICENSE.txt in the root folder of
 # this distribution):
 #
-# https://github.com/sequencing/licenses/blob/master/Simplified-BSD-License.txt
+# https://github.com/Illumina/licenses/blob/master/Simplified-BSD-License.txt
 
 macro(get_compiler_version compiler_version)
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE ${compiler_version})

@@ -3,12 +3,11 @@
 // 
 // Copyright (c) 2014 Illumina, Inc.
 //
-// This software is provided under the terms and conditions of the
-// Illumina Open Source Software License 1.
+// This file is distributed under the simplified BSD license.
+// The full text can be found here (and in LICENSE.txt in the root folder of
+// this distribution):
 //
-// You should have received a copy of the Illumina Open Source
-// Software License 1 along with this program. If not, see
-// <https://github.com/sequencing/licenses/>
+// https://github.com/Illumina/licenses/blob/master/Simplified-BSD-License.txt
 //
 
 /**

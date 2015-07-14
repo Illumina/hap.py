@@ -3,7 +3,7 @@ simplified BSD license.
 
 The full text can be found here:
 
-https://github.com/sequencing/licenses/blob/master/Simplified-BSD-License.txt
+https://github.com/Illumina/licenses/blob/master/Simplified-BSD-License.txt
 
 -------------------------------------------------------------------------------
 Copyright (c) 2010-2015 Illumina, Inc.
