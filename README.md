@@ -109,6 +109,32 @@ The most relevant metrics here again are recall and precision.
 Installation
 ============
 
+### Hardware and OS Requirements
+
+## Hardware
+
+Compiling and testing can be done on a standard desktop system with 8GB of RAM. Whole-genome
+comparisons (e.g. comparing a gVCF file against the [Platinum Genomes truth dataset](http://www.illumina.com/platinumgenomes/))
+can use up to 64GB of RAM (20GB typical, depending on the input VCF) and about 10-20 minutes
+using 32 processor cores.
+
+## Linux
+
+Hap.py is known to build and run on the following linux distributions (see also the [Dockerfile](Dockerfile)
+for a list of required packages):
+
+    Ubuntu 12.04,14.04
+    CentOS 5,6,7
+
+## OS X
+
+Hap.py builds and passes basic tests on OS X 10.9, but full WGS analyses are not tested for this platform.
+
+## Windows
+
+Hap.py is not tested on Windows. The main dependency that fails compilation is htslib. Given a build
+of htslib and pysam, using hap.py on Windows should be possible.
+
 ### Requirements:
 
 Firstly, hap.py requires a human reference sequence which contains at least
