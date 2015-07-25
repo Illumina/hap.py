@@ -6,7 +6,7 @@
 # The full text can be found here (and in LICENSE.txt in the root folder of
 # this distribution):
 #
-# https://github.com/sequencing/licenses/blob/master/Simplified-BSD-License.txt
+# https://github.com/Illumina/licenses/blob/master/Simplified-BSD-License.txt
 # - Try to find htslib
 # Define the environment variable HTSLIB_ROOT to point to a htslib 
 # download directory.
