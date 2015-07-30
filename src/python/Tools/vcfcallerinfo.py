@@ -3,12 +3,12 @@
 #
 # Copyright (c) 2010-2015 Illumina, Inc.
 # All rights reserved.
-# 
+#
 # This file is distributed under the simplified BSD license.
 # The full text can be found here (and in LICENSE.txt in the root folder of
 # this distribution):
 #
-# https://github.com/Illumina/licenses/blob/master/Simplified-BSD-License.txt
+# https://github.com/sequencing/licenses/blob/master/Simplified-BSD-License.txt
 
 import tempfile
 import itertools
@@ -122,7 +122,7 @@ class CallerInfo(object):
                 continue
             try:
                 # noinspection PyTypeChecker
-                x = dict(y.split(":", 2) for y in line.split("\t")[1:])
+                x = dict(y.split(":", 1) for y in line.split("\t")[1:])
             except:
                 logging.warn("Unable to parse SAM/BAM header line: %s" % line)
                 continue
