@@ -8,6 +8,8 @@ CMakeFiles
 bin/haplotypes
 .idea
 external/htslib
+external/boost_install
+external/boost_subset_1_58_0
 external/bcftools
 external/samtools
 external/muscle3.8.31

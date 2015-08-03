@@ -152,8 +152,8 @@ Note that, while the test cases are based on hg19, other reference sequences are
 usable as well  once the tool is installed.
 
 Hap.py also requires a copy of the [Boost libraries](http://www.boost.org) to
-work, with version >=  1.55. If compilation should fail using your system-wide
-installation of boost, you can compile a  subset of boost like this:
+work, with version >=  1.55. If compilation should fail using the included version
+of boost, you can compile a subset of boost like this:
 
 ```bash
 cd ~
@@ -162,6 +162,12 @@ tar xjf boost_1_55_0.tar.bz2
 cd boost_1_55_0
 ./bootstrap.sh --with-libraries=filesystem,chrono,thread,iostreams,system,regex,test,program_options
 ./b2 --prefix=$HOME/boost_1_55_0_install install
+```
+
+You can point Cmake to your version of boost as follows:
+
+```bash
+export BOOST_ROOT=$HOME/boost_1_55_0_install
 ```
 
 The complete list of dependencies / packages to install beforehand can be found
@@ -183,7 +189,8 @@ There are two fast ways to get a running installation of hap.py:
    python install.py ~/hap.py-install
    ```
 
-   The installer has an option `--boost-root` that allows us to use a specific installation of boost:
+   The installer has an option `--boost-root` that allows us to use a specific installation of boost
+   (see above for instructions):
 
    ```
    python install.py ~/hap.py-install --boost-root $HOME/boost_1_55_0_install
@@ -224,7 +231,7 @@ There are two fast ways to get a running installation of hap.py:
    ```
 
 
-Compiling 
+Compiling
 =========
 
 This section shows how to compile hap.py from source without using the installer.
@@ -234,7 +241,7 @@ List of Dependencies
 
 You will need these tools / libraries on your system to compile the code.
 
-* CMake &gt; 2.8 
+* CMake &gt; 2.8
 * GCC/G++ 4.8+ for compiling
 * Boost 1.55+
 * Python 2, version 2.7.8 or greater
@@ -279,7 +286,7 @@ Here is a list of additional flags for CMake to change compile options help it f
 *  `-DCMAKE_BUILD_TYPE=Debug` -- set the build type, allowed values are `Debug` and `Release`
 *  `-DCMAKE_C_COMPILER=/usr/bin/gcc` and `-DCMAKE_CXX_COMPILER=/usr/bin/g++` -- change the compiler path
 *  `-DCMAKE_INSTALL_PREFIX=/usr/local` -- set an installation directory that will be used by make install.
-*  `-DBOOST_ROOT=$HOME/boost_1_55_0_install` -- set the path to Boost. Run the following commands to compile and install boost: 
+*  `-DBOOST_ROOT=$HOME/boost_1_55_0_install` -- set the path to Boost. Run the following commands to compile and install boost:
    ```bash
    cd ~
    wget http://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.bz2

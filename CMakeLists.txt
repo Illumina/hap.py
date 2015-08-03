@@ -22,7 +22,15 @@ set(Boost_USE_STATIC_RUNTIME     ON)
 set(Boost_NO_BOOST_CMAKE         ON)
 set(Boost_NO_SYSTEM_PATHS        ON)
 
-find_package(Boost 1.50.0 COMPONENTS thread iostreams regex unit_test_framework filesystem system program_options REQUIRED)
+set(CUSTOM_BOOST_DIR "$ENV{BOOST_ROOT}")
+if(NOT CUSTOM_BOOST_DIR)
+    set(BOOST_ROOT ${HAPLOTYPES_SOURCE_DIR}/external/boost_install)
+    message("Using Boost which is built at ${HAPLOTYPES_SOURCE_DIR}/external/boost_install")
+else()
+    message("Using Boost from ${CUSTOM_BOOST_DIR}")
+endif()
+
+find_package(Boost 1.55.0 COMPONENTS thread iostreams regex unit_test_framework filesystem system program_options REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 

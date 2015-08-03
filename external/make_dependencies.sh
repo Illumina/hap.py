@@ -6,11 +6,15 @@ set -e
 PYTHON=python
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-if [ -d "/illumina/thirdparty/Python-2.7.3/bin" ]; then
-    PYTHON=/illumina/thirdparty/Python-2.7.3/bin/python
-fi
-if [ -d "/illumina/development/pgtools/pgt-virtualenv/bin" ]; then
-    PYTHON=/illumina/development/pgtools/pgt-virtualenv/bin/python
+if [ "$1" == "clean" ]; then
+    rm -rf zlib-1.2.8
+    rm -rf boost_subset_1_58_0
+    rm -rf boost_install
+    rm -rf htslib
+    rm -rf samtools
+    rm -rf bcftools
+    rm -rf muscle3.8.31
+    exit 0
 fi
 
 if [ ! -f zlib-1.2.8/libz.a ];
@@ -22,6 +26,23 @@ then
     make -j4 -C zlib-1.2.8
 else
     echo "Zlib already built. To rebuild, delete external/zlib-1.2.8"
+fi
+
+if [ -z "$BOOST_ROOT" ];
+then
+    if [ ! -d boost_install ];
+    then
+        tar xjf boost_subset_1_58_0.tar.bz2
+        cd boost_subset_1_58_0
+        ./bootstrap.sh
+        ./b2 link=static -j4 --prefix=$DIR/boost_install -sZLIB_SOURCE=$DIR/zlib-1.2.8
+        ./b2 link=static -j4 --prefix=$DIR/boost_install install -sZLIB_SOURCE=$DIR/zlib-1.2.8
+        cd ..
+    else
+        echo "Boost already built. To rebuild, delete external/boost_install"
+    fi
+else
+    echo "BOOST_ROOT is set, not building boost."
 fi
 
 # Get from git
