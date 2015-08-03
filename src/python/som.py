@@ -118,6 +118,9 @@ def main():
     parser.add_argument("--fix-chr-query", dest="fixchr_query", default=False, action="store_true",
                         help="Replace numeric chromosome names in the query by chr*-type names")
 
+    parser.add_argument("--fix-chr-truth", dest="fixchr_truth", default=False, action="store_true",
+                        help="Replace numeric chromosome names in the truth by chr*-type names")
+
     parser.add_argument("--no-order-check", dest="disable_order_check", default=False, action="store_true",
                         help="Disable checking the order of TP features (dev feature).")
 
@@ -145,13 +148,12 @@ def main():
     else:
         loglevel = logging.WARNING
 
-    ## reinitialize logging
+    # reinitialize logging
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
     logging.basicConfig(filename=args.logfile,
                         format='%(asctime)s %(levelname)-8s %(message)s',
                         level=loglevel)
-
 
     if args.normalize_all:
         args.normalize_truth = True
@@ -191,7 +193,7 @@ def main():
         if not (args.cont and os.path.exists(ntpath)):
             preprocessVCF(args.truth, ntpath, args.location,
                           True,  # pass_only
-                          False,  # chrprefix
+                          args.fixchr_truth,  # chrprefix
                           args.normalize_truth,  # norm,
                           args.regions_bedfile,
                           args.targets_bedfile,
@@ -413,7 +415,6 @@ def main():
         vstring = " ".join(sys.argv)
         res["sompycmd"] = vstring
 
-
         if args.ambi and args.explain_ambiguous:
             ac = list(ambiClasses.iteritems())
             if ac:
@@ -572,7 +573,6 @@ def main():
             if args.roc is not None:
                 roc_table = args.roc.from_table(featuretable)
                 roc_table.to_csv(args.output + ".roc.csv", float_format='%.8f')
-
 
     finally:
         if args.delete_scratch:
