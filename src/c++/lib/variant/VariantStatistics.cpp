@@ -37,7 +37,10 @@
 #include "Fasta.hh"
 #include "Alignment.hh"
 
+#include "Error.hh"
+
 #include <memory>
+#include <bitset>
 
 // #define DEBUG_VARIANTSTATISTICS
 
@@ -46,60 +49,67 @@ namespace variant
 
 /* variant types in uint64 */
 
-/* encode allele type in 4 bits */
+/* encode allele types seen in low 4 bits, highest bit is unused */
+static const uint64_t VT_SNP            = 1;
+static const uint64_t VT_INS            = 2;
+static const uint64_t VT_DEL            = 4;
 
-static const uint64_t VT_UNKNOWN        = 0;
-static const uint64_t VT_SNP            = 1; // 0001b
-static const uint64_t VT_INS            = 2; // 0010b
-static const uint64_t VT_DEL            = 4; // 0100b
-static const uint64_t VT_BLOCK          = 8; // 1000b -- fourth bit indicates blocksubst
-static const uint64_t VT_BLOCKSUBST     = 9; // 1001b
-static const uint64_t VT_COMPLEXINS     = 10;// 1010b
-static const uint64_t VT_COMPLEXDEL     = 12;// 1100b
+static const uint64_t VT_REF            = 8;
+static const uint64_t VT_NOCALL         = 9;
+static const uint64_t VT_UNKNOWN        = 10;
 
-/** counts and what they mean */
-static const int VS_COUNTS = 256;
-
-/** all alleles / refvars seen */
-static const uint64_t CT_ALLELES = 0;
-
-/** locations / input VCF lines */
-static const uint64_t CT_LOCATIONS = 1;
-
-/** alleles by type - see above VT_... - 16 different types possible */
-static const uint64_t CT_ALLELES_BY_TYPE = 8;
-
-/** alleles by type */
-static const uint64_t CT_LOCATIONS_BY_TYPE = 24;
-
-static const char * CT_NAMES [] = {
-    "alleles",              // 0
-    "locations",
-    "homref",
-    "haploid",
-    "het",                  // 4
-    "homalt",
-    "hetalt",
-    "unknown_gt",
-    "unknown_allele",       // 8 + ...
-    "snp",                  //      0001
-    "ins",                  //      0010
-    "snp_ins",              //      0011
-    "del",                  //      0100
-    "snp_del",              //      0101
-    "ins_del",              //      0110
-    "snp_ins_del",          //      0111
-    "block",                //      1000
-    "blocksubst",           //      1001
-    "blocksubst_ins",       //      1010
-    "blocksubst_snp_ins",   //      1011
-    "blocksubst_del",       //      1100
-    "blocksubst_snp_del",   //      1101
-    "blocksubst_ins_del",   //      1110
-    "blocksubst_snp_ins_del"//      1111
-    // ... now come combinations of 8+x and 4+y
+static const char * VT_NAMES [] = {
+    "none",                 //    0x00
+    "snp",                  //    0x01
+    "ins",                  //    0x02
+    "complex_si",           //    0x03
+    "del",                  //    0x04
+    "complex_sd",           //    0x05
+    "complex_id",           //    0x06
+    "complex",              //    0x07
+    "ref",                  //    0x08
+    "nocall",               //    0x09
+    "unknown",              //    0x0a
+    "unknown",              //    0x0b
+    "unknown",              //    0x0c
+    "unknown",              //    0x0d
+    "unknown",              //    0x0e
+    "unknown",              //    0x0f
 };
 
+/** encode call type / zygosity in bits 5-8 */
+static const uint64_t CT_NUCLEOTIDES = 0;   // count nucleotides
+static const uint64_t CT_ALLELES = 0x10;      // count alleles
+static const uint64_t CT_HOM = 0x20;          // locations with only one allele seen with copy number 2
+static const uint64_t CT_HET = 0x30;          // locations with one ref and one alt allele seen with copy number 1
+static const uint64_t CT_HETALT = 0x40;       // locations with two alt alleles seen with copy number 1 each
+static const uint64_t CT_HEMI = 0x50;         // locations with only one allele seen with copy number 1
+static const uint64_t CT_AMBI = 0x60;         // locations with more than two alleles
+static const uint64_t CT_HALFCALL = 0x70;     // locations with one allele, and one missing call
+static const uint64_t CT_NOCALL = 0x80;       // locations with one allele, and one missing call
+static const uint64_t CT_UNKNOWN = 0x90;      // unknown locations / counts
+
+static const char * CT_NAMES [] = {
+    "nucleotides", // 0x00
+    "alleles",     // 0x10
+    "hom",         // 0x20
+    "het",         // 0x30
+    "hetalt",      // 0x40
+    "hemi",        // 0x50
+    "ambi",        // 0x60
+    "halfcall",    // 0x70
+    "nocall",      // 0x80
+    "unknown",     // 0x90
+    "unknown",     // 0xa0
+    "unknown",     // 0xb0
+    "unknown",     // 0xc0
+    "unknown",     // 0xd0
+    "unknown",     // 0xe0
+    "unknown",     // 0xf0
+};
+
+/** we count 256 distinct things */
+static const int VS_COUNTS = 256;
 
 struct VariantStatisticsImpl
 {
@@ -107,6 +117,9 @@ struct VariantStatisticsImpl
         alignment(makeAlignment("klibg"))
     {
         memset(counts, 0, sizeof(size_t)*VS_COUNTS);
+        memset(rtypes, 0, sizeof(int)*VS_COUNTS);
+        nrtypes = 0;
+        rtype_bs.reset();
     }
 
     ~VariantStatisticsImpl() {}
@@ -116,9 +129,87 @@ struct VariantStatisticsImpl
     {
         memcpy(counts, rhs.counts, sizeof(size_t)*VS_COUNTS);
         count_homref = rhs.count_homref;
+        nrtypes = rhs.nrtypes;
+        memcpy(rtypes, rhs.rtypes, sizeof(int)*256);
+        rtype_bs = rhs.rtype_bs;
+    }
+
+    /** translate count key to name */
+    static inline std::string c2n(uint64_t _c) {
+        uint8_t c = (uint8_t)_c;
+        return std::string(CT_NAMES[c >> 4]) + "__" +
+               std::string(VT_NAMES[c & 0x0f]);
+    }
+
+    /** translate name to count key */
+    static inline uint8_t n2c(const char * n) {
+        static struct _n2clookup {
+            _n2clookup() {
+                for(int j = 0; j < VS_COUNTS; ++j) {
+                    t[c2n(j)] = j;
+                }
+            }
+            std::map<std::string, uint8_t> t;
+        } lookup;
+        auto it = lookup.t.find(std::string(n));
+        if(it != lookup.t.end()) {
+            return it->second;
+        } else {
+            error("Unknown statistics key: %s", n);
+        }
+        return 0;
+    }
+
+    /** add single allele */
+    int add_al(const char * chr, RefVar const & rhs)
+    {
+        size_t total_snp = 0;
+        size_t total_del = 0;
+        size_t total_ins = 0;
+        size_t total_hom = 0;
+        realignRefVar(ref, chr, rhs, alignment.get(),
+                total_snp,
+                total_ins,
+                total_del,
+                total_hom);
+
+        // count nucleotides
+        count( CT_NUCLEOTIDES | VT_SNP, total_snp );
+        count( CT_NUCLEOTIDES | VT_INS, total_ins );
+        count( CT_NUCLEOTIDES | VT_DEL, total_del );
+        count( CT_NUCLEOTIDES | VT_REF, total_hom );
+
+        uint8_t t = 0;
+        if(total_snp) t |= VT_SNP;
+        if(total_ins) t |= VT_INS;
+        if(total_del) t |= VT_DEL;
+
+        count(CT_ALLELES | t, 1);
+        return t;
     }
 
     size_t counts[VS_COUNTS];
+
+    // keep track of returned types
+    void count(int rt, size_t n) {
+        if(!n) {
+            return;
+        }
+        if(!rtype_bs[rt & 0xff]) {
+            rtype_bs[rt & 0xff] = 1;
+            rtypes[nrtypes++] = rt;
+        }
+        counts[rt & 0xff] += n;
+    }
+
+    void reset_rtypes() {
+        nrtypes = 0;
+        rtype_bs.reset();
+    }
+
+    int rtypes[256];
+    int nrtypes;
+    std::bitset<256> rtype_bs;
 
     FastaFile ref;
     bool count_homref;
@@ -152,64 +243,28 @@ VariantStatistics const & VariantStatistics::operator=(VariantStatistics const &
  */
 void VariantStatistics::read(Json::Value const & root)
 {
-    for (size_t i = 0; i < CT_LOCATIONS_BY_TYPE; ++i)
+    for (int i = 0; i < VS_COUNTS; ++i)
     {
-        if (root.isMember(CT_NAMES[i]))
+        std::string k = VariantStatisticsImpl::c2n(i);
+        if (root.isMember(k))
         {
-            _impl->counts[i] = root[CT_NAMES[i]].asUInt64();
+            _impl->counts[i] = root[k].asUInt64();
         }
         else
         {
             _impl->counts[i] = 0;
         }
-    }
-    // we have 16 composite allele types, 5 location types.
-    for (size_t i = CT_LOCATIONS_BY_TYPE; i < CT_LOCATIONS_BY_TYPE + 16*5; ++i)
-    {
-        size_t vt = (i - CT_LOCATIONS_BY_TYPE) & 0x0f;
-        size_t lt = ((i - CT_LOCATIONS_BY_TYPE) >> 4) & 0x07;
-        std::string n(CT_NAMES[CT_ALLELES_BY_TYPE + vt]);
-        n += "__";
-        n += CT_NAMES[CT_LOCATIONS + 1 + lt];
-        if (root.isMember(n.c_str()))
-        {
-            _impl->counts[i] = root[n.c_str()].asUInt64();
-        }
-        else
-        {
-            _impl->counts[i] = 0;
-        }
-#ifdef DEBUG_VARIANTSTATISTICS
-        std::cerr << i << " /  " << n << " : " << _impl->counts[i];
-#endif
     }
 }
 
 Json::Value VariantStatistics::write()
 {
     Json::Value root;
-    for (size_t i = 0; i < CT_LOCATIONS_BY_TYPE; ++i)
+    for (int i = 0; i < VS_COUNTS; ++i)
     {
         if (_impl->counts[i])
         {
-            root[CT_NAMES[i]] = Json::Value::UInt64(_impl->counts[i]);
-        }
-    }
-    // we have 16 composite allele types, 5 location types.
-    for (size_t i = CT_LOCATIONS_BY_TYPE; i < CT_LOCATIONS_BY_TYPE + 16*5; ++i)
-    {
-        if (_impl->counts[i])
-        {
-            size_t vt = (i - CT_LOCATIONS_BY_TYPE) & 0x0f;
-            size_t lt = ((i - CT_LOCATIONS_BY_TYPE) >> 4) & 0x07;
-            std::string n(CT_NAMES[CT_ALLELES_BY_TYPE + vt]);
-            if (std::string(CT_NAMES[CT_LOCATIONS + 1 + lt]) == "homref")
-            {
-                continue;
-            }
-            n += "__";
-            n += CT_NAMES[CT_LOCATIONS + 1 + lt];
-            root[n.c_str()] = Json::Value::UInt64(_impl->counts[i]);
+            root[VariantStatisticsImpl::c2n(i)] = Json::Value::UInt64(_impl->counts[i]);
         }
     }
 #ifdef DEBUG_VARIANTSTATISTICS
@@ -230,92 +285,84 @@ void VariantStatistics::add(VariantStatistics const & rhs)
     }
 }
 
-void VariantStatistics::add(Variants const & rhs, int sample)
+void VariantStatistics::add(Variants const & rhs, int sample, int ** rtypes, int * nrtypes)
 {
-    size_t total_als = 0;
-    size_t total_snp = 0;
-    size_t total_del = 0;
-    size_t total_ins = 0;
+    if(rtypes && nrtypes) { _impl->reset_rtypes(); }
 
-    auto add_rv = [this, rhs, &total_als, &total_snp, &total_del, &total_ins](RefVar const & rv)
-    {
-        ++total_als;
-        size_t tmp;
-        realignRefVar(_impl->ref, rhs.chr.c_str(), rv, _impl->alignment.get(),
-                      total_snp, total_ins, total_del, tmp);
-    };
+    int types = 0;
     // count hom-alt alleles only once
     if(rhs.calls[sample].isHomalt())
     {
-        add_rv(rhs.variation[rhs.calls[sample].gt[0]-1]);
-    }
-    else
-    {
+        types = _impl->add_al(rhs.chr.c_str(), rhs.variation[rhs.calls[sample].gt[0]-1]);
+    } else if(rhs.calls[sample].isHomref()) {
+        types = VT_REF;
+    } else {
         for(size_t i = 0; i < rhs.calls[sample].ngt; ++i)
         {
             if (rhs.calls[sample].gt[i] > 0)
             {
-                add_rv(rhs.variation[rhs.calls[sample].gt[i]-1]);
+                types |= _impl->add_al(rhs.chr.c_str(), rhs.variation[rhs.calls[sample].gt[i]-1]);
+            } else if(rhs.calls[sample].gt[i] == 0) {
+                types |= VT_REF;
+            } else {
+                types |= VT_NOCALL;
             }
         }
     }
+
+    bool is_ambi = false;
     for(auto i : rhs.ambiguous_alleles[sample])
     {
+        is_ambi = true;
         if (i > 0)
         {
-            add_rv(rhs.variation[i-1]);
+            types |= _impl->add_al(rhs.chr.c_str(), rhs.variation[i]);
+        } else if(i == 0) {
+            types |= VT_REF;
+        } else {
+            types |= VT_NOCALL;
         }
     }
 
-    _impl->counts[CT_ALLELES] += total_als;
-    _impl->counts[CT_ALLELES_BY_TYPE + VT_SNP] += total_snp;
-    _impl->counts[CT_ALLELES_BY_TYPE + VT_DEL] += total_del;
-    _impl->counts[CT_ALLELES_BY_TYPE + VT_INS] += total_ins;
-
-    gttype gtt = getGTType(rhs.calls[sample]);
-    uint64_t t = (((uint64_t)gtt) << 4);
-    int vts = 0;
-    if(total_snp)
-    {
-        t |= VT_SNP;
-        ++vts;
-    }
-    if(total_del)
-    {
-        t |= VT_DEL;
-        ++vts;
-    }
-    if(total_ins)
-    {
-        t |= VT_INS;
-        ++vts;
-    }
-    if(vts > 1)
-    {
-        t |= VT_BLOCK;
+    int location_type = CT_UNKNOWN;
+    if(is_ambi) {
+        location_type = CT_AMBI;
+    } else if(rhs.calls[sample].isHomref()) {
+        location_type = CT_HOM;
+    } else if(rhs.calls[sample].isHet()) {
+        location_type = CT_HET;
+    } else if(rhs.calls[sample].isHetAlt()) {
+        location_type = CT_HETALT;
+    } else if(rhs.calls[sample].isHalfcall()) {
+        location_type = CT_HALFCALL;
+    } else if(rhs.calls[sample].isNocall()) {
+        location_type = CT_NOCALL;
+    } else if(rhs.calls[sample].isHemi()) {
+        location_type = CT_HEMI;
     }
 
-    if (!_impl->count_homref && (CT_LOCATIONS + (t >> 4) + 1 == 2))
-    {
-        // don't count homref locations
-        return;
-    }
+    _impl->count(location_type | types, 1);
 
-    ++_impl->counts[CT_LOCATIONS];
-    ++_impl->counts[CT_LOCATIONS + (t >> 4) + 1];
-    ++_impl->counts[CT_LOCATIONS_BY_TYPE + t];
-
+    if(rtypes && nrtypes) { *rtypes = _impl->rtypes; *nrtypes = _impl->nrtypes; }
 }
 
-void VariantStatistics::add(const char * chr, RefVar const & rhs)
+void VariantStatistics::add(const char * chr, RefVar const & rhs, int ** rtypes, int * nrtypes)
 {
-    ++_impl->counts[CT_ALLELES];
-    size_t tmp;
-    realignRefVar(_impl->ref, chr, rhs, _impl->alignment.get(),
-            _impl->counts[CT_ALLELES_BY_TYPE + VT_SNP],
-            _impl->counts[CT_ALLELES_BY_TYPE + VT_INS],
-            _impl->counts[CT_ALLELES_BY_TYPE + VT_DEL],
-            tmp);
+    if(rtypes && nrtypes) { _impl->reset_rtypes(); }
+    _impl->add_al(chr, rhs);
+    if(rtypes && nrtypes) { *rtypes = _impl->rtypes; *nrtypes = _impl->nrtypes; }
+}
+
+/** resolve types to strings */
+std::string VariantStatistics::type2string(int type)
+{
+    return VariantStatisticsImpl::c2n(type);
+}
+
+/** resolve types to strings */
+int VariantStatistics::string2type(const char * str)
+{
+    return VariantStatisticsImpl::n2c(str);
 }
 
 }

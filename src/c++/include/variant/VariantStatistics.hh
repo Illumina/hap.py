@@ -40,6 +40,7 @@
 #include "Variant.hh"
 
 #include <json/json.h>
+#include <list>
 
 namespace variant
 {
@@ -63,8 +64,15 @@ public:
      * @brief add counts
      */
     void add(VariantStatistics const & rhs);
-    void add(Variants const & rhs, int sample);
-    void add(const char * chr, RefVar const & rhs);
+    /** add for variants and alleles can return the types that were added to */
+    void add(Variants const & rhs, int sample, int ** types = NULL, int * ntypes = NULL);
+    void add(const char * chr, RefVar const & rhs, int ** types = NULL, int * ntypes = NULL);
+
+    /** resolve types to strings */
+    std::string type2string(int type);
+
+    /** resolve types to strings */
+    int string2type(const char * str);
 private:
     VariantStatisticsImpl * _impl;
 };
