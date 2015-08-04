@@ -40,8 +40,8 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
     if not json_name:
         json_name = tempfile.NamedTemporaryFile().name
 
-    run_str = "quantify '%s:%s' -o '%s'" % (filename, sample_column, json_name)
-    run_str += " -r '%s'" % reference
+    run_str = "quantify '%s:%s' -o '%s'" % (filename.replace(" ", "\\ "), sample_column, json_name)
+    run_str += " -r '%s'" % reference.replace(" ", "\\ ")
 
     if write_vcf:
         if not write_vcf.endswith(".vcf.gz"):

@@ -57,8 +57,8 @@ def blocksplitWrapper(location_str, args):
     tf.close()
 
     to_run = "blocksplit %s %s -l %s -o %s --window %i --nblocks %i -f %i" % \
-             (args.vcf1,
-              args.vcf2,
+             (args.vcf1.replace(" ", "\\ "),
+              args.vcf2.replace(" ", "\\ "),
               location_str,
               tf.name,
               args.window*2,
@@ -114,8 +114,8 @@ def xcmpWrapper(location_str, args):
         bname = ""
 
     to_run = "xcmp %s %s -l %s -o %s %s -r %s -f %i --apply-filters-truth %i -n %i -V %i --leftshift %i --expand-hapblocks %i --window %i --compare-raw %i" % \
-             (args.vcf1,
-              args.vcf2,
+             (args.vcf1.replace(" ", "\\ "),
+              args.vcf2.replace(" ", "\\ "),
               location_str,
               tf.name,
               bname,
@@ -623,7 +623,7 @@ def main():
         if args.write_bed and bedfiles:
             runme = " ".join(["cat"] +
                              bedfiles +
-                             [">", args.reports_prefix + ".blocks.bed"])
+                             [">", args.reports_prefix.replace(" ", "\\ ") + ".blocks.bed"])
             logging.info("Concatenating block files: %s..." % runme)
             subprocess.check_call(runme,
                                   shell=True)
@@ -642,7 +642,7 @@ def main():
         fo.close()
 
         logging.info("Indexing...")
-        to_run = "tabix -p vcf %s" % output_name
+        to_run = "tabix -p vcf %s" % output_name.replace(" ", "\\ ")
         logging.info("Running '%s'" % to_run)
         subprocess.check_call(to_run, shell=True)
 
