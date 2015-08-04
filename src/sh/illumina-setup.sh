@@ -7,14 +7,11 @@
 # setup cmake environment vars for development on ukch-dev
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-export BOOST_ROOT=/illumina/thirdparty/boost/boost_1_57_0_python2.7-fPIC
-
 module purge
 unset MODULEPATH
-module use /illumina/sync/software/thirdparty/HPCBIOS.20150417/modules/all
-module load CMake
-module unload GCC
-module load GCC/4.9.2
+module use /illumina/sync/software/thirdparty/HPCBIOS/modules/all
+module load CMake/3.2.1-GCC-4.9.2
+# These break samtools. We need to make a patch for this.
 module unload zlib
 module unload ncurses
 
