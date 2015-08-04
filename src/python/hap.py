@@ -436,6 +436,38 @@ def main():
             args.vcf2 = Tools.bcftools.makeIndex(args.vcf2, vtf.name)
             h2 = vcfextract.extractHeadersJSON(args.vcf2)
 
+        ref_check = False
+        try:
+            happy_ref = args.ref
+            v1r = [_h for _h in h1["fields"] if _h["key"] == "reference"]
+            v2r = [_h for _h in h2["fields"] if _h["key"] == "reference"]
+            if args.verbose:
+                logging.info("References used: hap.py: %s / truth: %s / "
+                             "query: %s" % (str(happy_ref), str(v1r), str(v2r)))
+
+            v1_ref = ";".join([str(xxy["value"]) for xxy in v1r]).replace("file://", "")
+            v2_ref = ";".join([str(xxy["value"]) for xxy in v2r]).replace("file://", "")
+
+            if happy_ref == v1_ref and v1_ref == v2_ref:
+                ref_check = True
+
+            refids_found = 0
+            for refid in ["hg19", "hg38", "grc37", "grc38"]:
+                if refid in happy_ref.lower() and refid in v1_ref.lower() and refid in v2_ref.lower():
+                    if args.verbose:
+                        logging.info("Reference matches pattern: %s" % refid)
+                    refids_found += 1
+            if refids_found == 1:
+                ref_check = True
+        except:
+            pass
+
+        if not ref_check:
+            logging.warn("Reference sequence check failed! "
+                         "Please ensure that truth and query VCF use the same reference sequence as "
+                         "hap.py. XCMP may fail if this is not the case, and the results will not be "
+                         " accurate.")
+
         if args.locations is None or len(args.locations) == 0:
             # all chromosomes
             args.locations = ["chr" + x for x in map(str, range(1, 23))]
