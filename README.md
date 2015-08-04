@@ -116,7 +116,8 @@ Installation
 Compiling and testing can be done on a standard desktop system with 8GB of RAM. Whole-genome
 comparisons (e.g. comparing a gVCF file against the [Platinum Genomes truth dataset](http://www.illumina.com/platinumgenomes/))
 can use up to 64GB of RAM (20GB typical, depending on the input VCF) and about 10-20 minutes
-using 32 processor cores.
+using 32 processor cores. Whole exome comparison (using an exome bed mask and the `-T` switch)
+can be carried out on a desktop system.
 
 ## Linux
 
@@ -224,7 +225,7 @@ There are two fast ways to get a running installation of hap.py:
    ```
 
 
-Compiling 
+Compiling
 =========
 
 This section shows how to compile hap.py from source without using the installer.
@@ -234,7 +235,7 @@ List of Dependencies
 
 You will need these tools / libraries on your system to compile the code.
 
-* CMake &gt; 2.8 
+* CMake &gt; 2.8
 * GCC/G++ 4.8+ for compiling
 * Boost 1.55+
 * Python 2, version 2.7.8 or greater
@@ -279,7 +280,7 @@ Here is a list of additional flags for CMake to change compile options help it f
 *  `-DCMAKE_BUILD_TYPE=Debug` -- set the build type, allowed values are `Debug` and `Release`
 *  `-DCMAKE_C_COMPILER=/usr/bin/gcc` and `-DCMAKE_CXX_COMPILER=/usr/bin/g++` -- change the compiler path
 *  `-DCMAKE_INSTALL_PREFIX=/usr/local` -- set an installation directory that will be used by make install.
-*  `-DBOOST_ROOT=$HOME/boost_1_55_0_install` -- set the path to Boost. Run the following commands to compile and install boost: 
+*  `-DBOOST_ROOT=$HOME/boost_1_55_0_install` -- set the path to Boost. Run the following commands to compile and install boost:
    ```bash
    cd ~
    wget http://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.bz2
