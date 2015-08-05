@@ -127,14 +127,14 @@ BOOST_AUTO_TEST_CASE(testVariantStatisticsCountRefvar)
 //    Json::FastWriter w;
 //    std::cerr << w.write(result) << std::endl;
 
-    BOOST_CHECK_EQUAL(result["alleles__snp"].asUInt64(), (uint64_t)6); // 5 + 1 pure SNP records
-    BOOST_CHECK_EQUAL(result["alleles__ins"].asUInt64(), (uint64_t)2); // 2 pure insertion records
-    BOOST_CHECK_EQUAL(result["alleles__del"].asUInt64(), (uint64_t)1); // 1 pure deletion
-    BOOST_CHECK_EQUAL(result["alleles__complex_sd"].asUInt64(), (uint64_t)(1 + 10));
-    BOOST_CHECK_EQUAL(result["alleles__complex_si"].asUInt64(), (uint64_t)(1 + 20));
-    BOOST_CHECK_EQUAL(result["nucleotides__snp"].asUInt64(), (uint64_t)(1 + 1 + 1 + 5*3 + 2*10 + 4*20));
-    BOOST_CHECK_EQUAL(result["nucleotides__ins"].asUInt64(), (uint64_t)(1 + 2 + 1 + 6*20));
-    BOOST_CHECK_EQUAL(result["nucleotides__del"].asUInt64(), (uint64_t)(10 + 1 + 10));
+    BOOST_CHECK_EQUAL(result["al__s"].asUInt64(), (uint64_t)6); // 5 + 1 pure SNP records
+    BOOST_CHECK_EQUAL(result["al__i"].asUInt64(), (uint64_t)2); // 2 pure insertion records
+    BOOST_CHECK_EQUAL(result["al__d"].asUInt64(), (uint64_t)1); // 1 pure deletion
+    BOOST_CHECK_EQUAL(result["al__sd"].asUInt64(), (uint64_t)(1 + 10));
+    BOOST_CHECK_EQUAL(result["al__si"].asUInt64(), (uint64_t)(1 + 20));
+    BOOST_CHECK_EQUAL(result["nuc__s"].asUInt64(), (uint64_t)(1 + 1 + 1 + 5*3 + 2*10 + 4*20));
+    BOOST_CHECK_EQUAL(result["nuc__i"].asUInt64(), (uint64_t)(1 + 2 + 1 + 6*20));
+    BOOST_CHECK_EQUAL(result["nuc__d"].asUInt64(), (uint64_t)(10 + 1 + 10));
 }
 
 BOOST_AUTO_TEST_CASE(testVariantStatisticsCountVariants)
@@ -162,39 +162,58 @@ BOOST_AUTO_TEST_CASE(testVariantStatisticsCountVariants)
     }
 
     Json::Value result = vs.write();
-    Json::FastWriter w;
-    std::cerr << w.write(result) << std::endl;
+    /* bcftools stats ../hap.py/example/hc.vcf.gz | grep ^SN */
+    /* SN      0       number of samples:      1 */
+    /* SN      0       number of records:      84085 */
+    /* SN      0       number of SNPs: 3990 */
+    /* SN      0       number of MNPs: 0 */
+    /* SN      0       number of indels:       792 */
+    /* SN      0       number of others:       0 */
+    /* SN      0       number of multiallelic sites:   66 */
+    /* SN      0       number of multiallelic SNP sites:       1 */
+    /* Json::FastWriter w; */
+    /* std::cerr << w.write(result) << std::endl; */
+    //{"al__d":426,  426 + 431 - 65 het-alt locations = 792 indels
+    // "al__i":431,
+    // "al__s":3991, 3991 - 1 hetalt site = 3990
+    // "hemi__s":4,
+    // "het__rd":223,
+    // "het__ri":207,
+    // "het__rs":2088,
+    // "hetalt__d":22,  # of multiallelic sites: 22+31+12+1 = 66
+    // "hetalt__i":31,
+    // "hetalt__id":12,
+    // "hetalt__s":1,
+    // "homalt__d":147,
+    // "homalt__i":150,
+    // "homalt__s":1897,
+    // "homref__r":79057,
+    // "nocall__nc":246,
+    // "nuc__d":1329,
+    // "nuc__i":1169,
+    // "nuc__r":1022,
+    // "nuc__s":3991}
+    BOOST_CHECK_EQUAL(result["nuc__d"].asUInt64(), (uint64_t)1329);
+    BOOST_CHECK_EQUAL(result["nuc__i"].asUInt64(), (uint64_t)1169);
+    BOOST_CHECK_EQUAL(result["nuc__s"].asUInt64(), (uint64_t)3991);
+    BOOST_CHECK_EQUAL(result["nuc__r"].asUInt64(), (uint64_t)1022);
 
-    //{"alleles__del":426,
-    // "alleles__ins":431,
-    // "alleles__snp":3991,
-    // "hemi__snp":4,
-    // "het__nocall":2088,
-    // "het__unknown":223,
-    // "hetalt__complex_id":12,
-    // "hetalt__del":169,
-    // "hetalt__ins":181,
-    // "hetalt__snp":1898,
-    // "hom__ref":79057,
-    // "nocall__none":246,
-    // "nucleotides__del":1329,
-    // "nucleotides__ins":1169,
-    // "nucleotides__ref":1022,
-    // "nucleotides__snp":3991}
-
-    BOOST_CHECK_EQUAL(result["nucleotides__del"].asUInt64(), (uint64_t)1329);
-    BOOST_CHECK_EQUAL(result["nucleotides__ins"].asUInt64(), (uint64_t)1169);
-    BOOST_CHECK_EQUAL(result["nucleotides__snp"].asUInt64(), (uint64_t)3991);
-    BOOST_CHECK_EQUAL(result["nucleotides__ref"].asUInt64(), (uint64_t)1022);
-
-    // TODO put these back in after validating by outputting with VCF
-//    BOOST_CHECK_EQUAL(result["het"].asUInt64(), (uint64_t)2518);
-//    BOOST_CHECK_EQUAL(result["homalt"].asUInt64(), (uint64_t)2194);
-//    BOOST_CHECK_EQUAL(result["homref"].asUInt64(), (uint64_t)79057);
-//    BOOST_CHECK_EQUAL(result["haploid"].asUInt64(), (uint64_t)4);
-//    BOOST_CHECK_EQUAL(result["hetalt"].asUInt64(), (uint64_t)66);
-//    BOOST_CHECK_EQUAL(result["unknown_gt"].asUInt64(), (uint64_t)246);
-//    BOOST_CHECK_EQUAL(result["locations"].asUInt64(), (uint64_t)84085);
+    BOOST_CHECK_EQUAL(result["al__d"].asUInt64(), (uint64_t)426);
+    BOOST_CHECK_EQUAL(result["al__i"].asUInt64(), (uint64_t)431);
+    BOOST_CHECK_EQUAL(result["al__s"].asUInt64(), (uint64_t)3991);
+    BOOST_CHECK_EQUAL(result["hemi__s"].asUInt64(), (uint64_t)4);
+    BOOST_CHECK_EQUAL(result["het__rd"].asUInt64(), (uint64_t)223);
+    BOOST_CHECK_EQUAL(result["het__ri"].asUInt64(), (uint64_t)207);
+    BOOST_CHECK_EQUAL(result["het__rs"].asUInt64(), (uint64_t)2088);
+    BOOST_CHECK_EQUAL(result["hetalt__d"].asUInt64(), (uint64_t)22);
+    BOOST_CHECK_EQUAL(result["hetalt__i"].asUInt64(), (uint64_t)31);
+    BOOST_CHECK_EQUAL(result["hetalt__id"].asUInt64(), (uint64_t)12);
+    BOOST_CHECK_EQUAL(result["hetalt__s"].asUInt64(), (uint64_t)1);
+    BOOST_CHECK_EQUAL(result["homalt__d"].asUInt64(), (uint64_t)147);
+    BOOST_CHECK_EQUAL(result["homalt__i"].asUInt64(), (uint64_t)150);
+    BOOST_CHECK_EQUAL(result["homalt__s"].asUInt64(), (uint64_t)1897);
+    BOOST_CHECK_EQUAL(result["homref__r"].asUInt64(), (uint64_t)79057);
+    BOOST_CHECK_EQUAL(result["nocall__nc"].asUInt64(), (uint64_t)246);
 
     BOOST_CHECK(count > 0);
 }

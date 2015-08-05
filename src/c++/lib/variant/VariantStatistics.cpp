@@ -50,56 +50,55 @@ namespace variant
 /* variant types in uint64 */
 
 /* encode allele types seen in low 4 bits, highest bit is unused */
+static const uint64_t VT_NOCALL         = 0;
 static const uint64_t VT_SNP            = 1;
 static const uint64_t VT_INS            = 2;
 static const uint64_t VT_DEL            = 4;
-
 static const uint64_t VT_REF            = 8;
-static const uint64_t VT_NOCALL         = 9;
-static const uint64_t VT_UNKNOWN        = 10;
 
 static const char * VT_NAMES [] = {
-    "none",                 //    0x00
-    "snp",                  //    0x01
-    "ins",                  //    0x02
-    "complex_si",           //    0x03
-    "del",                  //    0x04
-    "complex_sd",           //    0x05
-    "complex_id",           //    0x06
-    "complex",              //    0x07
-    "ref",                  //    0x08
-    "nocall",               //    0x09
-    "unknown",              //    0x0a
-    "unknown",              //    0x0b
-    "unknown",              //    0x0c
-    "unknown",              //    0x0d
-    "unknown",              //    0x0e
-    "unknown",              //    0x0f
+    "nc",               //    0x00
+    "s",                //    0x01
+    "i",                //    0x02
+    "si",               //    0x03
+    "d",                //    0x04
+    "sd",               //    0x05
+    "id",               //    0x06
+    "sid",              //    0x07
+    "r",                //    0x08
+    "rs",               //    0x09
+    "ri",               //    0x0a
+    "rsi",              //    0x0b
+    "rd",               //    0x0c
+    "rsd",              //    0x0d
+    "rid",              //    0x0e
+    "rsid",             //    0x0f
 };
 
 /** encode call type / zygosity in bits 5-8 */
-static const uint64_t CT_NUCLEOTIDES = 0;   // count nucleotides
+static const uint64_t CT_NUCLEOTIDES = 0;     // count nucleotides
 static const uint64_t CT_ALLELES = 0x10;      // count alleles
-static const uint64_t CT_HOM = 0x20;          // locations with only one allele seen with copy number 2
+static const uint64_t CT_HOMREF = 0x20;       // locations with only one allele seen with copy number 2
 static const uint64_t CT_HET = 0x30;          // locations with one ref and one alt allele seen with copy number 1
 static const uint64_t CT_HETALT = 0x40;       // locations with two alt alleles seen with copy number 1 each
 static const uint64_t CT_HEMI = 0x50;         // locations with only one allele seen with copy number 1
 static const uint64_t CT_AMBI = 0x60;         // locations with more than two alleles
 static const uint64_t CT_HALFCALL = 0x70;     // locations with one allele, and one missing call
 static const uint64_t CT_NOCALL = 0x80;       // locations with one allele, and one missing call
-static const uint64_t CT_UNKNOWN = 0x90;      // unknown locations / counts
+static const uint64_t CT_HOMALT = 0x90;       // locations with one allele, and one missing call
+static const uint64_t CT_UNKNOWN = 0xa0;      // unknown locations / counts
 
 static const char * CT_NAMES [] = {
-    "nucleotides", // 0x00
-    "alleles",     // 0x10
-    "hom",         // 0x20
+    "nuc", // 0x00
+    "al",     // 0x10
+    "homref",         // 0x20
     "het",         // 0x30
     "hetalt",      // 0x40
     "hemi",        // 0x50
     "ambi",        // 0x60
     "halfcall",    // 0x70
     "nocall",      // 0x80
-    "unknown",     // 0x90
+    "homalt",      // 0x90
     "unknown",     // 0xa0
     "unknown",     // 0xb0
     "unknown",     // 0xc0
@@ -177,7 +176,9 @@ struct VariantStatisticsImpl
         count( CT_NUCLEOTIDES | VT_SNP, total_snp );
         count( CT_NUCLEOTIDES | VT_INS, total_ins );
         count( CT_NUCLEOTIDES | VT_DEL, total_del );
-        count( CT_NUCLEOTIDES | VT_REF, total_hom );
+        if(count_homref) {
+            count( CT_NUCLEOTIDES | VT_REF, total_hom );
+        }
 
         uint8_t t = 0;
         if(total_snp) t |= VT_SNP;
@@ -302,10 +303,10 @@ void VariantStatistics::add(Variants const & rhs, int sample, int ** rtypes, int
             if (rhs.calls[sample].gt[i] > 0)
             {
                 types |= _impl->add_al(rhs.chr.c_str(), rhs.variation[rhs.calls[sample].gt[i]-1]);
-            } else if(rhs.calls[sample].gt[i] == 0) {
+            }
+            else if(rhs.calls[sample].gt[i] == 0)
+            {
                 types |= VT_REF;
-            } else {
-                types |= VT_NOCALL;
             }
         }
     }
@@ -328,9 +329,11 @@ void VariantStatistics::add(Variants const & rhs, int sample, int ** rtypes, int
     if(is_ambi) {
         location_type = CT_AMBI;
     } else if(rhs.calls[sample].isHomref()) {
-        location_type = CT_HOM;
+        location_type = CT_HOMREF;
     } else if(rhs.calls[sample].isHet()) {
         location_type = CT_HET;
+    } else if(rhs.calls[sample].isHomalt()) {
+        location_type = CT_HOMALT;
     } else if(rhs.calls[sample].isHetAlt()) {
         location_type = CT_HETALT;
     } else if(rhs.calls[sample].isHalfcall()) {

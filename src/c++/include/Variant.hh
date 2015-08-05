@@ -117,7 +117,7 @@ struct Call {
 
     inline bool isHetAlt() const
     {
-        return ngt == 2 && (gt[0] > 0) && (gt[1] > 0);
+        return ngt == 2 && (gt[0] > 0) && (gt[1] > 0) && (gt[0] != gt[1]);
     }
 
     inline bool isHomalt() const

@@ -570,7 +570,8 @@ def main():
         if not h2["tabix"]["chromosomes"]:
             h2["tabix"]["chromosomes"] = []
 
-        for xc in args.locations:
+        for _xc in args.locations:
+            xc = _xc.split(":")[0]
             if xc not in h1["tabix"]["chromosomes"]:
                 logging.warn("No calls for location %s in truth!" % xc)
             if xc not in h2["tabix"]["chromosomes"]:
@@ -579,7 +580,7 @@ def main():
             if (xc not in h1["tabix"]["chromosomes"]) and (xc not in h2["tabix"]["chromosomes"]):
                 logging.warn("Removing location %s because neither input file has calls there." % xc)
             else:
-                newlocations.append(xc)
+                newlocations.append(_xc)
 
         if not newlocations:
             raise Exception("Location list is empty: the input files do not appear to have variants on any of %s" %
@@ -711,53 +712,50 @@ def main():
         simplified_numbers = Haplo.quantify.simplify_counts(counts)
 
         for vtype in simplified_numbers.keys():
-            for suffix in ["", ".HC"]:
-                simplified_numbers[vtype]["METRIC.Recall" + suffix] = 0
-                simplified_numbers[vtype]["METRIC.Recall2" + suffix] = 0
-                simplified_numbers[vtype]["METRIC.Precision" + suffix] = 0
-                simplified_numbers[vtype]["METRIC.Frac_NA" + suffix] = 0
+            simplified_numbers[vtype]["METRIC.Recall"] = 0
+            simplified_numbers[vtype]["METRIC.Recall2"] = 0
+            simplified_numbers[vtype]["METRIC.Precision"] = 0
+            simplified_numbers[vtype]["METRIC.Frac_NA"] = 0
 
-                try:
-                    simplified_numbers[vtype]["METRIC.Recall" + suffix] = \
-                        float(simplified_numbers[vtype]["TRUTH.TP" + suffix]) / \
-                        float(simplified_numbers[vtype]["TRUTH.TP" + suffix] + simplified_numbers[vtype]["TRUTH.FN" +
-                                                                                                         suffix])
-                except:
-                    pass
+            try:
+                simplified_numbers[vtype]["METRIC.Recall"] = \
+                    float(simplified_numbers[vtype]["TRUTH.TP"]) / \
+                    float(simplified_numbers[vtype]["TRUTH.TP"] + simplified_numbers[vtype]["TRUTH.FN"])
+            except:
+                pass
 
-                try:
-                    simplified_numbers[vtype]["METRIC.Recall2" + suffix] = \
-                        float(simplified_numbers[vtype]["TRUTH.TP" + suffix]) / \
-                        float(simplified_numbers[vtype]["TRUTH.TOTAL"])
-                except:
-                    pass
+            try:
+                simplified_numbers[vtype]["METRIC.Recall2"] = \
+                    float(simplified_numbers[vtype]["TRUTH.TP"]) / \
+                    float(simplified_numbers[vtype]["TRUTH.TOTAL"])
+            except:
+                pass
 
-                try:
-                    simplified_numbers[vtype]["METRIC.Precision" + suffix] = \
-                        float(simplified_numbers[vtype]["QUERY.TP" + suffix]) / \
-                        float(simplified_numbers[vtype]["QUERY.TP" + suffix] + simplified_numbers[vtype]["QUERY.FP" +
-                                                                                                         suffix])
-                except:
-                    pass
+            try:
+                simplified_numbers[vtype]["METRIC.Precision"] = \
+                    float(simplified_numbers[vtype]["QUERY.TP"]) / \
+                    float(simplified_numbers[vtype]["QUERY.TP"] + simplified_numbers[vtype]["QUERY.FP"])
+            except:
+                pass
 
-                try:
-                    simplified_numbers[vtype]["METRIC.Frac_NA" + suffix] = \
-                        float(simplified_numbers[vtype]["QUERY.UNK" + suffix]) / \
-                        float(simplified_numbers[vtype]["QUERY.TOTAL"])
-                except:
-                    pass
+            try:
+                simplified_numbers[vtype]["METRIC.Frac_NA"] = \
+                    float(simplified_numbers[vtype]["QUERY.UNK"]) / \
+                    float(simplified_numbers[vtype]["QUERY.TOTAL"])
+            except:
+                pass
 
-                try:
-                    simplified_numbers[vtype]["TRUTH.TOTAL.RAW"] = simplified_truth_counts[vtype][h1["samples"][0] +
-                                                                                                  ".TOTAL"]
-                except:
-                    pass
+            try:
+                simplified_numbers[vtype]["TRUTH.TOTAL.RAW"] = simplified_truth_counts[vtype][h1["samples"][0] +
+                                                                                              ".TOTAL"]
+            except:
+                pass
 
-                try:
-                    simplified_numbers[vtype]["QUERY.TOTAL.RAW"] = simplified_query_counts[vtype][h2["samples"][0] +
-                                                                                                  ".TOTAL"]
-                except:
-                    pass
+            try:
+                simplified_numbers[vtype]["QUERY.TOTAL.RAW"] = simplified_query_counts[vtype][h2["samples"][0] +
+                                                                                              ".TOTAL"]
+            except:
+                pass
 
         pandas.set_option("display.width", 120)
         pandas.set_option("display.max_columns", 1000)
@@ -771,25 +769,23 @@ def main():
 
         df.loc[vstring] = 0
 
-        for x in df:
-            # everything not a metric is a count
-            if not x.startswith("METRIC"):
-                df[x] = df[x].astype("int64")
+        # for x in df:
+        #     # everything not a metric is a count
+        #     if not x.startswith("METRIC"):
+        #         df[x] = df[x].astype("int64")
 
         df[["TRUTH.TOTAL",
             "QUERY.TOTAL",
-            "METRIC.Recall.HC",
-            "METRIC.Recall2.HC",
-            "METRIC.Precision.HC",
-            "METRIC.Frac_NA.HC"]].to_csv(args.reports_prefix + ".summary.csv")
+            "METRIC.Recall",
+            "METRIC.Precision",
+            "METRIC.Frac_NA"]].to_csv(args.reports_prefix + ".summary.csv")
 
         metrics_output["metrics"].append(dataframeToMetricsTable("summary.metrics",
                                          df[["TRUTH.TOTAL",
                                              "QUERY.TOTAL",
-                                             "METRIC.Recall.HC",
-                                             "METRIC.Recall2.HC",
-                                             "METRIC.Precision.HC",
-                                             "METRIC.Frac_NA.HC"]]))
+                                             "METRIC.Recall",
+                                             "METRIC.Precision",
+                                             "METRIC.Frac_NA"]]))
 
         if args.write_counts:
             df.to_csv(args.reports_prefix + ".extended.csv")
@@ -797,9 +793,9 @@ def main():
 
         essential_numbers = df[["TRUTH.TOTAL",
                                 "QUERY.TOTAL",
-                                "METRIC.Recall.HC",
-                                "METRIC.Precision.HC",
-                                "METRIC.Frac_NA.HC"]]
+                                "METRIC.Recall",
+                                "METRIC.Precision",
+                                "METRIC.Frac_NA"]]
 
         pandas.set_option('display.max_columns', 500)
         pandas.set_option('display.width', 1000)

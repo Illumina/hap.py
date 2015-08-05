@@ -93,108 +93,66 @@ def simplify_counts(counts, snames=None):
             counter_dict[sn + ".FP"] = 0
             counter_dict[sn + ".FN"] = 0
             counter_dict[sn + ".UNK"] = 0
-            counter_dict[sn + ".TP.HC"] = 0
-            counter_dict[sn + ".FP.HC"] = 0
-            counter_dict[sn + ".FN.HC"] = 0
-            counter_dict[sn + ".UNK.HC"] = 0
 
-    simplified_numbers = {
-        "Alleles" : copy.copy(counter_dict),
-        "Alleles.SNP" : copy.copy(counter_dict),
-        "Alleles.INS" : copy.copy(counter_dict),
-        "Alleles.DEL" : copy.copy(counter_dict),
-        "Alleles.other" : copy.copy(counter_dict),
-        "Locations" : copy.copy(counter_dict),
-        "Locations.het" : copy.copy(counter_dict),
-        "Locations.homalt" : copy.copy(counter_dict),
-        "Locations.hetalt" : copy.copy(counter_dict),
-        "Locations.unknown" : copy.copy(counter_dict),
-        "Locations.SNP" : copy.copy(counter_dict),
-        "Locations.SNP.het" : copy.copy(counter_dict),
-        "Locations.SNP.homalt" : copy.copy(counter_dict),
-        "Locations.SNP.hetalt" : copy.copy(counter_dict),
-        "Locations.SNP.unknown" : copy.copy(counter_dict),
-        "Locations.INDEL" : copy.copy(counter_dict),
-        "Locations.INDEL.het" : copy.copy(counter_dict),
-        "Locations.INDEL.homalt" : copy.copy(counter_dict),
-        "Locations.INDEL.hetalt" : copy.copy(counter_dict),
-        "Locations.INDEL.unknown" : copy.copy(counter_dict),
-    }
-
+    simplified_numbers = {}
     for k1, v in counts.iteritems():
         if k1.startswith("all") or v is None:
             continue
         # k1 is made in quantify.cpp
-        # type + ":" + hapmatch + ":" + kind + ":" + tag_string
-        vtype, hapmatch, kind, tags, tq = k1.split(":", 5)
+        # type + ":" + kind + ":" + tag_string + ":" + sample
+        try:
+            vtype, kind, tags, tq = k1.split(":", 4)
+        except:
+            logging.warn("Invalid k1 : %s" % k1)
+            continue
 
-        if type(snames) is list and not tq in snames:
+        if type(snames) is list and tq not in snames:
             logging.warn("Ignoring invalid key %s" % k1)
             continue
 
-        if not vtype in ["TP", "FP", "FN"]:
-            vtype = "UNK"
-
-        # these don't make sense to count
-        if vtype == "FN" and tq == "QUERY":
-            continue
-
-        # turn FP outside of confident regions into UNK
-        if vtype == "FP" and not "CONF" in tags and kind == "missing":
-            vtype = "UNK"
-
         for k2, v2 in v.iteritems():
-            if "__" in k2:
-                atype, _, gt = k2.partition("__")
+            # k2 is created in quantify.cpp, observation type, then allele types separated by __
+            ct, _, vt = k2.partition("__")
+
+            if ct == "nuc":
+                if vt == "s":
+                    altype = "SNP"
+                elif vt == "i":
+                    altype = "INS"
+                elif vt == "d":
+                    altype = "DEL"
+                else:
+                    raise Exception("Invalid nucleotide type: %s" % vt)
+                keys1 = ["Nucleotides", "Nucleotides." + altype]
+            elif ct == "al":
+                if vt == "s":
+                    altype = "SNP"
+                elif vt == "i":
+                    altype = "INS"
+                elif vt == "d":
+                    altype = "DEL"
+                else:
+                    altype = "COMPLEX"
+                keys1 = ["Alleles", "Alleles." + altype]
             else:
-                atype = k2
-                gt = None
-
-            if atype == "alleles":
-                atype = "Alleles"
-            elif atype == "locations":
-                atype = "Locations"
-            elif atype == "snp":
-                if gt:
-                    atype = "Locations.SNP"
+                if vt == "s" or vt == "rs":
+                    altype = "SNP"
                 else:
-                    atype = "Alleles.SNP"
-            elif atype in ["ins", "del"]: # for alleles, split out ins / del
-                if gt:  # for locations, everything not a SNP is an Indel
-                    atype = "Locations.INDEL"
-                else:
-                    atype = "Alleles." + atype.upper()
-            elif atype in ["het", "hetalt", "homalt", "unknown_gt"]: # for alleles, split out ins / del
-                gt = atype
-                atype = "Locations"
-            else:
-                if gt:
-                    atype = "Locations.INDEL"
-                else:
-                    atype = "Alleles.other"
+                    altype = "INDEL"
+                xkeys1 = ["Locations", "Locations." + altype]
+                if vt != "s":
+                    xkeys1.append("Locations.detailed." + vt)
 
-            if gt and gt not in ["het", "homalt", "hetalt"]:
-                gt = "unknown"
-
-            key1 = atype
-            if gt:
-                key1 += "." + gt
-
-            keys1 = [key1]
-            # add to SNP / indel locations
-            for qprefix in ["Locations.SNP", "Locations.INDEL"]:
-                if key1.startswith(qprefix):
-                    keys1.append(qprefix)
+                keys1 = copy.copy(xkeys1)
+                for k in xkeys1:
+                    if k != "Locations":
+                        keys1.append(k + "." + ct)
 
             keys2 = [tq + ".TOTAL", tq + "." + vtype]
 
-            # haplotype-matched FP/FN become TP
-            if hapmatch:
-                keys2.append(tq + ".TP.HC")
-            else:
-                keys2.append(tq + "." + vtype + ".HC")
-
             for key1 in keys1:
+                if key1 not in simplified_numbers:
+                    simplified_numbers[key1] = copy.copy(counter_dict)
                 for key2 in keys2:
                     try:
                         simplified_numbers[key1][key2] += v2

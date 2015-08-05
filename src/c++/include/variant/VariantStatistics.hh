@@ -69,10 +69,10 @@ public:
     void add(const char * chr, RefVar const & rhs, int ** types = NULL, int * ntypes = NULL);
 
     /** resolve types to strings */
-    std::string type2string(int type);
+    static std::string type2string(int type);
 
     /** resolve types to strings */
-    int string2type(const char * str);
+    static int string2type(const char * str);
 private:
     VariantStatisticsImpl * _impl;
 };
