@@ -6,7 +6,7 @@ import sys
 
 def csvread(filename):
     f = open(filename)
-    
+
     header = None
     rows = []
     for l in f:
@@ -15,7 +15,7 @@ def csvread(filename):
             header = l.split(",")
         else:
             rows.append(l.split(","))
-    
+
     data = {}
     for r in rows:
         label = r[0]
@@ -32,7 +32,7 @@ def main():
     data2 = csvread(sys.argv[2])
 
     for metric in [  # "TRUTH.TOTAL", "QUERY.TOTAL", #  -- these will vary by +/- 2
-                   "METRIC.Recall.HC", "METRIC.Precision.HC"]:
+                   "METRIC.Recall", "METRIC.Precision", "METRIC.Frac_NA"]:
         for field in ["Locations.SNP", "Locations.SNP.het", "Locations.INDEL", "Locations.INDEL.het"]:
             print metric + " / " + field
             print data1[metric][field]
