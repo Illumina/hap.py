@@ -59,37 +59,37 @@ BOOST_AUTO_TEST_CASE(testVariantStatisticsCountRefvar)
 
     RefVar rv;
 
-    // snp
+    // 1x snp
     rv.start = 10;
     rv.end = 10;
     rv.alt = "T";
     vs.add("chr21", rv);
 
-    // del
+    // 10x del
     rv.start = 20;
     rv.end = 30;
-    rv.alt = "A";
+    rv.alt = "N";
     vs.add("chr21", rv);
 
-    // del2
+    // 1x SNP - 1x del (complex_sd)
     rv.start = 20;
     rv.end = 21;
     rv.alt = "A";
     vs.add("chr21", rv);
 
-    // ins
+    // 1x SNP - 1x ins (complex_si)
     rv.start = 30;
     rv.end = 30;
     rv.alt = "AA";
     vs.add("chr21", rv);
 
-    // ins
+    // 2x ins
     rv.start = 40;
     rv.end = 39;
     rv.alt = "AA";
     vs.add("chr21", rv);
 
-    // ins
+    // 1x ins
     rv.start = 50;
     rv.end = 49;
     rv.alt = "A";
@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(testVariantStatisticsCountRefvar)
 
     for (int i = 0; i < 5; ++i)
     {
-        // blocksubst
+        // blocksubst -- 3xSNP x 5
         rv.start = 50*i;
         rv.end = 50*i + 2;
         rv.alt = "AAA";
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(testVariantStatisticsCountRefvar)
 
     for (int i = 0; i < 10; ++i)
     {
-        // complexdel
+        // complexdel -- 2x SNP 1x del x10
         rv.start = 50*i;
         rv.end = 50*i + 2;
         rv.alt = "AA";
@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(testVariantStatisticsCountRefvar)
 
     for (int i = 0; i < 20; ++i)
     {
-        // complexins
+        // complexins -- 4x snp, 6 x ins x20
         rv.start = 50*i;
         rv.end = 50*i + 3;
         rv.alt = "AAAAAAAAAA";
@@ -123,13 +123,18 @@ BOOST_AUTO_TEST_CASE(testVariantStatisticsCountRefvar)
     }
 
     Json::Value result(vs.write());
-    BOOST_CHECK_EQUAL(result["alleles"].asUInt64(), (uint64_t)41);
-    BOOST_CHECK_EQUAL(result["snp"].asUInt64(), (uint64_t)119);
-    BOOST_CHECK_EQUAL(result["del"].asUInt64(), (uint64_t)21);
-    BOOST_CHECK_EQUAL(result["ins"].asUInt64(), (uint64_t)123);
-    BOOST_CHECK_EQUAL(result["blocksubst"].asUInt64(), (uint64_t)0);
-    BOOST_CHECK_EQUAL(result["blocksubst_del"].asUInt64(), (uint64_t)0);
-    BOOST_CHECK_EQUAL(result["blocksubst_ins"].asUInt64(), (uint64_t)0);
+
+//    Json::FastWriter w;
+//    std::cerr << w.write(result) << std::endl;
+
+    BOOST_CHECK_EQUAL(result["al__s"].asUInt64(), (uint64_t)6); // 5 + 1 pure SNP records
+    BOOST_CHECK_EQUAL(result["al__i"].asUInt64(), (uint64_t)2); // 2 pure insertion records
+    BOOST_CHECK_EQUAL(result["al__d"].asUInt64(), (uint64_t)1); // 1 pure deletion
+    BOOST_CHECK_EQUAL(result["al__sd"].asUInt64(), (uint64_t)(1 + 10));
+    BOOST_CHECK_EQUAL(result["al__si"].asUInt64(), (uint64_t)(1 + 20));
+    BOOST_CHECK_EQUAL(result["nuc__s"].asUInt64(), (uint64_t)(1 + 1 + 1 + 5*3 + 2*10 + 4*20));
+    BOOST_CHECK_EQUAL(result["nuc__i"].asUInt64(), (uint64_t)(1 + 2 + 1 + 6*20));
+    BOOST_CHECK_EQUAL(result["nuc__d"].asUInt64(), (uint64_t)(10 + 1 + 10));
 }
 
 BOOST_AUTO_TEST_CASE(testVariantStatisticsCountVariants)
@@ -157,47 +162,58 @@ BOOST_AUTO_TEST_CASE(testVariantStatisticsCountVariants)
     }
 
     Json::Value result = vs.write();
+    /* bcftools stats ../hap.py/example/hc.vcf.gz | grep ^SN */
+    /* SN      0       number of samples:      1 */
+    /* SN      0       number of records:      84085 */
+    /* SN      0       number of SNPs: 3990 */
+    /* SN      0       number of MNPs: 0 */
+    /* SN      0       number of indels:       792 */
+    /* SN      0       number of others:       0 */
+    /* SN      0       number of multiallelic sites:   66 */
+    /* SN      0       number of multiallelic SNP sites:       1 */
+    /* Json::FastWriter w; */
+    /* std::cerr << w.write(result) << std::endl; */
+    //{"al__d":426,  426 + 431 - 65 het-alt locations = 792 indels
+    // "al__i":431,
+    // "al__s":3991, 3991 - 1 hetalt site = 3990
+    // "hemi__s":4,
+    // "het__rd":223,
+    // "het__ri":207,
+    // "het__rs":2088,
+    // "hetalt__d":22,  # of multiallelic sites: 22+31+12+1 = 66
+    // "hetalt__i":31,
+    // "hetalt__id":12,
+    // "hetalt__s":1,
+    // "homalt__d":147,
+    // "homalt__i":150,
+    // "homalt__s":1897,
+    // "homref__r":79057,
+    // "nocall__nc":246,
+    // "nuc__d":1329,
+    // "nuc__i":1169,
+    // "nuc__r":1022,
+    // "nuc__s":3991}
+    BOOST_CHECK_EQUAL(result["nuc__d"].asUInt64(), (uint64_t)1329);
+    BOOST_CHECK_EQUAL(result["nuc__i"].asUInt64(), (uint64_t)1169);
+    BOOST_CHECK_EQUAL(result["nuc__s"].asUInt64(), (uint64_t)3991);
+    BOOST_CHECK_EQUAL(result["nuc__r"].asUInt64(), (uint64_t)1022);
 
-    BOOST_CHECK_EQUAL(result["het"].asUInt64(), (uint64_t)2518);
-    BOOST_CHECK_EQUAL(result["homalt"].asUInt64(), (uint64_t)2194);
-    BOOST_CHECK_EQUAL(result["homref"].asUInt64(), (uint64_t)79057);
-    BOOST_CHECK_EQUAL(result["haploid"].asUInt64(), (uint64_t)4);
-    BOOST_CHECK_EQUAL(result["hetalt"].asUInt64(), (uint64_t)66);
-    BOOST_CHECK_EQUAL(result["unknown_gt"].asUInt64(), (uint64_t)246);
-    BOOST_CHECK_EQUAL(result["locations"].asUInt64(), (uint64_t)84085);
-
-    const char * vts [] = { "het", "homalt", "haploid", "hetalt" };
-
-    for(const char * vt : vts)
-    {
-        uint64_t count = 0;
-        for(std::string const & s : result.getMemberNames())
-        {
-            size_t p = s.find("__");
-            if (p == std::string::npos)
-            {
-                continue;
-            }
-            if (stringutil::endsWith(s, std::string("__") + vt))
-            {
-                count += result[s].asUInt64();
-            }
-        }
-        BOOST_CHECK_EQUAL(result[vt].asUInt64(), count);
-    }
-
-    BOOST_CHECK_EQUAL(result["del"].asUInt64(), (uint64_t)1329);
-    BOOST_CHECK_EQUAL(result["ins"].asUInt64(), (uint64_t)1169);
-    BOOST_CHECK_EQUAL(result["snp"].asUInt64(), (uint64_t)3991);
-    BOOST_CHECK_EQUAL(result["het"].asUInt64(), (uint64_t)2518);
-
-    BOOST_CHECK_EQUAL(result["locations"].asUInt64(),
-                      result["het"].asUInt64() +
-                      result["homalt"].asUInt64() +
-                      result["hetalt"].asUInt64() +
-                      result["homref"].asUInt64() +
-                      result["haploid"].asUInt64() +
-                      result["unknown_gt"].asUInt64());
+    BOOST_CHECK_EQUAL(result["al__d"].asUInt64(), (uint64_t)426);
+    BOOST_CHECK_EQUAL(result["al__i"].asUInt64(), (uint64_t)431);
+    BOOST_CHECK_EQUAL(result["al__s"].asUInt64(), (uint64_t)3991);
+    BOOST_CHECK_EQUAL(result["hemi__s"].asUInt64(), (uint64_t)4);
+    BOOST_CHECK_EQUAL(result["het__rd"].asUInt64(), (uint64_t)223);
+    BOOST_CHECK_EQUAL(result["het__ri"].asUInt64(), (uint64_t)207);
+    BOOST_CHECK_EQUAL(result["het__rs"].asUInt64(), (uint64_t)2088);
+    BOOST_CHECK_EQUAL(result["hetalt__d"].asUInt64(), (uint64_t)22);
+    BOOST_CHECK_EQUAL(result["hetalt__i"].asUInt64(), (uint64_t)31);
+    BOOST_CHECK_EQUAL(result["hetalt__id"].asUInt64(), (uint64_t)12);
+    BOOST_CHECK_EQUAL(result["hetalt__s"].asUInt64(), (uint64_t)1);
+    BOOST_CHECK_EQUAL(result["homalt__d"].asUInt64(), (uint64_t)147);
+    BOOST_CHECK_EQUAL(result["homalt__i"].asUInt64(), (uint64_t)150);
+    BOOST_CHECK_EQUAL(result["homalt__s"].asUInt64(), (uint64_t)1897);
+    BOOST_CHECK_EQUAL(result["homref__r"].asUInt64(), (uint64_t)79057);
+    BOOST_CHECK_EQUAL(result["nocall__nc"].asUInt64(), (uint64_t)246);
 
     BOOST_CHECK(count > 0);
 }

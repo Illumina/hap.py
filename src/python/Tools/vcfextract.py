@@ -220,12 +220,12 @@ def extractHeadersJSON(vcfname):
     vfh = {}
 
     try:
-        sp = subprocess.Popen("vcfhdr2json %s %s" % (vcfname, tf.name),
+        sp = subprocess.Popen("vcfhdr2json %s %s" % (vcfname.replace(" ", "\\ "), tf.name.replace(" ", "\\ ")),
                               shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         o, e = sp.communicate()
 
         if sp.returncode != 0:
-            raise Exception("Samtools call failed: %s / %s" % (o, e))
+            raise Exception("vcfhdr2json call failed: %s / %s" % (o, e))
 
         vfh = json.load(open(tf.name))
     finally:

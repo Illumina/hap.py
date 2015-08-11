@@ -93,6 +93,11 @@ struct Call {
         return true;
     }
 
+    inline bool isHalfcall() const
+    {
+        return ngt == 2 && ( (gt[0] >= 0 && gt[1] < 0) || (gt[0] >= 0 && gt[1] < 0));
+    }
+
     inline bool isHomref() const
     {
         for (size_t i = 0; i < ngt; ++i)
@@ -108,6 +113,11 @@ struct Call {
     inline bool isHet() const
     {
         return ngt == 2 && ((gt[0] == 0 && gt[1] > 0) || (gt[0] > 0 && gt[1] == 0));
+    }
+
+    inline bool isHetAlt() const
+    {
+        return ngt == 2 && (gt[0] > 0) && (gt[1] > 0) && (gt[0] != gt[1]);
     }
 
     inline bool isHomalt() const

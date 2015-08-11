@@ -173,11 +173,11 @@ def build_haplotypes(source_dir, build_dir, args):
 
     setupscript += boost_prefix
 
-    to_run = "cd %s && %s make -j%i" % (build_dir, setupscript, args.processes)
+    to_run = setupscript + "cd %s && %s make -j%i" % (build_dir, setupscript, args.processes)
     print >>sys.stderr, to_run
     subprocess.check_call(to_run, shell=True)
 
-    to_run = "cd %s && %s make -j%i install" % (build_dir, setupscript, args.processes)
+    to_run = setupscript + "cd %s && %s make -j%i install" % (build_dir, setupscript, args.processes)
     print >>sys.stderr, to_run
     subprocess.check_call(to_run, shell=True)
 

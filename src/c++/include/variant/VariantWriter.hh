@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -29,7 +29,7 @@
 
 /**
  * Simple Variant-to-file writer
- * 
+ *
  * \file VariantWriter.hh
  * \author Peter Krusche
  * \email pkrusche@illumina.com
@@ -59,17 +59,18 @@ public:
 
     /**
      * @brief Get header from VariantReader
-     * 
+     *
+     * Optionally add only contig names, but not format and ID fields
      */
-    void addHeader(VariantReader &);
+    void addHeader(VariantReader &, bool drop_formats_info=false);
 
     /**
      * @brief Add line to VCF header
-     * 
+     *
      * @param headerline the line to add
      */
     void addHeader(const char * headerline);
-    
+
     /**
      * @brief Add a sample to the header
      * @param sname  name of sample to write
@@ -79,7 +80,7 @@ public:
 
     /**
      * @brief write a variant to a file
-     * 
+     *
      * @param var the variant records to write
      */
     void put(Variants const & var);

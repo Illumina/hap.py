@@ -10,7 +10,7 @@ RUN apt-get install python-setuptools -y
 RUN apt-get install python-pip -y
 RUN apt-get install python-numpy -y
 RUN apt-get install zlib1g-dev -y
-# ideally, we don't want to use the ubuntu version 
+# ideally, we don't want to use the ubuntu version
 # here because this bloats the Docker image
 # RUN apt-get install python-pandas -y
 RUN easy_install -U distribute
@@ -23,24 +23,11 @@ RUN apt-get install pkg-config -y
 RUN apt-get install software-properties-common python-software-properties -y
 RUN apt-get install cmake -y
 
-# unfortunately, we have to build boost here since the one from the PPA
-# seems to not like to link with our code. Better solutions welcome here.
-WORKDIR /opt
-RUN apt-get install wget -y
-RUN apt-get install libbz2-dev -y
-RUN wget http://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.bz2
-RUN tar xjf boost_1_55_0.tar.bz2
-WORKDIR /opt/boost_1_55_0
-RUN ./bootstrap.sh --with-libraries=filesystem,chrono,thread,iostreams,system,regex,test,program_options
-RUN ./b2 --prefix=/opt/boost_1_55_0_install install
-WORKDIR /opt
-RUN rm -rf /opt/boost_1_55_0
-
 # upgrade to newest versions / install
-RUN pip install --upgrade cython 
-RUN pip install --upgrade numpy 
-RUN pip install --upgrade pandas 
-RUN pip install pybedtools 
+RUN pip install --upgrade cython
+RUN pip install --upgrade numpy
+RUN pip install --upgrade pandas
+RUN pip install pybedtools
 RUN pip install pysam
 RUN pip install bx-python
 
@@ -52,7 +39,7 @@ RUN apt-get install bzip2 -y
 RUN apt-get clean -y
 
 # copy git repository into the image
-RUN mkdir -p /opt/hap.py-source 
+RUN mkdir -p /opt/hap.py-source
 COPY . /opt/hap.py-source/
 
 # make minimal HG19 reference sequence
@@ -62,6 +49,9 @@ RUN mkdir -p /opt/hap.py-data
 WORKDIR /opt/hap.py-data
 
 # This downloads from UCSC
+RUN apt-get install wget -y
+RUN apt-get install libbz2-dev -y
+RUN apt-get clean -y
 RUN /opt/hap.py-source/src/sh/make_hg19.sh
 
 # this downloads our copy from box.com (once available)

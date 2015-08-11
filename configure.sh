@@ -25,10 +25,9 @@
 #
 # configure.sh Release auto $HOME/haplotypes_testing
 #
-# Make Release version, San Diego production config
-# install to $HOME/haplotypes_testing
+# Make Release version, Illumina config install to $HOME/haplotypes_testing
 #
-# configure.sh Release ussd $HOME/haplotypes_testing
+# configure.sh Release illumina $HOME/haplotypes_testing
 
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -43,21 +42,11 @@ else
 fi
 
 if [[ -z $CONFIGTYPE ]]; then
-
-if [[ "$(hostname)" == *chuk.illumina.com ]]; then
-    echo "Using Illumina-UK configuration."
-    SPECIALCONFIG="${DIR}/src/sh/chuk-setup.sh"
-    . ${DIR}/src/sh/chuk-setup.sh
-elif [[ "$(hostname)" == ukch-prd-lndt* ]] || [[ "$(hostname)" == ukch-dev-lnt* ]]; then
-    echo "Using Illumina-UK EL6 configuration."
-    SPECIALCONFIG="${DIR}/src/sh/chuk-el6-setup.sh"
-    . ${DIR}/src/sh/chuk-el6-setup.sh
-elif [[ "$(hostname)" == ussd-prd-lndt-b* ]]; then
-    echo "using illumina-us configuration."
-    SPECIALCONFIG="${DIR}/src/sh/ussd-setup.sh"
-    . ${DIR}/src/sh/ussd-setup.sh
-fi
-
+	if [[ "$(hostname)" == *chuk.illumina.com ]] || [[ "$(hostname)" == ukch-* ]] || [[ "$(hostname)" == ussd-prd-lndt* ]]; then
+	    echo "using Illumina configuration."
+	    SPECIALCONFIG="${DIR}/src/sh/illumina-setup.sh"
+	    . ${DIR}/src/sh/illumina-setup.sh
+	fi
 else
     echo "using $CONFIGTYPE configuration."
     SPECIALCONFIG="${DIR}/src/sh/$CONFIGTYPE-setup.sh"

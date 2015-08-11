@@ -57,8 +57,8 @@ def blocksplitWrapper(location_str, args):
     tf.close()
 
     to_run = "blocksplit %s %s -l %s -o %s --window %i --nblocks %i -f %i" % \
-             (args.vcf1,
-              args.vcf2,
+             (args.vcf1.replace(" ", "\\ "),
+              args.vcf2.replace(" ", "\\ "),
               location_str,
               tf.name,
               args.window*2,
@@ -114,8 +114,8 @@ def xcmpWrapper(location_str, args):
         bname = ""
 
     to_run = "xcmp %s %s -l %s -o %s %s -r %s -f %i --apply-filters-truth %i -n %i -V %i --leftshift %i --expand-hapblocks %i --window %i --compare-raw %i" % \
-             (args.vcf1,
-              args.vcf2,
+             (args.vcf1.replace(" ", "\\ "),
+              args.vcf2.replace(" ", "\\ "),
               location_str,
               tf.name,
               bname,
@@ -436,6 +436,38 @@ def main():
             args.vcf2 = Tools.bcftools.makeIndex(args.vcf2, vtf.name)
             h2 = vcfextract.extractHeadersJSON(args.vcf2)
 
+        ref_check = False
+        try:
+            happy_ref = args.ref
+            v1r = [_h for _h in h1["fields"] if _h["key"] == "reference"]
+            v2r = [_h for _h in h2["fields"] if _h["key"] == "reference"]
+            if args.verbose:
+                logging.info("References used: hap.py: %s / truth: %s / "
+                             "query: %s" % (str(happy_ref), str(v1r), str(v2r)))
+
+            v1_ref = ";".join([str(xxy["value"]) for xxy in v1r]).replace("file://", "")
+            v2_ref = ";".join([str(xxy["value"]) for xxy in v2r]).replace("file://", "")
+
+            if happy_ref == v1_ref and v1_ref == v2_ref:
+                ref_check = True
+
+            refids_found = 0
+            for refid in ["hg19", "hg38", "grc37", "grc38"]:
+                if refid in happy_ref.lower() and refid in v1_ref.lower() and refid in v2_ref.lower():
+                    if args.verbose:
+                        logging.info("Reference matches pattern: %s" % refid)
+                    refids_found += 1
+            if refids_found == 1:
+                ref_check = True
+        except:
+            pass
+
+        if not ref_check:
+            logging.warn("Reference sequence check failed! "
+                         "Please ensure that truth and query VCF use the same reference sequence as "
+                         "hap.py. XCMP may fail if this is not the case, and the results will not be "
+                         " accurate.")
+
         if args.locations is None or len(args.locations) == 0:
             # all chromosomes
             args.locations = ["chr" + x for x in map(str, range(1, 23))]
@@ -538,7 +570,8 @@ def main():
         if not h2["tabix"]["chromosomes"]:
             h2["tabix"]["chromosomes"] = []
 
-        for xc in args.locations:
+        for _xc in args.locations:
+            xc = _xc.split(":")[0]
             if xc not in h1["tabix"]["chromosomes"]:
                 logging.warn("No calls for location %s in truth!" % xc)
             if xc not in h2["tabix"]["chromosomes"]:
@@ -547,7 +580,7 @@ def main():
             if (xc not in h1["tabix"]["chromosomes"]) and (xc not in h2["tabix"]["chromosomes"]):
                 logging.warn("Removing location %s because neither input file has calls there." % xc)
             else:
-                newlocations.append(xc)
+                newlocations.append(_xc)
 
         if not newlocations:
             raise Exception("Location list is empty: the input files do not appear to have variants on any of %s" %
@@ -623,7 +656,7 @@ def main():
         if args.write_bed and bedfiles:
             runme = " ".join(["cat"] +
                              bedfiles +
-                             [">", args.reports_prefix + ".blocks.bed"])
+                             [">", args.reports_prefix.replace(" ", "\\ ") + ".blocks.bed"])
             logging.info("Concatenating block files: %s..." % runme)
             subprocess.check_call(runme,
                                   shell=True)
@@ -642,7 +675,7 @@ def main():
         fo.close()
 
         logging.info("Indexing...")
-        to_run = "tabix -p vcf %s" % output_name
+        to_run = "tabix -p vcf %s" % output_name.replace(" ", "\\ ")
         logging.info("Running '%s'" % to_run)
         subprocess.check_call(to_run, shell=True)
 
@@ -679,53 +712,50 @@ def main():
         simplified_numbers = Haplo.quantify.simplify_counts(counts)
 
         for vtype in simplified_numbers.keys():
-            for suffix in ["", ".HC"]:
-                simplified_numbers[vtype]["METRIC.Recall" + suffix] = 0
-                simplified_numbers[vtype]["METRIC.Recall2" + suffix] = 0
-                simplified_numbers[vtype]["METRIC.Precision" + suffix] = 0
-                simplified_numbers[vtype]["METRIC.Frac_NA" + suffix] = 0
+            simplified_numbers[vtype]["METRIC.Recall"] = 0
+            simplified_numbers[vtype]["METRIC.Recall2"] = 0
+            simplified_numbers[vtype]["METRIC.Precision"] = 0
+            simplified_numbers[vtype]["METRIC.Frac_NA"] = 0
 
-                try:
-                    simplified_numbers[vtype]["METRIC.Recall" + suffix] = \
-                        float(simplified_numbers[vtype]["TRUTH.TP" + suffix]) / \
-                        float(simplified_numbers[vtype]["TRUTH.TP" + suffix] + simplified_numbers[vtype]["TRUTH.FN" +
-                                                                                                         suffix])
-                except:
-                    pass
+            try:
+                simplified_numbers[vtype]["METRIC.Recall"] = \
+                    float(simplified_numbers[vtype]["TRUTH.TP"]) / \
+                    float(simplified_numbers[vtype]["TRUTH.TP"] + simplified_numbers[vtype]["TRUTH.FN"])
+            except:
+                pass
 
-                try:
-                    simplified_numbers[vtype]["METRIC.Recall2" + suffix] = \
-                        float(simplified_numbers[vtype]["TRUTH.TP" + suffix]) / \
-                        float(simplified_numbers[vtype]["TRUTH.TOTAL"])
-                except:
-                    pass
+            try:
+                simplified_numbers[vtype]["METRIC.Recall2"] = \
+                    float(simplified_numbers[vtype]["TRUTH.TP"]) / \
+                    float(simplified_numbers[vtype]["TRUTH.TOTAL"])
+            except:
+                pass
 
-                try:
-                    simplified_numbers[vtype]["METRIC.Precision" + suffix] = \
-                        float(simplified_numbers[vtype]["QUERY.TP" + suffix]) / \
-                        float(simplified_numbers[vtype]["QUERY.TP" + suffix] + simplified_numbers[vtype]["QUERY.FP" +
-                                                                                                         suffix])
-                except:
-                    pass
+            try:
+                simplified_numbers[vtype]["METRIC.Precision"] = \
+                    float(simplified_numbers[vtype]["QUERY.TP"]) / \
+                    float(simplified_numbers[vtype]["QUERY.TP"] + simplified_numbers[vtype]["QUERY.FP"])
+            except:
+                pass
 
-                try:
-                    simplified_numbers[vtype]["METRIC.Frac_NA" + suffix] = \
-                        float(simplified_numbers[vtype]["QUERY.UNK" + suffix]) / \
-                        float(simplified_numbers[vtype]["QUERY.TOTAL"])
-                except:
-                    pass
+            try:
+                simplified_numbers[vtype]["METRIC.Frac_NA"] = \
+                    float(simplified_numbers[vtype]["QUERY.UNK"]) / \
+                    float(simplified_numbers[vtype]["QUERY.TOTAL"])
+            except:
+                pass
 
-                try:
-                    simplified_numbers[vtype]["TRUTH.TOTAL.RAW"] = simplified_truth_counts[vtype][h1["samples"][0] +
-                                                                                                  ".TOTAL"]
-                except:
-                    pass
+            try:
+                simplified_numbers[vtype]["TRUTH.TOTAL.RAW"] = simplified_truth_counts[vtype][h1["samples"][0] +
+                                                                                              ".TOTAL"]
+            except:
+                pass
 
-                try:
-                    simplified_numbers[vtype]["QUERY.TOTAL.RAW"] = simplified_query_counts[vtype][h2["samples"][0] +
-                                                                                                  ".TOTAL"]
-                except:
-                    pass
+            try:
+                simplified_numbers[vtype]["QUERY.TOTAL.RAW"] = simplified_query_counts[vtype][h2["samples"][0] +
+                                                                                              ".TOTAL"]
+            except:
+                pass
 
         pandas.set_option("display.width", 120)
         pandas.set_option("display.max_columns", 1000)
@@ -739,25 +769,23 @@ def main():
 
         df.loc[vstring] = 0
 
-        for x in df:
-            # everything not a metric is a count
-            if not x.startswith("METRIC"):
-                df[x] = df[x].astype("int64")
+        # for x in df:
+        #     # everything not a metric is a count
+        #     if not x.startswith("METRIC"):
+        #         df[x] = df[x].astype("int64")
 
         df[["TRUTH.TOTAL",
             "QUERY.TOTAL",
-            "METRIC.Recall.HC",
-            "METRIC.Recall2.HC",
-            "METRIC.Precision.HC",
-            "METRIC.Frac_NA.HC"]].to_csv(args.reports_prefix + ".summary.csv")
+            "METRIC.Recall",
+            "METRIC.Precision",
+            "METRIC.Frac_NA"]].to_csv(args.reports_prefix + ".summary.csv")
 
         metrics_output["metrics"].append(dataframeToMetricsTable("summary.metrics",
                                          df[["TRUTH.TOTAL",
                                              "QUERY.TOTAL",
-                                             "METRIC.Recall.HC",
-                                             "METRIC.Recall2.HC",
-                                             "METRIC.Precision.HC",
-                                             "METRIC.Frac_NA.HC"]]))
+                                             "METRIC.Recall",
+                                             "METRIC.Precision",
+                                             "METRIC.Frac_NA"]]))
 
         if args.write_counts:
             df.to_csv(args.reports_prefix + ".extended.csv")
@@ -765,9 +793,9 @@ def main():
 
         essential_numbers = df[["TRUTH.TOTAL",
                                 "QUERY.TOTAL",
-                                "METRIC.Recall.HC",
-                                "METRIC.Precision.HC",
-                                "METRIC.Frac_NA.HC"]]
+                                "METRIC.Recall",
+                                "METRIC.Precision",
+                                "METRIC.Frac_NA"]]
 
         pandas.set_option('display.max_columns', 500)
         pandas.set_option('display.width', 1000)

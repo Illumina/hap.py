@@ -23,7 +23,7 @@ import Tools
 def runBcftools(*args):
     """ Run bcftools, return output
     """
-    runme = "bcftools %s" % " ".join(args)
+    runme = "bcftools %s" % " ".join([a.replace(" ", "\\ ") for a in args])
     logging.info(runme)
     po = subprocess.Popen(runme,
                           shell=True,
@@ -120,13 +120,13 @@ def preprocessVCF(input, output, location="",
         vargs += ["-f", "PASS,."]
 
     if chrprefix:
-        vargs += ["|", "perl -pe 's/^([0-9XYM])/chr$1/'", "|", "bcftools view"]
+        vargs += ["|", "perl", "-pe", "'s/^([0-9XYM])/chr$1/'", "|", "bcftools", "view"]
 
     if targets:
-        vargs += ["-T", targets, "|", "bcftools view"]
+        vargs += ["-T", targets, "|", "bcftools", "view"]
 
     if location:
-        vargs += ["-t", location, "|", "bcftools view"]
+        vargs += ["-t", location, "|", "bcftools", "view"]
 
     tff = tempfile.NamedTemporaryFile(delete=False)
     try:

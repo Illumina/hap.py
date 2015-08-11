@@ -568,7 +568,7 @@ void countRefVarPrimitives(FastaFile & f, const char * chr, variant::RefVar cons
     {
         if(altlen > 0)
         {
-            ++ins;
+            ins += altlen;
         }
         else
         {

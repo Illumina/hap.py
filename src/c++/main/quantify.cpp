@@ -341,13 +341,19 @@ int main(int argc, char* argv[]) {
                 writer->addSample(sname.c_str());
             }
             writer->addHeader(r);
+            writer->addHeader("##INFO=<ID=gtt1,Number=1,Type=String,Description=\"GT of truth call\">");
+            writer->addHeader("##INFO=<ID=gtt2,Number=1,Type=String,Description=\"GT of query call\">");
+            writer->addHeader("##INFO=<ID=type,Number=1,Type=String,Description=\"Decision for call (TP/FP/FN/N)\">");
+            writer->addHeader("##INFO=<ID=kind,Number=1,Type=String,Description=\"Sub-type for decision (match/mismatch type)\">");
             writer->addHeader("##INFO=<ID=Regions,Number=.,Type=String,Description=\"Tags for regions.\">");
+            writer->addHeader("##INFO=<ID=VTC,Number=.,Type=String,Description=\"Variant types used for counting.\">");
         }
 
         /** local function to count variants in all samples */
-        const auto count_variants = [ref_fasta, &count_map, &samples, count_homref](std::string const & name, Variants & vars)
+        const auto count_variants = [ref_fasta, &count_map, &samples, count_homref](std::string const & name, Variants & vars, bool update_info)
         {
             int i = 0;
+            std::set<int> vtypes;
             for (auto const & s : samples)
             {
                 std::string key;
@@ -365,8 +371,35 @@ int main(int argc, char* argv[]) {
                 {
                     it = count_map.emplace(key, VariantStatistics(ref_fasta.c_str(), count_homref)).first;
                 }
-                it->second.add(vars, i);
+                if(update_info)
+                {
+                    int * types;
+                    int ntypes = 0;
+                    it->second.add(vars, i, &types, &ntypes);
+                    for(int j = 0; j < ntypes; ++j) {
+                        vtypes.insert(types[j]);
+                    }
+                }
+                else
+                {
+                    it->second.add(vars, i);
+                }
                 ++i;
+            }
+            if(update_info && !vtypes.empty())
+            {
+                std::string s = "VTC=";
+                int j = 0;
+                for(int t : vtypes)
+                {
+                    if(j++ > 0) { s += ","; }
+                    s += VariantStatistics::type2string(t);
+                }
+                if (vars.info != "")
+                {
+                    vars.info += ";";
+                }
+                vars.info += s;
             }
         };
 
@@ -401,7 +434,7 @@ int main(int argc, char* argv[]) {
                 }
             }
             chr = v.chr;
-            count_variants("all", v);
+            count_variants("all", v, true);
             // resolve tags
             std::set<std::string> to_count;
             std::string tag_string = "";
@@ -423,23 +456,15 @@ int main(int argc, char* argv[]) {
                 }
             }
 
-            if (v.info != "")
-            {
-                v.info += ";";
-            }
-            v.info += std::string("Regions=") + tag_string;
-
-            if (writer)
-            {
-                writer->put(v);
-            }
-
-            std::string type = "unknown";
-            std::string kind = "unknown";
-            std::string hapmatch = "";
+            std::string type = ".";
+            std::string kind = ".";
+            std::string gtt1 = ".";
+            std::string gtt2 = ".";
+            bool hapmatch = false;
 
             std::vector<std::string> infs;
             stringutil::split(v.info, infs, ";");
+            v.info = "";
             for (std::string & i : infs)
             {
                 if(infs.size() < 2)
@@ -448,25 +473,46 @@ int main(int argc, char* argv[]) {
                 }
                 std::vector<std::string> ifo;
                 stringutil::split(i, ifo, "=");
-                if(ifo[0] == "HapMatch")
-                {
-                    hapmatch = "HapMatch";
-                }
-                if(ifo.size() < 2)
-                {
-                    continue;
-                }
-                if(ifo[0] == "type")
-                {
+                if(ifo[0] == "HapMatch") {
+                    hapmatch = true;
+                } else if(ifo.size() < 2) {
+                    v.info += i + ";";
+                } else if(ifo[0] == "type") {
                     type = ifo[1];
-                }
-                if(ifo[0] == "kind")
-                {
+                } else if(ifo[0] == "kind") {
                     kind = ifo[1];
+                } else if(ifo[0] == "gtt1") {
+                    gtt1 = ifo[1];
+                } else if(ifo[0] == "gtt2") {
+                    gtt2 = ifo[1];
+                } else if(ifo[0] != "ctype") {
+                    v.info += i + ";";
                 }
             }
 
-            count_variants(type + ":" + hapmatch + ":" + kind + ":" + tag_string, v);
+            if(hapmatch && type != "TP") {
+                kind = "hapmatch__" + type + "__" + kind;
+                type = "TP";
+            }
+
+            if(!regions.empty() && tag_string.empty() && type == "FP" && kind == "missing") {
+                type = "UNK";
+            }
+
+            v.info += std::string("type=") + type;
+            v.info += std::string(";kind=") + kind;
+            v.info += std::string(";gtt1=") + gtt1;
+            v.info += std::string(";gtt2=") + gtt2;
+            if(!tag_string.empty()) {
+                v.info += std::string(";Regions=") + tag_string;
+            }
+
+            if (writer)
+            {
+                writer->put(v);
+            }
+
+            count_variants(type + ":" + kind + ":" + tag_string, v, false);
 
             if(message > 0 && (rcount % message) == 0)
             {

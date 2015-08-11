@@ -100,7 +100,7 @@ namespace variant
         _impl->header_lines.push_back(headerline);
     }
 
-    void VariantWriter::addHeader(VariantReader & vr)
+    void VariantWriter::addHeader(VariantReader & vr, bool drop)
     {
         for (int i = 0; i < vr._impl->files->nreaders; ++i)
         {
@@ -113,7 +113,14 @@ namespace variant
             }
             stringutil::split(std::string(hdr_text, len), result, "\n");
             free(hdr_text);
-            _impl->header_lines.insert(_impl->header_lines.end(), result.begin(), result.end());
+            for(std::string hl : result) {
+                if(drop && !(
+                    (hl.find("##contig") == 0) ||
+                    (hl.find("##FILTER") == 0) ||
+                    (hl.find("##ref") == 0) )
+                ) { continue; }
+                _impl->header_lines.push_back(hl);
+            }
         }
     }
 
@@ -328,7 +335,7 @@ namespace variant
                 for (size_t j = 0; j < var.calls[g].ngt; ++j)
                 {
                     int this_ad = c.ad[j] >= 0 ? c.ad[j] : bcf_int32_missing;
-                    if(   var.calls[g].gt[j] > 0  
+                    if(   var.calls[g].gt[j] > 0
                       || (var.calls[g].gt[j] == 0 && tmp_ad[(var.variation.size() + 1)*g] == bcf_int32_missing))
                     {
                         tmp_ad[var.calls[g].gt[j] + (var.variation.size() + 1)*g] = this_ad;

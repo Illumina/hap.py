@@ -153,8 +153,8 @@ Note that, while the test cases are based on hg19, other reference sequences are
 usable as well  once the tool is installed.
 
 Hap.py also requires a copy of the [Boost libraries](http://www.boost.org) to
-work, with version >=  1.55. If compilation should fail using your system-wide
-installation of boost, you can compile a  subset of boost like this:
+work, with version >=  1.55. If compilation should fail using the included version
+of boost, you can compile a subset of boost like this:
 
 ```bash
 cd ~
@@ -163,6 +163,12 @@ tar xjf boost_1_55_0.tar.bz2
 cd boost_1_55_0
 ./bootstrap.sh --with-libraries=filesystem,chrono,thread,iostreams,system,regex,test,program_options
 ./b2 --prefix=$HOME/boost_1_55_0_install install
+```
+
+You can point Cmake to your version of boost as follows:
+
+```bash
+export BOOST_ROOT=$HOME/boost_1_55_0_install
 ```
 
 The complete list of dependencies / packages to install beforehand can be found
@@ -184,7 +190,8 @@ There are two fast ways to get a running installation of hap.py:
    python install.py ~/hap.py-install
    ```
 
-   The installer has an option `--boost-root` that allows us to use a specific installation of boost:
+   The installer has an option `--boost-root` that allows us to use a specific installation of boost
+   (see above for instructions):
 
    ```
    python install.py ~/hap.py-install --boost-root $HOME/boost_1_55_0_install
