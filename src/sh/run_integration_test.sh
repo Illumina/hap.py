@@ -101,7 +101,7 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-diff -I hap.py ${TMP_OUT}.summary.csv ${DIR}/../../example/integration/integrationtest.summary.csv
+${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.summary.csv ${DIR}/../../example/integration/integrationtest.summary.csv
 if [[ $? != 0 ]]; then
 	echo "Summary differs! ${TMP_OUT}.summary.csv ${DIR}/../../example/integration/integrationtest.summary.csv"
 	exit 1
@@ -113,7 +113,7 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-diff -I hap.py ${TMP_OUT}.pass.summary.csv ${DIR}/../../example/integration/integrationtest.summary.pass.csv
+${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.pass.summary.csv ${DIR}/../../example/integration/integrationtest.summary.pass.csv
 if [[ $? != 0 ]]; then
 	echo "Pass summary differs! ${TMP_OUT}.pass.summary.csv ${DIR}/../../example/integration/integrationtest.summary.pass.csv"
 	exit 1
@@ -154,7 +154,7 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-diff -I hap.py ${TMP_OUT}.performance.summary.csv ${DIR}/../../example/integration/integrationtest.performance.summary.csv
+${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.performance.summary.csv ${DIR}/../../example/integration/integrationtest.performance.summary.csv
 if [[ $? != 0 ]]; then
 	echo "Pass summary differs! vimdiff ${TMP_OUT}.performance.summary.csv ${DIR}/../../example/integration/integrationtest.performance.summary.csv"
 	exit 1
@@ -205,7 +205,7 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-diff -I hap.py ${TMP_OUT}.performance.t1.summary.csv ${DIR}/../../example/integration/integrationtest.performance.summary.csv
+${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.performance.t1.summary.csv ${DIR}/../../example/integration/integrationtest.performance.summary.csv
 if [[ $? != 0 ]]; then
 	echo "Pass summary differs! vimdiff ${TMP_OUT}.performance.t1.summary.csv ${DIR}/../../example/integration/integrationtest.performance.summary.csv"
 	exit 1
