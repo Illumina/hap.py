@@ -76,6 +76,10 @@ fi
 if [ ! -f samtools/samtools ];
 then
     tar xzf samtools.tar.gz
+    if [[ "$HAPPY_PATCH_SAMTOOLS" == "yes" ]]; then
+        echo "Patching Samtools for compatibility with EasyBuild"
+        patch -p0 samtools/Makefile < SAMtools_Makefile.patch
+    fi
     make -j4 -C samtools
 else
     echo "samtools already built. To rebuild, delete external/samtools"

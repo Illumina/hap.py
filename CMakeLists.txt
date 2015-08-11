@@ -14,36 +14,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 include(cxx)
 include(configureFiles)
 
-set(Boost_USE_STATIC_LIBS        ON)  # only find static libs
-set(Boost_USE_MULTITHREADED      ON)
-set(Boost_USE_STATIC_RUNTIME     ON)
-
-# un-break library finding
-set(Boost_NO_BOOST_CMAKE         ON)
-set(Boost_NO_SYSTEM_PATHS        ON)
-
-set(CUSTOM_BOOST_DIR "$ENV{BOOST_ROOT}")
-if(NOT CUSTOM_BOOST_DIR)
-    set(BOOST_ROOT ${HAPLOTYPES_SOURCE_DIR}/external/boost_install)
-    message("Using Boost which is built at ${HAPLOTYPES_SOURCE_DIR}/external/boost_install")
-else()
-    message("Using Boost from ${CUSTOM_BOOST_DIR}")
-endif()
-
-find_package(Boost 1.55.0 COMPONENTS thread iostreams regex unit_test_framework filesystem system program_options REQUIRED)
-include_directories(${Boost_INCLUDE_DIRS})
-link_directories(${Boost_LIBRARY_DIRS})
-
-include_directories (${HAPLOTYPES_SOURCE_DIR}/external/zlib-1.2.8)
-set(ZLIB_LIBRARIES ${HAPLOTYPES_SOURCE_DIR}/external/zlib-1.2.8/libz.a)
-
-include_directories (${HAPLOTYPES_SOURCE_DIR}/external/klib)
-include_directories (${HAPLOTYPES_SOURCE_DIR}/external/intervaltree)
-include_directories (${HAPLOTYPES_SOURCE_DIR}/external/jsoncpp)
-include_directories (${HAPLOTYPES_SOURCE_DIR}/src/c++/include)
-
-# install bcftools, samtools, htslib
-
 option(USE_MUSCLE "Build Muscle3 Multiple Aligner (required for approximate haplotype matching)" OFF)
 option(USE_SGE    "Require the --force-interactive option to run interactively in hap.py ()" OFF)
 
@@ -66,6 +36,35 @@ else()
     set (MUSCLE_AVAILABLE 0)
 endif()
 
+set(Boost_USE_STATIC_LIBS        ON)  # only find static libs
+set(Boost_USE_MULTITHREADED      ON)
+set(Boost_USE_STATIC_RUNTIME     ON)
+
+# un-break library finding
+set(Boost_NO_BOOST_CMAKE         ON)
+set(Boost_NO_SYSTEM_PATHS        ON)
+
+set(CUSTOM_BOOST_DIR "$ENV{BOOST_ROOT}")
+if(NOT CUSTOM_BOOST_DIR)
+    set(BOOST_ROOT ${HAPLOTYPES_SOURCE_DIR}/external/boost_install)
+    message("Using our own Boost, which was built at ${HAPLOTYPES_SOURCE_DIR}/external/boost_install")
+else()
+    message("Using Boost from ${CUSTOM_BOOST_DIR}")
+endif()
+
+find_package(Boost 1.55.0 COMPONENTS thread iostreams regex unit_test_framework filesystem system program_options REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
+
+include_directories (${HAPLOTYPES_SOURCE_DIR}/external/zlib-1.2.8)
+set(ZLIB_LIBRARIES ${HAPLOTYPES_SOURCE_DIR}/external/zlib-1.2.8/libz.a)
+
+include_directories (${HAPLOTYPES_SOURCE_DIR}/external/klib)
+include_directories (${HAPLOTYPES_SOURCE_DIR}/external/intervaltree)
+include_directories (${HAPLOTYPES_SOURCE_DIR}/external/jsoncpp)
+include_directories (${HAPLOTYPES_SOURCE_DIR}/src/c++/include)
+
+# install bcftools, samtools, htslib
 if(USE_SGE)
     message("SGE mode selected, you will need to use --force-interactive to run hap.py")
     set (SGE_AVAILABLE 1)
@@ -112,9 +111,5 @@ add_subdirectory (src/c++/test)
 add_subdirectory (src/python)
 
 # install
-
-
-# dev install static libraries
 install (DIRECTORY "${CMAKE_BINARY_DIR}/bin/" DESTINATION bin FILES_MATCHING PATTERN "*" PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE)
 install (DIRECTORY "${CMAKE_BINARY_DIR}/lib/" DESTINATION lib)
-install (DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src/c++/include/" DESTINATION include)

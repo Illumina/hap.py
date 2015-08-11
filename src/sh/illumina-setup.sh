@@ -12,7 +12,6 @@ unset MODULEPATH
 module use /illumina/sync/software/thirdparty/HPCBIOS/modules/all
 module load CMake/3.2.1-GCC-4.9.2
 # These break samtools. We need to make a patch for this.
-module unload zlib
-module unload ncurses
 
 export EXTRA_CMAKE_OPTS="-DUSE_SGE=ON"
+export HAPPY_PATCH_SAMTOOLS="yes"

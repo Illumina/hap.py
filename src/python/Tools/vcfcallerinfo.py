@@ -50,7 +50,7 @@ class CallerInfo(object):
             o, e = sp.communicate()
 
             if sp.returncode != 0:
-                raise Exception("Samtools call failed: %s / %s" % (o, e))
+                raise Exception("vcfhdr2json call failed: %s / %s" % (o, e))
 
             vfh = json.load(open(tf.name))
         finally:
