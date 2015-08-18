@@ -140,7 +140,7 @@ def build_external(source_dir, args):
 
     # remove builds
     if args.external_build:
-        for x in ["zlib-1.2.8", "htslib", "bcftools", "samtools", "muscle3.8.31"]:
+        for x in ["zlib-1.2.8", "htslib", "bcftools", "samtools"]:
             try:
                 shutil.rmtree(os.path.join(source_dir, "external", x))
                 print >>sys.stderr, "Deleted " + os.path.join(source_dir, "external", x)

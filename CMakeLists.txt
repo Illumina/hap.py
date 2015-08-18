@@ -14,27 +14,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 include(cxx)
 include(configureFiles)
 
-option(USE_MUSCLE "Build Muscle3 Multiple Aligner (required for approximate haplotype matching)" OFF)
-option(USE_SGE    "Require the --force-interactive option to run interactively in hap.py ()" OFF)
-
-if(USE_MUSCLE)
-    message("Muscle3/approximate haplotype matching is enabled")
-    execute_process(
-        COMMAND ./make_dependencies.sh build_muscle
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external)
-    configure_files("${CMAKE_CURRENT_SOURCE_DIR}/external/muscle3.8.31/src" "muscle" "${CMAKE_BINARY_DIR}/bin")
-
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAS_MUSCLE")
-    set (MUSCLE_AVAILABLE 1)
-else()
-    message("Muscle3/approximate haplotype matching is disabled")
-    execute_process(
-        COMMAND ./make_dependencies.sh
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external)
-    configure_files("${CMAKE_CURRENT_SOURCE_DIR}/external/muscle3.8.31/src" "muscle" "${CMAKE_BINARY_DIR}/bin")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_MUSCLE")
-    set (MUSCLE_AVAILABLE 0)
-endif()
+execute_process(
+    COMMAND ./make_dependencies.sh
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external)
 
 set(Boost_USE_STATIC_LIBS        ON)  # only find static libs
 set(Boost_USE_MULTITHREADED      ON)

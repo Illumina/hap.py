@@ -336,10 +336,7 @@ def main():
         exit(0)
 
     if args.version:
-        if Tools.has_muscle:
-            print "Hap.py %s-muscle" % Tools.version
-        else:
-            print "Hap.py %s-no-muscle" % Tools.version
+        print "Hap.py %s" % Tools.version
         exit(0)
 
     # Counting with partial credit
@@ -760,11 +757,7 @@ def main():
         pandas.set_option("display.width", 120)
         pandas.set_option("display.max_columns", 1000)
         df = pandas.DataFrame(simplified_numbers).transpose()
-        if Tools.has_muscle:
-            vstring = "hap.py-%s-muscle" % Tools.version
-        else:
-            vstring = "hap.py-%s-no-muscle" % Tools.version
-
+        vstring = "hap.py-%s" % Tools.version
         vstring += " ".join(sys.argv)
 
         df.loc[vstring] = 0

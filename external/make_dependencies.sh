@@ -13,7 +13,6 @@ if [ "$1" == "clean" ]; then
     rm -rf htslib
     rm -rf samtools
     rm -rf bcftools
-    rm -rf muscle3.8.31
     exit 0
 fi
 
@@ -84,17 +83,3 @@ then
 else
     echo "samtools already built. To rebuild, delete external/samtools"
 fi
-
-if [[ "$1" == "build_muscle" ]]; then
-    if [ ! -f muscle3.8.31/src/muscle ];
-    then
-        wget http://www.drive5.com/muscle/downloads3.8.31/muscle3.8.31_src.tar.gz
-        tar xzf muscle3.8.31_src.tar.gz
-        make -j4 -C muscle3.8.31/src
-    else
-        echo "muscle already built. To rebuild, delete external/muscle3.8.31"
-    fi
-else
-    echo "Muscle3 is disabled. Set the USE_MUSCLE variable to enable."
-fi
-

@@ -142,22 +142,7 @@ struct DiploidComparisonResult
     HaplotypeDiff diffs[2];
 
     std::string refsq;
-
-    // unphased diffs as variants
-    std::list<AnnotatedRefVar> shared;
-    std::list<AnnotatedRefVar> only_1;
-    std::list<AnnotatedRefVar> only_2;
-
 };
-
-/**
- * @brief Extract statistics from a result
- */
-void countResult(const char * chr, 
-                 DiploidComparisonResult const & , 
-                 variant::VariantStatistics & stats_shared,
-                 variant::VariantStatistics & stats_only1,
-                 variant::VariantStatistics & stats_only2);
 
 /**
  * Bed-style output without sequences

@@ -39,7 +39,6 @@
 #include "HaploCompare.hh"
 #include "DiploidReference.hh"
 #include "Alignment.hh"
-#include "SharedVar.hh"
 
 #include <memory>
 #include <algorithm>
@@ -48,13 +47,6 @@
 #include <limits>
 
 #include "Error.hh"
-
-#ifdef NO_MUSCLE
-// this removes the warning about matched_hap_count
-#ifndef __clang__
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
-#endif
-#endif
 
 /* #define DEBUG_DIPLOIDCOMPARE */
 
@@ -66,12 +58,7 @@ struct DiploidCompareImpl
     DiploidCompareImpl(const char * ref_fasta) :
             dr(ref_fasta),
             nhap(4096),
-            doAlignments(true),
-#ifdef HAS_MUSCLE
-            doSharedVar(true)
-#else
-            doSharedVar(false)
-#endif
+            doAlignments(true)
     {
         matchScore = hcomp.getAlignment()->bestScore(1);
     }
@@ -79,12 +66,7 @@ struct DiploidCompareImpl
     DiploidCompareImpl(DiploidCompareImpl const & rhs) :
             dr(rhs.dr),
             nhap(rhs.nhap),
-            doAlignments(rhs.doAlignments),
-#ifdef HAS_MUSCLE
-            doSharedVar(rhs.doSharedVar)
-#else
-            doSharedVar(false)
-#endif
+            doAlignments(rhs.doAlignments)
     {
         matchScore = hcomp.getAlignment()->bestScore(1);
     }
@@ -98,13 +80,10 @@ struct DiploidCompareImpl
     HaploCompare hcomp;
     int matchScore;
 
-    SharedVar shvar;
-
     // updated every time we advance in nextResult
     DiploidComparisonResult cr;
 
     bool doAlignments;
-    bool doSharedVar;
 };
 
 DiploidCompare::DiploidCompare(const char * ref_fasta)
@@ -155,22 +134,6 @@ bool DiploidCompare::getDoAlignments()
     return _impl->doAlignments;
 }
 
-
-/**
- * Enable / disable the multiple alignment step to find canonical representations
- * of shared and unique variation.
- */
-void DiploidCompare::setDoSharedVar(bool doSharedVar)
-{
-    _impl->doSharedVar = doSharedVar;
-}
-
-
-bool DiploidCompare::getDoSharedVar()
-{
-    return _impl->doSharedVar;
-}
-
 /**
  * @brief Set the region to compare in and reset the enumeration.
  *
@@ -191,9 +154,6 @@ void DiploidCompare::setRegion(const char * chr, int64_t start, int64_t end,
     _impl->cr.n_nonsnp = -1;
     _impl->cr.diffs[0] = HaplotypeDiff();
     _impl->cr.diffs[1] = HaplotypeDiff();
-    _impl->cr.shared.clear();
-    _impl->cr.only_1.clear();
-    _impl->cr.only_2.clear();
 
     // TODO: parameterize/fix
     if(end - start > 4096)
@@ -238,7 +198,6 @@ void DiploidCompare::setRegion(const char * chr, int64_t start, int64_t end,
     // this is where we store the haplotype sequences we have matched up
     // we will use this at the very end to find the variants they share
     // and the ones that are unique
-    int matched_hap_count = 0;
     std::string matched_haplotypes_1[2];
     std::string matched_haplotypes_2[2];
 
@@ -274,7 +233,6 @@ void DiploidCompare::setRegion(const char * chr, int64_t start, int64_t end,
                             matched_haplotypes_1[1] = d1.h1;
                             matched_haplotypes_2[1] = d2.h2;
                         }
-                        matched_hap_count = 1;
                         // het match
                         _impl->cr.type1 = dt1;
                         _impl->cr.type2 = dt2;
@@ -287,7 +245,6 @@ void DiploidCompare::setRegion(const char * chr, int64_t start, int64_t end,
                     // hom
                     if(d1.h1 == d2.h1)
                     {
-                        matched_hap_count = 1;
                         matched_haplotypes_1[0] = d1.h1;
                         matched_haplotypes_2[0] = d2.h1;
 
@@ -339,7 +296,6 @@ void DiploidCompare::setRegion(const char * chr, int64_t start, int64_t end,
 
                 if(d1_alt == d2_alt)
                 {
-                    matched_hap_count = 1;
                     matched_haplotypes_1[0] = d1_alt;
                     matched_haplotypes_2[0] = d2_alt;
                     gt_mismatch_found = true;
@@ -525,8 +481,6 @@ void DiploidCompare::setRegion(const char * chr, int64_t start, int64_t end,
         _impl->cr.type1 = best.dt1;
         _impl->cr.type2 = best.dt2;
 
-        matched_hap_count = best.aln_count;
-
         for (int i = 0; i < best.aln_count; ++i)
         {
             HaplotypeDiff & hd(_impl->cr.diffs[i]);
@@ -560,93 +514,6 @@ void DiploidCompare::setRegion(const char * chr, int64_t start, int64_t end,
                                  hd.vdiff);
         }
     }
-
-#ifdef NO_MUSCLE
-    return;
-#else
-
-    if (!_impl->doSharedVar)
-    {
-        return;
-    }
-
-    // find shared and unique variants
-
-    // basically, we need to find shared and common variants
-    // for both haplotypes and see if they are seen as het
-    // or hom.
-    std::map<std::string, variant::RefVar> shared_set;
-    std::map<std::string, variant::RefVar> o1_set;
-    std::map<std::string, variant::RefVar> o2_set;
-
-    // insertion function
-    auto insert_into = [](std::map<std::string, variant::RefVar> & set,
-                          variant::RefVar & r,
-                          int flags)
-    {
-        r.flags = flags;
-        // insert
-        std::string rp = r.repr();
-        auto pos = set.find(rp);
-        if(pos == set.end())
-        {
-            pos = set.insert(std::make_pair(rp, r)).first;
-        }
-        // or the flags
-        pos->second.flags |= r.flags;
-    };
-
-    for (int i = 0; i < matched_hap_count; ++i)
-    {
-        std::list<variant::RefVar> vars;
-        _impl->shvar.splitVar(
-            start,
-            refsq, matched_haplotypes_1[i], matched_haplotypes_2[i],
-            vars
-        );
-        variant::leftShift(_impl->dr.getRefFasta(), chr, vars, start);
-
-        for(variant::RefVar & r : vars)
-        {
-            if(r.flags == 3)
-            {
-                r.flags = 0;
-                insert_into(shared_set, r, ((_impl->cr.type1 == dt_hom || _impl->cr.type2 == dt_hom) && matched_hap_count == 1) ? 3 : 1 << i);
-            }
-            else if (r.flags == 1)
-            {
-                r.flags = 0;
-                insert_into(o1_set, r, _impl->cr.type1 == dt_hom ? 3 : (1 << i));
-            }
-            else if (r.flags == 2)
-            {
-                r.flags = 0;
-                insert_into(o2_set, r, _impl->cr.type2 == dt_hom ? 3 : (1 << i));
-            }
-            else
-            {
-                error("Unknown flag '%i' returned from splitVar() at %s", r.flags, r.repr().c_str());
-            }
-        }
-    }
-
-    for(auto & x : shared_set)
-    {
-        _impl->cr.shared.push_back(x.second);
-    }
-    for(auto & x : o1_set)
-    {
-        _impl->cr.only_1.push_back(x.second);
-    }
-    for(auto & x : o2_set)
-    {
-        _impl->cr.only_2.push_back(x.second);
-    }
-
-    variant::leftShift<AnnotatedRefVar>(_impl->dr.getRefFasta(), chr, _impl->cr.shared, start);
-    variant::leftShift<AnnotatedRefVar>(_impl->dr.getRefFasta(), chr, _impl->cr.only_1, start);
-    variant::leftShift<AnnotatedRefVar>(_impl->dr.getRefFasta(), chr, _impl->cr.only_2, start);
-#endif
 }
 
 /**

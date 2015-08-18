@@ -12,5 +12,4 @@
 
 __version__ = "@HAPLOTYPES_VERSION@"
 
-has_muscle = @MUSCLE_AVAILABLE@
 has_sge = @SGE_AVAILABLE@

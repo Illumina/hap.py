@@ -64,9 +64,3 @@ Further dependencies (to be installed by the user of this software):
                (https://bitbucket.org/james_taylor/bx-python)
 *   Boost C++ library: Boost software license 
     (http://www.boost.org/users/license.html)
-
-Optional dependency (not included, can be downloaded via config script), 
-not required for benchmarking:
-
-*   Muscle (multiple aligner, used for extracting shared variation for
-    approximate matches, public domain)
