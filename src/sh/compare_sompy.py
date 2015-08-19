@@ -39,10 +39,19 @@ def main():
                    'recall2', 'unk', 'total.truth', 'fn']:
         if len(data1[metric]) != len(data2[metric]) or len(data1[metric]) == 0:
             raise Exception("Number of metrics to compare is wrong")
+        
         for field in data1[metric].iterkeys():
-            if ("%.3g" % data1[metric][field]) != ("%.3g" % data2[metric][field]):
-                raise ("Failed: Results should be the same")
-            print metric + " / " + field + "... ok (%.3g)" % data2[metric][field]
+            if field == "no-ALTs":
+                continue
+            try:
+                if ("%8.3f" % data1[metric][field]) != ("%8.3f" % data2[metric][field]):
+                    raise Exception("Failed: Results should be the same")
+                print metric + " / " + field + "... ok (%8.3f)" % data2[metric][field]
+            except:
+                print metric + " / " + field + "... ERROR (%s / %s)" % (data1[metric][field], data2[metric][field])
+                raise
+
+
 if __name__ == '__main__':
     main()
 
