@@ -402,6 +402,13 @@ def main():
         if not args.reports_prefix:
             raise Exception("Please specify an output prefix using -o ")
 
+        if not os.path.exists(os.path.dirname(args.reports_prefix)):
+            raise Exception("The output path does not exist. Please specify a valid output path and prefix using -o")
+
+        if os.path.basename(args.reports_prefix) == "" or os.path.isdir(args.reports_prefix):
+            raise Exception("The output path should specify a file name prefix. Please specify a valid output path "
+                            "and prefix using -o. For example, -o /tmp/test will create files named /tmp/test* .")
+
         # noinspection PyProtectedMember
         if not args._vcfs or len(args._vcfs) != 2:
             raise Exception("Please specify exactly two input VCFs.")
