@@ -28,4 +28,4 @@ Nucleotides,66.0,62.0,0.6923076923076923,0.43548387096774194,0.0
 Nucleotides.DEL,16.0,24.0,0.8333333333333334,0.4166666666666667,0.0
 Nucleotides.INS,48.0,28.0,0.6153846153846154,0.5714285714285714,0.0
 Nucleotides.SNP,2.0,10.0,1.0,0.1,0.0
-hap.py--128-NOTFOUND-no-muscle/home/pkrusche/workspace-is/haplotypes_release_build_el6/bin/hap.py -l chr21 /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/integration/integrationtest_lhs.vcf.gz /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/integration/integrationtest_rhs.vcf.gz -o /tmp/happy.tRK5vvSkL5 -P -V -B -X --force-interactive,0.0,0.0,0.0,0.0,0.0
+hap.py--128-NOTFOUND/home/pkrusche/workspace-is/haplotypes_release_build_el6/bin/hap.py -l chr21 /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/integration/integrationtest_lhs.vcf.gz /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/integration/integrationtest_rhs.vcf.gz -o /tmp/happy.tRK5vvSkL5 -P -V -B -X --force-interactive,0.0,0.0,0.0,0.0,0.0

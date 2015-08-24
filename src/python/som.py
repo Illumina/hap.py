@@ -399,11 +399,7 @@ def main():
 
         metrics_output = makeMetricsObject("som.py.comparison")
         metrics_output["metrics"].append(dataframeToMetricsTable("result", res))
-
-        if Tools.has_muscle:
-            vstring = "som.py-%s-muscle" % Tools.version
-        else:
-            vstring = "som.py-%s-no-muscle" % Tools.version
+        vstring = "som.py-%s" % Tools.version
 
         logging.info("\n" + res.to_string())
         # in default mode, print result summary to stdout

@@ -22,7 +22,6 @@ from datetime import date
 # noinspection PyUnresolvedReferences
 import Haplo.version as vs
 version = vs.__version__
-has_muscle = vs.has_muscle
 has_sge = vs.has_sge
 
 

@@ -144,3 +144,21 @@ class StrelkaIndelRoc(ROC):
                         "QSI_NT", "FILTER", "QSI_ref")
 
 ROC.register("strelka.indel", "hcc.strelka.indel", StrelkaIndelRoc)
+
+
+class Varscan2SNVRoc(ROC):
+    """ROC calculator for Varscan2 SNVs"""
+
+    def from_table(self, tbl):
+        return tableROC(tbl, "tag", "SSC")
+
+ROC.register("varscan2.snv", "hcc.varscan2.snv", Varscan2SNVRoc)
+
+
+class Varscan2IndelRoc(ROC):
+    """ROC calculator for Varscan2 Indels"""
+
+    def from_table(self, tbl):
+        return tableROC(tbl, "tag", "SSC")
+
+ROC.register("varscan2.indel", "hcc.varscan2.indel", Varscan2IndelRoc)

@@ -22,7 +22,7 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-cat ${TMP_OUT}.stats.csv | perl -pe 's/som.py.*$/som.py/' | diff ${DIR}/../../example/sompy/stats.csv -
+${PYTHON} ${DIR}/compare_sompy.py ${TMP_OUT}.stats.csv ${DIR}/../../example/sompy/stats.csv
 if [[ $? != 0 ]]; then
 	echo "Output counts differ diff  ${TMP_OUT}.stats.csv ${DIR}/../../example/sompy/stats.csv !"
 	exit 1
@@ -43,7 +43,7 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-cat ${TMP_OUT}.stats.csv | perl -pe 's/som.py.*$/som.py/' | diff ${DIR}/../../example/sompy/stats_fpr.csv -
+${PYTHON} ${DIR}/compare_sompy.py ${TMP_OUT}.stats.csv ${DIR}/../../example/sompy/stats_fpr.csv
 if [[ $? != 0 ]]; then
 	echo "Output counts differ diff  ${TMP_OUT}.stats.csv ${DIR}/../../example/sompy/stats_fpr.csv !"
 	exit 1
@@ -65,22 +65,16 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-cat ${TMP_OUT}.stats.csv | perl -pe 's/som.py.*$/som.py/' | diff ${DIR}/../../example/sompy/stats.csv -
+${PYTHON} ${DIR}/compare_sompy.py ${TMP_OUT}.stats.csv ${DIR}/../../example/sompy/stats.csv
 if [[ $? != 0 ]]; then
 	echo "Output counts differ diff  ${TMP_OUT}.stats.csv ${DIR}/../../example/sompy/stats.csv !"
 	exit 1
 fi
 
-# HAP-35 : Python < 2.7.8 prints floats differently, so this test won't work
-if [[ $(${PYTHON} -c 'import sys; print "0" if tuple(sys.version_info[0:3]) >= (2,7,8) else "1"') == "0" ]];
-then
-    diff  ${TMP_OUT}.features.csv ${DIR}/../../example/sompy/features.csv
-    if [[ $? != 0 ]]; then
-    	echo "Output features differ -- diff ${TMP_OUT}.features.csv ${DIR}/../../example/sompy/features.csv !"
-    	exit 1
-    fi
-else
-    echo "Python is too old for testing whether the feature tables are the same. Use Python >= 2.7.8"
+${PYTHON} ${DIR}/compare_sompy_features.py ${TMP_OUT}.features.csv ${DIR}/../../example/sompy/features.csv
+if [[ $? != 0 ]]; then
+	echo "Output features differ:  diff ${TMP_OUT}.features.csv ${DIR}/../../example/sompy/features.csv"
+	exit 1
 fi
 
 rm -f ${TMP_OUT}*

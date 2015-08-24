@@ -17,6 +17,7 @@ from Tools.vcfextract import vcfExtract
 
 from Strelka import extractStrelkaSNVFeatures, extractStrelkaIndelFeatures
 from Mutect import extractMutectSNVFeatures, extractMutectIndelFeatures
+from Varscan2 import extractVarscan2SNVFeatures, extractVarscan2IndelFeatures
 
 
 class FeatureSet(object):
@@ -173,7 +174,7 @@ FeatureSet.register("hcc.strelka.indel", StrelkaHCCIndelFeatures)
 
 
 class MutectHCCSNVFeatures(StrelkaAdmixSNVFeatures):
-    """ Collect SNV features from Strelka-to-HCC truthset comparison """
+    """ Collect SNV features from Mutect-to-HCC truthset comparison """
     def collect(self, vcfname, tag):
         """ Return a data frame with features collected from the given VCF, tagged by given type """
         if tag not in ["TP", "FN"]:
@@ -188,7 +189,7 @@ FeatureSet.register("hcc.mutect.snv", MutectHCCSNVFeatures)
 
 
 class MutectHCCIndelFeatures(StrelkaAdmixIndelFeatures):
-    """ Collect Indel features from Strelka-to-HCC truthset comparison """
+    """ Collect Indel features from Mutect-to-HCC truthset comparison """
     def collect(self, vcfname, tag):
         """ Return a data frame with features collected from the given VCF, tagged by given type """
         if tag not in ["TP", "FN"]:
@@ -199,3 +200,32 @@ class MutectHCCIndelFeatures(StrelkaAdmixIndelFeatures):
         return GenericFeatures.collectFeatures(vcfname, tag, features, processor=StrelkaAdmixIndelFeatures.processValue)
 
 FeatureSet.register("hcc.mutect.indel", MutectHCCIndelFeatures)
+
+
+class Varscan2HCCSNVFeatures(StrelkaAdmixSNVFeatures):
+    """ Collect SNV features from Varscan2-to-HCC truthset comparison """
+    def collect(self, vcfname, tag):
+        """ Return a data frame with features collected from the given VCF, tagged by given type """
+        if tag not in ["TP", "FN"]:
+            return extractVarscan2SNVFeatures(vcfname, tag, self.chr_depth)
+        else:
+            features = ["CHROM", "POS", "REF", "ALT", "QUAL",
+                        "I.MapQrange", "I.somatic", "I.filtered", "S.1.VT",
+                        "I.T_ALT_RATE", "I.DP_normal", "I.DP_tumor", "I.tag", "I.count"]
+        return GenericFeatures.collectFeatures(vcfname, tag, features, processor=StrelkaAdmixSNVFeatures.processValue)
+
+FeatureSet.register("hcc.varscan2.snv", Varscan2HCCSNVFeatures)
+
+
+class Varscan2HCCIndelFeatures(StrelkaAdmixIndelFeatures):
+    """ Collect Indel features from Varscan2-to-HCC truthset comparison """
+    def collect(self, vcfname, tag):
+        """ Return a data frame with features collected from the given VCF, tagged by given type """
+        if tag not in ["TP", "FN"]:
+            return extractVarscan2IndelFeatures(vcfname, tag, self.chr_depth)
+        else:
+            features = ["CHROM", "POS", "REF", "ALT", "QUAL", "S.1.VT",
+                        "I.T_ALT_RATE", "I.DP_normal", "I.DP_tumor", "I.tag", "I.count"]
+        return GenericFeatures.collectFeatures(vcfname, tag, features, processor=StrelkaAdmixIndelFeatures.processValue)
+
+FeatureSet.register("hcc.varscan2.indel", Varscan2HCCIndelFeatures)

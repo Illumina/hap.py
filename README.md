@@ -273,7 +273,7 @@ If this is successful, the bin subdirectory of your build folder will contain bi
 
 ```bash
 $ python bin/hap.py --version
-Hap.py v0.1.6-no-muscle
+Hap.py v0.2.3
 ```
 
 Additional Cmake build flags

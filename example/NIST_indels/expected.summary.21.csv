@@ -36,4 +36,4 @@ Nucleotides,6033.0,6056.0,1.0,1.0,0.0
 Nucleotides.DEL,1939.0,1908.0,1.0,1.0,0.0
 Nucleotides.INS,1880.0,1839.0,1.0,1.0,0.0
 Nucleotides.SNP,2214.0,2309.0,1.0,1.0,0.0
-hap.py--128-NOTFOUND-no-muscle/home/pkrusche/workspace-is/haplotypes_release_build_el6/bin/hap.py /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/NIST_indels/Complex_1ormoreindels_NIST2.19.vcf.gz /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/NIST_indels/Complex_1ormoreindels_RTG.vcf.gz -o /tmp/happy.2DieFeIYGS -P -l chr21 -X --verbose --force-interactive,0.0,0.0,0.0,0.0,0.0
+hap.py--128-NOTFOUND/home/pkrusche/workspace-is/haplotypes_release_build_el6/bin/hap.py /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/NIST_indels/Complex_1ormoreindels_NIST2.19.vcf.gz /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/NIST_indels/Complex_1ormoreindels_RTG.vcf.gz -o /tmp/happy.2DieFeIYGS -P -l chr21 -X --verbose --force-interactive,0.0,0.0,0.0,0.0,0.0

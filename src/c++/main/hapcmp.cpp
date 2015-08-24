@@ -79,9 +79,6 @@ int main(int argc, char* argv[]) {
     bool output_sequences = false;
     bool apply_filters = false;
     bool do_alignment = false;
-#ifdef HAS_MUSCLE            
-    bool do_sharedvar = false;
-#endif
 
     try
     {
@@ -103,9 +100,6 @@ int main(int argc, char* argv[]) {
             ("limit,l", po::value<int64_t>(), "Maximum number of haplotype blocks to process.")
             ("apply-filters,f", po::value<bool>(), "Apply filtering in VCF.")
             ("do-alignment", po::value<bool>(), "Perform alignments on mismatching haplotypes to find best approximate match.")
-#ifdef HAS_MUSCLE
-            ("do-sharedvar", po::value<bool>(), "Perform multiple alignments on mismatching haplotypes to extract shared variants.")
-#endif            
         ;
 
         po::positional_options_description popts;
@@ -127,11 +121,6 @@ int main(int argc, char* argv[]) {
         {
             std::cout 
                 << "hapcmp version " << HAPLOTYPES_VERSION 
-#ifdef HAS_MUSCLE
-                << "-muscle"
-#else
-                << "-no-muscle"
-#endif
                 << "\n";
             return 0;
         }
@@ -244,12 +233,6 @@ int main(int argc, char* argv[]) {
             do_alignment = vm["do-alignment"].as< bool >();
         }
 
-#ifdef HAS_MUSCLE            
-        if (vm.count("do-sharedvar"))
-        {
-            do_sharedvar = vm["do-sharedvar"].as< bool >();
-        }
-#endif
     } 
     catch (po::error & e)
     {
@@ -278,9 +261,6 @@ int main(int argc, char* argv[]) {
         dc.setMaxHapEnum(max_n_haplotypes);
         dc.setDoAlignments(do_alignment);
 
-#ifdef HAS_MUSCLE            
-        dc.setDoSharedVar(do_sharedvar);
-#endif
         std::istream * in = NULL;
         if(regions != "-")
         {

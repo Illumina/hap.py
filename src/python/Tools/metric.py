@@ -83,10 +83,7 @@ def makeMetricsObject(name):
      }
     """
 
-    if Tools.has_muscle:
-        version = "%s-muscle" % Tools.version
-    else:
-        version = "%s-no-muscle" % Tools.version
+    version = "%s" % Tools.version
 
     mdict = {'name': name,
              'timestamp': time.strftime("%a %b %d %X %Y"),
