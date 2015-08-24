@@ -113,7 +113,7 @@ def xcmpWrapper(location_str, args):
     else:
         bname = ""
 
-    to_run = "xcmp %s %s -l %s -o %s %s -r %s -f %i --apply-filters-truth %i -n %i -V %i --leftshift %i --expand-hapblocks %i --window %i --compare-raw %i" % \
+    to_run = "xcmp %s %s -l %s -o %s %s -r %s -f %i --apply-filters-truth %i -n %i -V %i --leftshift %i --expand-hapblocks %i --window %i --compare-raw %i --no-hapcmp %i" % \
              (args.vcf1.replace(" ", "\\ "),
               args.vcf2.replace(" ", "\\ "),
               location_str,
@@ -127,7 +127,8 @@ def xcmpWrapper(location_str, args):
               1 if args.int_preprocessing_ls else 0,
               args.hb_expand,
               args.window,
-              1 if args.int_match_raw else 0)
+              1 if args.int_match_raw else 0,
+              1 if args.no_hc else 0)
 
     # regions / targets already have been taken care of in blocksplit / preprocessing
 
@@ -248,7 +249,7 @@ def main():
                         help="give credit for partially matched variants. "
                              "this is equivalent to --internal-leftshift and --internal-preprocessing.")
 
-    parser.add_argument("--no-partial-credit", dest="partial_credit", action="store_false",
+    parser.add_argument("--no-partial-credit", dest="partial_credit", action="store_false", default=True,
                         help="Give credit for partially matched variants. "
                              "This is equivalent to --internal-leftshift and --no-internal-preprocessing.")
 
@@ -267,6 +268,13 @@ def main():
     parser.add_argument("--match-raw", dest="int_match_raw", action="store_true", default=False,
                         help="Add a matching step in xcmp which also matches raw variant calls. This helps"
                              " when comparing files with very different representations.")
+
+    parser.add_argument("--no-haplotype-comparison", dest="no_hc", action="store_true", default=False,
+                        help="Disable haplotype comparison (only count direct GT matches as TP).")
+
+    parser.add_argument("--unhappy", dest="unhappy", action="store_true", default=False,
+                        help="Combination of --no-haplotype-comparison --no-internal-preprocessing "
+                             "--no-internal-leftshift.")
 
     parser.add_argument("--no-auto-index", dest="auto_index", action="store_false", default=True,
                         help="Disable automatic index creation for input files. "
@@ -339,23 +347,28 @@ def main():
         print "Hap.py %s" % Tools.version
         exit(0)
 
+    # disable all clever matching
+    if args.unhappy:
+        args.int_preprocessing = False
+        args.int_preprocessing_ls = False
+        args.no_hc = True
     # Counting with partial credit
-    if args.partial_credit:
+    elif args.partial_credit:
         # partial_credit switch is overridden by --no-* switches
-        if args.int_preprocessing is not None:
-            args.int_preprocessing = True
-        if args.int_preprocessing_ls is not None:
-            args.int_preprocessing_ls = True
+        args.int_preprocessing = True
+        args.int_preprocessing_ls = True
     elif args.partial_credit is not None:  # explicitly set to false
-        if args.int_preprocessing is not None:
-            args.int_preprocessing = False
-        if args.int_preprocessing_ls is not None:
-            args.int_preprocessing_ls = True
+        args.int_preprocessing = False
+        args.int_preprocessing_ls = True
 
     if args.int_preprocessing is None:
         args.int_preprocessing = False
     if args.int_preprocessing_ls is None:
         args.int_preprocessing_ls = False
+
+    logging.info("Preprocessing settings: %s / %s / %s" % ("leftshift" if args.int_preprocessing_ls else "no-leftshift",
+                                                           "splitting" if args.int_preprocessing else "raw calls",
+                                                           "haplocompare" if not args.no_hc else "no-haplocompare"))
 
     # sanity-check regions bed file (HAP-57)
     if args.regions_bedfile:

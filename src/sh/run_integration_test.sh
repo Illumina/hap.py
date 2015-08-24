@@ -61,6 +61,22 @@ fi
 
 cat ${TMP_OUT}.vcf.gz | gunzip | grep -v ^# > ${TMP_OUT}.vcf
 
+# run hap.py, without any clever comparison
+${PYTHON} ${HCDIR}/hap.py \
+			 	-l chr21 \
+			 	${DIR}/../../example/integration/integrationtest_lhs.vcf.gz \
+			 	${DIR}/../../example/integration/integrationtest_rhs.vcf.gz \
+			 	-o ${TMP_OUT}.unhappy -P \
+			 	-V -B -X \
+			 	--force-interactive --unhappy
+
+if [[ $? != 0 ]]; then
+	echo "hap.py failed!"
+	exit 1
+fi
+
+cat ${TMP_OUT}.unhappy.vcf.gz | gunzip | grep -v ^# > ${TMP_OUT}.unhappy.vcf
+
 # run hap.py
 ${PYTHON} ${HCDIR}/hap.py \
 			 	-l chr21 \
@@ -80,6 +96,12 @@ cat ${TMP_OUT}.pass.vcf.gz | gunzip | grep -v ^# > ${TMP_OUT}.pass.vcf
 diff -I fileDate -I source_version ${TMP_OUT}.vcf ${DIR}/../../example/integration/integrationtest.vcf
 if [[ $? != 0 ]]; then
 	echo "Output variants differ -- vimdiff ${TMP_OUT}.vcf ${DIR}/../../example/integration/integrationtest.vcf !"
+	exit 1
+fi
+
+diff -I fileDate -I source_version ${TMP_OUT}.unhappy.vcf ${DIR}/../../example/integration/integrationtest.unhappy.vcf
+if [[ $? != 0 ]]; then
+	echo "Output variants differ -- vimdiff ${TMP_OUT}.unhappy.vcf ${DIR}/../../example/integration/integrationtest.unhappy.vcf !"
 	exit 1
 fi
 

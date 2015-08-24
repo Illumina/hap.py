@@ -299,7 +299,7 @@ are otherwise identical).
 
 Normally this is detected automatically from the VCF headers / tabix indexes.
 
-### Internal Variant Normalisation
+### Internal Variant Normalisation and Haplotype Comparison
 
 ```
   --partial-credit      give credit for partially matched variants. this is
@@ -319,6 +319,11 @@ Normally this is detected automatically from the VCF headers / tabix indexes.
   --no-internal-preprocessing
                         Switch off xcmp's internal VCF leftshift
                         preprocessing.
+  --no-haplotype-comparison
+                        Disable haplotype comparison (only count direct GT matches as TP).
+  --unhappy
+                        Disable all clever matching (equivalent to --no-internal-leftshift
+                        --no-internal-preprocessing --no-haplotype-comparison).
 ```
 
 These switches control xcmp's internal VCF [leftshifting preprocessing](normalisation.md).

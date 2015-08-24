@@ -102,6 +102,7 @@ int main(int argc, char* argv[]) {
     bool preprocess = false;
     bool leftshift = false;
     bool always_hapcmp = false;
+    bool no_hapcmp = false;
     bool compare_raw = false;
 
     try
@@ -130,6 +131,7 @@ int main(int argc, char* argv[]) {
             ("leftshift", po::value<bool>(), "Left-shift indel alleles (off by default).")
             ("always-hapcmp", po::value<bool>(), "Always compare haplotype blocks (even if they match). Testing use only/slow.")
             ("compare-raw", po::value<bool>(), "Compare raw calls also to maximize chances of matching difficult regions.")
+            ("no-hapcmp", po::value<bool>(), "Disable haplotype comparison. This overrides all other haplotype comparison options.")
         ;
 
         po::positional_options_description popts;
@@ -279,6 +281,11 @@ int main(int argc, char* argv[]) {
         if (vm.count("always-hapcmp"))
         {
             always_hapcmp = vm["always-hapcmp"].as< bool >();
+        }
+
+        if (vm.count("no-hapcmp"))
+        {
+            no_hapcmp = vm["no-hapcmp"].as< bool >();
         }
 
         if (vm.count("compare-raw"))
@@ -431,11 +438,14 @@ int main(int argc, char* argv[]) {
                                    &has_mismatch,
                                    &pvw, &error_out_stream,
                                    &hc,
-                                   hb_expand, always_hapcmp, compare_raw] ()
+                                   hb_expand,
+                                   no_hapcmp,
+                                   always_hapcmp,
+                                   compare_raw] ()
         {
             bool hap_match = false, hap_fail = false, hap_run = false, raw_match = false;
             // try HC if we have mismatches, and if the number of calls is > 0
-            if (always_hapcmp || (has_mismatch && calls_1 > 0 && calls_2 > 0 && n_nonsnp > 0))
+            if (!no_hapcmp && (always_hapcmp || (has_mismatch && calls_1 > 0 && calls_2 > 0 && n_nonsnp > 0)))
             {
                 if(compare_raw)
                 {
