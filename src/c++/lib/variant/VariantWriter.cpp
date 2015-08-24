@@ -176,6 +176,14 @@ namespace variant
             if(merged_header_items.find(oss.str()) == merged_header_items.end())
             {
                 merged_header_items[oss.str()] = l;
+                if(hrec->type == BCF_HL_INFO) {
+                    // HAP-79 check if info entries have a description
+                    int idx = bcf_hrec_find_key(hrec, "Description");
+                    if (idx < 0)
+                    {
+                        bcf_hrec_add_key(hrec, "Description", 1);
+                    }
+                }
                 bcf_hdr_add_hrec(hdr, hrec);
             }
             else
