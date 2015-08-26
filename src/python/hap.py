@@ -245,24 +245,24 @@ def main():
     parser.add_argument("--no-fixchr-query", dest="fixchr_query", action="store_false",
                         help="Add chr prefix to query file (default: auto).")
 
-    parser.add_argument("--partial-credit", dest="partial_credit", action="store_true", default=True,
+    parser.add_argument("--partial-credit", dest="partial_credit", action="store_true", default=None,
                         help="give credit for partially matched variants. "
                              "this is equivalent to --internal-leftshift and --internal-preprocessing.")
 
-    parser.add_argument("--no-partial-credit", dest="partial_credit", action="store_false", default=True,
+    parser.add_argument("--no-partial-credit", dest="partial_credit", action="store_false", default=None,
                         help="Give credit for partially matched variants. "
                              "This is equivalent to --internal-leftshift and --no-internal-preprocessing.")
 
-    parser.add_argument("--internal-leftshift", dest="int_preprocessing_ls", action="store_true",
+    parser.add_argument("--internal-leftshift", dest="int_preprocessing_ls", action="store_true", default=None,
                         help="Switch off xcmp's internal VCF leftshift preprocessing.")
 
-    parser.add_argument("--internal-preprocessing", dest="int_preprocessing", action="store_true",
+    parser.add_argument("--internal-preprocessing", dest="int_preprocessing", action="store_true", default=None,
                         help="Switch off xcmp's internal VCF leftshift preprocessing.")
 
-    parser.add_argument("--no-internal-leftshift", dest="int_preprocessing_ls", action="store_false",
+    parser.add_argument("--no-internal-leftshift", dest="int_preprocessing_ls", action="store_false", default=None,
                         help="Switch off xcmp's internal VCF leftshift preprocessing.")
 
-    parser.add_argument("--no-internal-preprocessing", dest="int_preprocessing", action="store_false",
+    parser.add_argument("--no-internal-preprocessing", dest="int_preprocessing", action="store_false", default=None,
                         help="Switch off xcmp's internal VCF leftshift preprocessing.")
 
     parser.add_argument("--match-raw", dest="int_match_raw", action="store_true", default=False,
@@ -352,11 +352,19 @@ def main():
         args.int_preprocessing = False
         args.int_preprocessing_ls = False
         args.no_hc = True
+
     # Counting with partial credit
     elif args.partial_credit:
         # partial_credit switch is overridden by --no-* switches
         args.int_preprocessing = True
         args.int_preprocessing_ls = True
+    elif args.partial_credit is None:
+        # in the default setting, we enable partial credit but only override the
+        # preprocessing settings if they haven't been specified
+        if args.int_preprocessing is None:
+            args.int_preprocessing = True
+        if args.int_preprocessing_ls is None:
+            args.int_preprocessing_ls = True
     elif args.partial_credit is not None:  # explicitly set to false
         args.int_preprocessing = False
         args.int_preprocessing_ls = True

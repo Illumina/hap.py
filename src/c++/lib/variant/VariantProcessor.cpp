@@ -399,7 +399,7 @@ bool VariantProcessor::advance()
                 while((*previous_step)->advance() == true)
                 {
 #ifdef DEBUG_VARIANTPROCESSOR_STEPS
-                    std::cerr << "Adding " << (*previous_step)->current() << "\n";
+                    std::cerr << "Adding " << (*previous_step)->current()  << " INFO: " << (*previous_step)->current().info << "\n";
 #endif
                     (*pstep)->add((*previous_step)->current());
 #ifdef DEBUG_VARIANTPROCESSOR
