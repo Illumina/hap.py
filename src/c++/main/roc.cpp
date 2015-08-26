@@ -325,7 +325,11 @@ int main(int argc, char* argv[]) {
             if (filter_column >= 0 && !filter_name.empty())
             {
                 std::vector<std::string> filters;
-                stringutil::split(v[filter_column], filters, ";,");
+                std::string fcol = v[filter_column];
+                if(fcol == "." || fcol == "PASS") {
+                    fcol = "";
+                }
+                stringutil::split(fcol, filters, ";,");
                 for (auto f : filters)
                 {
                     auto q = filter_stats.find(f);
