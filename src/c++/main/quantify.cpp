@@ -347,6 +347,8 @@ int main(int argc, char* argv[]) {
             writer->addHeader("##INFO=<ID=kind,Number=1,Type=String,Description=\"Sub-type for decision (match/mismatch type)\">");
             writer->addHeader("##INFO=<ID=Regions,Number=.,Type=String,Description=\"Tags for regions.\">");
             writer->addHeader("##INFO=<ID=VTC,Number=.,Type=String,Description=\"Variant types used for counting.\">");
+            writer->addHeader("##INFO=<ID=T_VT,Number=1,Type=String,Description=\"High-level variant type in truth (SNP|INDEL).\">");
+            writer->addHeader("##INFO=<ID=Q_VT,Number=1,Type=String,Description=\"High-level variant type in truth (SNP|INDEL).\">");
         }
 
         /** local function to count variants in all samples */
@@ -354,6 +356,8 @@ int main(int argc, char* argv[]) {
         {
             int i = 0;
             std::set<int> vtypes;
+            int hl_vt_truth = -1;
+            int hl_vt_query = -1;
             for (auto const & s : samples)
             {
                 std::string key;
@@ -376,8 +380,15 @@ int main(int argc, char* argv[]) {
                     int * types;
                     int ntypes = 0;
                     it->second.add(vars, i, &types, &ntypes);
+                    int vts_seen = 0;
                     for(int j = 0; j < ntypes; ++j) {
+                        vts_seen |= types[j] & 0xf;
                         vtypes.insert(types[j]);
+                    }
+                    if(s.second == "TRUTH") {
+                        hl_vt_truth = vts_seen == 0 ? 2 : ((vts_seen == 1 || vts_seen == 9) ? 0 : 1);
+                    } else if(s.second == "QUERY") {
+                        hl_vt_query = vts_seen == 0 ? 2 : ((vts_seen == 1 || vts_seen == 9) ? 0 : 1);
                     }
                 }
                 else
@@ -385,6 +396,13 @@ int main(int argc, char* argv[]) {
                     it->second.add(vars, i);
                 }
                 ++i;
+            }
+            if(update_info)
+            {
+                if (vars.info != "") { vars.info += ";"; }
+                static const char * nvs[] = { "UNK", "SNP", "INDEL", "NOCALL" };
+                vars.info += std::string("T_VT=") + nvs[hl_vt_truth + 1];
+                vars.info += std::string(";Q_VT=") + nvs[hl_vt_query + 1];
             }
             if(update_info && !vtypes.empty())
             {
@@ -395,10 +413,7 @@ int main(int argc, char* argv[]) {
                     if(j++ > 0) { s += ","; }
                     s += VariantStatistics::type2string(t);
                 }
-                if (vars.info != "")
-                {
-                    vars.info += ";";
-                }
+                if (vars.info != "") { vars.info += ";"; }
                 vars.info += s;
             }
         };

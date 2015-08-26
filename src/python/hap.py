@@ -46,6 +46,7 @@ from Tools.parallel import runParallel
 from Tools.metric import makeMetricsObject, dataframeToMetricsTable
 
 import Haplo.quantify
+import Haplo.happyroc
 
 
 def blocksplitWrapper(location_str, args):
@@ -113,7 +114,8 @@ def xcmpWrapper(location_str, args):
     else:
         bname = ""
 
-    to_run = "xcmp %s %s -l %s -o %s %s -r %s -f %i --apply-filters-truth %i -n %i -V %i --leftshift %i --expand-hapblocks %i --window %i --compare-raw %i --no-hapcmp %i" % \
+    to_run = "xcmp %s %s -l %s -o %s %s -r %s -f %i --apply-filters-truth %i -n %i -V %i --leftshift %i --expand-hapblocks %i " \
+             "--window %i --compare-raw %i --no-hapcmp %i --roc-vals %i" % \
              (args.vcf1.replace(" ", "\\ "),
               args.vcf2.replace(" ", "\\ "),
               location_str,
@@ -128,7 +130,9 @@ def xcmpWrapper(location_str, args):
               args.hb_expand,
               args.window,
               1 if args.int_match_raw else 0,
-              1 if args.no_hc else 0)
+              1 if args.no_hc else 0,
+              1 if args.roc else 0
+              )
 
     # regions / targets already have been taken care of in blocksplit / preprocessing
 
@@ -213,6 +217,18 @@ def main():
     parser.add_argument("-X", "--write-counts", dest="write_counts",
                         default=False, action="store_true",
                         help="Write advanced counts and metrics.")
+
+    parser.add_argument("--raw-counts", dest="raw_counts",
+                        default=False, action="store_true",
+                        help="Count variants in unprocessed input VCFs and output as TOTAL.*.RAW.")
+
+    parser.add_argument("--roc", dest="roc", default=False,
+                        help="Select an INFO feature to produce a ROC on. This works best with "
+                             "--no-internal-preprocessing and --no-internal-leftshift since these "
+                             "flags preserve the most INFO flags from the input files.")
+
+    parser.add_argument("--roc-filter", dest="roc_filter", default=False,
+                        help="Select a filter to ignore when making ROCs.")
 
     parser.add_argument("--scratch-prefix", dest="scratch_prefix",
                         default=None,
@@ -346,6 +362,9 @@ def main():
     if args.version:
         print "Hap.py %s" % Tools.version
         exit(0)
+
+    if args.roc:
+        args.write_vcf = True
 
     # disable all clever matching
     if args.unhappy:
@@ -643,21 +662,29 @@ def main():
         # count variants before normalisation
         if "samples" not in h1 or not h1["samples"]:
             raise Exception("Cannot read sample names from truth input file")
-        counts_truth = Haplo.quantify.run_quantify(args.vcf1,
-                                                   None,
-                                                   None,
-                                                   {"CONF": args.fp_bedfile} if args.fp_bedfile else None,
-                                                   args.ref,
-                                                   h1["samples"][0])
+
+        if args.raw_counts:
+            counts_truth = Haplo.quantify.run_quantify(args.vcf1,
+                                                       None,
+                                                       None,
+                                                       {"CONF": args.fp_bedfile} if args.fp_bedfile else None,
+                                                       args.ref,
+                                                       h1["samples"][0])
+        else:
+            counts_truth = None
 
         if "samples" not in h2 or not h2["samples"]:
             raise Exception("Cannot read sample names from truth input file")
-        counts_query = Haplo.quantify.run_quantify(args.vcf2,
-                                                   None,
-                                                   None,
-                                                   {"CONF": args.fp_bedfile} if args.fp_bedfile else None,
-                                                   args.ref,
-                                                   h2["samples"][0])
+        if args.raw_counts:
+            counts_query = Haplo.quantify.run_quantify(args.vcf2,
+                                                       None,
+                                                       None,
+                                                       {"CONF": args.fp_bedfile} if args.fp_bedfile else None,
+                                                       args.ref,
+                                                       h2["samples"][0])
+        else:
+            counts_query = None
+
         # do xcmp
         res = runParallel(pool, xcmpWrapper, args.locations, args)
         tempfiles += [x[0] for x in res if x is not None]   # VCFs
@@ -732,8 +759,13 @@ def main():
             metrics_output["metrics"].append(dataframeToMetricsTable("raw.counts", df))
 
         # calculate precision / recall
-        simplified_truth_counts = Haplo.quantify.simplify_counts(counts_truth, h1["samples"][0:1])
-        simplified_query_counts = Haplo.quantify.simplify_counts(counts_query, h2["samples"][0:1])
+        if args.raw_counts:
+            simplified_truth_counts = Haplo.quantify.simplify_counts(counts_truth, h1["samples"][0:1])
+            simplified_query_counts = Haplo.quantify.simplify_counts(counts_query, h2["samples"][0:1])
+        else:
+            simplified_truth_counts = None
+            simplified_query_counts = None
+
         simplified_numbers = Haplo.quantify.simplify_counts(counts)
 
         for vtype in simplified_numbers.keys():
@@ -837,6 +869,11 @@ def main():
 
         with open(args.reports_prefix + ".metrics.json", "w") as fp:
             json.dump(metrics_output, fp)
+
+        if args.roc:
+            vcf = args.reports_prefix + ".vcf.gz"
+            Haplo.happyroc.roc(vcf, args.roc, args.roc_filter, args.reports_prefix + ".roc")
+
     finally:
         if args.delete_scratch:
             for x in tempfiles:

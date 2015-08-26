@@ -104,6 +104,7 @@ int main(int argc, char* argv[]) {
     bool always_hapcmp = false;
     bool no_hapcmp = false;
     bool compare_raw = false;
+    bool output_roc_vals = false;
 
     try
     {
@@ -132,6 +133,7 @@ int main(int argc, char* argv[]) {
             ("always-hapcmp", po::value<bool>(), "Always compare haplotype blocks (even if they match). Testing use only/slow.")
             ("compare-raw", po::value<bool>(), "Compare raw calls also to maximize chances of matching difficult regions.")
             ("no-hapcmp", po::value<bool>(), "Disable haplotype comparison. This overrides all other haplotype comparison options.")
+            ("roc-vals", po::value<bool>(), "Output GQX and qual values for truth and query in INFO (which gets preserved through quantify).")
         ;
 
         po::positional_options_description popts;
@@ -293,6 +295,10 @@ int main(int argc, char* argv[]) {
             compare_raw = vm["compare-raw"].as< bool >();
         }
 
+        if (vm.count("roc-vals"))
+        {
+            output_roc_vals = vm["roc-vals"].as< bool >();
+        }
     }
     catch (po::error & e)
     {
@@ -402,6 +408,15 @@ int main(int argc, char* argv[]) {
             pvw->addHeader("##INFO=<ID=kind,Number=1,Type=String,Description=\"Sub-type for decision (match/mismatch type)\">");
             pvw->addHeader("##INFO=<ID=ctype,Number=1,Type=String,Description=\"Type of comparison performed\">");
             pvw->addHeader("##INFO=<ID=HapMatch,Number=0,Type=Flag,Description=\"Variant is in matching haplotype block\">");
+            if(output_roc_vals)
+            {
+                pvw->addHeader("##INFO=<ID=T_GQ,Number=1,Type=Float,Description=\"GQ field in truth VCF.\">");
+                pvw->addHeader("##INFO=<ID=Q_GQ,Number=1,Type=Float,Description=\"GQ field in query VCF.\">");
+                pvw->addHeader("##INFO=<ID=T_DP,Number=1,Type=Float,Description=\"DP field in truth VCF.\">");
+                pvw->addHeader("##INFO=<ID=Q_DP,Number=1,Type=Float,Description=\"DP field in query VCF.\">");
+                pvw->addHeader("##INFO=<ID=T_QUAL,Number=1,Type=Float,Description=\"Qual column in truth VCF.\">");
+                pvw->addHeader("##INFO=<ID=Q_QUAL,Number=1,Type=Float,Description=\"Qual column in query VCF.\">");
+            }
             pvw->addSample("TRUTH");
             pvw->addSample("QUERY");
         }
@@ -677,6 +692,18 @@ int main(int argc, char* argv[]) {
             {
                 has_mismatch = true;
             }
+
+            if(output_roc_vals)
+            {
+                if(!v.info.empty()) { v.info += ";"; }
+                v.info += "T_GQ=" + std::to_string(v.calls[r1].gq);
+                v.info += ";Q_GQ=" + std::to_string(v.calls[r2].gq);
+                v.info += ";T_DP=" + std::to_string(v.calls[r1].dp);
+                v.info += ";Q_DP=" + std::to_string(v.calls[r2].dp);
+                v.info += ";T_QUAL=" + std::to_string(v.calls[r1].qual);
+                v.info += ";Q_QUAL=" + std::to_string(v.calls[r2].qual);
+            }
+
             block_variants.push_back(v);
 
 #ifdef DEBUG_XCMP
