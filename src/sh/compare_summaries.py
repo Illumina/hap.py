@@ -31,7 +31,7 @@ def main():
     data1 = csvread(sys.argv[1])
     data2 = csvread(sys.argv[2])
 
-    for metric in [  # "TRUTH.TOTAL", "QUERY.TOTAL", #  -- these will vary by +/- 2
+    for metric in ["TRUTH.TOTAL", "QUERY.TOTAL",
                    "METRIC.Recall", "METRIC.Precision", "METRIC.Frac_NA"]:
         for field in ["Locations.SNP", "Locations.SNP.het", "Locations.INDEL", "Locations.INDEL.het"]:
             print metric + " / " + field

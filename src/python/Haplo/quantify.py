@@ -134,7 +134,7 @@ def simplify_counts(counts, snames=None):
                 else:
                     altype = "COMPLEX"
                 keys1 = ["Alleles", "Alleles." + altype]
-            else:
+            elif vt != "nc":  # ignore non-called locations in a sample
                 if vt == "s" or vt == "rs":
                     altype = "SNP"
                 else:
@@ -147,6 +147,8 @@ def simplify_counts(counts, snames=None):
                 for k in xkeys1:
                     if k != "Locations":
                         keys1.append(k + "." + ct)
+            else:
+                keys1 = []
 
             keys2 = [tq + ".TOTAL", tq + "." + vtype]
 

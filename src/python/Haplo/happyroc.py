@@ -19,6 +19,7 @@
 #
 
 import os
+import sys
 import tempfile
 import subprocess
 import logging
@@ -38,11 +39,11 @@ def roc(vcf, feature, filter_name, output_path):
     tf.close()
 
     try:
-        cmdline = "bcftools query -i 'INFO/type==\"FP\"' -f '%%INFO/Q_VT\t%%INFO/%s\t%%INFO/type\t%%FILTER\\n' " \
+        cmdline = "bcftools query -i 'INFO/type==\"FP\" && INFO/Q_VT != \"NOCALL\"' -f '%%INFO/Q_VT\t%%INFO/%s\t%%INFO/type\t%%FILTER\\n' " \
                   "%s -o %s" % (feature, vcf.replace(" ", "\\ "), tf.name + ".fp")
         logging.info("Running: %s" % cmdline)
         subprocess.check_call(cmdline, shell=True)
-        cmdline = "bcftools query -i 'INFO/type==\"TP\"' -f '%%INFO/T_VT\t%%INFO/%s\t%%INFO/type\t%%FILTER\\n' " \
+        cmdline = "bcftools query -i 'INFO/type==\"TP\" && INFO/T_VT != \"NOCALL\"' -f '%%INFO/T_VT\t%%INFO/%s\t%%INFO/type\t%%FILTER\\n' " \
                   "%s -o %s" % (feature, vcf.replace(" ", "\\ "), tf.name + ".tp")
         logging.info("Running: %s" % cmdline)
         subprocess.check_call(cmdline, shell=True)
@@ -83,10 +84,16 @@ def roc(vcf, feature, filter_name, output_path):
 
         cmdlines = cmdline + " -o %s %s" % (output_path.replace(" ", "\\ ") + ".snp.tsv", output_path + ".snp.data")
         logging.info("Running %s" % cmdlines)
+
+        # this is not great, we should capture the output and log it.
+        print >>sys.stderr, "Making SNP ROC"
+        print >>sys.stderr, "--------------"
         subprocess.check_call(cmdlines, shell=True)
 
         cmdlinei = cmdline + " -o %s %s" % (output_path.replace(" ", "\\ ") + ".indel.tsv", output_path + ".indel.data")
         logging.info("Running %s" % cmdlinei)
+        print >>sys.stderr, "Making INDEL ROC"
+        print >>sys.stderr, "----------------"
         subprocess.check_call(cmdlinei, shell=True)
     finally:
         tf.close()

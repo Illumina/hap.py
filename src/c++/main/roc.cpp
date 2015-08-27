@@ -46,6 +46,7 @@
 #include <fstream>
 #include <cstdlib>
 #include <map>
+#include <set>
 #include <boost/algorithm/string.hpp>
 
 #include "Error.hh"
@@ -363,9 +364,15 @@ int main(int argc, char* argv[]) {
                     }
                 }
                 auto it = filters.begin();
+                std::vector<std::string> _filters_to_remove;
+                stringutil::split(filter_name, _filters_to_remove, ";,");
+                std::set<std::string> filters_to_remove;
+                for (auto f : _filters_to_remove) {
+                    filters_to_remove.insert(f);
+                }
                 while(it != filters.end())
                 {
-                    if(*it == filter_name) {
+                    if(filters_to_remove.count(*it) > 0) {
                         filters.erase(it);
                         it = filters.begin();
                     } else {
@@ -415,16 +422,20 @@ int main(int argc, char* argv[]) {
         std::cerr << "tp: " << total_tp << " fp: " << total_fp << " fn: " << total_fn
                   << " filtered: " << total_filtered << " ignored: " << total_ignored << "\n";
         for (auto i : filter_stats) {
-            std::cerr << "F:" << i.first << " : " << i.second << "\n";
-        }
-        for (auto i : filter_stats_tp) {
-            std::cerr << "tp F:" << i.first << " : " << i.second << "\n";
-        }
-        for (auto i : filter_stats_fp) {
-            std::cerr << "fp F:" << i.first << " : " << i.second << "\n";
-        }
-        for (auto i : filter_stats_fn) {
-            std::cerr << "fn F:" << i.first << " : " << i.second << "\n";
+            int f_tp = 0;
+            if (filter_stats_tp.find(i.first) != filter_stats_tp.end())
+            {
+                f_tp = filter_stats_tp[i.first];
+            }
+            int f_fp = 0;
+            if (filter_stats_fp.find(i.first) != filter_stats_fp.end())
+            {
+                f_fp = filter_stats_fp[i.first];
+            }
+            std::cerr << "F:" << i.first << " : " << i.second
+                      << " -- tp: " << f_tp
+                      << " fp: " << f_fp
+                      << "\n";
         }
     }
     if(output == "-") {
