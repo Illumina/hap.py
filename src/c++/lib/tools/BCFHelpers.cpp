@@ -365,17 +365,17 @@ void getGT(bcf_hdr_t * header, bcf1_t * line, int isample, int * gt, int & ngt, 
     }
 }
 
-/** read GQ(X) -- will use in this order: GQ, GQX, -1 */
+/** read GQ(X) -- will use in this order: GQX, GQ, -1 */
 void getGQ(const bcf_hdr_t * header, bcf1_t * line, int isample, float & gq)
 {
     using namespace _impl;
     static const bcf_get_numeric_format<float> gf;
 
     get_fmt_outcome res;
-    res = gf(header, line, "GQ", isample, &gq, 1, 0.0);
+    res = gf(header, line, "GQX", isample, &gq, 1, 0.0);
     if(res == get_fmt_outcome::failure)
     {
-        res = gf(header, line, "GQX", isample, &gq, 1, 0.0);
+        res = gf(header, line, "GQ", isample, &gq, 1, 0.0);
     }
     if(res == get_fmt_outcome::too_many)
     {

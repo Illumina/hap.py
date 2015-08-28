@@ -56,6 +56,7 @@ enum class tag_t { tp, fp, fn };
 struct RocData {
     void add(double value, tag_t tag)
     {
+        if(reverse) value = -value;
         data.push_back(std::make_pair(value, tag));
     }
 
@@ -99,7 +100,7 @@ struct RocData {
                     recall = tp / (tp + fn);
                 }
 
-                out << current_value << "\t" << tp << "\t" << fp << "\t" << fn << "\t" << precision << "\t" << recall << "\n";
+                out << (reverse ? -current_value : current_value) << "\t" << tp << "\t" << fp << "\t" << fn << "\t" << precision << "\t" << recall << "\n";
             }
 
             switch(r.second)
@@ -119,6 +120,8 @@ struct RocData {
 
     std::vector<std::pair<double, tag_t> > data;
     std::string label = "value";
+
+    bool reverse = false;
 };
 
 
@@ -138,6 +141,7 @@ int main(int argc, char* argv[]) {
     std::string filter_name = "";
 
     bool verbose = false;
+    bool reverse = false;
 
     try
     {
@@ -153,6 +157,7 @@ int main(int argc, char* argv[]) {
             ("header-lines,H", po::value<int>(), "lines to skip before starting to read")
             ("value,v", po::value<std::string>(), "value column name")
             ("value-column", po::value<int>(), "value column number")
+            ("reverse,R", po::value<bool>(), "Reverse counting for score (default: higher scores are better)")
             ("tag,t", po::value<std::string>(), "tag column name")
             ("tag-column", po::value<int>(), "tag column number. Tags must be TP/FP/FN, lines with different tags will be ignored")
             ("filter,f", po::value<std::string>(), "filter column name")
@@ -219,6 +224,10 @@ int main(int argc, char* argv[]) {
         {
             value = vm["value"].as<std::string>();
         }
+        if (vm.count("reverse"))
+        {
+            reverse = vm["reverse"].as<bool>();
+        }
 
         if (vm.count("tag-column"))
         {
@@ -250,6 +259,7 @@ int main(int argc, char* argv[]) {
 
 
     RocData data;
+    data.reverse = reverse;
     if(!value.empty())
     {
         data.label = value;
@@ -295,6 +305,7 @@ int main(int argc, char* argv[]) {
                 {
                     for (size_t i = 0; i < v.size(); ++i)
                     {
+                        v[i] = stringutil::replaceAll(v[i], "\r", "");
                         if(!v[i].empty() && v[i] == value) {
                             value_column = i;
                         }

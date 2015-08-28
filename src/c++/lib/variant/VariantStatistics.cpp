@@ -50,13 +50,13 @@ namespace variant
 /* variant types in uint64 */
 
 /* encode allele types seen in low 4 bits, highest bit is unused */
-static const uint64_t VT_NOCALL         = 0;
-static const uint64_t VT_SNP            = 1;
-static const uint64_t VT_INS            = 2;
-static const uint64_t VT_DEL            = 4;
-static const uint64_t VT_REF            = 8;
+const uint64_t VT_NOCALL         = 0;
+const uint64_t VT_SNP            = 1;
+const uint64_t VT_INS            = 2;
+const uint64_t VT_DEL            = 4;
+const uint64_t VT_REF            = 8;
 
-static const char * VT_NAMES [] = {
+const char * VT_NAMES [] = {
     "nc",               //    0x00
     "s",                //    0x01
     "i",                //    0x02
@@ -76,19 +76,19 @@ static const char * VT_NAMES [] = {
 };
 
 /** encode call type / zygosity in bits 5-8 */
-static const uint64_t CT_NUCLEOTIDES = 0;     // count nucleotides
-static const uint64_t CT_ALLELES = 0x10;      // count alleles
-static const uint64_t CT_HOMREF = 0x20;       // locations with only one allele seen with copy number 2
-static const uint64_t CT_HET = 0x30;          // locations with one ref and one alt allele seen with copy number 1
-static const uint64_t CT_HETALT = 0x40;       // locations with two alt alleles seen with copy number 1 each
-static const uint64_t CT_HEMI = 0x50;         // locations with only one allele seen with copy number 1
-static const uint64_t CT_AMBI = 0x60;         // locations with more than two alleles
-static const uint64_t CT_HALFCALL = 0x70;     // locations with one allele, and one missing call
-static const uint64_t CT_NOCALL = 0x80;       // locations with one allele, and one missing call
-static const uint64_t CT_HOMALT = 0x90;       // locations with one allele, and one missing call
-static const uint64_t CT_UNKNOWN = 0xa0;      // unknown locations / counts
+const uint64_t CT_NUCLEOTIDES = 0;     // count nucleotides
+const uint64_t CT_ALLELES = 0x10;      // count alleles
+const uint64_t CT_HOMREF = 0x20;       // locations with only one allele seen with copy number 2
+const uint64_t CT_HET = 0x30;          // locations with one ref and one alt allele seen with copy number 1
+const uint64_t CT_HETALT = 0x40;       // locations with two alt alleles seen with copy number 1 each
+const uint64_t CT_HEMI = 0x50;         // locations with only one allele seen with copy number 1
+const uint64_t CT_AMBI = 0x60;         // locations with more than two alleles
+const uint64_t CT_HALFCALL = 0x70;     // locations with one allele, and one missing call
+const uint64_t CT_NOCALL = 0x80;       // locations with one allele, and one missing call
+const uint64_t CT_HOMALT = 0x90;       // locations with one allele, and one missing call
+const uint64_t CT_UNKNOWN = 0xa0;      // unknown locations / counts
 
-static const char * CT_NAMES [] = {
+const char * CT_NAMES [] = {
     "nuc", // 0x00
     "al",     // 0x10
     "homref",         // 0x20

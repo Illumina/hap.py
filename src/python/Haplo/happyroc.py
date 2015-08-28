@@ -33,68 +33,86 @@ def _rm(f):
         pass
 
 
-def roc(vcf, feature, filter_name, output_path):
+def _run(cmd):
+    """ Run something, log output
+    """
+    logging.info(cmd)
+    po = subprocess.Popen(cmd,
+                          shell=True,
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE)
+
+    o, e = po.communicate()
+
+    po.wait()
+
+    rc = po.returncode
+
+    if rc != 0:
+        raise Exception("Error running ROC. Return code was %i\n" % rc)
+
+    logging.info(o)
+    logging.info(e)
+
+    return o
+
+
+def vcfroc(vcf, feature, filter_name, output_path, rreversed):
     """ Calculate SNP and indel ROC. """
     tf = tempfile.NamedTemporaryFile(delete=False)
     tf.close()
 
+    files = {}
     try:
-        cmdline = "bcftools query -i 'INFO/type==\"FP\" && INFO/Q_VT != \"NOCALL\"' -f '%%INFO/Q_VT\t%%INFO/%s\t%%INFO/type\t%%FILTER\\n' " \
+        cmdline = "bcftools query -i 'INFO/type==\"FP\" && INFO/Q_VT != \"NOCALL\"' -f '%%INFO/Q_VT\t%%INFO/Q_LT\t%%INFO/%s\t%%INFO/type\t%%FILTER\\n' " \
                   "%s -o %s" % (feature, vcf.replace(" ", "\\ "), tf.name + ".fp")
-        logging.info("Running: %s" % cmdline)
-        subprocess.check_call(cmdline, shell=True)
-        cmdline = "bcftools query -i 'INFO/type==\"TP\" && INFO/T_VT != \"NOCALL\"' -f '%%INFO/T_VT\t%%INFO/%s\t%%INFO/type\t%%FILTER\\n' " \
+        _run(cmdline)
+        cmdline = "bcftools query -i 'INFO/type==\"TP\" && INFO/T_VT != \"NOCALL\"' -f '%%INFO/T_VT\t%%INFO/T_LT\t%%INFO/%s\t%%INFO/type\t%%FILTER\\n' " \
                   "%s -o %s" % (feature, vcf.replace(" ", "\\ "), tf.name + ".tp")
-        logging.info("Running: %s" % cmdline)
-        subprocess.check_call(cmdline, shell=True)
-        cmdline = "bcftools query -i 'INFO/type==\"FN\"' -f '%%INFO/T_VT\t%%INFO/%s\t%%INFO/type\t%%FILTER\\n' " \
+        _run(cmdline)
+        cmdline = "bcftools query -i 'INFO/type==\"FN\"' -f '%%INFO/T_VT\t%%INFO/T_LT\t%%INFO/%s\t%%INFO/type\t%%FILTER\\n' " \
                   "%s -o %s" % (feature, vcf.replace(" ", "\\ "), tf.name + ".fn")
-        logging.info("Running: %s" % cmdline)
-        subprocess.check_call(cmdline, shell=True)
+        _run(cmdline)
 
-        # tf_i = open(tf.name + ".indel", "w")
-        tf_s = open(output_path + ".snp.data", "w")
-        tf_i = open(output_path + ".indel.data", "w")
-        print >>tf_s, "type\t%s\tlabel\tfilter" % feature
-        print >>tf_i, "type\t%s\tlabel\tfilter" % feature
+        def getfile(vtype, ltype):
+            fname = output_path.replace(" ", "\\ ") + \
+                    "." + vtype.lower() + "." + ltype.lower() + ".data"
+            if fname not in files:
+                files[fname] = { 
+                    "vtype": vtype,
+                    "ltype": ltype,
+                    "file": open(fname, "w")
+                }
+                print >>files[fname]["file"], "type\tltype\t%s\tlabel\tfilter" % feature
+            return files[fname]["file"]
+
+        def output_line(l):
+            ll = l.split("\t")
+            f1 = getfile(ll[0], "all")
+            f2 = getfile(ll[0], ll[1])
+            f1.write(l)
+            f2.write(l)
+
         with open(tf.name + ".tp") as tp:
             for l in tp:
-                if l.startswith("INDEL"):
-                    tf_i.write(l)
-                else:
-                    tf_s.write(l)
+                output_line(l)
         with open(tf.name + ".fp") as fp:
             for l in fp:
-                if l.startswith("INDEL"):
-                    tf_i.write(l)
-                else:
-                    tf_s.write(l)
-        with open(tf.name + ".fn") as fp:
-            for l in fp:
-                if l.startswith("INDEL"):
-                    tf_i.write(l)
-                else:
-                    tf_s.write(l)
-        tf_s.close()
-        tf_i.close()
+                output_line(l)
+        with open(tf.name + ".fn") as fn:
+            for l in fn:
+                output_line(l)
 
-        cmdline = "roc -t label -v %s -f filter --verbose " % feature
+        cmdline = "roc -t label -v %s -f filter --verbose -R %i" % (feature, 1 if rreversed else 0)
         if filter_name:
             cmdline += " -n %s" % filter_name
+        for n, ff in files.iteritems():
+            ff["file"].close()
+            cmdlines = cmdline + " -o %s %s" % (output_path.replace(" ", "\\ ") + 
+                                                "." + ff["vtype"].lower() + "." + ff["ltype"].lower() + 
+                                                ".tsv", n)
+            _run(cmdlines)
 
-        cmdlines = cmdline + " -o %s %s" % (output_path.replace(" ", "\\ ") + ".snp.tsv", output_path + ".snp.data")
-        logging.info("Running %s" % cmdlines)
-
-        # this is not great, we should capture the output and log it.
-        print >>sys.stderr, "Making SNP ROC"
-        print >>sys.stderr, "--------------"
-        subprocess.check_call(cmdlines, shell=True)
-
-        cmdlinei = cmdline + " -o %s %s" % (output_path.replace(" ", "\\ ") + ".indel.tsv", output_path + ".indel.data")
-        logging.info("Running %s" % cmdlinei)
-        print >>sys.stderr, "Making INDEL ROC"
-        print >>sys.stderr, "----------------"
-        subprocess.check_call(cmdlinei, shell=True)
     finally:
         tf.close()
         _rm(tf.name)
@@ -102,3 +120,6 @@ def roc(vcf, feature, filter_name, output_path):
         _rm(tf.name + ".fp")
         _rm(tf.name + ".tp")
         _rm(tf.name + ".fn")
+        # remove intermediate data -- might add an option to keep
+        # for n in files.iterkeys():
+        #     _rm(n)

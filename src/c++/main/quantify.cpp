@@ -89,6 +89,7 @@ int main(int argc, char* argv[]) {
 
     bool apply_filters = false;
     bool count_homref = false;
+    bool output_vtc = false;
 
     try
     {
@@ -108,6 +109,7 @@ int main(int argc, char* argv[]) {
             ("message-every", po::value<int64_t>(), "Print a message every N records.")
             ("apply-filters,f", po::value<bool>(), "Apply filtering in VCF.")
             ("count-homref", po::value<bool>(), "Count homref locations.")
+            ("output-vtc", po::value<bool>(), "Output variant types counted (debugging).")
         ;
 
         po::positional_options_description popts;
@@ -183,6 +185,11 @@ int main(int argc, char* argv[]) {
         if (vm.count("count-homref"))
         {
             count_homref = vm["count-homref"].as< bool >();
+        }
+
+        if (vm.count("output-vtc"))
+        {
+            output_vtc = vm["output-vtc"].as< bool >();
         }
 
         if(files.size() == 0)
@@ -346,18 +353,32 @@ int main(int argc, char* argv[]) {
             writer->addHeader("##INFO=<ID=type,Number=1,Type=String,Description=\"Decision for call (TP/FP/FN/N)\">");
             writer->addHeader("##INFO=<ID=kind,Number=1,Type=String,Description=\"Sub-type for decision (match/mismatch type)\">");
             writer->addHeader("##INFO=<ID=Regions,Number=.,Type=String,Description=\"Tags for regions.\">");
-            writer->addHeader("##INFO=<ID=VTC,Number=.,Type=String,Description=\"Variant types used for counting.\">");
+            if(output_vtc) {
+                writer->addHeader("##INFO=<ID=VTC,Number=.,Type=String,Description=\"Variant types used for counting.\">");
+            }
             writer->addHeader("##INFO=<ID=T_VT,Number=1,Type=String,Description=\"High-level variant type in truth (SNP|INDEL).\">");
-            writer->addHeader("##INFO=<ID=Q_VT,Number=1,Type=String,Description=\"High-level variant type in truth (SNP|INDEL).\">");
+            writer->addHeader("##INFO=<ID=Q_VT,Number=1,Type=String,Description=\"High-level variant type in query (SNP|INDEL).\">");
+            writer->addHeader("##INFO=<ID=T_LT,Number=1,Type=String,Description=\"High-level location type in truth (het|hom|hetalt).\">");
+            writer->addHeader("##INFO=<ID=Q_LT,Number=1,Type=String,Description=\"High-level location type in query (het|hom|hetalt).\">");
         }
 
         /** local function to count variants in all samples */
-        const auto count_variants = [ref_fasta, &count_map, &samples, count_homref](std::string const & name, Variants & vars, bool update_info)
+        const auto count_variants = [ref_fasta, &count_map, &samples, 
+                                     count_homref,
+                                     output_vtc
+                                    ]
+                                    (std::string const & name, Variants & vars, bool update_info)
         {
             int i = 0;
             std::set<int> vtypes;
-            int hl_vt_truth = -1;
-            int hl_vt_query = -1;
+            uint64_t hl_lt_truth = -1;
+            uint64_t hl_lt_query = -1;
+            uint64_t hl_vt_truth = -1;
+            uint64_t hl_vt_query = -1;
+
+            std::string lt_truth = "unk";
+            std::string lt_query = "unk";
+
             for (auto const & s : samples)
             {
                 std::string key;
@@ -380,15 +401,23 @@ int main(int argc, char* argv[]) {
                     int * types;
                     int ntypes = 0;
                     it->second.add(vars, i, &types, &ntypes);
-                    int vts_seen = 0;
+                    uint64_t vts_seen = 0;
+                    uint64_t lt = -1;
                     for(int j = 0; j < ntypes; ++j) {
                         vts_seen |= types[j] & 0xf;
                         vtypes.insert(types[j]);
+                        if((types[j] & 0xf0) > 0x10) {
+                            lt = types[j] >> 4;
+                        }
                     }
                     if(s.second == "TRUTH") {
-                        hl_vt_truth = vts_seen == 0 ? 2 : ((vts_seen == 1 || vts_seen == 9) ? 0 : 1);
+                        hl_vt_truth = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP 
+                                                                 || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0 : 1);
+                        hl_lt_truth = lt;
                     } else if(s.second == "QUERY") {
-                        hl_vt_query = vts_seen == 0 ? 2 : ((vts_seen == 1 || vts_seen == 9) ? 0 : 1);
+                        hl_vt_query = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP 
+                                                                 || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0 : 1);
+                        hl_lt_query = lt;
                     }
                 }
                 else
@@ -403,8 +432,10 @@ int main(int argc, char* argv[]) {
                 static const char * nvs[] = { "UNK", "SNP", "INDEL", "NOCALL" };
                 vars.info += std::string("T_VT=") + nvs[hl_vt_truth + 1];
                 vars.info += std::string(";Q_VT=") + nvs[hl_vt_query + 1];
+                vars.info += std::string(";T_LT=") + CT_NAMES[hl_lt_truth];
+                vars.info += std::string(";Q_LT=") + CT_NAMES[hl_lt_query];
             }
-            if(update_info && !vtypes.empty())
+            if(output_vtc && update_info && !vtypes.empty())
             {
                 std::string s = "VTC=";
                 int j = 0;
@@ -516,8 +547,8 @@ int main(int argc, char* argv[]) {
 
             v.info += std::string("type=") + type;
             v.info += std::string(";kind=") + kind;
-            v.info += std::string(";gtt1=") + gtt1;
-            v.info += std::string(";gtt2=") + gtt2;
+            // v.info += std::string(";gtt1=") + gtt1;
+            // v.info += std::string(";gtt2=") + gtt2;
             if(!tag_string.empty()) {
                 v.info += std::string(";Regions=") + tag_string;
             }

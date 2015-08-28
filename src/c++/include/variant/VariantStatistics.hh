@@ -77,4 +77,30 @@ private:
     VariantStatisticsImpl * _impl;
 };
 
+// variant type names
+extern const char * VT_NAMES [];
+// encode allele types seen in low 4 bits
+extern const uint64_t VT_NOCALL;
+extern const uint64_t VT_SNP;
+extern const uint64_t VT_INS;
+extern const uint64_t VT_DEL;
+extern const uint64_t VT_REF;
+
+
+// calltype names -- look up via calltype >> 4
+extern const char * CT_NAMES [];
+// this is encoded in the high 4 bits 
+extern const uint64_t CT_NUCLEOTIDES;     // count nucleotides
+extern const uint64_t CT_ALLELES;         // count alleles
+extern const uint64_t CT_HOMREF;          // locations with only one allele seen with copy number 2
+extern const uint64_t CT_HET;             // locations with one ref and one alt allele seen with copy number 1
+extern const uint64_t CT_HETALT;          // locations with two alt alleles seen with copy number 1 each
+extern const uint64_t CT_HEMI;            // locations with only one allele seen with copy number 1
+extern const uint64_t CT_AMBI;            // locations with more than two alleles
+extern const uint64_t CT_HALFCALL;        // locations with one allele, and one missing call
+extern const uint64_t CT_NOCALL;          // locations with one allele, and one missing call
+extern const uint64_t CT_HOMALT;          // locations with one allele, and one missing call
+extern const uint64_t CT_UNKNOWN;         // unknown locations / counts
+
+
 }

@@ -230,6 +230,9 @@ def main():
     parser.add_argument("--roc-filter", dest="roc_filter", default=False,
                         help="Select a filter to ignore when making ROCs.")
 
+    parser.add_argument("--roc-reversed", dest="roc_reversed", default=False,
+                        help="Change the meaning of the ROC feature to count the other way around (higher values=bad).")
+
     parser.add_argument("--scratch-prefix", dest="scratch_prefix",
                         default=None,
                         help="Directory for scratch files.")
@@ -872,7 +875,7 @@ def main():
 
         if args.roc:
             vcf = args.reports_prefix + ".vcf.gz"
-            Haplo.happyroc.roc(vcf, args.roc, args.roc_filter, args.reports_prefix + ".roc")
+            Haplo.happyroc.roc(vcf, args.roc, args.roc_filter, args.reports_prefix + ".roc", args.roc_reversed)
 
     finally:
         if args.delete_scratch:

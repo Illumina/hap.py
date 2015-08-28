@@ -19,7 +19,7 @@ import tempfile
 
 
 def tableROC(tbl, label_column, feature_column, filter_column=None,
-             filter_name=None):
+             filter_name=None, roc_reversed=False):
     """Compute ROC table from TP/FP/FN classification table.
 
     :param tbl: table with label and feature
@@ -28,6 +28,7 @@ def tableROC(tbl, label_column, feature_column, filter_column=None,
     :param feature_column: column name which gives the feature
     :param filter_column: column that contains the filter fields
     :param filter_name: column that contains the filter name
+    :param roc_reversed: reverse ROC behaviour
     :returns: a pandas.DataFrame with TP/FP/FN/precision/recall columns.
     """
 
@@ -47,6 +48,8 @@ def tableROC(tbl, label_column, feature_column, filter_column=None,
             cmdline += " -f %s" % filter_column
         if filter_name:
             cmdline += " -n %s" % filter_name
+        if roc_reversed:
+            cmdline += " -R 1"
         cmdline += " -o %s %s" % (tf1.name, tf2.name)
 
         logging.info("Running %s" % cmdline)
