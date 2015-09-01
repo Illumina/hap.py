@@ -24,16 +24,55 @@ import logging
 import Tools
 
 
+def _locations_tmp_bed_file(locations):
+    """ turn a list of locations into a bed file """
+    if type(locations) is str:
+        locations = locations.split(",")
+    if type(locations) is not list:
+        raise Exception("Invalid list of locations (must be str or list): %s" % str(locations))
+
+    llocations = []
+
+    for l in locations:
+        xchr, _, _pos = l.partition(":")
+        start, _, end = _pos.partition("-")
+        if not xchr:
+            raise Exception("Invalid chromosome name in %s" % str(l))
+        try:
+            start = int(start)
+        except:
+            start = 0
+        
+        try:
+            end = int(end)
+        except:
+            end = 2**31-1
+
+        llocations.append((xchr, start, end))
+
+    locations = sorted(llocations)
+
+    tf = tempfile.NamedTemporaryFile(delete=False)
+    for xchr, start, end in locations:
+        print >>tf, "%s\t%i\t%i" % (xchr, start-1, end)
+    tf.close()
+
+    return tf.name
+
+
+
 def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
-                 reference=Tools.defaultReference(), sample_column="*"):
+                  reference=Tools.defaultReference(), sample_column="*",
+                  locations=None):
     """Run quantify and return parsed JSON
 
     :filename: the VCF file name
     :json_name: output file name (if None, will use a temp file)
     :write_vcf: write annotated VCF (give filename)
-    :regions: dictionary of region names and file names
+    :regions: dictionary of stratification region names and file names
     :reference: reference fasta path
     :sample_column: column to use (or * for all)
+    :location: a location to use
     :returns: parsed counts JSON
     """
 
@@ -51,6 +90,11 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
     if regions:
         for k, v in regions.iteritems():
             run_str += " -R '%s:%s'" % (k, v)
+
+    location_file = None
+    if locations:
+        location_file = _locations_tmp_bed_file(locations)
+        run_str += " --only '%s'" % location_file
 
     tfe = tempfile.NamedTemporaryFile(delete=False,
                                       prefix="stderr",
@@ -74,6 +118,8 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
             for l in f:
                 logging.error("[stderr] " + l.replace("\n", ""))
         os.unlink(tfe.name)
+        if location_file:
+            os.unlink(location_file)
         raise
 
     tfo.close()
@@ -86,6 +132,8 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
         for l in f:
             logging.info("[stderr] " + l.replace("\n", ""))
     os.unlink(tfe.name)
+    if location_file:
+        os.unlink(location_file)
 
     if write_vcf:
         to_run = "tabix -p vcf '%s'" % write_vcf
@@ -149,7 +197,7 @@ def simplify_counts(counts, snames=None):
                 else:
                     altype = "COMPLEX"
                 keys1 = ["Alleles", "Alleles." + altype]
-            elif vt != "nc":  # ignore non-called locations in a sample
+            elif not (vt == "nc" or ct == "homref" or vt == "r"):  # ignore non-called locations in a sample
                 if vt == "s" or vt == "rs":
                     altype = "SNP"
                 else:
@@ -162,6 +210,11 @@ def simplify_counts(counts, snames=None):
                 for k in xkeys1:
                     if k != "Locations":
                         keys1.append(k + "." + ct)
+            elif vt == "nc" or ct == "homref" or vt == "r":
+                if vt == "nc":
+                    keys1 = ["Records.nocall"]
+                else:
+                    keys1 = ["Records.homref"]
             else:
                 keys1 = []
 

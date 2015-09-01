@@ -672,7 +672,8 @@ def main():
                                                        None,
                                                        {"CONF": args.fp_bedfile} if args.fp_bedfile else None,
                                                        args.ref,
-                                                       h1["samples"][0])
+                                                       h1["samples"][0],
+                                                       locations=args.locations)
         else:
             counts_truth = None
 
@@ -684,7 +685,8 @@ def main():
                                                        None,
                                                        {"CONF": args.fp_bedfile} if args.fp_bedfile else None,
                                                        args.ref,
-                                                       h2["samples"][0])
+                                                       h2["samples"][0],
+                                                       locations=args.locations)
         else:
             counts_query = None
 

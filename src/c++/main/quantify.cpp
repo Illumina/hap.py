@@ -75,6 +75,7 @@ int main(int argc, char* argv[]) {
     std::string output;
     std::string output_vcf;
     std::string ref_fasta;
+    std::string only_regions;
 
     std::map<std::string, IntervalTree<std::string, int64_t> > regions;
     std::set<std::string> region_names;
@@ -105,6 +106,7 @@ int main(int argc, char* argv[]) {
             ("location,l", po::value<std::string>(), "Start location.")
             ("regions,R", po::value< std::vector<std::string> >(),
                 "Region bed file. You can attach a label by prefixing with a colon, e.g. -R FP2:false-positives-type2.bed")
+            ("only,O", po::value< std::string >(), "Bed file of locations (equivalent to -R in bcftools)")
             ("limit-records", po::value<int64_t>(), "Maximum umber of records to process")
             ("message-every", po::value<int64_t>(), "Print a message every N records.")
             ("apply-filters,f", po::value<bool>(), "Apply filtering in VCF.")
@@ -165,6 +167,11 @@ int main(int argc, char* argv[]) {
         if (vm.count("location"))
         {
             stringutil::parsePos(vm["location"].as< std::string >(), chr, start, end);
+        }
+
+        if (vm.count("only"))
+        {
+            only_regions = vm["only"].as< std::string >();
         }
 
         if (vm.count("limit-records"))
@@ -298,6 +305,9 @@ int main(int argc, char* argv[]) {
     try
     {
         VariantReader r;
+        if(!only_regions.empty()) {
+            r.setRegions(only_regions.c_str(), true);
+        }
         r.setApplyFilters(apply_filters);
 
         for(std::string const & f : files)
