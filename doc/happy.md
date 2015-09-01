@@ -262,6 +262,60 @@ Write advanced counts and metrics. This writes additional files / numbers:
     but it contains more rows and columns showing detailed counts for more
     allele/location types, as well as TP/FP/FN/UNK counts.
 
+### ROC Curves
+
+Hap.py can create data for ROC-style curves. Normally, it is preferable to calculate 
+such curves based on the input variant representations, and not to perform any
+variant splitting or preprocessing.
+
+Here are the options which need to be added to a hap.py command line to create
+a ROC curve based on the query GQ(X) field:
+
+```
+...
+  --no-internal-leftshift \
+  --no-internal-preprocessing \
+  -P -V \
+  --roc Q_GQ \
+  --roc-filter LowGQX \
+...
+```
+
+The `-P` switch is necessary to consider unfiltered variants, `-V` will write an
+annotated output VCF which is used to extract the features and labels. The `--roc` switch
+specifies the feature to filter on. Hap.py translates the truth and query GQ(X) fields into 
+the INFO fields T_GQ and Q_GQ, it tries to use GQX first, if this is not present, it
+will use GQ. When run without internal preprocessing any other input INFO field can
+be used (e.g. VQSLOD for GATK). The `--roc-filter` switch specifies the VCF filter which
+implements a threshold on the quality score. When calculating filtered TP/FP counts, this 
+filter will be removed, and replaced with a threshold filter on the feature specified
+by `--roc`.
+
+Normally, we assume that higher quality scores are better during ROC calculation,
+variants with scores higher than the variable threshold will "pass", all others will
+"fail". We can reverse this behaviour using the `--roc-reversed` argument.
+
+ROC curves can also be generated from the output VCF that is written using `-V` without
+running hap.py again using the `roc.py` script.
+
+```
+bin/roc.py hap.py-output.vcf.gz output-roc.tsv \
+  --roc Q_GQ \
+  --roc-filter LowGQX 
+```
+
+The output file will be tab-delimited and gives tp / fp / fn counts, as well as precision
+and recall for different thresholds of the ROC feature:
+
+```
+Q_GQ      tp      fp      fn      precision       recall
+38        567     23970   37      0.02310800      0.93874200
+...
+```
+
+Hap.py will output separate ROC files for different variant types (SNP, INDEL, each for 
+het/hom/hetalt variants).
+
 ### Input Preprocessing
 
 Hap.py has a range of options to control pre-processing separately for truth

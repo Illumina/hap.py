@@ -4,12 +4,11 @@ Alleles.COMPLEX,1.0,2.0,1.0,1.0,0.0
 Alleles.DEL,3132.0,3051.0,1.0,1.0,0.0
 Alleles.INS,3005.0,2890.0,1.0,1.0,0.0
 Alleles.SNP,7484.0,7906.0,1.0,1.0,0.0
-Locations,15353.0,15353.0,1.0,1.0,0.0
-Locations.INDEL,7870.0,7448.0,1.0,1.0,0.0
+Locations,13589.0,13776.0,1.0,1.0,0.0
+Locations.INDEL,6106.0,5871.0,1.0,1.0,0.0
 Locations.INDEL.het,3696.0,3552.0,1.0,1.0,0.0
 Locations.INDEL.hetalt,32.0,72.0,1.0,1.0,0.0
 Locations.INDEL.homalt,2378.0,2247.0,1.0,1.0,0.0
-Locations.INDEL.nocall,1764.0,1577.0,1.0,1.0,0.0
 Locations.SNP,7483.0,7905.0,1.0,1.0,0.0
 Locations.SNP.het,4432.0,4649.0,1.0,1.0,0.0
 Locations.SNP.hetalt,1.0,1.0,1.0,1.0,0.0
@@ -22,8 +21,6 @@ Locations.detailed.i.hetalt,27.0,48.0,1.0,1.0,0.0
 Locations.detailed.i.homalt,1175.0,1103.0,1.0,1.0,0.0
 Locations.detailed.id,5.0,9.0,1.0,1.0,0.0
 Locations.detailed.id.hetalt,5.0,9.0,1.0,1.0,0.0
-Locations.detailed.nc,1764.0,1577.0,1.0,1.0,0.0
-Locations.detailed.nc.nocall,1764.0,1577.0,1.0,1.0,0.0
 Locations.detailed.rd,1924.0,1870.0,1.0,1.0,0.0
 Locations.detailed.rd.het,1924.0,1870.0,1.0,1.0,0.0
 Locations.detailed.ri,1771.0,1682.0,1.0,1.0,0.0
@@ -38,4 +35,4 @@ Nucleotides,25861.0,25852.0,1.0,1.0,0.0
 Nucleotides.DEL,9559.0,9365.0,1.0,1.0,0.0
 Nucleotides.INS,8817.0,8579.0,1.0,1.0,0.0
 Nucleotides.SNP,7485.0,7908.0,1.0,1.0,0.0
-hap.py--128-NOTFOUND/home/pkrusche/workspace-is/haplotypes_release_build_el6/bin/hap.py /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/NIST_indels/Complex_1ormoreindels_NIST2.19.vcf.gz /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/NIST_indels/Complex_1ormoreindels_RTG.vcf.gz -o /tmp/happy.G5mAngWdgW -P -l chr1 -X --verbose --force-interactive,0.0,0.0,0.0,0.0,0.0
+hap.py-v0.2.3-public-5-gd025691/home/pkrusche/workspace-is/haplotypes_release_build_el6/bin/hap.py /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/NIST_indels/Complex_1ormoreindels_NIST2.19.vcf.gz /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/NIST_indels/Complex_1ormoreindels_RTG.vcf.gz -o /tmp/happy.yzglMqljTN -P -l chr1 -X --verbose --force-interactive,0.0,0.0,0.0,0.0,0.0

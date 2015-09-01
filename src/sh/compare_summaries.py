@@ -19,10 +19,16 @@ def csvread(filename):
     data = {}
     for r in rows:
         label = r[0]
+        if "hap.py" in label:
+            # ignore version line
+            continue
         for i in xrange(1, len(r)):
             if header[i] not in data:
                 data[header[i]] = {}
-            data[header[i]][label] = float(r[i])
+            try:
+                data[header[i]][label] = float(r[i])
+            except:
+                data[header[i]][label] = r[i]
     f.close()
     return data
 
@@ -38,7 +44,7 @@ def main():
             print data1[metric][field]
             print data2[metric][field]
             if ( "%.3g" % data1[metric][field] ) != ( "%.3g" % data2[metric][field] ):
-                raise "Failed: Results should be the same"
+                raise Exception("Failed: Results should be the same")
 
 if __name__ == '__main__':
     main()

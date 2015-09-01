@@ -3,13 +3,12 @@ Alleles,4244.0,9559.0,0.958858501783591,0.8520710059171598,0.5049691390312794
 Alleles.DEL,315.0,344.0,0.7620578778135049,0.915057915057915,0.24709302325581395
 Alleles.INS,296.0,307.0,0.7275862068965517,0.9134199134199135,0.247557003257329
 Alleles.SNP,3633.0,8908.0,0.9944506104328524,0.8448844884488449,0.5237988325101033
-Locations,9700.0,9700.0,0.9589988081048868,0.852511125238398,0.49577319587628865
-Locations.INDEL,6067.0,811.0,0.7428087986463621,0.9126819126819127,0.19482120838471023
+Locations,4234.0,9528.0,0.9589988081048868,0.852511125238398,0.5047229219143576
+Locations.INDEL,601.0,639.0,0.7428087986463621,0.9126819126819127,0.24726134585289514
 Locations.INDEL.het,330.0,359.0,0.6504559270516718,0.895397489539749,0.3342618384401114
 Locations.INDEL.hetalt,11.0,12.0,0.9,1.0,0.25
 Locations.INDEL.homalt,259.0,268.0,0.8571428571428571,0.927038626609442,0.13059701492537312
 Locations.INDEL.homref,1.0,0.0,0.0,0.0,0.0
-Locations.INDEL.nocall,5466.0,172.0,0.0,0.0,0.0
 Locations.SNP,3633.0,8889.0,0.9944506104328524,0.8456819254365266,0.5232309596130048
 Locations.SNP.het,2009.0,6831.0,0.9950149551345963,0.7712519319938176,0.6211389254867515
 Locations.SNP.hetalt,0.0,19.0,0.0,0.0,0.7894736842105263
@@ -21,8 +20,6 @@ Locations.detailed.i.hetalt,8.0,8.0,0.8571428571428571,1.0,0.25
 Locations.detailed.i.homalt,131.0,142.0,0.8515625,0.9083333333333333,0.15492957746478872
 Locations.detailed.id,3.0,4.0,1.0,1.0,0.25
 Locations.detailed.id.hetalt,3.0,4.0,1.0,1.0,0.25
-Locations.detailed.nc,5466.0,172.0,0.0,0.0,0.0
-Locations.detailed.nc.nocall,5466.0,172.0,0.0,0.0,0.0
 Locations.detailed.r,1.0,0.0,0.0,0.0,0.0
 Locations.detailed.r.homref,1.0,0.0,0.0,0.0,0.0
 Locations.detailed.rd,184.0,214.0,0.6902173913043478,0.8881118881118881,0.3317757009345794
@@ -35,4 +32,4 @@ Nucleotides,7328.0,10670.0,0.6576229169535877,0.8493418712202063,0.4731021555763
 Nucleotides.DEL,2516.0,989.0,0.2536837913181999,0.8437086092715231,0.23660262891809908
 Nucleotides.INS,1179.0,773.0,0.48342059336823734,0.8864,0.19146183699870634
 Nucleotides.SNP,3633.0,8908.0,0.9944506104328524,0.8448844884488449,0.5237988325101033
-hap.py--128-NOTFOUND/home/pkrusche/workspace-is/haplotypes_release_build_el6/bin/hap.py -l chr1 /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/PG_performance.vcf.gz /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/performance.vcf.gz -o /tmp/happy.ozjvWtcWrS.performance -P -V -B -X -f /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/performance.confident.bed.gz --force-interactive --threads 4,0.0,0.0,0.0,0.0,0.0
+hap.py-v0.2.3-public-5-gd025691/home/pkrusche/workspace-is/haplotypes_release_build_el6/bin/hap.py -l chr1 /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/PG_performance.vcf.gz /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/performance.vcf.gz -o /tmp/happy.xFXqVKDkhO.performance -P -V -B -X -f /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/performance.confident.bed.gz --force-interactive --threads 4,0.0,0.0,0.0,0.0,0.0

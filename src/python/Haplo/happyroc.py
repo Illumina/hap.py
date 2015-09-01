@@ -57,7 +57,7 @@ def _run(cmd):
     return o
 
 
-def vcfroc(vcf, feature, filter_name, output_path, rreversed):
+def roc(vcf, feature, filter_name, output_path, rreversed):
     """ Calculate SNP and indel ROC. """
     tf = tempfile.NamedTemporaryFile(delete=False)
     tf.close()

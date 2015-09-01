@@ -4,12 +4,11 @@ Alleles.COMPLEX,0.0,1.0,0.0,1.0,0.0
 Alleles.DEL,881.0,858.0,1.0,1.0,0.0
 Alleles.INS,901.0,874.0,1.0,1.0,0.0
 Alleles.SNP,2214.0,2308.0,1.0,1.0,0.0
-Locations,4404.0,4404.0,1.0,1.0,0.0
-Locations.INDEL,2190.0,2097.0,1.0,1.0,0.0
+Locations,3987.0,4023.0,1.0,1.0,0.0
+Locations.INDEL,1773.0,1716.0,1.0,1.0,0.0
 Locations.INDEL.het,866.0,843.0,1.0,1.0,0.0
 Locations.INDEL.hetalt,9.0,17.0,1.0,1.0,0.0
 Locations.INDEL.homalt,898.0,856.0,1.0,1.0,0.0
-Locations.INDEL.nocall,417.0,381.0,1.0,1.0,0.0
 Locations.SNP,2214.0,2307.0,1.0,1.0,0.0
 Locations.SNP.het,1305.0,1342.0,1.0,1.0,0.0
 Locations.SNP.hetalt,0.0,1.0,0.0,1.0,0.0
@@ -22,8 +21,6 @@ Locations.detailed.i.hetalt,5.0,12.0,1.0,1.0,0.0
 Locations.detailed.i.homalt,470.0,453.0,1.0,1.0,0.0
 Locations.detailed.id,4.0,2.0,1.0,1.0,0.0
 Locations.detailed.id.hetalt,4.0,2.0,1.0,1.0,0.0
-Locations.detailed.nc,417.0,381.0,1.0,1.0,0.0
-Locations.detailed.nc.nocall,417.0,381.0,1.0,1.0,0.0
 Locations.detailed.rd,449.0,447.0,1.0,1.0,0.0
 Locations.detailed.rd.het,449.0,447.0,1.0,1.0,0.0
 Locations.detailed.ri,417.0,395.0,1.0,1.0,0.0
@@ -36,4 +33,4 @@ Nucleotides,6033.0,6056.0,1.0,1.0,0.0
 Nucleotides.DEL,1939.0,1908.0,1.0,1.0,0.0
 Nucleotides.INS,1880.0,1839.0,1.0,1.0,0.0
 Nucleotides.SNP,2214.0,2309.0,1.0,1.0,0.0
-hap.py--128-NOTFOUND/home/pkrusche/workspace-is/haplotypes_release_build_el6/bin/hap.py /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/NIST_indels/Complex_1ormoreindels_NIST2.19.vcf.gz /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/NIST_indels/Complex_1ormoreindels_RTG.vcf.gz -o /tmp/happy.2DieFeIYGS -P -l chr21 -X --verbose --force-interactive,0.0,0.0,0.0,0.0,0.0
+hap.py-v0.2.3-public-5-gd025691/home/pkrusche/workspace-is/haplotypes_release_build_el6/bin/hap.py /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/NIST_indels/Complex_1ormoreindels_NIST2.19.vcf.gz /home/pkrusche/workspace-is/haplotypes/src/sh/../../example/NIST_indels/Complex_1ormoreindels_RTG.vcf.gz -o /tmp/happy.OV0qACac4h -P -l chr21 -X --verbose --force-interactive,0.0,0.0,0.0,0.0,0.0

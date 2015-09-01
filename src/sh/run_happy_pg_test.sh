@@ -43,7 +43,7 @@ fi
 # This script checks if the summary precision / recall figures have changed significantly
 ${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.summary.csv ${DIR}/../../example/happy/expected.summary.csv
 if [[ $? != 0 ]]; then
-	echo "PASS summary differs! -- diff ${TMP_OUT}.pass.summary.csv ${DIR}/../../example/happy/expected.pass.summary.csv"
+	echo "All summary differs! -- diff ${TMP_OUT}.summary.csv ${DIR}/../../example/happy/expected.summary.csv"
 	exit 1
 fi
 
@@ -88,6 +88,9 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	-r ${DIR}/../../example/chr21.fa \
 			 	-o ${TMP_OUT}.unhappy \
 			 	-X --unhappy \
+			 	--roc VQSLOD \
+			 	-P \
+			 	--roc-filter TruthSensitivityTranche99.00to99.90,TruthSensitivityTranche99.90to100.00,TruthSensitivityTranche99.90to100.00+ \
 			 	--force-interactive
 
 if [[ $? != 0 ]]; then

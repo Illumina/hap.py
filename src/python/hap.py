@@ -857,11 +857,7 @@ def main():
         pandas.set_option('display.width', 1000)
 
         essential_numbers = essential_numbers[essential_numbers.index.isin(
-            ["Alleles.SNP",
-             "Alleles.INS",
-             "Alleles.DEL",
-             "Locations.SNP.het",
-             "Locations.SNP.homalt"])]
+            ["Locations.SNP", "Locations.INDEL"])]
 
         logging.info("\n" + str(essential_numbers))
 
