@@ -428,12 +428,27 @@ int main(int argc, char* argv[]) {
             }
             if(update_info)
             {
-                if (vars.info != "") { vars.info += ";"; }
                 static const char * nvs[] = { "UNK", "SNP", "INDEL", "NOCALL" };
-                vars.info += std::string("T_VT=") + nvs[hl_vt_truth + 1];
-                vars.info += std::string(";Q_VT=") + nvs[hl_vt_query + 1];
-                vars.info += std::string(";T_LT=") + CT_NAMES[hl_lt_truth];
-                vars.info += std::string(";Q_LT=") + CT_NAMES[hl_lt_query];
+                if(hl_vt_truth < 4)
+                {
+                    if (vars.info != "") { vars.info += ";"; }
+                    vars.info += std::string("T_VT=") + nvs[hl_vt_truth + 1];                    
+                }
+                if(hl_vt_truth < 4)
+                {
+                    if (vars.info != "") { vars.info += ";"; }
+                    vars.info += std::string("Q_VT=") + nvs[hl_vt_query + 1];
+                }
+                if(hl_lt_truth < 0x10)
+                {
+                    if (vars.info != "") { vars.info += ";"; }
+                    vars.info += std::string(";T_LT=") + CT_NAMES[hl_lt_truth];
+                }
+                if(hl_lt_query < 0x10)
+                {
+                    if (vars.info != "") { vars.info += ";"; }
+                    vars.info += std::string(";Q_LT=") + CT_NAMES[hl_lt_query];
+                }
             }
             if(output_vtc && update_info && !vtypes.empty())
             {

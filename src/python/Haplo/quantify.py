@@ -60,7 +60,22 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
                                       suffix=".log")
 
     logging.info("Running '%s'" % run_str)
-    subprocess.check_call(run_str, shell=True, stdout=tfo, stderr=tfe)
+
+    try:
+        subprocess.check_call(run_str, shell=True, stdout=tfo, stderr=tfe)
+    except:
+        tfo.close()
+        tfe.close()
+        with open(tfo.name) as f:
+            for l in f:
+                logging.error("[stdout] " + l.replace("\n", ""))
+        os.unlink(tfo.name)
+        with open(tfe.name) as f:
+            for l in f:
+                logging.error("[stderr] " + l.replace("\n", ""))
+        os.unlink(tfe.name)
+        raise
+
     tfo.close()
     tfe.close()
     with open(tfo.name) as f:
