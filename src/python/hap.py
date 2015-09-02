@@ -764,16 +764,26 @@ def main():
             metrics_output["metrics"].append(dataframeToMetricsTable("raw.counts", df))
 
         # calculate precision / recall
+        count_types = []
         if args.raw_counts:
             simplified_truth_counts = Haplo.quantify.simplify_counts(counts_truth, h1["samples"][0:1])
             simplified_query_counts = Haplo.quantify.simplify_counts(counts_query, h2["samples"][0:1])
+
+            count_types += simplified_truth_counts.keys()
+            count_types += simplified_query_counts.keys()
         else:
             simplified_truth_counts = None
             simplified_query_counts = None
 
         simplified_numbers = Haplo.quantify.simplify_counts(counts)
 
-        for vtype in simplified_numbers.keys():
+        count_types += simplified_numbers.keys()
+        count_types = sorted(list(set(count_types)))
+
+        for vtype in count_types:
+            if vtype not in simplified_numbers:
+                simplified_numbers[vtype] = {}
+
             simplified_numbers[vtype]["METRIC.Recall"] = 0
             simplified_numbers[vtype]["METRIC.Recall2"] = 0
             simplified_numbers[vtype]["METRIC.Precision"] = 0

@@ -216,7 +216,7 @@ def simplify_counts(counts, snames=None):
                 else:
                     keys1 = ["Records.homref"]
             else:
-                keys1 = []
+                keys1 = ["Records.unknown"]
 
             keys2 = [tq + ".TOTAL", tq + "." + vtype]
 
