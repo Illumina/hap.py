@@ -19,7 +19,6 @@
 #
 
 import os
-import sys
 import tempfile
 import subprocess
 import logging
@@ -58,11 +57,16 @@ def _run(cmd):
 
 
 def roc(vcf, feature, filter_name, output_path, rreversed):
-    """ Calculate SNP and indel ROC. """
+    """ Calculate SNP and indel ROC.
+
+    Return a dictionary of variant types and corresponding files.
+
+    """
     tf = tempfile.NamedTemporaryFile(delete=False)
     tf.close()
 
     files = {}
+    result = {}
     try:
         cmdline = "bcftools query -i 'INFO/type==\"FP\" && INFO/Q_VT != \"NOCALL\"' -f '%%INFO/Q_VT\t%%INFO/Q_LT\t%%INFO/%s\t%%INFO/type\t%%FILTER\\n' " \
                   "%s -o %s" % (feature, vcf.replace(" ", "\\ "), tf.name + ".fp")
@@ -76,9 +80,9 @@ def roc(vcf, feature, filter_name, output_path, rreversed):
 
         def getfile(vtype, ltype):
             fname = output_path.replace(" ", "\\ ") + \
-                    "." + vtype.lower() + "." + ltype.lower() + ".data"
+                "." + vtype.lower() + "." + ltype.lower() + ".data"
             if fname not in files:
-                files[fname] = { 
+                files[fname] = {
                     "vtype": vtype,
                     "ltype": ltype,
                     "file": open(fname, "w")
@@ -106,11 +110,14 @@ def roc(vcf, feature, filter_name, output_path, rreversed):
         cmdline = "roc -t label -v %s -f filter --verbose -R %i" % (feature, 1 if rreversed else 0)
         if filter_name:
             cmdline += " -n %s" % filter_name
+
         for n, ff in files.iteritems():
             ff["file"].close()
-            cmdlines = cmdline + " -o %s %s" % (output_path.replace(" ", "\\ ") + 
-                                                "." + ff["vtype"].lower() + "." + ff["ltype"].lower() + 
-                                                ".tsv", n)
+            fname = output_path.replace(" ", "\\ ") + \
+                "." + ff["vtype"].lower() + "." + ff["ltype"].lower() + \
+                ".tsv"
+            result["Locations." + ff["vtype"].upper() + ("." + ff["ltype"].lower() if ff["ltype"] else "")] = fname
+            cmdlines = cmdline + " -o %s %s" % (fname, n)
             _run(cmdlines)
 
     finally:
@@ -121,5 +128,6 @@ def roc(vcf, feature, filter_name, output_path, rreversed):
         _rm(tf.name + ".tp")
         _rm(tf.name + ".fn")
         # remove intermediate data -- might add an option to keep
-        # for n in files.iterkeys():
-        #     _rm(n)
+        for n in files.iterkeys():
+            _rm(n)
+    return result
