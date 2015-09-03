@@ -67,7 +67,7 @@ def roc(vcf, feature, filter_name, output_path, rreversed):
         cmdline = "bcftools query -i 'INFO/type==\"FP\" && INFO/Q_VT != \"NOCALL\"' -f '%%INFO/Q_VT\t%%INFO/Q_LT\t%%INFO/%s\t%%INFO/type\t%%FILTER\\n' " \
                   "%s -o %s" % (feature, vcf.replace(" ", "\\ "), tf.name + ".fp")
         _run(cmdline)
-        cmdline = "bcftools query -i 'INFO/type==\"TP\" && INFO/T_VT != \"NOCALL\"' -f '%%INFO/T_VT\t%%INFO/T_LT\t%%INFO/%s\t%%INFO/type\t%%FILTER\\n' " \
+        cmdline = "bcftools query -i 'INFO/type==\"TP\" && INFO/Q_VT != \"NOCALL\"' -f '%%INFO/Q_VT\t%%INFO/Q_LT\t%%INFO/%s\t%%INFO/type\t%%FILTER\\n' " \
                   "%s -o %s" % (feature, vcf.replace(" ", "\\ "), tf.name + ".tp")
         _run(cmdline)
         cmdline = "bcftools query -i 'INFO/type==\"FN\"' -f '%%INFO/T_VT\t%%INFO/T_LT\t%%INFO/%s\t%%INFO/type\t%%FILTER\\n' " \
