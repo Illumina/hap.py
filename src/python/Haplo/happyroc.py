@@ -116,7 +116,8 @@ def roc(vcf, feature, filter_name, output_path, rreversed):
             fname = output_path.replace(" ", "\\ ") + \
                 "." + ff["vtype"].lower() + "." + ff["ltype"].lower() + \
                 ".tsv"
-            result["Locations." + ff["vtype"].upper() + ("." + ff["ltype"].lower() if ff["ltype"] else "")] = fname
+            result["Locations." + ff["vtype"].upper() + ("." + ff["ltype"].lower()
+                                                         if ff["ltype"] not in ["", "all"] else "")] = fname
             cmdlines = cmdline + " -o %s %s" % (fname, n)
             _run(cmdlines)
 
