@@ -32,7 +32,6 @@ import subprocess
 import multiprocessing
 import gzip
 import tempfile
-import time
 import pandas
 import json
 
@@ -45,130 +44,11 @@ from Tools.bcftools import preprocessVCF, bedOverlapCheck
 from Tools.parallel import runParallel
 from Tools.metric import makeMetricsObject, dataframeToMetricsTable
 
+import Haplo.blocksplit
+import Haplo.xcmp
+import Haplo.vcfeval
 import Haplo.quantify
 import Haplo.happyroc
-
-
-def blocksplitWrapper(location_str, args):
-    starttime = time.time()
-    tf = tempfile.NamedTemporaryFile(delete=False,
-                                     dir=args.scratch_prefix,
-                                     prefix="result.%s" % location_str,
-                                     suffix=".chunks.bed")
-    tf.close()
-
-    to_run = "blocksplit %s %s -l %s -o %s --window %i --nblocks %i -f %i" % \
-             (args.vcf1.replace(" ", "\\ "),
-              args.vcf2.replace(" ", "\\ "),
-              location_str,
-              tf.name,
-              args.window*2,
-              args.pieces,
-              0 if args.usefiltered or args.usefiltered_truth else 1)
-
-    tfe = tempfile.NamedTemporaryFile(delete=False,
-                                      dir=args.scratch_prefix,
-                                      prefix="stderr",
-                                      suffix=".log")
-    tfo = tempfile.NamedTemporaryFile(delete=False,
-                                      dir=args.scratch_prefix,
-                                      prefix="stdout",
-                                      suffix=".log")
-    try:
-        logging.info("Running '%s'" % to_run)
-        subprocess.check_call(to_run, shell=True, stdout=tfo, stderr=tfe)
-    finally:
-        tfo.close()
-        tfe.close()
-        with open(tfo.name) as f:
-            for l in f:
-                logging.info(l.replace("\n", ""))
-        os.unlink(tfo.name)
-        with open(tfe.name) as f:
-            for l in f:
-                logging.warn(l.replace("\n", ""))
-        os.unlink(tfe.name)
-
-    elapsed = time.time() - starttime
-    logging.info("blocksplit for %s -- time taken %.2f" % (location_str, elapsed))
-    return tf.name
-
-
-def xcmpWrapper(location_str, args):
-    """ Haplotype block comparison wrapper function
-    """
-    starttime = time.time()
-    tf = tempfile.NamedTemporaryFile(delete=False,
-                                     dir=args.scratch_prefix,
-                                     prefix="result.%s" % location_str,
-                                     suffix=".vcf.gz")
-    tf.close()
-
-    if args.write_bed:
-        tf2 = tempfile.NamedTemporaryFile(delete=False,
-                                          dir=args.scratch_prefix,
-                                          prefix="result.blocks.%s" % location_str,
-                                          suffix=".bed")
-        tf2.close()
-        bname = "-e %s" % tf2.name
-    else:
-        bname = ""
-
-    to_run = "xcmp %s %s -l %s -o %s %s -r %s -f %i --apply-filters-truth %i -n %i -V %i --leftshift %i --expand-hapblocks %i " \
-             "--window %i --compare-raw %i --no-hapcmp %i --roc-vals %i" % \
-             (args.vcf1.replace(" ", "\\ "),
-              args.vcf2.replace(" ", "\\ "),
-              location_str,
-              tf.name,
-              bname,
-              args.ref,
-              0 if args.usefiltered else 1,
-              0 if args.usefiltered_truth else 1,
-              args.max_enum,
-              1 if args.int_preprocessing else 0,
-              1 if args.int_preprocessing_ls else 0,
-              args.hb_expand,
-              args.window,
-              1 if args.int_match_raw else 0,
-              1 if args.no_hc else 0,
-              1 if args.roc else 0
-              )
-
-    # regions / targets already have been taken care of in blocksplit / preprocessing
-
-    tfe = tempfile.NamedTemporaryFile(delete=False,
-                                      dir=args.scratch_prefix,
-                                      prefix="stderr",
-                                      suffix=".log")
-    tfo = tempfile.NamedTemporaryFile(delete=False,
-                                      dir=args.scratch_prefix,
-                                      prefix="stdout",
-                                      suffix=".log")
-
-    try:
-        logging.info("Running '%s'" % to_run)
-        subprocess.check_call(to_run, shell=True, stdout=tfo, stderr=tfe)
-    finally:
-        tfo.close()
-        tfe.close()
-        with open(tfo.name) as f:
-            for l in f:
-                logging.info(l.replace("\n", ""))
-        os.unlink(tfo.name)
-        with open(tfe.name) as f:
-            for l in f:
-                logging.warn(l.replace("\n", ""))
-        os.unlink(tfe.name)
-
-    elapsed = time.time() - starttime
-    logging.info("xcmp for chunk %s -- time taken %.2f" % (location_str, elapsed))
-
-    if bname == "":
-        bname = None
-    else:
-        bname = bname[3:]
-
-    return tf.name, bname
 
 
 def main():
@@ -316,6 +196,16 @@ def main():
     parser.add_argument("--threads", dest="threads",
                         default=multiprocessing.cpu_count(), type=int,
                         help="Number of threads to use.")
+
+    parser.add_argument("--engine", dest="engine",
+                        default="xcmp", choices=["xcmp", "vcfeval"],
+                        help="Comparison engine to use.")
+
+    parser.add_argument("--engine-vcfeval-path", dest="engine_vcfeval", required=False,
+                        help="This parameter should give the path to the \"rtg\" executable.")
+    parser.add_argument("--engine-vcfeval-template", dest="engine_vcfeval_template", required=False,
+                        help="Vcfeval needs the reference sequence formatted in its own file format "
+                             "(SDF -- run rtg format -o ref.SDF ref.fa).")
 
     if Tools.has_sge:
         parser.add_argument("--force-interactive", dest="force_interactive",
@@ -641,7 +531,7 @@ def main():
 
             # find balanced pieces
             args.pieces = (args.threads + len(args.locations) - 1) / len(args.locations)
-            res = runParallel(pool, blocksplitWrapper, args.locations, args)
+            res = runParallel(pool, Haplo.blocksplit.blocksplitWrapper, args.locations, args)
 
             if None in res:
                 raise Exception("One of the blocksplit processes failed.")
@@ -690,14 +580,6 @@ def main():
         else:
             counts_query = None
 
-        # do xcmp
-        res = runParallel(pool, xcmpWrapper, args.locations, args)
-        tempfiles += [x[0] for x in res if x is not None]   # VCFs
-        tempfiles += [x[1] for x in res if x is not None and x[1] is not None]   # beds (if any)
-
-        if None in res:
-            raise Exception("One of the xcmp jobs failed.")
-
         tf = tempfile.NamedTemporaryFile(delete=False,
                                          dir=args.scratch_prefix,
                                          prefix="hap.py.result.", suffix=".vcf.gz")
@@ -705,36 +587,50 @@ def main():
         tempfiles.append(tf.name)
         output_name = tf.name
 
-        if len(res) == 0:
-            raise Exception("Input files/regions do not contain variants (0 haplotype blocks were processed).")
+        if args.engine == "xcmp":
+            # do xcmp
+            logging.info("Using xcmp for comparison")
+            res = runParallel(pool, Haplo.xcmp.xcmpWrapper, args.locations, args)
+            tempfiles += [x[0] for x in res if x is not None]   # VCFs
+            tempfiles += [x[1] for x in res if x is not None and x[1] is not None]   # beds (if any)
 
-        # concatenate + index
-        bedfiles = [x[1] for x in res if x is not None and x[1] is not None]
-        if args.write_bed and bedfiles:
-            runme = " ".join(["cat"] +
-                             bedfiles +
-                             [">", args.reports_prefix.replace(" ", "\\ ") + ".blocks.bed"])
-            logging.info("Concatenating block files: %s..." % runme)
-            subprocess.check_call(runme,
-                                  shell=True)
+            if None in res:
+                raise Exception("One of the xcmp jobs failed.")
 
-        logging.info("Concatenating variants...")
-        runme_list = [x[0] for x in res if x is not None]
-        if len(runme_list) == 0:
-            raise Exception("No outputs to concatenate!")
+            if len(res) == 0:
+                raise Exception("Input files/regions do not contain variants (0 haplotype blocks were processed).")
 
-        fo = Tools.BGZipFile(output_name, True)
-        for i, x in enumerate(runme_list):
-            f = gzip.GzipFile(x)
-            for l in f:
-                if i == 0 or not l[0] == "#":
-                    fo.write(l)
-        fo.close()
+            # concatenate + index
+            bedfiles = [x[1] for x in res if x is not None and x[1] is not None]
+            if args.write_bed and bedfiles:
+                runme = " ".join(["cat"] +
+                                 bedfiles +
+                                 [">", args.reports_prefix.replace(" ", "\\ ") + ".blocks.bed"])
+                logging.info("Concatenating block files: %s..." % runme)
+                subprocess.check_call(runme,
+                                      shell=True)
 
-        logging.info("Indexing...")
-        to_run = "tabix -p vcf %s" % output_name.replace(" ", "\\ ")
-        logging.info("Running '%s'" % to_run)
-        subprocess.check_call(to_run, shell=True)
+            logging.info("Concatenating variants...")
+            runme_list = [x[0] for x in res if x is not None]
+            if len(runme_list) == 0:
+                raise Exception("No outputs to concatenate!")
+
+            fo = Tools.BGZipFile(output_name, True)
+            for i, x in enumerate(runme_list):
+                f = gzip.GzipFile(x)
+                for l in f:
+                    if i == 0 or not l[0] == "#":
+                        fo.write(l)
+            fo.close()
+
+            logging.info("Indexing...")
+            to_run = "tabix -p vcf %s" % output_name.replace(" ", "\\ ")
+            logging.info("Running '%s'" % to_run)
+            subprocess.check_call(to_run, shell=True)
+        elif args.engine == "vcfeval":
+            tempfiles += Haplo.vcfeval.runVCFEval(args.vcf1, args.vcf2, output_name, args)
+        else:
+            raise Exception("Unknown comparison engine: %s" % args.engine)
 
         if args.write_counts:
             json_name = args.reports_prefix + ".counts.json"
