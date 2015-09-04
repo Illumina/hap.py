@@ -878,13 +878,16 @@ def main():
             print "Benchmarking Summary:"
             print str(essential_numbers)
 
-        with open(args.reports_prefix + ".metrics.json", "w") as fp:
-            json.dump(metrics_output, fp)
-
         if args.roc:
             vcf = args.reports_prefix + ".vcf.gz"
-            Haplo.happyroc.roc(vcf, args.roc, args.roc_filter, args.reports_prefix + ".roc", args.roc_reversed)
+            res = Haplo.happyroc.roc(vcf, args.roc, args.roc_filter, args.reports_prefix + ".roc", args.roc_reversed)
 
+            for t in res.iterkeys():
+                rocdf = pandas.read_table(res[t])
+                metrics_output["metrics"].append(dataframeToMetricsTable("roc." + t, rocdf))
+
+        with open(args.reports_prefix + ".metrics.json", "w") as fp:
+            json.dump(metrics_output, fp)
     finally:
         if args.delete_scratch:
             for x in tempfiles:
