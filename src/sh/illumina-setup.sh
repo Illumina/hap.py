@@ -6,7 +6,7 @@
 
 # setup cmake environment vars for development on ukch-dev
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
+. /etc/profile.d/modules.sh
 module purge
 unset MODULEPATH
 module use /illumina/sync/software/thirdparty/HPCBIOS/modules/all
