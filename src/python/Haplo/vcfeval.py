@@ -55,6 +55,9 @@ def runVCFEval(vcf1, vcf2, target, args):
             args.engine_vcfeval_template.replace(" ", "\\ "),
             vtf.name,
             args.threads)
+        if args.usefiltered:
+            runme += " --all-records"
+
         logging.info(runme)
         po = subprocess.Popen(runme,
                               shell=True,

@@ -299,7 +299,7 @@ def main():
         args.preprocessing_truth = True
         args.preprocessing = True
 
-    if args.targets_bedfile:
+    if args.targets_bedfile or args.engine != "xcmp":
         args.preprocessing_truth = True
         args.preprocessing = True
 
