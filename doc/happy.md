@@ -264,7 +264,7 @@ Write advanced counts and metrics. This writes additional files / numbers:
 
 ### ROC Curves
 
-Hap.py can create data for ROC-style curves. Normally, it is preferable to calculate 
+Hap.py can create data for ROC-style curves. Normally, it is preferable to calculate
 such curves based on the input variant representations, and not to perform any
 variant splitting or preprocessing.
 
@@ -283,11 +283,11 @@ a ROC curve based on the query GQ(X) field:
 
 The `-P` switch is necessary to consider unfiltered variants, `-V` will write an
 annotated output VCF which is used to extract the features and labels. The `--roc` switch
-specifies the feature to filter on. Hap.py translates the truth and query GQ(X) fields into 
+specifies the feature to filter on. Hap.py translates the truth and query GQ(X) fields into
 the INFO fields T_GQ and Q_GQ, it tries to use GQX first, if this is not present, it
 will use GQ. When run without internal preprocessing any other input INFO field can
 be used (e.g. VQSLOD for GATK). The `--roc-filter` switch specifies the VCF filter which
-implements a threshold on the quality score. When calculating filtered TP/FP counts, this 
+implements a threshold on the quality score. When calculating filtered TP/FP counts, this
 filter will be removed, and replaced with a threshold filter on the feature specified
 by `--roc`.
 
@@ -301,7 +301,7 @@ running hap.py again using the `roc.py` script.
 ```
 bin/roc.py hap.py-output.vcf.gz output-roc.tsv \
   --roc Q_GQ \
-  --roc-filter LowGQX 
+  --roc-filter LowGQX
 ```
 
 The output file will be tab-delimited and gives tp / fp / fn counts, as well as precision
@@ -313,7 +313,7 @@ Q_GQ      tp      fp      fn      precision       recall
 ...
 ```
 
-Hap.py will output separate ROC files for different variant types (SNP, INDEL, each for 
+Hap.py will output separate ROC files for different variant types (SNP, INDEL, each for
 het/hom/hetalt variants).
 
 ### Input Preprocessing
@@ -413,3 +413,28 @@ alternate sequences).
 Reference-pad and expand the sequences generate haplotype blocks by this many
 basepairs left and right.  This is useful for approximate block matching.
 
+### Using RTG-Tools / VCFEval as the comparison engine
+
+RTG-Tools (see [https://github.com/RealTimeGenomics/rtg-tools](https://github.com/RealTimeGenomics/rtg-tools)
+provides a feature called "vcfeval" which performs complex variant comparisons. Hap.py
+can use this tool as a comparison engine instead of its built-in `xcmp` tool.
+
+Before using RTG tools, it is necessary to translate the reference Fasta file into
+their SDF format (this only needs to be done once for each reference sequence):
+
+```
+rtg format -o hg19.sdf hg19.fa
+```
+
+This creates a folder `hg19.sdf`, which must be passed to hap.py using the `--engine-vcfeval-template hg19.sdf`
+arguments.
+
+The hap.py command line arguments for using vcfeval are as follows (assuming that RTG tools is installed
+in `~/rtg-install`, and that the folder `hg19.sdf` created by the previous command line is in the current
+directory):
+
+```
+hap.py truth.vcf.gz query.vcf.gz -f conf.bed.gz -o ./test -V -X --engine=vcfeval --engine-vcfeval-path ~/rtg-install/rtg --engine-vcfeval-template hg19
+```
+
+Most other command line arguments and outputs will work as before.
