@@ -17,16 +17,14 @@
 # Peter Krusche <pkrusche@illumina.com>
 #
 
-import sys
 import os
 import logging
 import subprocess
-import gzip
 import tempfile
 import time
 import shutil
-
 import Tools.bcftools
+
 
 def runVCFEval(vcf1, vcf2, target, args):
     """ Run VCFEval and convert it's output to something quantify
@@ -39,7 +37,17 @@ def runVCFEval(vcf1, vcf2, target, args):
                                       suffix=".dir")
     vtf.close()
 
+    del_vcf1 = False
+    del_vcf2 = False
+
     try:
+        if not os.path.exists(vcf1 + ".tbi"):
+            vcf1 = Tools.bcftools.makeIndex(vcf1)
+            del_vcf1 = True
+        if not os.path.exists(vcf2 + ".tbi"):
+            vcf2 = Tools.bcftools.makeIndex(vcf2)
+            del_vcf2 = True
+
         runme = "%s vcfeval -b %s -c %s -t %s -o %s -T %i --baseline-tp" % (
             args.engine_vcfeval,
             vcf1.replace(" ", "\\ "),
@@ -49,6 +57,7 @@ def runVCFEval(vcf1, vcf2, target, args):
             args.threads)
         logging.info(runme)
         po = subprocess.Popen(runme,
+                              shell=True,
                               stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE)
 
@@ -61,11 +70,12 @@ def runVCFEval(vcf1, vcf2, target, args):
         if rc != 0:
             raise Exception("Error running rtg tools / vcfeval. Return code was %i, output: %s / %s \n" % (rc, o, e))
         else:
-            logging.info("vcfeval output: %s / %s" % (o, e))
+            logging.info("vcfeval output: \n%s\n / \n%s\n" % (o, e))
 
-        runme = "postvcfeval -o %s %s" % (target, vtf.name)
+        runme = "postvcfeval %s %s -r %s" % (vtf.name, target, args.ref)
         logging.info(runme)
         po = subprocess.Popen(runme,
+                              shell=True,
                               stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE)
 
@@ -79,9 +89,28 @@ def runVCFEval(vcf1, vcf2, target, args):
             raise Exception("Error running postvcfeval. Return code was %i, output: %s / %s \n" % (rc, o, e))
         else:
             logging.info("postvcfeval output: %s / %s" % (o, e))
+
+        Tools.bcftools.runBcftools("index", "-t", target)
     finally:
+        if del_vcf1:
+            try:
+                os.unlink(vcf1)
+                os.unlink(vcf1 + ".tbi")
+            except:
+                pass
+        if del_vcf2:
+            try:
+                os.unlink(vcf2)
+                os.unlink(vcf2 + ".tbi")
+            except:
+                pass
         # remove temp path
-        shutil.rmtree(vtf.name)
+        try:
+            shutil.rmtree(vtf.name)
+        except:
+            pass
 
     elapsed = time.time() - starttime
     logging.info("vcfeval for %s vs. %s -- time taken %.2f" % (vcf1, vcf2, elapsed))
+
+    return [target, target + ".tbi"]

@@ -85,7 +85,9 @@ def makeIndex(inputfile, output_name=None):
               inputfile if no file was written, and output_name if not None
     """
     if not output_name:
-        output_name = tempfile.NamedTemporaryFile().name
+        of = tempfile.NamedTemporaryFile(suffix=".vcf.gz", delete=False)
+        of.close()
+        output_name = of.name
 
     runBcftools("view",
                 "-o", output_name,

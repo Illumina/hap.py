@@ -84,12 +84,13 @@ int main(int argc, char* argv[]) {
             ("help,h", "produce help message")
             ("version", "Show version")
             ("input-dir", po::value<std::string>(), "Path to a vcfeval output directory.")
-            ("output-vcf,v", po::value<std::string>(), "Annotated VCF file (with bed annotations).")
+            ("output-vcf", po::value<std::string>(), "Annotated VCF output file.")
             ("reference,r", po::value<std::string>(), "The reference fasta file.")
         ;
 
         po::positional_options_description popts;
         popts.add("input-dir", 1);
+        popts.add("output-vcf", 1);
 
         po::options_description cmdline_options;
         cmdline_options
@@ -104,7 +105,7 @@ int main(int argc, char* argv[]) {
 
         if (vm.count("version"))
         {
-            std::cout << "quantify version " << HAPLOTYPES_VERSION << "\n";
+            std::cout << "postvcfeval version " << HAPLOTYPES_VERSION << "\n";
             return 0;
         }
 
@@ -116,16 +117,11 @@ int main(int argc, char* argv[]) {
 
         if (vm.count("input-dir"))
         {
-            input_dir = vm["input-file"].as<std::string>();
+            input_dir = vm["input-dir"].as<std::string>();
         }
         else
         {
             error("Please specify an input directory");
-        }
-
-        if (vm.count("output-file"))
-        {
-            output_vcf = vm["output-file"].as< std::string >();
         }
 
         if (vm.count("output-vcf"))
@@ -170,6 +166,7 @@ int main(int argc, char* argv[]) {
         writer->addSample("QUERY");
         writer->addHeader(r);
         writer->addHeader("##INFO=<ID=type,Number=1,Type=String,Description=\"Decision for call (TP/FP/FN/N)\">");
+        writer->addHeader("##INFO=<ID=kind,Number=1,Type=String,Description=\"Sub-type for decision (match/mismatch type)\">");
 
         int64_t rcount = 0;
 
@@ -177,11 +174,48 @@ int main(int argc, char* argv[]) {
         {
             Variants & v = r.current();
 
-            Variants out_vars;
-            out_vars = v;
-            out_vars.calls.clear();
-            out_vars.calls.resize(2);
+            if(!v.calls[in_ix_fp].isNocall())
+            {
+                Variants out_vars;
+                out_vars = v;
+                out_vars.calls.clear();
+                out_vars.calls.resize(2);
 
+                out_vars.calls[1] = v.calls[in_ix_fp];
+                if(!out_vars.info.empty()) out_vars.info += ";";
+                out_vars.info += "type=FP";
+                out_vars.info += ";kind=missing";
+                writer->put(out_vars);
+            }
+
+            if(!v.calls[in_ix_fn].isNocall())
+            {
+                Variants out_vars;
+                out_vars = v;
+                out_vars.calls.clear();
+                out_vars.calls.resize(2);
+
+                out_vars.calls[0] = v.calls[in_ix_fn];
+                if(!out_vars.info.empty()) out_vars.info += ";";
+                out_vars.info += "type=FN";
+                out_vars.info += ";kind=missing";
+                writer->put(out_vars);
+            }
+
+            if(!v.calls[in_ix_tp].isNocall() || !v.calls[in_ix_tpb].isNocall())
+            {
+                Variants out_vars;
+                out_vars = v;
+                out_vars.calls.clear();
+                out_vars.calls.resize(2);
+
+                out_vars.calls[0] = v.calls[in_ix_tp];
+                out_vars.calls[1] = v.calls[in_ix_tpb];
+                if(!out_vars.info.empty()) out_vars.info += ";";
+                out_vars.info += "type=TP";
+                out_vars.info += ";kind=vcfeval";
+                writer->put(out_vars);
+            }
             ++rcount;
         }
     }

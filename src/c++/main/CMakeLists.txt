@@ -41,3 +41,7 @@ target_link_libraries(vcfhdr2json ${HAPLOTYPES_ALL_LIBS})
 # ROC takes a table with labels and a value + calculates a ROC curve
 add_executable(roc roc.cpp)
 target_link_libraries(roc ${HAPLOTYPES_ALL_LIBS})
+
+# postvcfeval merges TP/FP/FN files into a single file that is understood by quantify
+add_executable(postvcfeval postvcfeval.cpp)
+target_link_libraries(postvcfeval ${HAPLOTYPES_ALL_LIBS})
