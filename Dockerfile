@@ -36,6 +36,8 @@ RUN apt-get install libncurses5-dev -y
 RUN apt-get install git -y
 RUN apt-get install samtools -y
 RUN apt-get install bzip2 -y
+RUN apt-get install wget -y
+RUN apt-get install libbz2-dev -y
 RUN apt-get clean -y
 
 # copy git repository into the image
@@ -49,9 +51,6 @@ RUN mkdir -p /opt/hap.py-data
 WORKDIR /opt/hap.py-data
 
 # This downloads from UCSC
-RUN apt-get install wget -y
-RUN apt-get install libbz2-dev -y
-RUN apt-get clean -y
 RUN /opt/hap.py-source/src/sh/make_hg19.sh
 
 # this downloads our copy from box.com (once available)
@@ -61,7 +60,7 @@ RUN samtools faidx /opt/hap.py-data/hg19.fa
 
 # run hap.py installer in the image
 WORKDIR /opt/hap.py-source
-RUN HG19=/opt/hap.py-data/hg19.fa python install.py --boost-root=/opt/boost_1_55_0_install /opt/hap.py
+RUN HG19=/opt/hap.py-data/hg19.fa python install.py /opt/hap.py
 WORKDIR /
 RUN rm -rf /opt/hap.py-source
 
