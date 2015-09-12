@@ -30,11 +30,11 @@ def extractVarscan2SNVFeatures(vcfname, tag, avg_depth=None):
 
         hdrs = extractHeadersJSON(vcfname)
 
-        tsn = ""
-        nsn = ""
-
-        n_sample = "NORMAL"
-        t_sample = "TUMOR"
+        # TODO could figure this out automatically
+        nsn = "NORMAL"
+        tsn = "TUMOR"
+        n_sample = "S.1."
+        t_sample = "S.2."
 
         logging.info("Normal sample name : %s (prefix %s) / tumour sample name : %s (prefix %s)" % (nsn, n_sample,
                                                                                                     tsn, t_sample))
@@ -205,11 +205,10 @@ def extractVarscan2IndelFeatures(vcfname, tag, avg_depth=None):
 
         hdrs = extractHeadersJSON(vcfname)
 
-        tsn = ""
-        nsn = ""
-
-        n_sample = "NORMAL"
-        t_sample = "TUMOR"
+        nsn = "NORMAL"
+        tsn = "TUMOR"
+        n_sample = "S.1."
+        t_sample = "S.2."
 
         logging.info("Normal sample name : %s (prefix %s) / tumour sample name : %s (prefix %s)" % (nsn, n_sample,
                                                                                                     tsn, t_sample))
