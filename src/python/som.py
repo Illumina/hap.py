@@ -76,8 +76,18 @@ def main():
                         help="Ambiguous region bed file(s) to distinguish from FP (e.g. variant only observed "
                              "in some replicates)")
 
-    parser.add_argument("--ambiguous-fp", dest="ambi_fp", action='store_true', default=False,
+    parser.add_argument("--ambiguous-fp", dest="ambi_fp", action='store_true', default=True,
                         help="Use FP calls from ambiguous region files also.")
+
+    parser.add_argument("--no-ambiguous-fp", dest="ambi_fp", action='store_false',
+                        help="Do not use FP calls from ambiguous region files also.")
+
+    parser.add_argument("--count-unk", dest="count_unk", action='store_true', default=False,
+                        help="Assume the truth set covers the whole genome and only count FPs in regions "
+                             "specified by the truth VCF or ambiguous/false-positive regions.")
+
+    parser.add_argument("--no-count-unk", dest="count_unk", action='store_false',
+                        help="Do not use FP calls from ambiguous region files also.")
 
     parser.add_argument("-e", "--explain_ambiguous", dest="explain_ambiguous", required=False,
                         default=False, action="store_true",
@@ -273,8 +283,6 @@ def main():
         if args.FP:
             fpclasses.addFromBed(args.FP, "FP")
 
-        has_fp = (fpclasses.count("FP") > 0) or (fpclasses.count("fp") > 0 and args.ambi_fp)
-
         # split VCF into FP, UNK and AMBI
         toProcess = gzip.open(rununiquepath, "rb")
         for entry in toProcess:
@@ -321,7 +329,7 @@ def main():
                 fp.write(entry)
             elif is_ambi:
                 ambi.write(entry)
-            elif not has_fp:
+            elif not args.count_unk:
                 # when we don't have FP regions, unk stuff becomes FP
                 fp.write(entry)
             else:

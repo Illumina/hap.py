@@ -36,7 +36,7 @@ TMP_OUT=`mktemp -t sompy.XXXXXXXXXX`
 ${PYTHON} ${HCDIR}/som.py \
 			 	  ${DIR}/../../example/sompy/PG_admix_truth_snvs.vcf.gz \
 			 	  ${DIR}/../../example/sompy/strelka_admix_snvs.vcf.gz \
-			 	  -o ${TMP_OUT} -P -f ${DIR}/../../example/sompy/FP_admix.bed.gz
+			 	  -o ${TMP_OUT} -P -f ${DIR}/../../example/sompy/FP_admix.bed.gz --count-unk
 
 if [[ $? != 0 ]]; then
 	echo "som.py failed!"
