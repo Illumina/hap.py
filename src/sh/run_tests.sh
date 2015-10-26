@@ -100,6 +100,19 @@ else
 fi
 
 ##############################################################
+# Test Hap.py variant decomposition into primitives
+##############################################################
+
+/bin/bash ${DIR}/run_decomp_test.sh
+
+if [[ $? -ne 0 ]]; then
+	echo "Variant decomposition test FAILED!"
+	exit 1
+else
+	echo "Variant decomposition test SUCCEEDED!"
+fi
+
+##############################################################
 # Test Hap.py on tricky test cases
 ##############################################################
 

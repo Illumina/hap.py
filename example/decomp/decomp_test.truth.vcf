@@ -1,0 +1,53 @@
+##fileformat=VCFv4.1
+##FILTER=<ID=PASS,Description="All filters passed">
+##fileDate=2015-08-04
+##source=IlluminaPlatinumGenomes, version: hg19_8.0.1
+##reference=hg19
+##contig=<ID=chr1,length=249250621>
+##contig=<ID=chr2,length=243199373>
+##contig=<ID=chr3,length=198022430>
+##contig=<ID=chr4,length=191154276>
+##contig=<ID=chr5,length=180915260>
+##contig=<ID=chr6,length=171115067>
+##contig=<ID=chr7,length=159138663>
+##contig=<ID=chr8,length=146364022>
+##contig=<ID=chr9,length=141213431>
+##contig=<ID=chr10,length=135534747>
+##contig=<ID=chr11,length=135006516>
+##contig=<ID=chr12,length=133851895>
+##contig=<ID=chr13,length=115169878>
+##contig=<ID=chr14,length=107349540>
+##contig=<ID=chr15,length=102531392>
+##contig=<ID=chr16,length=90354753>
+##contig=<ID=chr17,length=81195210>
+##contig=<ID=chr18,length=78077248>
+##contig=<ID=chr19,length=59128983>
+##contig=<ID=chr20,length=63025520>
+##contig=<ID=chr21,length=48129895>
+##contig=<ID=chr22,length=51304566>
+##contig=<ID=chrX,length=155270560>
+##Method=<ID=cgi,Description="Method=CompleteGenomics">
+##Method=<ID=bwa_freebayes,Description="Aligner=bwa-mem-0.7.5;VariantCaller=freebayes-0.9.1">
+##Method=<ID=bwa_platypus,Description="Aligner=bwa-mem-0.7.5;VariantCaller=platypus-0.7.2">
+##Method=<ID=bwa_gatk3,Description="Aligner=bwa-mem-0.7.5;VariantCaller=gatk-3.2.2">
+##Method=<ID=cortex,Description="Method=cortex-1.0.5.11">
+##Method=<ID=isaac2,Description="Aligner=isaac_aligner-02.14.10.23;VariantCaller=isaac_variant_caller-2.1.4.1">
+##FILTER=<ID=Silver,Description="Medium-confidence call. It can be included in order to achieve even higher completeness of the truth set.">
+##FILTER=<ID=OverlapConflict,Description="Discordant high-confidence calls from different pipelines.">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##INFO=<ID=metal,Number=1,Type=String,Description="Confidence tranche. Platinum is better than silver.">
+##INFO=<ID=cgi,Number=2,Type=String,Description="Variant calling method.">
+##INFO=<ID=bwa_freebayes,Number=2,Type=String,Description="Variant calling method.">
+##INFO=<ID=bwa_platypus,Number=2,Type=String,Description="Variant calling method.">
+##INFO=<ID=bwa_gatk3,Number=2,Type=String,Description="Variant calling method.">
+##INFO=<ID=cortex,Number=2,Type=String,Description="Variant calling method.">
+##INFO=<ID=isaac2,Number=2,Type=String,Description="Variant calling method.">
+##INFO=<ID=dist2closest,Number=1,Type=Integer,Description="Distance to closest variant.">
+##bcftools_viewVersion=1.2+htslib-1.2.1
+##bcftools_viewCommand=view -o decomp_test.truth.vcf.gz -O z /illumina/development/PlatinumGenomes/hg19/8.0.1/NA12878/NA12878.vcf.gz chr1:237600000-247600000
+##bcftools_viewVersion=1.2-108-gd4d42ca+htslib-1.2.1-176-gf790455
+##bcftools_viewCommand=view example/decomp/decomp_test.truth.vcf.gz chr1:237636190-237636320
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA12878
+chr1	237636277	.	AT	A	0	PASS	metal=platinum;cgi=.;bwa_freebayes=HD:0,LOOHD:0;bwa_platypus=.;bwa_gatk3=HD:0,LOOHD:0;cortex=.;isaac2=HD:0,LOOHD:0;dist2closest=13	GT	1|1
+chr1	237636291	.	G	C	0	PASS	metal=platinum;cgi=HD:2,LOOHD:2;bwa_freebayes=HD:0,LOOHD:0;bwa_platypus=HD:0,LOOHD:0;bwa_gatk3=HD:0,LOOHD:0;cortex=.;isaac2=HD:2,LOOHD:2;dist2closest=13	GT	1|1
+chr1	237636309	.	A	T	0	PASS	metal=platinum;cgi=HD:0,LOOHD:0;bwa_freebayes=HD:0,LOOHD:0;bwa_platypus=.;bwa_gatk3=HD:0,LOOHD:0;cortex=.;isaac2=HD:0,LOOHD:0;dist2closest=18	GT	1|1
