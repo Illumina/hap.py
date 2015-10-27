@@ -95,8 +95,12 @@ def main():
                         help="Write a bed file with the haplotype blocks that were used.")
 
     parser.add_argument("-X", "--write-counts", dest="write_counts",
-                        default=False, action="store_true",
+                        default=True, action="store_true",
                         help="Write advanced counts and metrics.")
+
+    parser.add_argument("--no-write-counts", dest="write_counts",
+                        default=True, action="store_false",
+                        help="Do not write advanced counts and metrics.")
 
     parser.add_argument("--raw-counts", dest="raw_counts",
                         default=False, action="store_true",
