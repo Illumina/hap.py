@@ -338,6 +338,21 @@ bool VariantReader::getReturnHomref() const
 }
 
 /**
+ * @brief Validate reference alleles
+ *
+ */
+void VariantReader::setValidateRef(const char * ref_fasta, bool validate)
+{
+    _impl->ref = FastaFile(ref_fasta);
+    _impl->validateRef = validate;
+}
+
+bool VariantReader::getValidateRef() const
+{
+    return _impl->validateRef;
+}
+
+/**
  * @brief Add a sample to read from
  * @param filename  file name
  * @param sname  name of sample to read from
@@ -605,12 +620,27 @@ bool VariantReader::advance(bool get_calls, bool get_info)
 
         if(endfield > 0)
         {
+            // if there is an end field, don't validate the ref allele
             refend = endfield-1;
         }
         else
         {
             refend = refstart + strlen(line->d.allele[0]) - 1;
+            if(_impl->validateRef)
+            {
+                std::string actual_ref_seq = _impl->ref.query(vars.chr.c_str(), refstart, refend);
+                if(actual_ref_seq != line->d.allele[0]) {
+                    std::cerr << "[W] REF allele mismatch with reference sequence at " << vars.chr << ":" << refstart << "-" << refend
+                              << " VCF: " << line->d.allele[0] << " REF: " << actual_ref_seq << "\n";
+                    if (vars.info != "")
+                    {
+                        vars.info += ";";
+                    }
+                    vars.info += "IMPORT_FAIL_REFALLELE";
+                }
+            }
         }
+
 
         // use the position and length of the rightmost variant as a start
         if(vars.pos < refstart)
@@ -793,8 +823,8 @@ bool VariantReader::advance(bool get_calls, bool get_info)
                 {
                     vars.info += ";";
                 }
-                vars.info += "IMPORT_FAIL_" + std::to_string(sid);
-                ngt = 0;
+                vars.info += "IMPORT_FAIL_GT_" + std::to_string(sid + 1);
+                ngt = MAX_GT;
             }
 
             vars.calls[sid].ngt = ngt;

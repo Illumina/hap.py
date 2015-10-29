@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -60,28 +60,35 @@ public:
 
     /**
      * @brief Apply filters in the input VCF(s)
-     * 
-     * Filters can be enabled / disabled globally (sample == -1) 
+     *
+     * Filters can be enabled / disabled globally (sample == -1)
      * or for each sample individually.
-     * 
+     *
      */
     void setApplyFilters(bool filters=false, int sample = -1);
     bool getApplyFilters(int sample = -1) const;
 
     /**
-     * @brief Return homref/no-calls 
-     * 
+     * @brief Return homref/no-calls
+     *
      */
     void setReturnHomref(bool homref=true);
     bool getReturnHomref() const;
 
     /**
+     * @brief Validate reference alleles
+     *
+     */
+    void setValidateRef(const char * ref_fasta, bool validate=true);
+    bool getValidateRef() const;
+
+    /**
      * @brief Interface to htslib regions functionality
      * @param regions regions string, see synced_bcf_reader.h
      * @param isFile True if regions is a file
-     * 
+     *
      * Must be called before addSample!
-     * 
+     *
      */
     void setRegions(const char * regions, bool isFile);
 
@@ -89,9 +96,9 @@ public:
      * @brief Interface to htslib targets functionality
      * @param targets targets string, see synced_bcf_reader.h
      * @param isFile True if targets is a file
-     * 
+     *
      * Must be called before addSample!
-     * 
+     *
      */
     void setTargets(const char * targets, bool isFile);
 
@@ -108,7 +115,7 @@ public:
 
     /**
      * @brief Rewind / set region to read
-     * 
+     *
      * @param chr chromosome/contig name
      * @param startpos start position on chr (or -1 for entire chr)
      */
@@ -116,7 +123,7 @@ public:
 
     /**
      * @brief Return next variant and advance
-     * 
+     *
      * @param v Variant record to populate
      */
     Variants & current();
@@ -132,7 +139,7 @@ public:
     /**
      * @brief Insert a Variants record into the stream
      * @details The next record returned will be this one
-     * 
+     *
      * @param s Variants to put on top of stack
      * @param back enqueue at back or front of buffer
      */

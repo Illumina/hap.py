@@ -84,6 +84,7 @@ struct VariantReaderImpl
         targetsFile = false;
         applyFilters = false;
         returnHomref = true;
+        validateRef = false;
     }
 
     ~VariantReaderImpl()
@@ -111,6 +112,10 @@ struct VariantReaderImpl
 
     // return homref / no-call variants
     bool returnHomref;
+
+    // validate ref alleles
+    FastaFile ref;
+    bool validateRef;
 
     // we buffer variant output
     std::list<Variants> buffered_variants;

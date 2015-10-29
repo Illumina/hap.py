@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -44,8 +44,9 @@ struct FastaFileImpl;
 class FastaFile
 {
 public:
+    FastaFile();
 	FastaFile(const char * filename);
-	
+
 	~FastaFile();
 	FastaFile(FastaFile const &);
 	FastaFile const & operator=(FastaFile const &);

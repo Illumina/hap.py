@@ -28,7 +28,7 @@
 
 /**
  *  \brief Fasta wrapper implementation
- *  
+ *
  * \file Fasta.cpp
  * \author Peter Krusche
  * \email pkrusche@illumina.com
@@ -60,7 +60,7 @@ extern "C" {
 
 struct FastaFileImpl
 {
-    FastaFileImpl(const char * _filename) : 
+    FastaFileImpl(const char * _filename) :
         filename(_filename)
     {
         boost::filesystem::path iname(_filename);
@@ -70,7 +70,7 @@ struct FastaFileImpl
             if(fai_build(_filename) < 0)
             {
                 error("Cannot index %s", _filename);
-            }            
+            }
         }
         idx = fai_load(_filename);
         if(!idx)
@@ -105,6 +105,10 @@ struct FastaFileImpl
     std::map<std::string, int64_t> contig_lengths;
 };
 
+FastaFile::FastaFile() {
+    _impl = NULL;
+}
+
 FastaFile::FastaFile(const char * filename)
 {
     _impl = new FastaFileImpl(filename);
@@ -112,11 +116,14 @@ FastaFile::FastaFile(const char * filename)
 
 FastaFile::~FastaFile()
 {
-    delete _impl;
+    if(_impl) {
+        delete _impl;
+    }
 }
 
 std::string FastaFile::getFilename() const
 {
+    if(!_impl) return "";
     return _impl->filename;
 }
 
@@ -131,7 +138,7 @@ FastaFile const & FastaFile::operator=(FastaFile const & rhs)
     {
         return *this;
     }
-    delete _impl;
+    if(_impl) delete _impl;
     _impl = new FastaFileImpl(rhs._impl->filename.c_str());
     return *this;
 }
@@ -149,6 +156,9 @@ std::string FastaFile::query(std::string const & location)
 
 std::string FastaFile::query(const char * chr, int64_t start, int64_t end)
 {
+    if(!_impl) {
+        error("FastaFile object not initialized before use");
+    }
     int64_t requested_length = end-start+1;
 
     auto clen = _impl->contig_lengths.find(chr);
