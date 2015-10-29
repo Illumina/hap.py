@@ -76,10 +76,10 @@ def main():
                         help="Ambiguous region bed file(s) to distinguish from FP (e.g. variant only observed "
                              "in some replicates)")
 
-    parser.add_argument("--ambiguous-fp", dest="ambi_fp", action='store_true', default=True,
+    parser.add_argument("--ambi-fp", dest="ambi_fp", action='store_true', default=False,
                         help="Use FP calls from ambiguous region files also.")
 
-    parser.add_argument("--no-ambiguous-fp", dest="ambi_fp", action='store_false',
+    parser.add_argument("--no-ambi-fp", dest="ambi_fp", action='store_false',
                         help="Do not use FP calls from ambiguous region files also.")
 
     parser.add_argument("--count-unk", dest="count_unk", action='store_true', default=False,
@@ -278,10 +278,10 @@ def main():
                 # auto-label from first value after chr start end
                 # new ambi files have the label in position 4
                 # old ones will look weird here.
-                fpclasses.addFromBed(aBED, lambda xe: xe[4])
+                fpclasses.addFromBed(aBED, lambda xe: xe[4], args.fixchr_truth)
 
         if args.FP:
-            fpclasses.addFromBed(args.FP, "FP")
+            fpclasses.addFromBed(args.FP, "FP", args.fixchr_truth)
 
         # split VCF into FP, UNK and AMBI
         toProcess = gzip.open(rununiquepath, "rb")

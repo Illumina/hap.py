@@ -1,7 +1,7 @@
 #
 # Copyright (c) 2010-2015 Illumina, Inc.
 # All rights reserved.
-# 
+#
 # This file is distributed under the simplified BSD license.
 # The full text can be found here (and in LICENSE.txt in the root folder of
 # this distribution):
@@ -13,11 +13,13 @@ from bx.intervals.intersection import Interval
 from bx.intervals.intersection import IntervalTree
 from collections import defaultdict
 
+
 class BedIntervalTree(object):
     def __init__(self):
         """reads in a BED file and converts it to an interval tree for searching"""
         self.tree = defaultdict(IntervalTree)
         self.intCount = 0
+
         def mkzero():
             return int(0)
         self.count_by_label = defaultdict(mkzero)
@@ -37,9 +39,9 @@ class BedIntervalTree(object):
         """
         chrom = bedentry[0]
         start = int(bedentry[1]) + 1
-        end   = int(bedentry[2]) + 1
+        end = int(bedentry[2]) + 1
         lbl = [label] + bedentry[3:]
-        currInt = Interval(start, end, value = lbl, chrom = chrom)
+        currInt = Interval(start, end, value=lbl, chrom=chrom)
         self.tree[chrom].add_interval(currInt)
         self.count_by_label[label] += 1
         self.intCount += 1
@@ -67,10 +69,11 @@ class BedIntervalTree(object):
         else:
             return self.count_by_label[label]
 
-    def addFromBed(self, bed_file, label="fp"):
+    def addFromBed(self, bed_file, label="fp", fixchr=False):
         """ Add all intervals from a bed file, attaching a given label
         :param bed_file: Bed File
         :param label: either a string label or a function to work on the bed columns
+        :param fixchr: fix chr prefix for contig names
 
         label can be something like this:
 
@@ -97,6 +100,8 @@ class BedIntervalTree(object):
         for entry in bed:
             # split comma / semicolon entries
             fields = entry.replace(";", "\t").replace(",", "\t").strip().split("\t")
+            if fixchr:
+                fields[0] = "chr" + fields[0].replace("chr", "")
 
             # we've made sure.
             # noinspection PyCallingNonCallable
