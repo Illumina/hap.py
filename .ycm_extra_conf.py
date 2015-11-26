@@ -55,6 +55,8 @@ flags = [
 '-I',
 'external/intervaltree',
 '-I',
+'external/boost_install/include',
+'-I',
 '/illumina/thirdparty/boost/boost_1_55_0_python2.4/include',
 '-I',
 '/opt/boost_1_55_0/include',

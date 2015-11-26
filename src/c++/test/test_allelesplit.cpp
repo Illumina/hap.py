@@ -191,6 +191,8 @@ BOOST_AUTO_TEST_CASE(testVariantPrimitiveSplitter)
             std::ostringstream oss;
             oss << v;
             std::string res = stringutil::replaceAll(oss.str(), "1/0", "0/1");
+            res = stringutil::replaceAll(res, "2/0", "0/2");
+            res = stringutil::replaceAll(res, "2/1", "1/2");
             if(!expected_vars[v.pos].count(res))
             {
                 std::cerr << "Unexpected variant calls: " << v << "\n";
