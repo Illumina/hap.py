@@ -490,10 +490,10 @@ int main(int argc, char* argv[]) {
                         raw_match = hap_match = hcr.outcome == dco_match;
                         hap_fail = !(hcr.outcome == dco_match || hcr.outcome == dco_mismatch);
                     }
-                    catch(std::runtime_error &e)
+                    catch(std::runtime_error &)
                     {
                     }
-                    catch(std::logic_error &e)
+                    catch(std::logic_error &)
                     {
                     }
                 }

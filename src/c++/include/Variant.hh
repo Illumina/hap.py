@@ -274,7 +274,34 @@ struct VariantCompare
             {
                 if(v1_max_reflen == v2_max_reflen)
                 {
-                    return v1_max_altlen > v2_max_altlen;
+                    return v1_max_altlen >= v2_max_altlen;
+                }
+                else if (v1_max_altlen == v2_max_altlen)
+                {
+                    std::vector<std::string> v1_alts;
+                    std::vector<std::string> v2_alts;
+                    // lexicographic sort on alts
+                    for(RefVar const & rv : v1.variation)
+                    {
+                        v1_alts.push_back(rv.alt);
+                    }
+                    for(RefVar const & rv : v2.variation)
+                    {
+                        v2_alts.push_back(rv.alt);
+                    }
+                    std::sort(v1_alts.begin(), v1_alts.end());
+                    std::sort(v2_alts.begin(), v2_alts.end());
+                    std::string v1a;
+                    for (auto s : v1_alts) {
+                        v1a += s;
+                        v1a += ";";
+                    }
+                    std::string v2a;
+                    for (auto s : v2_alts) {
+                        v2a += s;
+                        v2a += ";";
+                    }
+                    return v1a < v2a;
                 }
                 else
                 {
