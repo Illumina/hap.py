@@ -37,7 +37,7 @@ def main():
 
     for metric in ['fp', 'ambiguous', 'recall', 'precision', 'tp', 'total.query', 'ambi', 'na',
                    'recall2', 'unk', 'total.truth', 'fn']:
-        if len(data1[metric]) != len(data2[metric]) or len(data1[metric]) == 0:
+        if len(data1[metric]) == 0 or len(data2[metric]) == 0:
             raise Exception("Number of metrics to compare is wrong")
         
         for field in data1[metric].iterkeys():
