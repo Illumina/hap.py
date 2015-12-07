@@ -32,7 +32,7 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-zcat ${TMP_OUT}.vcf.gz > ${TMP_OUT}.vcf
+gunzip -c ${TMP_OUT}.vcf.gz > ${TMP_OUT}.vcf
 diff ${TMP_OUT}.vcf ${DIR}/../../example/decomp/expected.vcf
 if [[ $? != 0 ]]; then
 	echo "Variants differ! diff ${TMP_OUT}.vcf ${DIR}/../../example/decomp/expected.vcf"
