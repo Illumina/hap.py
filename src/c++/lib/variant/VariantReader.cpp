@@ -191,6 +191,9 @@ std::ostream & operator<<(std::ostream &o, Variants const & v)
     return o;
 }
 
+uint64_t Variants::MAX_VID = 0;
+Variants::Variants() : id(MAX_VID++) {}
+
 void setVariantInfo(Variants & v, std::string const & name, std::string const & value)
 {
     size_t start = 0, p = v.info.find_first_of(name + "=");

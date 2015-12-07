@@ -3222,8 +3222,7 @@ chr1	1546949	.	T	C	1972.63	TruthSensitivityTranche99.00to99.90	T_VT=NOCALL;Q_VT=
 chr1	1547566	.	A	G	1382.66	.	T_VT=SNP;Q_VT=SNP;T_LT=homalt;Q_LT=homalt;type=TP;kind=match;Regions=CONF	GT	1/1	1/1
 chr1	1547940	.	G	T	144.4	TruthSensitivityTranche99.00to99.90	T_VT=NOCALL;Q_VT=SNP;T_LT=nocall;Q_LT=het;type=FP;kind=missing;Regions=CONF	GT	./.	0/1
 chr1	1547940	.	G	GT	950.29	.	T_VT=INDEL;Q_VT=INDEL;T_LT=homalt;Q_LT=homalt;type=TP;kind=match;Regions=CONF	GT	1/1	1/1
-chr1	1547940	.	G	GT	0	.	T_VT=INDEL;Q_VT=NOCALL;T_LT=het;Q_LT=nocall;type=FN;kind=missing;Regions=CONF	GT	0/1	./.
-chr1	1547942	.	T	TC	654.48	.	T_VT=INDEL;Q_VT=INDEL;T_LT=het;Q_LT=het;type=TP;kind=match;Regions=CONF	GT	0/1	0/1
+chr1	1547942	.	T	TC,TT	654.48	.	T_VT=INDEL;Q_VT=INDEL;T_LT=hetalt;Q_LT=het;type=FP;kind=alpartial;Regions=CONF	GT	2/1	0/1
 chr1	1547949	.	G	T	228.65	TruthSensitivityTranche99.90to100.00	T_VT=NOCALL;Q_VT=SNP;T_LT=nocall;Q_LT=het;type=UNK;kind=missing	GT	./.	0/1
 chr1	1547955	.	G	T	15.06	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	T_VT=NOCALL;Q_VT=SNP;T_LT=nocall;Q_LT=het;type=UNK;kind=missing	GT	./.	0/1
 chr1	1548470	.	A	G	594.54	.	T_VT=SNP;Q_VT=SNP;T_LT=het;Q_LT=het;type=TP;kind=match;Regions=CONF	GT	0/1	0/1
@@ -3386,7 +3385,7 @@ chr1	1596304	.	G	A	915.79	TruthSensitivityTranche99.90to100.00	T_VT=SNP;Q_VT=SNP
 chr1	1596974	.	C	T	1756.28	.	T_VT=SNP;Q_VT=SNP;T_LT=homalt;Q_LT=homalt;type=TP;kind=match;Regions=CONF	GT	1/1	1/1
 chr1	1598432	.	T	A	0	.	T_VT=SNP;Q_VT=NOCALL;T_LT=homalt;Q_LT=nocall;type=FN;kind=missing	GT	1/1	./.
 chr1	1598432	.	T	<DEL>	410.92	TruthSensitivityTranche99.00to99.90	T_VT=NOCALL;Q_VT=INDEL;T_LT=nocall;Q_LT=homalt;type=UNK;kind=missing	GT	./.	1/1
-chr1	1598433	.	A	C	7.42	.	T_VT=SNP;Q_VT=SNP;T_LT=homalt;Q_LT=het;type=FP;kind=gtmismatch	GT	1/1	0/1
+chr1	1598433	.	A	C	7.42	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	T_VT=SNP;Q_VT=SNP;T_LT=homalt;Q_LT=het;type=FP;kind=gtmismatch	GT	1/1	0/1
 chr1	1598434	.	C	T	8.74	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	T_VT=NOCALL;Q_VT=SNP;T_LT=nocall;Q_LT=het;type=UNK;kind=missing	GT	./.	0/1
 chr1	1598434	.	C	CT	306.74	TruthSensitivityTranche99.00to99.90;LowGQX	T_VT=NOCALL;Q_VT=INDEL;T_LT=nocall;Q_LT=homalt;type=UNK;kind=missing	GT	./.	1/1
 chr1	1598437	.	G	T	17.78	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	T_VT=NOCALL;Q_VT=SNP;T_LT=nocall;Q_LT=het;type=UNK;kind=missing	GT	./.	0/1

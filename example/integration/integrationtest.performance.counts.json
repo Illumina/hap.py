@@ -17,21 +17,21 @@
         "nuc__s": 12
     },
     "FN:missing:CONF:QUERY": {
-        "nocall__nc": 104
+        "nocall__nc": 103
     },
     "FN:missing:CONF:TRUTH": {
         "al__d": 47,
-        "al__i": 50,
+        "al__i": 49,
         "al__s": 8,
         "het__rd": 45,
-        "het__ri": 35,
+        "het__ri": 34,
         "het__rs": 5,
         "hetalt__i": 1,
         "homalt__d": 2,
         "homalt__i": 13,
         "homalt__s": 3,
         "nuc__d": 1770,
-        "nuc__i": 346,
+        "nuc__i": 345,
         "nuc__s": 8
     },
     "FP:almismatch::QUERY": {
@@ -67,13 +67,19 @@
         "nuc__s": 1
     },
     "FP:alpartial:CONF:QUERY": {
+        "al__i": 1,
         "al__s": 6,
+        "het__ri": 1,
         "hetalt__s": 3,
+        "nuc__i": 1,
         "nuc__s": 6
     },
     "FP:alpartial:CONF:TRUTH": {
+        "al__i": 2,
         "al__s": 3,
+        "hetalt__i": 1,
         "homalt__s": 3,
+        "nuc__i": 2,
         "nuc__s": 3
     },
     "FP:gtmismatch::QUERY": {
@@ -161,10 +167,10 @@
     },
     "TP:match:CONF:QUERY": {
         "al__d": 199,
-        "al__i": 183,
+        "al__i": 182,
         "al__s": 3490,
         "het__rd": 116,
-        "het__ri": 80,
+        "het__ri": 79,
         "het__rs": 1958,
         "hetalt__i": 5,
         "hetalt__id": 3,
@@ -172,15 +178,15 @@
         "homalt__i": 90,
         "homalt__s": 1532,
         "nuc__d": 528,
-        "nuc__i": 493,
+        "nuc__i": 492,
         "nuc__s": 3490
     },
     "TP:match:CONF:TRUTH": {
         "al__d": 199,
-        "al__i": 183,
+        "al__i": 182,
         "al__s": 3490,
         "het__rd": 116,
-        "het__ri": 80,
+        "het__ri": 79,
         "het__rs": 1958,
         "hetalt__i": 5,
         "hetalt__id": 3,
@@ -188,7 +194,7 @@
         "homalt__i": 90,
         "homalt__s": 1532,
         "nuc__d": 528,
-        "nuc__i": 493,
+        "nuc__i": 492,
         "nuc__s": 3490
     },
     "UNK:missing::QUERY": {
@@ -224,7 +230,7 @@
         "homalt__d": 126,
         "homalt__i": 142,
         "homalt__s": 2039,
-        "nocall__nc": 172,
+        "nocall__nc": 171,
         "nuc__d": 989,
         "nuc__i": 773,
         "nuc__s": 8908
@@ -234,9 +240,9 @@
         "al__i": 296,
         "al__s": 3633,
         "het__rd": 184,
-        "het__ri": 146,
+        "het__ri": 144,
         "het__rs": 2009,
-        "hetalt__i": 8,
+        "hetalt__i": 9,
         "hetalt__id": 3,
         "homalt__d": 128,
         "homalt__i": 131,
