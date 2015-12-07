@@ -230,6 +230,17 @@ There are two fast ways to get a running installation of hap.py:
    $ sudo docker run -ti --rm 3d03a99b3d81 bin/bash
    $/ /opt/hap.py/bin/hap.py
    ```
+   A pre-built docker image can be found here: [https://hub.docker.com/r/pkrusche/hap.py](https://hub.docker.com/r/pkrusche/hap.py). It can
+   be obtained by running:
+   ```bash
+   docker pull pkrusche/hap.py
+   ```
+   If the current directory contains a clone of the hap.py repository, hap.py can be run in Docker as follows:
+   ```bash
+   sudo docker run -it -v `pwd`:/data pkrusche/hap.py /opt/hap.py/bin/hap.py /data/example/PG_performance.vcf.gz /data/example/performance.vcf.gz -o /data/test
+   ```
+   The `-v` argument mounts the current directory as `/data` in the Docker image. The output should also
+   appear in the current directory.
 
 
 Compiling
