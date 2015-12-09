@@ -377,7 +377,7 @@ def main():
             args.vcf2 = Tools.bcftools.makeIndex(args.vcf2, vtf.name)
             h2 = vcfextract.extractHeadersJSON(args.vcf2)
 
-        ref_check = False
+        ref_check = True
         try:
             happy_ref = args.ref
             v1r = [_h for _h in h1["fields"] if _h["key"] == "reference"]
@@ -393,13 +393,32 @@ def main():
                 ref_check = True
 
             refids_found = 0
+            rids_vh = set()
+            rids_v1 = set()
+            rids_v2 = set()
             for refid in ["hg19", "hg38", "grc37", "grc38"]:
-                if refid in happy_ref.lower() and refid in v1_ref.lower() and refid in v2_ref.lower():
-                    if args.verbose:
-                        logging.info("Reference matches pattern: %s" % refid)
-                    refids_found += 1
-            if refids_found == 1:
-                ref_check = True
+                if refid in happy_ref.lower():
+                    rids_vh.add(refid)
+                if refid in v1_ref.lower():
+                    rids_v1.add(refid)
+                if refid in v2_ref.lower():
+                    rids_v2.add(refid)
+
+            rids_v1 = sorted(list(rids_v1))
+            rids_v2 = sorted(list(rids_v2))
+            rids_vh = sorted(list(rids_vh))
+
+            to_cmp = None
+            if rids_v1:  to_cmp = rids_v1
+            if rids_v2:  to_cmp = rids_v2
+            if rids_vh:  to_cmp = rids_vh
+            if to_cmp and rids_v1 and rids_v1 != to_cmp:
+                ref_check = False
+            if to_cmp and rids_v2 and rids_v2 != to_cmp:
+                ref_check = False
+            if to_cmp and rids_vh and rids_vh != to_cmp:
+                ref_check = False
+
         except:
             pass
 
