@@ -502,7 +502,7 @@ def main():
             raise Exception("Truth file is not Tabix indexed.")
 
         if not h2["tabix"]:
-            raise Exception("Truth file is not Tabix indexed.")
+            raise Exception("Query file is not Tabix indexed.")
 
         newlocations = []
 
@@ -558,7 +558,7 @@ def main():
 
         # count variants before normalisation
         if "samples" not in h1 or not h1["samples"]:
-            raise Exception("Cannot read sample names from truth input file")
+            raise Exception("Cannot read sample names from truth VCF file")
 
         if args.raw_counts:
             counts_truth = Haplo.quantify.run_quantify(args.vcf1,
@@ -572,7 +572,7 @@ def main():
             counts_truth = None
 
         if "samples" not in h2 or not h2["samples"]:
-            raise Exception("Cannot read sample names from truth input file")
+            raise Exception("Cannot read sample names from query VCF file")
         if args.raw_counts:
             counts_query = Haplo.quantify.run_quantify(args.vcf2,
                                                        None,
