@@ -20,7 +20,6 @@ import subprocess
 import copy
 import json
 import logging
-
 import Tools
 
 
@@ -42,11 +41,11 @@ def _locations_tmp_bed_file(locations):
             start = int(start)
         except:
             start = 0
-        
+
         try:
             end = int(end)
         except:
-            end = 2**31-1
+            end = 2 ** 31 - 1
 
         llocations.append((xchr, start, end))
 
@@ -54,25 +53,25 @@ def _locations_tmp_bed_file(locations):
 
     tf = tempfile.NamedTemporaryFile(delete=False)
     for xchr, start, end in locations:
-        print >>tf, "%s\t%i\t%i" % (xchr, start-1, end)
+        print >> tf, "%s\t%i\t%i" % (xchr, start - 1, end)
     tf.close()
 
     return tf.name
 
 
-
 def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
-                  reference=Tools.defaultReference(), sample_column="*",
-                  locations=None):
+                 reference=Tools.defaultReference(), sample_column="*",
+                 locations=None):
     """Run quantify and return parsed JSON
 
-    :filename: the VCF file name
-    :json_name: output file name (if None, will use a temp file)
-    :write_vcf: write annotated VCF (give filename)
-    :regions: dictionary of stratification region names and file names
-    :reference: reference fasta path
-    :sample_column: column to use (or * for all)
-    :location: a location to use
+    :param filename: the VCF file name
+    :param json_name: output file name (if None, will use a temp file)
+    :param write_vcf: write annotated VCF (give filename)
+    :type write_vcf: str
+    :param regions: dictionary of stratification region names and file names
+    :param reference: reference fasta path
+    :param sample_column: column to use (or * for all)
+    :param locations: a location to use
     :returns: parsed counts JSON
     """
 
@@ -143,7 +142,10 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
 
 
 def simplify_counts(counts, snames=None):
-    """ Return simplified counts from quantify  """
+    """ Return simplified counts from quantify
+    :param counts: counts from running quantify
+    :param snames: sample names
+    """
 
     if not snames:
         snames = ["TRUTH", "QUERY"]
@@ -228,5 +230,30 @@ def simplify_counts(counts, snames=None):
                         simplified_numbers[key1][key2] += v2
                     except:
                         simplified_numbers[key1][key2] = v2
+
+    for vt in ["Locations.SNP", "Locations.INDEL"]:
+        if vt not in simplified_numbers:
+            continue
+        for sample in snames:
+            for ct in ["TP", "FP", "FN", "UNK", "TOTAL"]:
+                homalt_count = 0
+                try:
+                    homalt_count = simplified_numbers[vt + ".homalt"][sample + "." + ct]
+                except:
+                    pass
+                het_count = 0
+                try:
+                    het_count = simplified_numbers[vt + ".het"][sample + "." + ct]
+                except:
+                    pass
+                hetalt_count = 0
+                try:
+                    hetalt_count = simplified_numbers[vt + ".hetalt"][sample + "." + ct]
+                except:
+                    pass
+
+                if homalt_count != 0:
+                    simplified_numbers[vt][sample + "." + ct + ".het_hom_ratio"] = float(het_count) / float(homalt_count)
+                    simplified_numbers[vt][sample + "." + ct + ".hethetalt_hom_ratio"] = float(het_count + hetalt_count) / float(homalt_count)
 
     return simplified_numbers
