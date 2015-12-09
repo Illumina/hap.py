@@ -376,28 +376,6 @@ def main():
 
         res = res[(res["total.truth"] > 0) | (res["total.query"] > 0)]
 
-        # use this to use plain row counts rather than stratified bcftools counts
-        # truthcounts = countVCFRows(ntpath) # , "total.truth")
-        # querycounts = countVCFRows(nqpath) # , "total.query")
-        #
-        # tpcounts = countVCFRows(os.path.join(scratch, "tpfn", "0002.vcf.gz"))  #, "tp")
-        # fncounts = countVCFRows(os.path.join(scratch, "tpfn", "0000.vcf.gz"))  #, "fn")
-        # fpcounts = countVCFRows(fppath)  #, "fp")
-        # ambicounts = countVCFRows(ambipath)  #, "ambi")
-        # unkcounts = countVCFRows(unkpath)  #, "unk")
-        #
-        # res = pandas.DataFrame({
-        #     "total.truth" : [ truthcounts ],
-        #     "total.query" : [ querycounts ],
-        #     "tp" : [ tpcounts ],
-        #     "fn" : [ fncounts ],
-        #     "fp" : [ fpcounts ],
-        #     "ambi" : [ ambicounts ],
-        #     "unk" : [ unkcounts ]
-        # })
-        #
-        # res["type"] = "records"
-
         # summary metrics
         res["recall"] = res["tp"] / (res["tp"] + res["fn"])
         res["recall2"] = res["tp"] / (res["total.truth"])
@@ -527,8 +505,7 @@ def main():
 
             logging.info("Collecting FP info...")
             fps = fset.collect(fppath, "FP")
-            ambs = fset.collect(fppath, "AMBI")
-            unks = fset.collect(fppath, "UNK")
+            ambs = fset.collect(ambipath, "AMBI")
 
             logging.info("Collecting FN info...")
             fns = fset.collect(os.path.join(scratch, "tpfn", "0000.vcf.gz"), "FN")
@@ -540,7 +517,7 @@ def main():
                     renamed[col] = col + ".truth"
             fns.rename(columns=renamed, inplace=True)
 
-            featurelist = [tpc, fps, fns, ambs, unks]
+            featurelist = [tpc, fps, fns, ambs]
 
             if unkpath is not None:
                 logging.info("Collecting UNK info...")
