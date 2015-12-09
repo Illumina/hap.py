@@ -71,6 +71,9 @@ class CallerInfo(object):
                         cp[0] = str(hf["values"])
                     except:
                         cp[0] = hf["value"]
+                    if cp[0].startswith("Platypus_Version_"):
+                        cp[1] = cp[0][len("Platypus_Version_"):]
+                        cp[0] = "Platypus"
                     source_found = True
                 elif k == "source_version":
                     try:
@@ -79,6 +82,12 @@ class CallerInfo(object):
                         cp[1] = hf["value"]
                     source_found = True
                 elif k == "cmdline":
+                    try:
+                        cp[2] = str(hf["values"])
+                    except:
+                        cp[2] = hf["value"]
+                    source_found = True
+                elif k == "platypusOptions":
                     try:
                         cp[2] = str(hf["values"])
                     except:
