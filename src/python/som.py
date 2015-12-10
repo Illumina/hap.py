@@ -140,7 +140,7 @@ def main():
     parser.add_argument("--bin-afs", dest="af_strat", default=None, action="store_true",
                         help="Stratify into different AF buckets. This needs to have features available"
                              "for getting the AF both in truth and query variants.")
-    parser.add_argument("--af-binsize", dest="af_strat_binsize", default=0.25, type=float,
+    parser.add_argument("--af-binsize", dest="af_strat_binsize", default=0.2, type=float,
                         help="Bin size for AF binning (should be < 1)")
     parser.add_argument("--af-truth", dest="af_strat_truth", default="I.T_ALT_RATE",
                         help="Feature name to use for retrieving AF for truth variants (TP and FN)")
