@@ -45,6 +45,33 @@ else
 	exit 1
 fi
 
+# HAP-143 run hap.py with one empty input
+${PYTHON} ${HCDIR}/hap.py \
+			 	-l chr21 \
+			 	${DIR}/../../example/integration/integrationtest_empty.vcf \
+			 	${DIR}/../../example/integration/integrationtest_rhs.vcf.gz \
+			 	-o ${TMP_OUT} -P \
+			 	-V -B -X \
+			 	--force-interactive
+
+if [[ $? != 0 ]]; then
+	echo "hap.py failed!"
+	exit 1
+fi
+
+${PYTHON} ${HCDIR}/hap.py \
+			 	-l chr21 \
+			 	${DIR}/../../example/integration/integrationtest_lhs.vcf.gz \
+			 	${DIR}/../../example/integration/integrationtest_empty.vcf \
+			 	-o ${TMP_OUT} -P \
+			 	-V -B -X \
+			 	--force-interactive
+
+if [[ $? != 0 ]]; then
+	echo "hap.py failed!"
+	exit 1
+fi
+
 # run hap.py
 ${PYTHON} ${HCDIR}/hap.py \
 			 	-l chr21 \

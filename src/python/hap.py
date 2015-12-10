@@ -43,7 +43,6 @@ from Tools import vcfextract
 from Tools.bcftools import preprocessVCF, bedOverlapCheck
 from Tools.parallel import runParallel
 from Tools.metric import makeMetricsObject, dataframeToMetricsTable
-
 import Haplo.blocksplit
 import Haplo.xcmp
 import Haplo.vcfeval
@@ -436,15 +435,28 @@ def main():
             # noinspection PyUnresolvedReferences
             args.locations = args.locations.split(",")
 
+        # HAP-143 fix the case where no chromosomes are in truth or query
+        try:
+            if not h1["tabix"]["chromosomes"]:
+                h1["tabix"]["chromosomes"] = []
+        except:
+            pass
+        try:
+            if not h2["tabix"]["chromosomes"]:
+                h2["tabix"]["chromosomes"] = []
+        except:
+            pass
+
         if not h1["tabix"]:
             args.preprocessing_truth = True
             logging.warn("Truth file is not Tabix indexed. Switching on pre-processing + chr name conversion.")
             if args.fixchr_truth is None:
                 args.fixchr_truth = True
         elif args.fixchr_truth is None:
+            logging.info(str(h1["tabix"]))
             # autodetect chr naming
             count_with_fix = len([__ for __ in h1["tabix"]["chromosomes"]
-                                 if ("chr%s" % str(__)) in args.locations])
+                                  if ("chr%s" % str(__)) in args.locations])
             count_no_fix = len([__ for __ in h1["tabix"]["chromosomes"] if str(__) in args.locations])
             logging.info("Truth: Number of chromosome names matching with / without renaming : %i / %i " % (
                 count_with_fix, count_no_fix))
@@ -464,7 +476,7 @@ def main():
         elif args.fixchr_query is None:
             # autodetect chr naming
             count_with_fix = len([__ for __ in h2["tabix"]["chromosomes"]
-                                 if ("chr%s" % str(__)) in args.locations])
+                                  if ("chr%s" % str(__)) in args.locations])
             count_no_fix = len([__ for __ in h2["tabix"]["chromosomes"] if str(__) in args.locations])
             logging.info("Query: Number of chromosome names matching with / without renaming : %i / %i " % (
                 count_with_fix, count_no_fix))
@@ -489,8 +501,8 @@ def main():
             vtf.close()
             tempfiles.append(vtf.name)
             preprocessVCF(args.vcf1, vtf.name, ",".join(args.locations),
-                          not args.usefiltered_truth,     # pass_only
-                          args.fixchr_truth,        # chrprefix
+                          not args.usefiltered_truth,  # pass_only
+                          args.fixchr_truth,  # chrprefix
                           args.preprocessing_norm,  # norm,
                           args.regions_bedfile,
                           args.targets_bedfile,
@@ -507,8 +519,8 @@ def main():
             vtf.close()
             tempfiles.append(vtf.name)
             preprocessVCF(args.vcf2, vtf.name, ",".join(args.locations),
-                          not args.usefiltered,     # pass_only
-                          args.fixchr_query,        # chrprefix
+                          not args.usefiltered,  # pass_only
+                          args.fixchr_query,  # chrprefix
                           args.preprocessing_norm,  # norm,
                           args.regions_bedfile,
                           args.targets_bedfile,
@@ -614,8 +626,8 @@ def main():
             # do xcmp
             logging.info("Using xcmp for comparison")
             res = runParallel(pool, Haplo.xcmp.xcmpWrapper, args.locations, args)
-            tempfiles += [x[0] for x in res if x is not None]   # VCFs
-            tempfiles += [x[1] for x in res if x is not None and x[1] is not None]   # beds (if any)
+            tempfiles += [x[0] for x in res if x is not None]  # VCFs
+            tempfiles += [x[1] for x in res if x is not None and x[1] is not None]  # beds (if any)
 
             if None in res:
                 raise Exception("One of the xcmp jobs failed.")
@@ -768,11 +780,11 @@ def main():
             "METRIC.Frac_NA"]].to_csv(args.reports_prefix + ".summary.csv")
 
         metrics_output["metrics"].append(dataframeToMetricsTable("summary.metrics",
-                                         df[["TRUTH.TOTAL",
-                                             "QUERY.TOTAL",
-                                             "METRIC.Recall",
-                                             "METRIC.Precision",
-                                             "METRIC.Frac_NA"]]))
+                                                                 df[["TRUTH.TOTAL",
+                                                                     "QUERY.TOTAL",
+                                                                     "METRIC.Recall",
+                                                                     "METRIC.Precision",
+                                                                     "METRIC.Frac_NA"]]))
 
         if args.write_counts:
             df.to_csv(args.reports_prefix + ".extended.csv")
