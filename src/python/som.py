@@ -147,6 +147,10 @@ def main():
     parser.add_argument("--af-query", dest="af_strat_query", default="T_AF",
                         help="Feature name to use for retrieving AF for query variants (FP/UNK/AMBI)")
 
+    parser.add_argument("-FN", "--count-filtered-fn", dest="count_filtered_fn", action="store_true",
+                        help="Count filtered vs. absent FN numbers. This requires the -P switch (to use all "
+                             "variants) and either the --feature-table or --roc switch.")
+
     parser.add_argument("--logfile", dest="logfile", default=None,
                         help="Write logging information into file rather than to stderr")
 
@@ -181,10 +185,19 @@ def main():
     if args.roc:
         args.roc = ROC.make(args.roc)
         args.features = args.roc.ftname
+        if not args.inc_nonpass:
+            logging.warn("When creating ROCs without the -P switch, the ROC data points will only "
+                         "include filtered variants (i.e. they will normally end at the caller's "
+                         "quality threshold).")
 
     if args.af_strat and not args.features:
         raise Exception("To stratify by AFs, a feature table must be selected -- use this switch together "
                         "with --feature-table or --roc")
+
+    if args.count_filtered_fn and (not args.inc_nonpass or not args.features):
+        raise Exception("Counting filtered / unfiltered FNs only works when a feature table is selected, "
+                        "and when using unfiltered variants. Specify -P --feature-table <...> or use "
+                        "--roc to select a ROC type.")
 
     if args.scratch_prefix:
         scratch = os.path.abspath(args.scratch_prefix)
@@ -541,23 +554,36 @@ def main():
                 roc_table = args.roc.from_table(featuretable)
                 roc_table.to_csv(args.output + ".roc.csv", float_format='%.8f')
 
-            if args.af_strat:
-                featuretable.ix[featuretable["tag"] == "FN", "REF"] = featuretable.ix[featuretable["tag"] == "FN",
-                                                                                      "REF.truth"]
-                featuretable.ix[featuretable["tag"] == "FN", "ALT"] = featuretable.ix[featuretable["tag"] == "FN",
-                                                                                      "ALT.truth"]
-                af_t_feature = args.af_strat_truth
-                af_q_feature = args.af_strat_query
-                for vtype in ["records", "snvs", "indels"]:
-                    if vtype == "snvs":
-                        featuretable_this_type = featuretable[(featuretable["REF"].str.len() > 0) &
-                                                              (featuretable["ALT"].str.len() ==
-                                                               featuretable["REF"].str.len())]
-                    elif vtype == "indels":
-                        featuretable_this_type = featuretable[(featuretable["REF"].str.len() != 1) |
-                                                              (featuretable["ALT"].str.len() != 1)]
-                    else:
-                        featuretable_this_type = featuretable
+            featuretable["FILTER"].fillna("", inplace=True)
+            featuretable.ix[featuretable["REF"].str.len() < 1, "absent"] = True
+            featuretable.ix[featuretable["tag"] == "FN", "REF"] = featuretable.ix[featuretable["tag"] == "FN",
+                                                                                  "REF.truth"]
+            featuretable.ix[featuretable["tag"] == "FN", "ALT"] = featuretable.ix[featuretable["tag"] == "FN",
+                                                                                  "ALT.truth"]
+            af_t_feature = args.af_strat_truth
+            af_q_feature = args.af_strat_query
+            for vtype in ["records", "snvs", "indels"]:
+                if vtype == "snvs":
+                    featuretable_this_type = featuretable[(featuretable["REF"].str.len() > 0) &
+                                                          (featuretable["ALT"].str.len() ==
+                                                           featuretable["REF"].str.len())]
+                elif vtype == "indels":
+                    featuretable_this_type = featuretable[(featuretable["REF"].str.len() != 1) |
+                                                          (featuretable["ALT"].str.len() != 1)]
+                else:
+                    featuretable_this_type = featuretable
+
+                if args.count_filtered_fn:
+                    res.ix[res["type"] == vtype, "fp.filtered"] = featuretable_this_type[
+                        (featuretable_this_type["tag"] == "FP") & (featuretable_this_type["FILTER"] != "")].shape[0]
+                    res.ix[res["type"] == vtype, "tp.filtered"] = featuretable_this_type[
+                        (featuretable_this_type["tag"] == "TP") & (featuretable_this_type["FILTER"] != "")].shape[0]
+                    res.ix[res["type"] == vtype, "unk.filtered"] = featuretable_this_type[
+                        (featuretable_this_type["tag"] == "UNK") & (featuretable_this_type["FILTER"] != "")].shape[0]
+                    res.ix[res["type"] == vtype, "ambi.filtered"] = featuretable_this_type[
+                        (featuretable_this_type["tag"] == "AMBI") & (featuretable_this_type["FILTER"] != "")].shape[0]
+
+                if args.af_strat:
                     start = 0.0
                     while start < 1.0:
                         # include 1 in last interval
@@ -587,6 +613,12 @@ def main():
                              "unk": n_unk.shape[0],
                              "ambi": n_ambi.shape[0], }
 
+                        if args.count_filtered_fn:
+                            r["fp.filtered"] = n_fp[n_fp["FILTER"] != ""].shape[0]
+                            r["tp.filtered"] = n_tp[n_tp["FILTER"] != ""].shape[0]
+                            r["unk.filtered"] = n_unk[n_unk["FILTER"] != ""].shape[0]
+                            r["ambi.filtered"] = n_ambi[n_ambi["FILTER"] != ""].shape[0]
+
                         res = pandas.concat([res, pandas.DataFrame([r])])
 
                         if args.roc is not None and (n_tp.shape[0] + n_fn.shape[0] + n_fp.shape[0]) > 0:
@@ -603,6 +635,13 @@ def main():
         res["precision"] = res["tp"] / (res["tp"] + res["fp"])
         res["na"] = res["unk"] / (res["total.query"])
         res["ambiguous"] = res["ambi"] / res["total.query"]
+
+        if args.count_filtered_fn:
+            res["recall.filtered"] = (res["tp"] - res["tp.filtered"]) / (res["tp"] + res["fn"])
+            res["precision.filtered"] = (res["tp"] - res["tp.filtered"]) / (res["tp"] - res["tp.filtered"] +
+                                                                            res["fp"] - res["fp.filtered"])
+            res["na.filtered"] = (res["unk"] - res["unk.filtered"]) / (res["total.query"])
+            res["ambiguous.filtered"] = (res["ambi"] - res["ambi.filtered"]) / res["total.query"]
 
         metrics_output["metrics"].append(dataframeToMetricsTable("result", res))
         vstring = "som.py-%s" % Tools.version
