@@ -325,7 +325,7 @@ def main():
         if not args.reports_prefix:
             raise Exception("Please specify an output prefix using -o ")
 
-        if not os.path.exists(os.path.dirname(args.reports_prefix)):
+        if not os.path.exists(os.path.dirname(os.path.abspath(args.reports_prefix))):
             raise Exception("The output path does not exist. Please specify a valid output path and prefix using -o")
 
         if os.path.basename(args.reports_prefix) == "" or os.path.isdir(args.reports_prefix):
