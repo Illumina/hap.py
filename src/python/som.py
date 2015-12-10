@@ -44,7 +44,6 @@ from Tools.bamstats import bamStats
 from Tools.bedintervaltree import BedIntervalTree
 from Tools.roc import ROC
 from Tools.metric import makeMetricsObject, dataframeToMetricsTable
-
 import Somatic
 
 
@@ -138,6 +137,16 @@ def main():
                         help="Create a ROC-style table. This is caller specific "
                              " - this will override the --feature-table switch!")
 
+    parser.add_argument("--bin-afs", dest="af_strat", default=None, action="store_true",
+                        help="Stratify into different AF buckets. This needs to have features available"
+                             "for getting the AF both in truth and query variants.")
+    parser.add_argument("--af-binsize", dest="af_strat_binsize", default=0.25, type=float,
+                        help="Bin size for AF binning (should be < 1)")
+    parser.add_argument("--af-truth", dest="af_strat_truth", default="I.T_ALT_RATE",
+                        help="Feature name to use for retrieving AF for truth variants (TP and FN)")
+    parser.add_argument("--af-query", dest="af_strat_query", default="T_AF",
+                        help="Feature name to use for retrieving AF for query variants (FP/UNK/AMBI)")
+
     parser.add_argument("--logfile", dest="logfile", default=None,
                         help="Write logging information into file rather than to stderr")
 
@@ -172,6 +181,10 @@ def main():
     if args.roc:
         args.roc = ROC.make(args.roc)
         args.features = args.roc.ftname
+
+    if args.af_strat and not args.features:
+        raise Exception("To stratify by AFs, a feature table must be selected -- use this switch together "
+                        "with --feature-table or --roc")
 
     if args.scratch_prefix:
         scratch = os.path.abspath(args.scratch_prefix)
@@ -374,28 +387,7 @@ def main():
         res = res[res["type"] != "multiallelic sites"]
         res.loc[res["type"] == "SNPs", "type"] = "SNVs"
 
-        res = res[(res["total.truth"] > 0) | (res["total.query"] > 0)]
-
-        # summary metrics
-        res["recall"] = res["tp"] / (res["tp"] + res["fn"])
-        res["recall2"] = res["tp"] / (res["total.truth"])
-        res["precision"] = res["tp"] / (res["tp"] + res["fp"])
-        res["na"] = res["unk"] / (res["total.query"])
-        res["ambiguous"] = res["ambi"] / res["total.query"]
-
         metrics_output = makeMetricsObject("som.py.comparison")
-        metrics_output["metrics"].append(dataframeToMetricsTable("result", res))
-        vstring = "som.py-%s" % Tools.version
-
-        logging.info("\n" + res.to_string())
-        # in default mode, print result summary to stdout
-        if not args.quiet and not args.verbose:
-            print "\n" + res.to_string()
-
-        res["sompyversion"] = vstring
-
-        vstring = " ".join(sys.argv)
-        res["sompycmd"] = vstring
 
         if args.ambi and args.explain_ambiguous:
             ac = list(ambiClasses.iteritems())
@@ -407,13 +399,11 @@ def main():
                 pandas.set_option("display.width", 1000)
                 pandas.set_option("display.height", 1100)
                 logging.info("FP/ambiguity classes with info (multiple classes can "
-                             "overlap):\n" + ambie.to_string(
-                             index=False))
+                             "overlap):\n" + ambie.to_string(index=False))
                 # in default mode, print result summary to stdout
                 if not args.quiet and not args.verbose:
                     print "FP/ambiguity classes with info (multiple classes can " \
-                          "overlap):\n" + ambie.to_string(
-                          index=False)
+                          "overlap):\n" + ambie.to_string(index=False)
                 ambie.to_csv(args.output + ".ambiclasses.csv")
                 metrics_output["metrics"].append(dataframeToMetricsTable("ambiclasses", ambie))
             else:
@@ -428,20 +418,15 @@ def main():
                 pandas.set_option("display.width", 1000)
                 pandas.set_option("display.height", 1100)
                 logging.info("Reasons for defining as ambiguous (multiple reasons can overlap):\n" + ambie.to_string(
-                    formatters={'reason':'{{:<{}s}}'.format(ambie['reason'].str.len().max()).format}, index=False))
+                    formatters={'reason': '{{:<{}s}}'.format(ambie['reason'].str.len().max()).format}, index=False))
                 # in default mode, print result summary to stdout
                 if not args.quiet and not args.verbose:
                     print "Reasons for defining as ambiguous (multiple reasons can overlap):\n" + ambie.to_string(
-                        formatters={'reason':'{{:<{}s}}'.format(ambie['reason'].str.len().max()).format}, index=False)
+                        formatters={'reason': '{{:<{}s}}'.format(ambie['reason'].str.len().max()).format}, index=False)
                 ambie.to_csv(args.output + ".ambireasons.csv")
                 metrics_output["metrics"].append(dataframeToMetricsTable("ambireasons", ambie))
             else:
                 logging.info("No ambiguous variants.")
-
-        res.to_csv(args.output + ".stats.csv")
-
-        with open(args.output + ".metrics.json", "w") as fp:
-            json.dump(metrics_output, fp)
 
         if args.features:
             logging.info("Extracting features...")
@@ -495,9 +480,9 @@ def main():
 
             all_columns = list(set(columns_tps + columns_tps2))
             for a in all_columns:
-                if a in columns_tps and not a in columns_tps2:
+                if a in columns_tps and a not in columns_tps2:
                     tpc[a] = tps[a]
-                elif not a in columns_tps and a in columns_tps2:
+                elif a not in columns_tps and a in columns_tps2:
                     tpc[a] = tps2[a]
                 elif a not in ["CHROM", "POS", "tag"]:
                     tpc[a] = tps2[a]
@@ -529,6 +514,7 @@ def main():
 
             # reorder to make more legible
             first_columns = ["CHROM", "POS", "tag"]
+            # noinspection PyTypeChecker
             all_columns = list(featuretable)
 
             if "REF" in all_columns:
@@ -554,6 +540,80 @@ def main():
             if args.roc is not None:
                 roc_table = args.roc.from_table(featuretable)
                 roc_table.to_csv(args.output + ".roc.csv", float_format='%.8f')
+
+            if args.af_strat:
+                af_t_feature = args.af_strat_truth
+                af_q_feature = args.af_strat_query
+                for vtype in ["records", "snvs", "indels"]:
+                    if vtype == "snvs":
+                        featuretable_this_type = featuretable[(featuretable["REF"].str.len() == 1) &
+                                                              (featuretable["ALT"].str.len() == 1)]
+                    elif vtype == "indels":
+                        featuretable_this_type = featuretable[(featuretable["REF"].str.len() != 1) |
+                                                              (featuretable["ALT"].str.len() != 1)]
+                    else:
+                        featuretable_this_type = featuretable
+                    start = 0.0
+                    while start < 1.0:
+                        # include 1 in last interval
+                        end = min(1.000000001, start + args.af_strat_binsize)
+                        n_tp = featuretable_this_type[(featuretable_this_type["tag"] == "TP") &
+                                                      (featuretable_this_type[af_t_feature] >= start) &
+                                                      (featuretable_this_type[af_t_feature] < end)]
+                        n_fn = featuretable_this_type[(featuretable_this_type["tag"] == "FN") &
+                                                      (featuretable_this_type[af_t_feature] >= start) &
+                                                      (featuretable_this_type[af_t_feature] < end)]
+                        n_fp = featuretable_this_type[(featuretable_this_type["tag"] == "FP") &
+                                                      (featuretable_this_type[af_q_feature] >= start) &
+                                                      (featuretable_this_type[af_q_feature] < end)]
+                        n_ambi = featuretable_this_type[(featuretable_this_type["tag"] == "AMBI") &
+                                                        (featuretable_this_type[af_q_feature] >= start) &
+                                                        (featuretable_this_type[af_q_feature] < end)]
+                        n_unk = featuretable_this_type[(featuretable_this_type["tag"] == "UNK") &
+                                                       (featuretable_this_type[af_q_feature] >= start) &
+                                                       (featuretable_this_type[af_q_feature] < end)]
+
+                        r = {"type": "%s.%f-%f" % (vtype, start, end),
+                             "total.truth": n_tp.shape[0] + n_fn.shape[0],
+                             "total.query": n_tp.shape[0] + n_fp.shape[0] + n_ambi.shape[0] + n_unk.shape[0],
+                             "tp": n_tp.shape[0],
+                             "fp": n_fp.shape[0],
+                             "fn": n_fn.shape[0],
+                             "unk": n_unk.shape[0],
+                             "ambi": n_ambi.shape[0], }
+
+                        res = pandas.concat([res, pandas.DataFrame([r])])
+
+                        if args.roc is not None and (n_tp.shape[0] + n_fn.shape[0] + n_fp.shape[0]) > 0:
+                            roc_table_strat = args.roc.from_table(pandas.concat([n_tp, n_fp, n_fn]))
+                            rtname = "%s.%s.%f-%f.roc.csv" % (args.output, vtype, start, end)
+                            roc_table_strat.to_csv(rtname, float_format='%.8f')
+                        start += args.af_strat_binsize
+
+        # remove things where we haven't seen any variants in truth and query
+        res = res[(res["total.truth"] > 0) & (res["total.query"] > 0)]
+        # summary metrics
+        res["recall"] = res["tp"] / (res["tp"] + res["fn"])
+        res["recall2"] = res["tp"] / (res["total.truth"])
+        res["precision"] = res["tp"] / (res["tp"] + res["fp"])
+        res["na"] = res["unk"] / (res["total.query"])
+        res["ambiguous"] = res["ambi"] / res["total.query"]
+
+        metrics_output["metrics"].append(dataframeToMetricsTable("result", res))
+        vstring = "som.py-%s" % Tools.version
+
+        logging.info("\n" + res.to_string())
+        # in default mode, print result summary to stdout
+        if not args.quiet and not args.verbose:
+            print "\n" + res.to_string()
+
+        res["sompyversion"] = vstring
+
+        vstring = " ".join(sys.argv)
+        res["sompycmd"] = vstring
+        res.to_csv(args.output + ".stats.csv")
+        with open(args.output + ".metrics.json", "w") as fp:
+            json.dump(metrics_output, fp)
 
     finally:
         if args.delete_scratch:
