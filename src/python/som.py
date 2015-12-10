@@ -542,12 +542,17 @@ def main():
                 roc_table.to_csv(args.output + ".roc.csv", float_format='%.8f')
 
             if args.af_strat:
+                featuretable.ix[featuretable["tag"] == "FN", "REF"] = featuretable.ix[featuretable["tag"] == "FN",
+                                                                                      "REF.truth"]
+                featuretable.ix[featuretable["tag"] == "FN", "ALT"] = featuretable.ix[featuretable["tag"] == "FN",
+                                                                                      "ALT.truth"]
                 af_t_feature = args.af_strat_truth
                 af_q_feature = args.af_strat_query
                 for vtype in ["records", "snvs", "indels"]:
                     if vtype == "snvs":
-                        featuretable_this_type = featuretable[(featuretable["REF"].str.len() == 1) &
-                                                              (featuretable["ALT"].str.len() == 1)]
+                        featuretable_this_type = featuretable[(featuretable["REF"].str.len() > 0) &
+                                                              (featuretable["ALT"].str.len() ==
+                                                               featuretable["REF"].str.len())]
                     elif vtype == "indels":
                         featuretable_this_type = featuretable[(featuretable["REF"].str.len() != 1) |
                                                               (featuretable["ALT"].str.len() != 1)]
