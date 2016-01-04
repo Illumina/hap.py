@@ -287,12 +287,20 @@ void DiploidReference::setRegion(
                         /** homref in the het case means that we have a het+homref call vs.
                             a het+het call. the two sequences are different by design of the
                             GraphReference::enumeratePaths function, so if one of them is
-                            equal to the reference, the other one can't be.
+                            equal to the reference, the other one shouldn't be.
                          */
                         if(r.h1 == refsq || r.h2 == refsq)
                         {
                             r.homref = true;
+                            if((hom_nodes.size() > 0 || het_nodes.size() > 0) && r.h1 == r.h2)
+                            {
+#ifdef _DEBUG_DIPLOIDREFERENCE
+                                std::cerr << "Invalid hom-ref pair -- ALT alleles must generate at least one non-ref sequence" << std::endl;
+#endif
+                                continue;
+                            }
                         }
+
 #ifdef _DEBUG_DIPLOIDREFERENCE
                         std::cerr << "Found pair: " << r.h1 << ":" << r.h2 << " - homref: " << r.homref << " het : " << r.het << "\n";
 #endif
