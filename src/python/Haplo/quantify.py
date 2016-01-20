@@ -175,11 +175,22 @@ def simplify_counts(counts, snames=None):
             logging.warn("Ignoring invalid key %s" % k1)
             continue
 
-        for k2, v2 in v.iteritems():
-            # k2 is created in quantify.cpp, observation type, then allele types separated by __
-            ct, _, vt = k2.partition("__")
+        isExtraCount = False
 
-            if ct == "nuc":
+        for k2, v2 in v.iteritems():
+            ct = ''
+            vt = ''
+
+            if (k2 in ['Transitions', 'Transversions']):
+                isExtraCount = True
+                altype = "SNP"
+            else:
+                # k2 is created in quantify.cpp, observation type, then allele types separated by __
+                ct, _, vt = k2.partition("__")
+            
+            if (isExtraCount):
+                keys1 = ['Locations.SNP.' + k2]
+            elif ct == "nuc":
                 if vt == "s":
                     altype = "SNP"
                 elif vt == "i":
@@ -225,6 +236,7 @@ def simplify_counts(counts, snames=None):
             for key1 in keys1:
                 if key1 not in simplified_numbers:
                     simplified_numbers[key1] = copy.copy(counter_dict)
+
                 for key2 in keys2:
                     try:
                         simplified_numbers[key1][key2] += v2
