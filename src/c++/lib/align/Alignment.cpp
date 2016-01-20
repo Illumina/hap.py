@@ -42,10 +42,12 @@
 
 #include "Klib.hh"
 #include "KlibGlobal.hh"
+#include "helpers/Genetics.hh"
 
 #include "Error.hh"
 
 using namespace variant;
+using namespace genetics;
 
 Alignment::~Alignment() {}
 
@@ -385,7 +387,8 @@ void realignRefVar(FastaFile & f, const char * chr, RefVar const & in_rv, Alignm
  * @param homref the number of calls with no variation
  */
 void realignRefVar(FastaFile & f, const char * chr, variant::RefVar const & in_rv, Alignment * aln,
-                   size_t & snps, size_t & ins, size_t & dels, size_t & homref)
+                   size_t & snps, size_t & ins, size_t & dels, size_t & homref,
+                   size_t& transitions, size_t& transversions)
 {
     int64_t rstart = in_rv.start, rend = in_rv.end, reflen = rend - rstart + 1;
     int64_t altlen = (int64_t)in_rv.alt.size();
@@ -393,7 +396,8 @@ void realignRefVar(FastaFile & f, const char * chr, variant::RefVar const & in_r
     if(reflen < 2 || altlen < 2)
     {
         // no complex ref / alt => use fast and simple function
-        countRefVarPrimitives(f, chr, in_rv, snps, ins, dels, homref);
+        countRefVarPrimitives(f, chr, in_rv, snps, ins, dels, homref,
+                              transitions, transversions);
         return;
     }
 
@@ -410,6 +414,7 @@ void realignRefVar(FastaFile & f, const char * chr, variant::RefVar const & in_r
 
     int refpos = r0;
     int altpos = a0;
+    bool isValidSnv(false);
 
     for (int i = 0; i < ncigar; ++i)
     {
@@ -423,9 +428,23 @@ void realignRefVar(FastaFile & f, const char * chr, variant::RefVar const & in_r
                 for(uint32_t j = 0; j < count; ++j)
                 {
                     // check match / mismatch because ksw doesn't give this to us
-                    if(refseq[refpos] != altseq[altpos])
+                    const char refBase(refseq[refpos]);
+                    const char altBase(altseq[altpos]);
+
+                    if (altBase != refBase)
                     {
                         ++snps;
+                        const bool
+                            isTransversion(snvIsTransversion(refBase, altBase,
+                                                             isValidSnv));
+
+                        if (isValidSnv) {
+                            if (isTransversion) {
+                                ++transversions;
+                            } else {
+                                ++transitions;
+                            }
+                        }
                     }
                     else
                     {

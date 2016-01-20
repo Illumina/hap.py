@@ -37,9 +37,12 @@
 #include "RefVar.hh"
 
 #include "Error.hh"
+#include "helpers/Genetics.hh"
 
 #include <limits>
 #include <cassert>
+
+using namespace genetics;
 
 // #define DEBUG_REFVAR
 
@@ -556,7 +559,8 @@ void toPrimitives(FastaFile & f, const char * chr, RefVar const & rv, std::list<
  * @param homref the number of calls with no variation
  */
 void countRefVarPrimitives(FastaFile & f, const char * chr, variant::RefVar const & rv,
-                           size_t & snps, size_t & ins, size_t & dels, size_t & homref)
+                           size_t & snps, size_t & ins, size_t & dels, size_t & homref,
+                           size_t& transitions, size_t& transversions)
 {
     int64_t rstart = rv.start, rend = rv.end, reflen = rend - rstart + 1;
     int64_t altlen = (int64_t)rv.alt.size();
@@ -581,6 +585,8 @@ void countRefVarPrimitives(FastaFile & f, const char * chr, variant::RefVar cons
 
     // from the left, split off SNPs / matches
     size_t pos = 0;
+    bool isValidSnv(false);
+
     while(reflen > 0 && altlen > 0)
     {
         char r = refseq[pos];
@@ -588,6 +594,15 @@ void countRefVarPrimitives(FastaFile & f, const char * chr, variant::RefVar cons
         if (r != a)
         {
             ++snps;
+            const bool isTransversion(snvIsTransversion(r, a, isValidSnv));
+
+            if (isValidSnv) {
+                if (isTransversion) {
+                    ++transversions;
+                } else {
+                    ++transitions;
+                }
+            }
         }
         else
         {

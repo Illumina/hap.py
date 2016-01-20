@@ -257,6 +257,7 @@ void realignRefVar(FastaFile & f, const char * chr, variant::RefVar const & rv, 
  * @param homref the number of calls with no variation
  */
 void realignRefVar(FastaFile & f, const char * chr, variant::RefVar const & rv, Alignment * aln,
-                   size_t & snps, size_t & ins, size_t & dels, size_t & homref);
+                   size_t & snps, size_t & ins, size_t & dels, size_t & homref,
+                   size_t& transitions, size_t& transversions);
 
 
