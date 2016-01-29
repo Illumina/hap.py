@@ -463,31 +463,27 @@ void GraphReference::enumeratePaths(
     static int bp_id_ctr = 0;
 #endif
 
-    typedef std::map<std::string, std::unique_ptr<Haplotype> > unique_hap_map_t;
-    typedef std::map<std::string, std::string > hapinfo_map_t;
-
     // we assume the reference graph is loop free
     // otherwise, this doesn't really work
     typedef struct _branchpoint
     {
         _branchpoint(size_t _node,
                      std::list<size_t>::iterator _next_choice,
-                     unique_hap_map_t::iterator _up_to_here,
-                     std::bitset<MAX_GRAPHREFERENCE_NODES> const & _nodes_used) :
+                     Haplotype const & _up_to_here,
+                     std::bitset<MAX_GRAPHREFERENCE_NODES> const & _nodes_used,
+                     std::set < std::string > const & _sequences_seen
+        ) :
             node(_node), color(ReferenceNode::grey), next_choice(_next_choice),
-            up_to_here(_up_to_here), nodes_used(_nodes_used)
+            up_to_here(_up_to_here), nodes_used(_nodes_used), sequences_seen(_sequences_seen)
 #ifdef _DEBUG_GRAPHREFERENCE
             , bp_id(bp_id_ctr++)
 #endif
-        {
-            // insert at least the sequence of the haplotype up to here
-            sequences_seen.insert(up_to_here->first);
-        }
+        {}
 
         size_t node;
         ReferenceNode::color_t color;
         std::list<size_t>::iterator next_choice;
-        unique_hap_map_t::iterator up_to_here; // pointer into unique haplotype block
+        Haplotype up_to_here; // pointer into unique haplotype block
 
         // track the number of nodes we used
         std::bitset<MAX_GRAPHREFERENCE_NODES> nodes_used;
@@ -502,31 +498,17 @@ void GraphReference::enumeratePaths(
 
     std::list< branchpoint > hlist;
 
-    // we contract the variation graph into a "unique haplotype block graph"
-    // this map gives the nodes (indexed by canonical haplotype representation).
-    unique_hap_map_t unique_haps;
-    hapinfo_map_t hapinfos;
-
-    // list of hap ids we get after finishing traversal
-    std::set<std::string> final_haps;
-
     // generate starting hap block
-    std::unique_ptr<Haplotype> ph0 (new Haplotype(chr, _impl->refsq.getFilename().c_str()));
-    Haplotype & h0(*ph0);
+    Haplotype h0(chr, _impl->refsq.getFilename().c_str());
     nodes[source].appendToHaplotype(h0);
-    std::string first_rp(h0.repr(start, end));
 
     std::bitset<MAX_GRAPHREFERENCE_NODES> initial_bitset;
     initial_bitset[0] = 1;
 
-    unique_haps.emplace(first_rp, std::move(ph0));
-    hapinfos.emplace(first_rp, initial_bitset.to_string().substr(MAX_GRAPHREFERENCE_NODES-nodes.size(), nodes.size()));
-
     // first branch point
-    branchpoint bp(source, adj[source].begin(), unique_haps.find(first_rp), initial_bitset);
-    hlist.push_back(bp);
+    hlist.push_back(branchpoint(source, adj[source].begin(), h0, initial_bitset, std::set<std::string>()));
 
-    while(!hlist.empty() && final_haps.size() < ((size_t)max_n_paths))
+    while(!hlist.empty() && target.size() < ((size_t)max_n_paths))
     {
         branchpoint & current(hlist.front());
 
@@ -539,15 +521,13 @@ void GraphReference::enumeratePaths(
             current.next_choice++;
 
             // copy unique haplotype to start from
-            std::unique_ptr<Haplotype> pht(new Haplotype(*(current.up_to_here->second)));
-            Haplotype & ht(*pht);
+            Haplotype ht(current.up_to_here);
             std::bitset<MAX_GRAPHREFERENCE_NODES> nodes_used(current.nodes_used);
             std::set<std::string> sequences_seen(current.sequences_seen);
 
 #ifdef _DEBUG_GRAPHREFERENCE
             std::cerr << "(Re)starting at bp " << current.bp_id << ": "
-                                               << current.up_to_here->first
-                                               << " / " << current.up_to_here->second->repr();
+                                               << current.up_to_here.repr();
 
             std::cerr << " sequences_seen: ";
             for (auto x : sequences_seen) {
@@ -626,26 +606,9 @@ void GraphReference::enumeratePaths(
                                          // or more than one choice: insert a haplotype block node if necessary
                                          // and link up to previous
                 {
-                    std::string ht_rp(ht.repr(start, end));
-                    unique_hap_map_t::iterator pos = unique_haps.find(ht_rp);
-                    if(pos == unique_haps.end())
-                    {
-                        // insert a copy
-                        std::unique_ptr<Haplotype> pht_copy(new Haplotype(ht));
-                        pos = unique_haps.emplace(ht_rp, std::move(pht_copy)).first;
-                        hapinfos.emplace(ht_rp, nodes_used.to_string().substr(MAX_GRAPHREFERENCE_NODES-nodes.size(), nodes.size()));
-#ifdef _DEBUG_GRAPHREFERENCE
-                        std::cerr << "Adding UHB " << ht_rp << "\n";
-                    }
-                    else
-                    {
-                        std::cerr << "UHB " << ht_rp << " already exists.\n";
-#endif
-                    }
                     if(nextone != sink && adj[nextone].size() > 1) // more than 1 choice => create branch point
                     {   // more than one choice: create branchpoint
-                        branchpoint bp(nextone, std::next(adj[nextone].begin()), pos, nodes_used);
-                        bp.sequences_seen.insert(sequences_seen.begin(), sequences_seen.end());
+                        branchpoint bp(nextone, std::next(adj[nextone].begin()), ht, nodes_used, sequences_seen);
                         bp.color = current_path_color;
                         hlist.push_back(bp);
 #ifdef _DEBUG_GRAPHREFERENCE
@@ -657,15 +620,27 @@ void GraphReference::enumeratePaths(
                         cont = false;
                         if(sink == (size_t)-1 || nextone == sink)
                         {
-                            final_haps.insert(ht_rp);
+                            // save all blocks with no out edges
+                            target.push_back(ht);
+                            if(nodes_used_vec != NULL)
+                            {
+                                nodes_used_vec->push_back(nodes_used.to_string()
+                                                              .substr(MAX_GRAPHREFERENCE_NODES-nodes.size(),
+                                                                      nodes.size()));
+                            }
 #ifdef _DEBUG_GRAPHREFERENCE
-                            std::cerr << "Finished path from BP " << current.bp_id << " at " << ht_rp << "\n";
+                            std::cerr << "Finished path from BP " << current.bp_id << " at " << target[target.size()-1].seq(start, end);
+                            if(nodes_used_vec)
+                            {
+                                std::cerr << " u: " << (*nodes_used_vec)[nodes_used_vec->size()-1];
+                            }
+                            std::cerr << "\n";
 #endif
                         }
                         else
                         {
 #ifdef _DEBUG_GRAPHREFERENCE
-                            std::cerr << "Finished path from BP" << current.bp_id << " at " << ht_rp << " (no sink)\n";
+                            std::cerr << "Finished path from BP" << current.bp_id << " at " << target[target.size()-1].seq(start, end) << " (no sink)\n";
 #endif
                         }
                         std::cerr << "------------------\n\n";
@@ -676,16 +651,6 @@ void GraphReference::enumeratePaths(
             }
         }
         hlist.pop_front();
-    }
-
-    for(std::string const & p : final_haps)
-    {
-        // save all blocks with no out edges
-        target.push_back(*(unique_haps[p]));
-        if(nodes_used_vec != NULL)
-        {
-            nodes_used_vec->push_back(hapinfos[p]);
-        }
     }
 
     // no final haps because all is homref?
