@@ -55,7 +55,7 @@
 #include <set>
 #include <bitset>
 
-/* #define _DEBUG_GRAPHREFERENCE */
+#define _DEBUG_GRAPHREFERENCE
 
 #ifndef MAX_GRAPHREFERENCE_NODES
 #define MAX_GRAPHREFERENCE_NODES 4096
@@ -479,7 +479,10 @@ void GraphReference::enumeratePaths(
 #ifdef _DEBUG_GRAPHREFERENCE
             , bp_id(bp_id_ctr++)
 #endif
-        {}
+        {
+            // insert at least the sequence of the haplotype up to here
+            sequences_seen.insert(up_to_here->first);
+        }
 
         size_t node;
         ReferenceNode::color_t color;
@@ -488,6 +491,9 @@ void GraphReference::enumeratePaths(
 
         // track the number of nodes we used
         std::bitset<MAX_GRAPHREFERENCE_NODES> nodes_used;
+
+        // HAP-147 track sequences we have seen already
+        std::set<std::string> sequences_seen;
 
 #ifdef _DEBUG_GRAPHREFERENCE
         int bp_id;
@@ -508,17 +514,16 @@ void GraphReference::enumeratePaths(
     std::unique_ptr<Haplotype> ph0 (new Haplotype(chr, _impl->refsq.getFilename().c_str()));
     Haplotype & h0(*ph0);
     nodes[source].appendToHaplotype(h0);
-    std::string current_rp(h0.repr(start, end));
-    std::string first_rp(current_rp);
+    std::string first_rp(h0.repr(start, end));
 
     std::bitset<MAX_GRAPHREFERENCE_NODES> initial_bitset;
     initial_bitset[0] = 1;
 
-    unique_haps.emplace(current_rp, std::move(ph0));
-    hapinfos.emplace(current_rp, initial_bitset.to_string().substr(MAX_GRAPHREFERENCE_NODES-nodes.size(), nodes.size()));
+    unique_haps.emplace(first_rp, std::move(ph0));
+    hapinfos.emplace(first_rp, initial_bitset.to_string().substr(MAX_GRAPHREFERENCE_NODES-nodes.size(), nodes.size()));
 
     // first branch point
-    branchpoint bp(source, adj[source].begin(), unique_haps.find(current_rp), initial_bitset);
+    branchpoint bp(source, adj[source].begin(), unique_haps.find(first_rp), initial_bitset);
     hlist.push_back(bp);
 
     while(!hlist.empty() && final_haps.size() < ((size_t)max_n_paths))
@@ -537,11 +542,19 @@ void GraphReference::enumeratePaths(
             std::unique_ptr<Haplotype> pht(new Haplotype(*(current.up_to_here->second)));
             Haplotype & ht(*pht);
             std::bitset<MAX_GRAPHREFERENCE_NODES> nodes_used(current.nodes_used);
+            std::set<std::string> sequences_seen(current.sequences_seen);
 
 #ifdef _DEBUG_GRAPHREFERENCE
             std::cerr << "(Re)starting at bp " << current.bp_id << ": "
                                                << current.up_to_here->first
-                                               << " / " << current.up_to_here->second->repr() << "\n";
+                                               << " / " << current.up_to_here->second->repr();
+
+            std::cerr << " sequences_seen: ";
+            for (auto x : sequences_seen) {
+                std::cerr << " " << x;
+            }
+
+            std::cerr << "\n";
 #endif
             bool cont = true;
             ReferenceNode::color_t current_path_color = current.color;
@@ -573,17 +586,40 @@ void GraphReference::enumeratePaths(
                     break;
                 }
 
+                nodes[nextone].appendToHaplotype(ht);
+
+                // HAP-147: check that we haven't appended a variant that brought us back
+                //          to a sequence we already observed (e.g. insert an A and then
+                //          delete it again). We assume that VCFs don't contain cases where
+                //          this is valid choice of paths.
+                std::string modified_rp = ht.seq(start, end);
+                if(nodes[nextone].type == ReferenceNode::alternative)
+                {
+                    if(sequences_seen.count(modified_rp))
+                    {
+#ifdef _DEBUG_GRAPHREFERENCE
+                        std::cerr << "Ignoring branch where we see the same sequence twice " << start << "-" << end << ": " << modified_rp << " seen: ";
+                        for (auto i : sequences_seen) {
+                            std::cerr << i << ", ";
+                        }
+                        std::cerr << "\n";
+#endif
+                        cont = false;
+                        break;
+                    }
+                    sequences_seen.insert(modified_rp);
+                }
+
+                //
                 // mark that we used this node on this path
                 nodes_used[nextone] = 1;
 
-                nodes[nextone].appendToHaplotype(ht);
                 // update path color
                 current_path_color = std::max(nodes[nextone].color, current_path_color);
 
 #ifdef _DEBUG_GRAPHREFERENCE
-                std::cerr << "Appending to HT, now: " << ht.repr() << "\n";
+                std::cerr << "Appending " << nodes[nextone] << " to HT, now: " << modified_rp << "\n";
 #endif
-                current_rp = h0.repr(start, end);
 
                 if(nextone == sink || adj[nextone].size() != 1)
                                          // end of path, Haplotype block is complete
@@ -609,6 +645,7 @@ void GraphReference::enumeratePaths(
                     if(nextone != sink && adj[nextone].size() > 1) // more than 1 choice => create branch point
                     {   // more than one choice: create branchpoint
                         branchpoint bp(nextone, std::next(adj[nextone].begin()), pos, nodes_used);
+                        bp.sequences_seen.insert(sequences_seen.begin(), sequences_seen.end());
                         bp.color = current_path_color;
                         hlist.push_back(bp);
 #ifdef _DEBUG_GRAPHREFERENCE
@@ -631,6 +668,7 @@ void GraphReference::enumeratePaths(
                             std::cerr << "Finished path from BP" << current.bp_id << " at " << ht_rp << " (no sink)\n";
 #endif
                         }
+                        std::cerr << "------------------\n\n";
                         break;
                     }
                 }
