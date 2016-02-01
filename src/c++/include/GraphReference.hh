@@ -94,9 +94,9 @@ public:
      * Graph traversal can be controlled by specifying a source and a sink (this will only enumerate paths starting at source
      * and optionally ending at sink), and by limiting the number of paths that are output.
      *
-     * Finally, each Haplotype block corresponds to traversing a set of nodes, which can be returned for each haplotype
-     * in the nodes_used vector. This is used in DiploidReference to find the pairs of haplotype blocks in a diploid setting
-     * (pairs of haplotypes that cover the whole graph).
+     * Finally, each Haplotype block corresponds to traversing or skipping a set of het nodes. The nodes_used
+     * vector gives a mask for each path which indicate which het nodes were used in its creation. n_hets will
+     * return the total number of het nodes (so nodes_used[*] will always be < 2^(*n_hets + 1))
      *
      */
     void enumeratePaths(
@@ -107,9 +107,10 @@ public:
         std::vector<ReferenceEdge> const & edges,
         std::vector<Haplotype> & target,
         size_t source=0,
-        int max_n_paths=-1,
         size_t sink=(size_t)-1,
-        std::vector<std::string> * nodes_used = NULL
+        int max_n_paths=-1,
+        std::vector<uint64_t> * nodes_used = NULL,
+        size_t * n_hets = NULL
     );
 
 private:

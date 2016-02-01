@@ -287,10 +287,10 @@ int main(int argc, char* argv[]) {
             std::vector<Haplotype> haps;
             std::ofstream fout(out_fasta.c_str());
 
-            gr.enumeratePaths(chr.c_str(), start, end, nodes, edges, haps, 0, max_n_haplotypes);
+            gr.enumeratePaths(chr.c_str(), start, end, nodes, edges, haps, 0, (size_t)-1, max_n_haplotypes);
 
             int i = 0;
-            for(Haplotype const & hap : haps)
+            for(auto const & hap : haps)
             {
                 fout << ">hap_" << i++ << ":" << stringutil::formatPos(chr, start, end)
                      << ":hb=" << stringutil::formatPos(hap.chr(), hap.start(), hap.end())

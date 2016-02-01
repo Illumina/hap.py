@@ -41,12 +41,14 @@
 #include <cstring>
 #include <cmath>
 #include <set>
+#include <bitset>
 #include <map>
+#include <unordered_map>
 
 #include "Error.hh"
 
 #ifdef _DEBUG
-/* #define _DEBUG_DIPLOIDREFERENCE */
+//#define _DEBUG_DIPLOIDREFERENCE
 #endif
 
 namespace haplotypes
@@ -184,12 +186,12 @@ void DiploidReference::setRegion(
         std::string refsq = _impl->gr.getRefFasta().query(chr, start, end);
 
         std::vector<Haplotype> target;
-        std::vector<std::string> nodes_used;
+        std::vector<uint64_t> nodes_used;
 
         _impl->gr.enumeratePaths(chr, start, end,
                           nodes, edges, target,
-                          0, _impl->max_n_paths, -1,
-                          &nodes_used);
+                          0, (size_t)-1, _impl->max_n_paths,
+                          &nodes_used, &nhets);
 
 #ifdef _DEBUG_DIPLOIDREFERENCE
         std::cerr << "Nodes: " << "\n";
@@ -206,107 +208,65 @@ void DiploidReference::setRegion(
         for (size_t i = 0; i < target.size(); ++i)
         {
             std::cerr << target[i].repr(start, end) << "\n";
-            std::cerr << "NU: " << nodes_used[i] << "\n";
+            std::cerr << "NU: " << std::bitset<64>(nodes_used[i]) << "\n";
         }
 #endif
-        std::list<size_t> het_nodes;
-        std::list<size_t> hom_nodes;
-        for(size_t n = 0; n < nodes.size(); ++n)
-        {
-            if (nodes[n].type == ReferenceNode::alternative)
-            {
-                if(   nodes[n].het
-                   || nodes[n].color == ReferenceNode::red
-                   || nodes[n].color == ReferenceNode::blue )
-                {
-                    het_nodes.push_back(n);
-                }
-                else if(!nodes[n].het)
-                {
-                    hom_nodes.push_back(n);
-                }
-            }
-        }
 
         // if we have het nodes, each pair of haplotypes must cover them all
-        if(het_nodes.size() != 0)
+        if(nhets != 0)
         {
-            if(_impl->max_n_paths > 0 && pow(2, het_nodes.size()) > _impl->max_n_paths)
-            {
-                error("Too many het nodes (%i) at %s:%i-%i", het_nodes.size(), chr, start, end);
-            }
+            std::unordered_map<uint64_t, size_t> nu_haps;
+            uint64_t nh_mask = 1;
+            nh_mask = (nh_mask << (int)(nhets)) - 1;
+
             for (size_t p1 = 0; p1 < nodes_used.size(); ++p1)
             {
-                for (size_t p2 = p1; p2 < nodes_used.size(); ++p2) // we allow matching up p1 with p1 to allow creation of hom blocks via filtered variants
+                nu_haps[nodes_used[p1]] = p1;
+            }
+
+            while(!nu_haps.empty())
+            {
+                size_t p1 = nu_haps.begin()->second;
+
+                auto opposite_path = nu_haps.find((~nodes_used[p1]) & nh_mask);
+                if(opposite_path != nu_haps.end() && opposite_path != nu_haps.begin())
                 {
-                    size_t hn_found = 0;
-                    for(size_t n : het_nodes)
-                    {
-                        if(nodes_used[p1][nodes.size() - 1 - n] + nodes_used[p2][nodes.size() - 1 - n] == '0' + '1')
-                        {
-                            ++hn_found;
-                        }
-#ifdef _DEBUG_DIPLOIDREFERENCE
-                        std::cerr << "n: " << n << " p1:" << p1 << "(" << nodes_used[p1][nodes.size() - 1 - n] << ")"
-                                  << " p2:" << p2 << "(" <<  nodes_used[p2][nodes.size() - 1 - n] << ")"
-                                  << "\n";
-#endif
-                    }
+                    size_t p2 = opposite_path->second;
 
-                    // make sure hom nodes are covered as hom
-                    bool hom_conflict = false;
-                    for(size_t n : hom_nodes)
+                    nu_haps.erase(nu_haps.begin());
+                    nu_haps.erase(opposite_path);
+
+                    DiploidRef r = {
+                        true,
+                        false,
+                        target[p1].seq(start, end),
+                        target[p2].seq(start, end),
+                        refsq
+                    };
+
+                    /** homref in the het case means that we have a het+homref call vs.
+                        a het+het call. the two sequences are different by design of the
+                        GraphReference::enumeratePaths function, so if one of them is
+                        equal to the reference, the other one shouldn't be.
+                     */
+                    if( (r.h1 == refsq || r.h2 == refsq) && r.h1 != r.h2)
                     {
-                        // hom variants must be present in every path
-                        if(nodes_used[p1][nodes.size() - 1 - n] != nodes_used[p2][nodes.size() - 1 - n] ||
-                           nodes_used[p2][nodes.size() - 1 - n] != '1')
-                        {
-                            hom_conflict = true;
-                        }
+                        r.homref = true;
                     }
 
 #ifdef _DEBUG_DIPLOIDREFERENCE
-                    std::cerr << "p1: " << p1 << "/" << nodes_used[p1] << " "
-                              << "p2: " << p2 << "/" << nodes_used[p2] << " "
-                              << "\n";
-
-                    std::cerr << " -- found: " << hn_found << " hns: " << het_nodes.size()
-                              << " hom_conflict: " << hom_conflict << "\n";
+                    std::cerr << "Found pair: " << r.h1 << ":" << r.h2 << " - homref: " << r.homref << " het : " << r.het << "\n";
 #endif
-                    // covering all hets?
-                    if(hn_found == het_nodes.size() && !hom_conflict)
-                    {
-                        DiploidRef r = {
-                            p1 != p2,
-                            false,
-                            target[p1].seq(start, end),
-                            target[p2].seq(start, end),
-                            refsq
-                        };
-
-                        /** homref in the het case means that we have a het+homref call vs.
-                            a het+het call. the two sequences are different by design of the
-                            GraphReference::enumeratePaths function, so if one of them is
-                            equal to the reference, the other one shouldn't be.
-                         */
-                        if(r.h1 == refsq || r.h2 == refsq)
-                        {
-                            r.homref = true;
-                            if((hom_nodes.size() > 0 || het_nodes.size() > 0) && r.h1 == r.h2)
-                            {
-#ifdef _DEBUG_DIPLOIDREFERENCE
-                                std::cerr << "Invalid hom-ref pair -- ALT alleles must generate at least one non-ref sequence" << std::endl;
-#endif
-                                continue;
-                            }
-                        }
-
-#ifdef _DEBUG_DIPLOIDREFERENCE
-                        std::cerr << "Found pair: " << r.h1 << ":" << r.h2 << " - homref: " << r.homref << " het : " << r.het << "\n";
-#endif
-                        _impl->di_haps.push_back(r);
-                    }
+                    _impl->di_haps.push_back(r);
                 }
+#ifdef _DEBUG_DIPLOIDREFERENCE
+                else
+                {
+                    std::cerr << "het path " << nodes_used[p1] << " does not have corresponding opposite path at " <<
+                                 chr << ":" << start << "-" << end << std::endl;
+                    nu_haps.erase(nu_haps.begin());
+                }
+#endif
             }
         }
         else
