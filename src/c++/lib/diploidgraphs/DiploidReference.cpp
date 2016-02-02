@@ -259,14 +259,14 @@ void DiploidReference::setRegion(
 #endif
                     _impl->di_haps.push_back(r);
                 }
-#ifdef _DEBUG_DIPLOIDREFERENCE
                 else
                 {
+#ifdef _DEBUG_DIPLOIDREFERENCE
                     std::cerr << "het path " << nodes_used[p1] << " does not have corresponding opposite path at " <<
                                  chr << ":" << start << "-" << end << std::endl;
+#endif
                     nu_haps.erase(nu_haps.begin());
                 }
-#endif
             }
         }
         else
