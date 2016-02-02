@@ -614,8 +614,10 @@ void GraphReference::enumeratePaths(
                 //          to a sequence we already observed (e.g. insert an A and then
                 //          delete it again). We assume that VCFs don't contain cases where
                 //          this is valid choice of paths.
+                // Note we only need to do this if we already used het variants. Otherwise,
+                // we don't really have a choice and need to produce the same sequence twice.
                 std::string modified_rp = ht.seq(start, end);
-                if(nodes[nextone].type == ReferenceNode::alternative)
+                if(nodes[nextone].type == ReferenceNode::alternative && nodes_used != 0)
                 {
                     if(sequences_seen.count(modified_rp))
                     {
@@ -703,7 +705,7 @@ void GraphReference::enumeratePaths(
     }
 
     // no final haps because all is homref?
-    if(target.empty())
+    if(target.empty() && hets == 0 && homs == 0)
     {
         target.push_back(Haplotype(chr, _impl->refsq.getFilename().c_str()));
 
@@ -711,6 +713,11 @@ void GraphReference::enumeratePaths(
         {
             nodes_used_vec->push_back(0);
         }
+    }
+
+    if(target.empty())
+    {
+        error("Failed to create any haplotype sequences from variants at %s:%i-%i", chr, start, end);
     }
 }
 
