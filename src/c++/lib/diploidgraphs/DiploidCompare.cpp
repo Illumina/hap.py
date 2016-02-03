@@ -48,7 +48,7 @@
 
 #include "Error.hh"
 
-/* #define DEBUG_DIPLOIDCOMPARE */
+//#define DEBUG_DIPLOIDCOMPARE
 
 namespace haplotypes
 {

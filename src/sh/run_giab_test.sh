@@ -50,7 +50,7 @@ fi
 
 ${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.summary.csv ${DIR}/../../example/NIST_indels/expected.summary.21.csv
 if [[ $? != 0 ]]; then
-	echo "summary differs! -- diff ${DIR}/compare_summaries.py ${TMP_OUT}.summary.csv ${DIR}/../../example/NIST_indels/expected.summary.21.csv"
+	echo "summary differs! -- diff ${TMP_OUT}.summary.csv ${DIR}/../../example/NIST_indels/expected.summary.21.csv"
 	exit 1
 fi
 
@@ -77,7 +77,7 @@ fi
 
 ${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.summary.csv ${DIR}/../../example/NIST_indels/expected.summary.1.csv
 if [[ $? != 0 ]]; then
-	echo "summary differs! -- diff ${DIR}/compare_summaries.py ${TMP_OUT}.summary.csv ${DIR}/../../example/NIST_indels/expected.summary.1.csv"
+	echo "summary differs! -- diff ${TMP_OUT}.summary.csv ${DIR}/../../example/NIST_indels/expected.summary.1.csv"
 	exit 1
 fi
 

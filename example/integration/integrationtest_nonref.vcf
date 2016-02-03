@@ -1,0 +1,9 @@
+##fileformat=VCFv4.1
+##FILTER=<ID=PASS,Description="All	filters	passed">
+##reference=hg38
+##contig=<ID=chr1,length=249250621>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA12878
+chr1	54935127	.	TAA	T	0	.	.	GT	0/1
+chr1	54935129	.	TA	TAAA	0	.	.	GT	0/1
+chr1	61235463	.	AAAAT	A	0	.	.	GT	0/1
+chr1	61235467	.	T	TAAAT	0	.	.	GT	0/1

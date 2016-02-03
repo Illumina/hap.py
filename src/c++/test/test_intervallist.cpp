@@ -199,6 +199,40 @@ BOOST_AUTO_TEST_CASE(testIntervalList2)
     listcmp(expected, actual);
 }
 
+BOOST_AUTO_TEST_CASE(testIntervalList3)
+{
+    struct ivlist : public interval
+    {
+        ivlist() : interval() {}
+        ivlist(int64_t _start, int64_t _end) : interval(_start, _end) {
+            contained_ivs.push_back(std::pair<int64_t, int64_t>(_start, _end));
+        }
+        virtual void merge(interval const & rhs)
+        {
+            contained_ivs.insert(contained_ivs.end(),
+                                 (dynamic_cast<ivlist const &>(rhs)).contained_ivs.begin(),
+                                 (dynamic_cast<ivlist const &>(rhs)).contained_ivs.end());
+            interval::merge(rhs);
+        }
+
+        std::list< std::pair<int64_t, int64_t> > contained_ivs;
+    };
+
+    IntervalList<ivlist> ivl;
+
+    ivl.add(ivlist(2, 4));
+    ivl.add(ivlist(6, 7));
+
+    std::list<std::pair<int64_t, int64_t> > expected, actual;
+
+    expected = {
+        std::pair<int64_t, int64_t>{2, 4},
+        std::pair<int64_t, int64_t>{6, 7}
+    };
+    actual = ivl.query(0, 10).contained_ivs;
+    listcmp(expected, actual);
+}
+
 BOOST_AUTO_TEST_CASE(testIntervalListRandom)
 {
     static const int count = 2048;
