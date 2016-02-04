@@ -87,6 +87,19 @@ else
 fi
 
 ##############################################################
+# Test Hap.py + path traversals
+##############################################################
+
+/bin/bash ${DIR}/run_pathtraversal_test.sh
+
+if [[ $? -ne 0 ]]; then
+	echo "Path traversal test FAILED!"
+	exit 1
+else
+	echo "Path traversal test SUCCEEDED!"
+fi
+
+##############################################################
 # Test PG Counting
 ##############################################################
 
