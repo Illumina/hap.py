@@ -14,11 +14,11 @@ TMP_OUT=`mktemp -t happy.XXXXXXXXXX`
 
 # run hap.py
 ${PYTHON} ${HCDIR}/hap.py \
-			 	${DIR}/../data/pathtraversal/test.vcf \
-			 	${DIR}/../data/pathtraversal/test2.vcf \
-			 	-o ${TMP_OUT} -P \
-			 	-X --reference ${DIR}/../data/pathtraversal/test.fa -l chrQ \
-			 	--force-interactive
+				${DIR}/../data/pathtraversal/test.vcf \
+				${DIR}/../data/pathtraversal/test2.vcf \
+				-o ${TMP_OUT} -P \
+				-X --reference ${DIR}/../data/pathtraversal/test.fa -l chrQ \
+				--force-interactive
 
 if [[ $? != 0 ]]; then
 	echo "hap.py failed!"
