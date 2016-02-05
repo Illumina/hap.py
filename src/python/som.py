@@ -31,6 +31,7 @@ import traceback
 import tempfile
 import shutil
 import pandas
+import numpy as np
 import gzip
 import json
 from collections import Counter
@@ -44,6 +45,7 @@ from Tools.bamstats import bamStats
 from Tools.bedintervaltree import BedIntervalTree
 from Tools.roc import ROC
 from Tools.metric import makeMetricsObject, dataframeToMetricsTable
+from Tools.fastasize import fastaContigSizes, calculateLength
 import Somatic
 
 
@@ -636,13 +638,18 @@ def main():
         res["na"] = res["unk"] / (res["total.query"])
         res["ambiguous"] = res["ambi"] / res["total.query"]
 
+
+
         if args.count_filtered_fn:
             res["recall.filtered"] = (res["tp"] - res["tp.filtered"]) / (res["tp"] + res["fn"])
+
             res["precision.filtered"] = (res["tp"] - res["tp.filtered"]) / (res["tp"] - res["tp.filtered"] +
                                                                             res["fp"] - res["fp.filtered"])
+
             res["na.filtered"] = (res["unk"] - res["unk.filtered"]) / (res["total.query"])
             res["ambiguous.filtered"] = (res["ambi"] - res["ambi.filtered"]) / res["total.query"]
 
+        res.replace([np.inf, -np.inf], 0)
         metrics_output["metrics"].append(dataframeToMetricsTable("result", res))
         vstring = "som.py-%s" % Tools.version
 
