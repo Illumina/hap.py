@@ -50,7 +50,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	-l chr21 \
 			 	${DIR}/../../example/integration/integrationtest_empty.vcf \
 			 	${DIR}/../../example/integration/integrationtest_rhs.vcf.gz \
-			 	-o ${TMP_OUT}.e1 -P \
+			 	-o ${TMP_OUT}.e0 -P \
 			 	-V -B -X \
 			 	--force-interactive
 
@@ -63,7 +63,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	-l chr21 \
 			 	${DIR}/../../example/integration/integrationtest_lhs.vcf.gz \
 			 	${DIR}/../../example/integration/integrationtest_empty.vcf \
-			 	-o ${TMP_OUT}.e2 -P \
+			 	-o ${TMP_OUT}.e1 -P \
 			 	-V -B -X \
 			 	--force-interactive
 
