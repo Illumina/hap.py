@@ -175,22 +175,11 @@ def simplify_counts(counts, snames=None):
             logging.warn("Ignoring invalid key %s" % k1)
             continue
 
-        isExtraCount = False
-
         for k2, v2 in v.iteritems():
-            ct = ''
-            vt = ''
+            # k2 is created in quantify.cpp, observation type, then allele types separated by __
+            ct, _, vt = k2.partition("__")
 
-            if (k2 in ['Transitions', 'Transversions']):
-                isExtraCount = True
-                altype = "SNP"
-            else:
-                # k2 is created in quantify.cpp, observation type, then allele types separated by __
-                ct, _, vt = k2.partition("__")
-            
-            if (isExtraCount):
-                keys1 = ['Locations.SNP.' + k2]
-            elif ct == "nuc":
+            if ct == "nuc":
                 if vt == "s":
                     altype = "SNP"
                 elif vt == "i":
@@ -211,18 +200,24 @@ def simplify_counts(counts, snames=None):
                     altype = "COMPLEX"
                 keys1 = ["Alleles", "Alleles." + altype]
             elif not (vt == "nc" or ct == "homref" or vt == "r"):  # ignore non-called locations in a sample
-                if vt == "s" or vt == "rs":
-                    altype = "SNP"
+                # process locations
+                if ct in ["Transitions", "Transversions"]:
+                    # these are additional counts. Every SNP we see in
+                    # here is also seen separately below.
+                    keys1 = ["Locations.SNP." + ct]
                 else:
-                    altype = "INDEL"
-                xkeys1 = ["Locations", "Locations." + altype]
-                if vt != "s":
-                    xkeys1.append("Locations.detailed." + vt)
+                    if vt == "s" or vt == "rs":
+                        altype = "SNP"
+                    else:
+                        altype = "INDEL"
+                    xkeys1 = ["Locations", "Locations." + altype]
+                    if vt != "s":
+                        xkeys1.append("Locations.detailed." + vt)
 
-                keys1 = copy.copy(xkeys1)
-                for k in xkeys1:
-                    if k != "Locations":
-                        keys1.append(k + "." + ct)
+                    keys1 = copy.copy(xkeys1)
+                    for k in xkeys1:
+                        if k != "Locations":
+                            keys1.append(k + "." + ct)
             elif vt == "nc" or ct == "homref" or vt == "r":
                 if vt == "nc":
                     keys1 = ["Records.nocall"]

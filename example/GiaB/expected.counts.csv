@@ -1,6 +1,4 @@
 ,TP:hapmatch__FN__missing::QUERY,TP:hapmatch__FN__missing::TRUTH,TP:hapmatch__FP__almismatch::QUERY,TP:hapmatch__FP__almismatch::TRUTH,TP:hapmatch__FP__missing::QUERY,TP:hapmatch__FP__missing::TRUTH,TP:match::QUERY,TP:match::TRUTH,all:QUERY,all:TRUTH
-Transitions,0.0,0.0,0.0,0.0,0.0,0.0,2.0,2.0,2,2
-Transversions,0.0,0.0,0.0,0.0,2.0,0.0,1.0,1.0,3,1
 al__d,,3.0,1.0,1.0,2.0,,4.0,4.0,7,8
 al__i,,2.0,2.0,2.0,1.0,,1.0,1.0,4,5
 al__s,,,,,2.0,,3.0,3.0,5,3
