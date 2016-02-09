@@ -1,8 +1,12 @@
 {
     "FN:missing::QUERY": {
+        "Transitions": 0,
+        "Transversions": 0,
         "nocall__nc": 68
     },
     "FN:missing::TRUTH": {
+        "Transitions": 4,
+        "Transversions": 8,
         "al__d": 27,
         "al__i": 29,
         "al__s": 12,
@@ -17,9 +21,13 @@
         "nuc__s": 12
     },
     "FN:missing:CONF:QUERY": {
+        "Transitions": 0,
+        "Transversions": 0,
         "nocall__nc": 103
     },
     "FN:missing:CONF:TRUTH": {
+        "Transitions": 3,
+        "Transversions": 5,
         "al__d": 47,
         "al__i": 49,
         "al__s": 8,
@@ -35,6 +43,8 @@
         "nuc__s": 8
     },
     "FP:almismatch::QUERY": {
+        "Transitions": 0,
+        "Transversions": 1,
         "al__d": 1,
         "al__i": 2,
         "al__s": 1,
@@ -47,6 +57,8 @@
         "nuc__s": 1
     },
     "FP:almismatch::TRUTH": {
+        "Transitions": 0,
+        "Transversions": 1,
         "al__i": 4,
         "al__s": 1,
         "het__ri": 1,
@@ -57,16 +69,22 @@
         "nuc__s": 1
     },
     "FP:almismatch:CONF:QUERY": {
+        "Transitions": 0,
+        "Transversions": 1,
         "al__s": 1,
         "het__rs": 1,
         "nuc__s": 1
     },
     "FP:almismatch:CONF:TRUTH": {
+        "Transitions": 1,
+        "Transversions": 0,
         "al__s": 1,
         "het__rs": 1,
         "nuc__s": 1
     },
     "FP:alpartial:CONF:QUERY": {
+        "Transitions": 3,
+        "Transversions": 3,
         "al__i": 1,
         "al__s": 6,
         "het__ri": 1,
@@ -75,6 +93,8 @@
         "nuc__s": 6
     },
     "FP:alpartial:CONF:TRUTH": {
+        "Transitions": 2,
+        "Transversions": 1,
         "al__i": 2,
         "al__s": 3,
         "hetalt__i": 1,
@@ -83,6 +103,8 @@
         "nuc__s": 3
     },
     "FP:gtmismatch::QUERY": {
+        "Transitions": 9,
+        "Transversions": 5,
         "al__d": 4,
         "al__i": 2,
         "al__s": 14,
@@ -95,6 +117,8 @@
         "nuc__s": 14
     },
     "FP:gtmismatch::TRUTH": {
+        "Transitions": 9,
+        "Transversions": 5,
         "al__d": 4,
         "al__i": 2,
         "al__s": 14,
@@ -107,16 +131,22 @@
         "nuc__s": 14
     },
     "FP:gtmismatch:CONF:QUERY": {
+        "Transitions": 8,
+        "Transversions": 2,
         "al__s": 10,
         "het__rs": 10,
         "nuc__s": 10
     },
     "FP:gtmismatch:CONF:TRUTH": {
+        "Transitions": 8,
+        "Transversions": 2,
         "al__s": 10,
         "homalt__s": 10,
         "nuc__s": 10
     },
     "FP:missing:CONF:QUERY": {
+        "Transitions": 322,
+        "Transversions": 304,
         "al__d": 17,
         "al__i": 16,
         "al__s": 626,
@@ -132,10 +162,14 @@
         "nuc__s": 626
     },
     "FP:missing:CONF:TRUTH": {
+        "Transitions": 0,
+        "Transversions": 0,
         "homref__r": 1,
         "nocall__nc": 657
     },
     "TP:match::QUERY": {
+        "Transitions": 52,
+        "Transversions": 42,
         "al__d": 38,
         "al__i": 28,
         "al__s": 94,
@@ -151,6 +185,8 @@
         "nuc__s": 94
     },
     "TP:match::TRUTH": {
+        "Transitions": 52,
+        "Transversions": 42,
         "al__d": 38,
         "al__i": 28,
         "al__s": 94,
@@ -166,6 +202,8 @@
         "nuc__s": 94
     },
     "TP:match:CONF:QUERY": {
+        "Transitions": 2524,
+        "Transversions": 966,
         "al__d": 199,
         "al__i": 182,
         "al__s": 3490,
@@ -182,6 +220,8 @@
         "nuc__s": 3490
     },
     "TP:match:CONF:TRUTH": {
+        "Transitions": 2524,
+        "Transversions": 966,
         "al__d": 199,
         "al__i": 182,
         "al__s": 3490,
@@ -198,6 +238,8 @@
         "nuc__s": 3490
     },
     "UNK:missing::QUERY": {
+        "Transitions": 2478,
+        "Transversions": 2188,
         "al__d": 85,
         "al__i": 76,
         "al__s": 4666,
@@ -215,9 +257,13 @@
         "nuc__s": 4666
     },
     "UNK:missing::TRUTH": {
+        "Transitions": 0,
+        "Transversions": 0,
         "nocall__nc": 4809
     },
     "all:QUERY": {
+        "Transitions": 5396,
+        "Transversions": 3512,
         "al__d": 344,
         "al__i": 307,
         "al__s": 8908,
@@ -236,6 +282,8 @@
         "nuc__s": 8908
     },
     "all:TRUTH": {
+        "Transitions": 2603,
+        "Transversions": 1030,
         "al__d": 315,
         "al__i": 296,
         "al__s": 3633,
