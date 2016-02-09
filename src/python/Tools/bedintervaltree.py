@@ -23,6 +23,7 @@ class BedIntervalTree(object):
         def mkzero():
             return int(0)
         self.count_by_label = defaultdict(mkzero)
+        self.nt_count_by_label = defaultdict(mkzero)
 
     def __str__(self):
         return str(self.intCount) + ' intervals'
@@ -44,6 +45,7 @@ class BedIntervalTree(object):
         currInt = Interval(start, end, value=lbl, chrom=chrom)
         self.tree[chrom].add_interval(currInt)
         self.count_by_label[label] += 1
+        self.nt_count_by_label[label] += end - start
         self.intCount += 1
 
     def intersect(self, chrom, start, end):
@@ -58,6 +60,29 @@ class BedIntervalTree(object):
 
         """
         return self.tree[chrom].find(start, end)
+
+    def countbases(self, chrom=None, start=0, end=0, label=None):
+        """ Return the number of bases covered by intervals in chr:[start,end)
+        :param chrom: Chromosome
+        :param start: start (1-based)
+        :param end: end
+        :param label: label
+        :rtype: int
+
+        Intervals have a value associated, this value is an array -- the first column will be
+        the label, followed by the bed columns
+
+        """
+        if not chrom and label:
+            return self.nt_count_by_label[label]
+        elif not chrom and not label:
+            return sum([self.nt_count_by_label[x] for x in self.nt_count_by_label.keys()])
+
+        total_length = 0
+        for x in self.tree[chrom].find(start, end):
+            if not label or x.value == label:
+                total_length += x.end - x.start
+        return total_length
 
     def count(self, label=None):
         """ Return number of records per label
@@ -108,4 +133,3 @@ class BedIntervalTree(object):
             label = labeller(fields)
 
             self._addEntryToTree(fields, label)
-
