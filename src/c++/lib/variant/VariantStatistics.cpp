@@ -112,8 +112,10 @@ static const int VS_COUNTS = 256;
 
 struct VariantStatisticsImpl
 {
-    VariantStatisticsImpl(const char * ref_fasta, bool _count_homref) : ref(ref_fasta), count_homref(_count_homref),
-        alignment(makeAlignment("klibg"))
+    VariantStatisticsImpl(const char * ref_fasta, bool _count_homref) :
+        ref(ref_fasta), count_homref(_count_homref),
+        alignment(makeAlignment("klibg")),
+        myNumTransitions(0), myNumTransversions(0)
     {
         memset(counts, 0, sizeof(size_t)*VS_COUNTS);
         memset(rtypes, 0, sizeof(int)*VS_COUNTS);
@@ -131,6 +133,9 @@ struct VariantStatisticsImpl
         nrtypes = rhs.nrtypes;
         memcpy(rtypes, rhs.rtypes, sizeof(int)*256);
         rtype_bs = rhs.rtype_bs;
+
+        myNumTransitions = rhs.myNumTransitions;
+        myNumTransversions = rhs.myNumTransversions;
     }
 
     /** translate count key to name */
@@ -159,6 +164,11 @@ struct VariantStatisticsImpl
         return 0;
     }
 
+    void addExtras(const VariantStatisticsImpl& rhs) {
+        myNumTransitions += rhs.myNumTransitions;
+        myNumTransversions += rhs.myNumTransversions;
+    }
+
     /** add single allele */
     int add_al(const char * chr, RefVar const & rhs)
     {
@@ -167,10 +177,11 @@ struct VariantStatisticsImpl
         size_t total_ins = 0;
         size_t total_hom = 0;
         realignRefVar(ref, chr, rhs, alignment.get(),
-                total_snp,
-                total_ins,
-                total_del,
-                total_hom);
+                      total_snp,
+                      total_ins,
+                      total_del,
+                      total_hom,
+                      myNumTransitions, myNumTransversions);
 
         // count nucleotides
         count( CT_NUCLEOTIDES | VT_SNP, total_snp );
@@ -208,6 +219,34 @@ struct VariantStatisticsImpl
         rtype_bs.reset();
     }
 
+    void getExtraCountNames(StrVec& extraCountNames) {
+        extraCountNames = { ourTransitionsName, ourTransversionsName };
+    }
+
+    size_t extraCount(const std::string& extraCountName)
+    {
+        if (extraCountName == ourTransitionsName) {
+            return myNumTransitions;
+        } else if (extraCountName == ourTransversionsName) {
+            return myNumTransversions;
+        }
+
+        error((std::string("Trying to read unknown extra statistic: ")
+               + extraCountName).c_str());
+        return 0;
+    }
+
+    void setExtraCount(const std::string& extraCountName, size_t count) {
+        if (extraCountName == ourTransitionsName) {
+            myNumTransitions = count;
+        } else if (extraCountName == ourTransversionsName) {
+            myNumTransversions = count;
+        }
+
+        error((std::string("Try to set unknown extra statistic: ")
+               + extraCountName).c_str());
+    }
+
     int rtypes[256];
     int nrtypes;
     std::bitset<256> rtype_bs;
@@ -215,7 +254,17 @@ struct VariantStatisticsImpl
     FastaFile ref;
     bool count_homref;
     std::unique_ptr<Alignment> alignment;
+
+    static const std::string ourTransitionsName;
+    static const std::string ourTransversionsName;
+
+    size_t myNumTransitions;
+    size_t myNumTransversions;
 };
+
+const std::string VariantStatisticsImpl::ourTransitionsName("Transitions");
+const std::string VariantStatisticsImpl::ourTransversionsName("Transversions");
+
 
 VariantStatistics::VariantStatistics(const char * ref_fasta, bool count_homref)
 {
@@ -256,6 +305,15 @@ void VariantStatistics::read(Json::Value const & root)
             _impl->counts[i] = 0;
         }
     }
+
+    StrVec extraCountNames;
+    _impl->getExtraCountNames(extraCountNames);
+
+    for (const std::string& extraCountName : extraCountNames) {
+        const size_t count(root.isMember(extraCountName)
+                           ? root[extraCountName].asUInt64() : 0);
+        _impl->setExtraCount(extraCountName, count);
+    }
 }
 
 Json::Value VariantStatistics::write()
@@ -268,6 +326,15 @@ Json::Value VariantStatistics::write()
             root[VariantStatisticsImpl::c2n(i)] = Json::Value::UInt64(_impl->counts[i]);
         }
     }
+
+    StrVec extraCountNames;
+    _impl->getExtraCountNames(extraCountNames);
+
+    for (const std::string& extraCountName : extraCountNames) {
+        root[extraCountName]
+            = Json::Value::UInt64(_impl->extraCount(extraCountName));
+    }
+
 #ifdef DEBUG_VARIANTSTATISTICS
     Json::StyledWriter sw;
     std::cerr << sw.write(root) << std::endl;
@@ -284,6 +351,8 @@ void VariantStatistics::add(VariantStatistics const & rhs)
     {
         _impl->counts[i] += rhs._impl->counts[i];
     }
+
+    _impl->addExtras(*(rhs._impl));
 }
 
 void VariantStatistics::add(Variants const & rhs, int sample, int ** rtypes, int * nrtypes)
@@ -366,6 +435,16 @@ std::string VariantStatistics::type2string(int type)
 int VariantStatistics::string2type(const char * str)
 {
     return VariantStatisticsImpl::n2c(str);
+}
+
+void VariantStatistics::getExtraCountNames(StrVec& extraCountNames)
+{
+    return _impl->getExtraCountNames(extraCountNames);
+}
+
+size_t VariantStatistics::extraCount(const std::string& extraCountName)
+{
+    return _impl->extraCount(extraCountName);
 }
 
 }

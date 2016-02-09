@@ -200,18 +200,24 @@ def simplify_counts(counts, snames=None):
                     altype = "COMPLEX"
                 keys1 = ["Alleles", "Alleles." + altype]
             elif not (vt == "nc" or ct == "homref" or vt == "r"):  # ignore non-called locations in a sample
-                if vt == "s" or vt == "rs":
-                    altype = "SNP"
+                # process locations
+                if ct in ["Transitions", "Transversions"]:
+                    # these are additional counts. Every SNP we see in
+                    # here is also seen separately below.
+                    keys1 = ["Locations.SNP." + ct]
                 else:
-                    altype = "INDEL"
-                xkeys1 = ["Locations", "Locations." + altype]
-                if vt != "s":
-                    xkeys1.append("Locations.detailed." + vt)
+                    if vt == "s" or vt == "rs":
+                        altype = "SNP"
+                    else:
+                        altype = "INDEL"
+                    xkeys1 = ["Locations", "Locations." + altype]
+                    if vt != "s":
+                        xkeys1.append("Locations.detailed." + vt)
 
-                keys1 = copy.copy(xkeys1)
-                for k in xkeys1:
-                    if k != "Locations":
-                        keys1.append(k + "." + ct)
+                    keys1 = copy.copy(xkeys1)
+                    for k in xkeys1:
+                        if k != "Locations":
+                            keys1.append(k + "." + ct)
             elif vt == "nc" or ct == "homref" or vt == "r":
                 if vt == "nc":
                     keys1 = ["Records.nocall"]
@@ -225,6 +231,7 @@ def simplify_counts(counts, snames=None):
             for key1 in keys1:
                 if key1 not in simplified_numbers:
                     simplified_numbers[key1] = copy.copy(counter_dict)
+
                 for key2 in keys2:
                     try:
                         simplified_numbers[key1][key2] += v2
@@ -255,5 +262,21 @@ def simplify_counts(counts, snames=None):
                 if homalt_count != 0:
                     simplified_numbers[vt][sample + "." + ct + ".het_hom_ratio"] = float(het_count) / float(homalt_count)
                     simplified_numbers[vt][sample + "." + ct + ".hethetalt_hom_ratio"] = float(het_count + hetalt_count) / float(homalt_count)
+
+                if vt == "Locations.SNP":
+                    ti_count = 0
+                    try:
+                        ti_count = simplified_numbers[vt + ".Transitions"][sample + "." + ct]
+                    except:
+                        pass
+
+                    tv_count = 0
+                    try:
+                        tv_count = simplified_numbers[vt + ".Transversions"][sample + "." + ct]
+                    except:
+                        pass
+
+                    if tv_count > 0:
+                        simplified_numbers[vt][sample + "." + ct + ".TiTv_ratio"] = float(ti_count) / float(tv_count)
 
     return simplified_numbers

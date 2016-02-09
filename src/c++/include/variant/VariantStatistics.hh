@@ -41,9 +41,11 @@
 
 #include <json/json.h>
 #include <list>
+#include <vector>
 
 namespace variant
 {
+typedef std::vector<std::string> StrVec;
 
 struct VariantStatisticsImpl;
 class VariantStatistics
@@ -73,6 +75,9 @@ public:
 
     /** resolve types to strings */
     static int string2type(const char * str);
+
+    void getExtraCountNames(StrVec& extraCountNames);
+    size_t extraCount(const std::string& extraCountName);
 private:
     VariantStatisticsImpl * _impl;
 };
