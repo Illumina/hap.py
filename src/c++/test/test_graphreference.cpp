@@ -50,6 +50,7 @@
 #include <iostream>
 #include <vector>
 #include <set>
+#include <bitset>
 
 using namespace variant;
 using namespace haplotypes;
@@ -140,7 +141,15 @@ struct GraphReferenceTester
         size_t sink=(size_t)-1,
         std::vector<std::string> * nodes_used = NULL
     ) {
-        gr.enumeratePaths(chr, start, end, nodes, edges, target, source, max_n_paths, sink, nodes_used);
+        std::vector<uint64_t> unodes_used;
+        gr.enumeratePaths(chr, start, end, nodes, edges, target, source, sink, max_n_paths, &unodes_used);
+        if(nodes_used)
+        {
+            for(auto n : unodes_used)
+            {
+                nodes_used->push_back(std::bitset<64>(n).to_string());
+            }
+        }
     }
 
     GraphReference gr;
@@ -308,20 +317,27 @@ BOOST_AUTO_TEST_CASE(graphNodesUsed)
     gr.enumeratePaths("chrQ", 0, 24, nodes, edges, target, 0, -1, -1, &nodes_used);
 
     std::set<std::string> expected;
-
-    expected.insert("chrQ:1-20:CCGGGAAACCCTAACCCGGC:101010101011101");
-    expected.insert("chrQ:1-20:CCGGGAAACTTGAACCCGGT:110101010011101");
-    expected.insert("chrQ:1-20:CCGGGAAAGCCTAACCCGGC:101010101101101");
-    expected.insert("chrQ:1-20:CCGGGAAAGTTGAACCCGGT:110101010101101");
-    expected.insert("chrQ:6-20:GGGAAACCCTAACCCGGC:101010101011011");
-    expected.insert("chrQ:6-20:GGGAAACTTGAACCCGGT:110101010011011");
-    expected.insert("chrQ:6-20:GGGAAAGCCTAACCCGGC:101010101101011");
-    expected.insert("chrQ:6-20:GGGAAAGTTGAACCCGGT:110101010101011");
+    // "chrQ:1-20:CCGGGAAACCCTAACCCGGC:101010101011101"
+    expected.insert("chrQ:1-20:CCGGGAAACCCTAACCCGGC:0000000000000000000000000000000000000000000000000000000001010001");
+    // "chrQ:1-20:CCGGGAAACTTGAACCCGGT:110101010011101"
+    expected.insert("chrQ:1-20:CCGGGAAACTTGAACCCGGT:0000000000000000000000000000000000000000000000000000000010101101");
+    // "chrQ:1-20:CCGGGAAAGCCTAACCCGGC:101010101101101"
+    expected.insert("chrQ:1-20:CCGGGAAAGCCTAACCCGGC:0000000000000000000000000000000000000000000000000000000001010011");
+    // "chrQ:1-20:CCGGGAAAGTTGAACCCGGT:110101010101101"
+    expected.insert("chrQ:1-20:CCGGGAAAGTTGAACCCGGT:0000000000000000000000000000000000000000000000000000000010101111");
+    // "chrQ:6-20:GGGAAACCCTAACCCGGC:101010101011011"
+    expected.insert("chrQ:6-20:GGGAAACCCTAACCCGGC:0000000000000000000000000000000000000000000000000000000001010000");
+    // "chrQ:6-20:GGGAAACTTGAACCCGGT:110101010011011"
+    expected.insert("chrQ:6-20:GGGAAACTTGAACCCGGT:0000000000000000000000000000000000000000000000000000000010101100");
+    // "chrQ:6-20:GGGAAAGCCTAACCCGGC:101010101101011"
+    expected.insert("chrQ:6-20:GGGAAAGCCTAACCCGGC:0000000000000000000000000000000000000000000000000000000001010010");
+    // "chrQ:6-20:GGGAAAGTTGAACCCGGT:110101010101011"
+    expected.insert("chrQ:6-20:GGGAAAGTTGAACCCGGT:0000000000000000000000000000000000000000000000000000000010101110");
 
     size_t is = 0;
     for(std::string const & s : nodes_used)
     {
-        /* std::cerr << target[is].repr() + ":" + s << "\n"; */
+//        std::cerr << target[is].repr() + ":" + s << "\n";
         BOOST_CHECK_EQUAL(expected.count(target[is].repr() + ":" + s), (size_t)1);
         ++is;
     }
@@ -352,13 +368,13 @@ BOOST_AUTO_TEST_CASE(graphNodesUsedPhased)
 
     std::set<std::string> expected;
 
-    expected.insert("chrQ:11-20:TGAACCCGGT:11010101");
-    expected.insert("chrQ:12-20:TAACCCGGC:10101011");
+    expected.insert("chrQ:11-20:TGAACCCGGT:0000000000000000000000000000000000000000000000000000000000010101");
+    expected.insert("chrQ:12-20:TAACCCGGC:0000000000000000000000000000000000000000000000000000000000001010");
 
     size_t is = 0;
     for(std::string const & s : nodes_used)
     {
-        // std::cerr << target[is].repr() + ":" + s << "\n";
+//        std::cerr << target[is].repr() + ":" + s << "\n";
         BOOST_CHECK_EQUAL(expected.count(target[is].repr() + ":" + s), (size_t)1);
         ++is;
     }
@@ -389,12 +405,12 @@ BOOST_AUTO_TEST_CASE(graphHomref)
     gr.enumeratePaths("chrQ", 11, 25, nodes, edges, target, 0, -1, -1, &nodes_used);
 
     std::set<std::string> expected;
-    expected.insert("chrQ:novar:01");
+    expected.insert("chrQ:novar:0000000000000000000000000000000000000000000000000000000000000000");
 
     size_t is = 0;
     for(std::string const & s : nodes_used)
     {
-        // std::cerr << (target[is].repr() + ":" + s) << std::endl;
+//        std::cerr << (target[is].repr() + ":" + s) << std::endl;
         BOOST_CHECK_EQUAL(expected.count(target[is].repr() + ":" + s), (size_t)1);
         ++is;
     }

@@ -31,6 +31,7 @@ import traceback
 import tempfile
 import shutil
 import pandas
+import numpy as np
 import gzip
 import json
 from collections import Counter
@@ -39,11 +40,12 @@ scriptDir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'lib', 'python27')))
 
 import Tools
-from Tools.bcftools import runBcftools, parseStats, preprocessVCF, countVCFRows
+from Tools.bcftools import runBcftools, parseStats, preprocessVCF
 from Tools.bamstats import bamStats
 from Tools.bedintervaltree import BedIntervalTree
 from Tools.roc import ROC
 from Tools.metric import makeMetricsObject, dataframeToMetricsTable
+from Tools.fastasize import fastaContigLengths, calculateLength
 import Somatic
 
 
@@ -150,6 +152,12 @@ def main():
     parser.add_argument("-FN", "--count-filtered-fn", dest="count_filtered_fn", action="store_true",
                         help="Count filtered vs. absent FN numbers. This requires the -P switch (to use all "
                              "variants) and either the --feature-table or --roc switch.")
+
+    parser.add_argument("--fp-region-size", dest="fpr_size",
+                        help="How to obtain the normalisation constant for FP rate. By default, this will use the FP region bed file size when using"
+                             " --count-unk and the size of all reference contigs that overlap with the location specified in -l otherwise."
+                             " This can be overridden with: 1) a number of nucleotides, or 2) \"auto\" to use the lengths of all contigs that have calls."
+                             " The resulting value is used as fp.region.size.")
 
     parser.add_argument("--logfile", dest="logfile", default=None,
                         help="Write logging information into file rather than to stderr")
@@ -636,13 +644,57 @@ def main():
         res["na"] = res["unk"] / (res["total.query"])
         res["ambiguous"] = res["ambi"] / res["total.query"]
 
+        any_fp = fpclasses.countbases(label="FP")
+
+        fp_region_count = 0
+        auto_size = True
+        if args.fpr_size:
+            try:
+                fp_region_count = int(args.fpr_size)
+                auto_size = False
+            except:
+                pass
+        if auto_size:
+            if any_fp:
+                if args.location:
+                    chrom, _, rest = args.location.partition(":")
+                    if rest:
+                        start, _, end = rest.partition("_")
+                        if start:
+                            start = int(start)
+                        if end:
+                            end = int(end)
+                    else:
+                        fp_region_count += fpclasses.countbases(chrom, label="FP")
+                else:
+                    fp_region_count = any_fp
+            else:
+                cs = fastaContigLengths(args.ref)
+                if args.location:
+                    fp_region_count = calculateLength(cs, args.location)
+                else:
+                    # use all locations we saw calls on
+                    h1 = Tools.vcfextract.extractHeadersJSON(ntpath)
+                    h2 = Tools.vcfextract.extractHeadersJSON(nqpath)
+                    qlocations = " ".join(list(set(h1["tabix"]["chromosomes"] + h2["tabix"]["chromosomes"])))
+                    fp_region_count = calculateLength(cs, qlocations)
+
+        res["fp.region.size"] = fp_region_count
+        res["fp.rate"] = 1e6 * res["fp"] / res["fp.region.size"]
+
         if args.count_filtered_fn:
             res["recall.filtered"] = (res["tp"] - res["tp.filtered"]) / (res["tp"] + res["fn"])
+
             res["precision.filtered"] = (res["tp"] - res["tp.filtered"]) / (res["tp"] - res["tp.filtered"] +
                                                                             res["fp"] - res["fp.filtered"])
+
+            res["fp.rate.filtered"] = 1e6 * (res["fp"] - res["fp.filtered"]) / res["fp.region.size"]
+
             res["na.filtered"] = (res["unk"] - res["unk.filtered"]) / (res["total.query"])
             res["ambiguous.filtered"] = (res["ambi"] - res["ambi.filtered"]) / res["total.query"]
 
+        # HAP-162 remove inf values
+        res.replace([np.inf, -np.inf], 0)
         metrics_output["metrics"].append(dataframeToMetricsTable("result", res))
         vstring = "som.py-%s" % Tools.version
 

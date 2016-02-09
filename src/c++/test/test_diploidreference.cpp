@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(diploidReferenceBasic)
     // AAACCCGGGAAAGCCTAACCCGGCTTTGG
     // AAACCCGGGAAAGTTGAACCCGGTTTTGG
 
-    expected.insert("hetalt(ACCGGGAAACCCTAACCCGGCTTTGG|AAACCCGGGAAAGTTGAACCCGGTTTTGG)");
+    expected.insert("hetalt(AAACCCGGGAAAGTTGAACCCGGTTTTGG|ACCGGGAAACCCTAACCCGGCTTTGG)");
     expected.insert("hetalt(ACCGGGAAACTTGAACCCGGTTTTGG|AAACCCGGGAAAGCCTAACCCGGCTTTGG)");
     expected.insert("hetalt(ACCGGGAAAGCCTAACCCGGCTTTGG|AAACCCGGGAAACTTGAACCCGGTTTTGG)");
     expected.insert("hetalt(ACCGGGAAAGTTGAACCCGGTTTTGG|AAACCCGGGAAACCCTAACCCGGCTTTGG)");
@@ -188,7 +188,7 @@ BOOST_AUTO_TEST_CASE(diploidReferenceBasic)
     {
         std::ostringstream ss;
         ss << dr.next();
-        // std::cerr << ss.str() << "\n";
+//        std::cerr << ss.str() << "\n";
         BOOST_CHECK_EQUAL(expected.count(ss.str()), (size_t)1);
         dr.advance();
         ++count;
