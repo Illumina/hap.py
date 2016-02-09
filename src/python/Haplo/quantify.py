@@ -263,4 +263,20 @@ def simplify_counts(counts, snames=None):
                     simplified_numbers[vt][sample + "." + ct + ".het_hom_ratio"] = float(het_count) / float(homalt_count)
                     simplified_numbers[vt][sample + "." + ct + ".hethetalt_hom_ratio"] = float(het_count + hetalt_count) / float(homalt_count)
 
+                if vt == "Locations.SNP":
+                    ti_count = 0
+                    try:
+                        ti_count = simplified_numbers[vt + ".Transitions"][sample + "." + ct]
+                    except:
+                        pass
+
+                    tv_count = 0
+                    try:
+                        tv_count = simplified_numbers[vt + ".Transversions"][sample + "." + ct]
+                    except:
+                        pass
+
+                    if tv_count > 0:
+                        simplified_numbers[vt][sample + "." + ct + ".TiTv_ratio"] = float(ti_count) / float(tv_count)
+
     return simplified_numbers

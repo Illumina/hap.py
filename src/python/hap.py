@@ -33,6 +33,7 @@ import multiprocessing
 import gzip
 import tempfile
 import pandas
+import numpy
 import json
 
 scriptDir = os.path.abspath(os.path.dirname(__file__))
@@ -763,6 +764,7 @@ def main():
         pandas.set_option("display.width", 120)
         pandas.set_option("display.max_columns", 1000)
         df = pandas.DataFrame(simplified_numbers).transpose()
+
         vstring = "hap.py-%s" % Tools.version
         vstring += " ".join(sys.argv)
 
@@ -773,28 +775,29 @@ def main():
         #     if not x.startswith("METRIC"):
         #         df[x] = df[x].astype("int64")
 
-        df[["TRUTH.TOTAL",
-            "QUERY.TOTAL",
-            "METRIC.Recall",
-            "METRIC.Precision",
-            "METRIC.Frac_NA"]].to_csv(args.reports_prefix + ".summary.csv")
+        summary_columns = ["TRUTH.TOTAL",
+                           "QUERY.TOTAL",
+                           "METRIC.Recall",
+                           "METRIC.Precision",
+                           "METRIC.Frac_NA"]
+
+        for additional_column in ["TRUTH.TOTAL.TiTv_ratio",
+                                  "QUERY.TOTAL.TiTv_ratio",
+                                  "TRUTH.TOTAL.het_hom_ratio",
+                                  "QUERY.TOTAL.het_hom_ratio"]:
+            if additional_column in df.columns:
+                summary_columns.append(additional_column)
+
+        df[summary_columns].to_csv(args.reports_prefix + ".summary.csv")
 
         metrics_output["metrics"].append(dataframeToMetricsTable("summary.metrics",
-                                                                 df[["TRUTH.TOTAL",
-                                                                     "QUERY.TOTAL",
-                                                                     "METRIC.Recall",
-                                                                     "METRIC.Precision",
-                                                                     "METRIC.Frac_NA"]]))
+                                                                 df[summary_columns]))
 
         if args.write_counts:
             df.to_csv(args.reports_prefix + ".extended.csv")
             metrics_output["metrics"].append(dataframeToMetricsTable("all.metrics", df))
 
-        essential_numbers = df[["TRUTH.TOTAL",
-                                "QUERY.TOTAL",
-                                "METRIC.Recall",
-                                "METRIC.Precision",
-                                "METRIC.Frac_NA"]]
+        essential_numbers = df[summary_columns]
 
         pandas.set_option('display.max_columns', 500)
         pandas.set_option('display.width', 1000)

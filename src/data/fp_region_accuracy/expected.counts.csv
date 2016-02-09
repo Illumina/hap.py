@@ -1,4 +1,6 @@
 ,FP:missing:CONF:QUERY,FP:missing:CONF:TRUTH,TP:match::QUERY,TP:match::TRUTH,UNK:missing::QUERY,UNK:missing::TRUTH,all:QUERY,all:TRUTH
+Transitions,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0
+Transversions,3.0,0.0,1.0,1.0,1.0,0.0,5.0,1
 al__s,3.0,,1.0,1.0,1.0,,5.0,1
 het__rs,3.0,,1.0,1.0,1.0,,5.0,1
 nocall__nc,,3.0,,,,1.0,,4
