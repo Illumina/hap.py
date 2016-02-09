@@ -26,7 +26,7 @@
 import os
 
 
-def fastaContigSizes(fastafile):
+def fastaContigLengths(fastafile):
     """ Return contig lengths in a fasta file
     """
     if not os.path.exists(fastafile + ".fai"):
@@ -37,7 +37,7 @@ def fastaContigSizes(fastafile):
     with open(fastafile + ".fai") as fai:
         for l in fai:
             row = l.strip().split("\t")
-            fastacontiglengths[row[0]] = int(fastacontiglengths[1])
+            fastacontiglengths[row[0]] = int(row[1])
 
     return fastacontiglengths
 

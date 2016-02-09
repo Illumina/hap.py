@@ -36,10 +36,10 @@ def main():
     data2 = csvread(sys.argv[2])
 
     for metric in ['fp', 'ambiguous', 'recall', 'precision', 'tp', 'total.query', 'ambi', 'na',
-                   'recall2', 'unk', 'total.truth', 'fn']:
+                   'recall2', 'unk', 'total.truth', 'fn', 'fp.region.size', 'fp.rate']:
         if len(data1[metric]) == 0 or len(data2[metric]) == 0:
             raise Exception("Number of metrics to compare is wrong")
-        
+
         for field in data1[metric].iterkeys():
             if field == "no-ALTs":
                 continue
