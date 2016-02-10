@@ -44,6 +44,7 @@ from Tools import vcfextract
 from Tools.bcftools import preprocessVCF, bedOverlapCheck
 from Tools.parallel import runParallel
 from Tools.metric import makeMetricsObject, dataframeToMetricsTable
+from Tools.fastasize import fastaContigLengths
 import Haplo.blocksplit
 import Haplo.xcmp
 import Haplo.vcfeval
@@ -135,6 +136,16 @@ def main():
     parser.add_argument("--bcftools-norm", dest="preprocessing_norm", action="store_true", default=False,
                         help="Enable preprocessing through bcftools norm -c x -D (requires external "
                              " preprocessing to be switched on).")
+
+    parser.add_argument("-N", "--numeric-chromosomes", dest="numeric_chrs", action="store_true", default=None,
+                        help="Use numeric chromosome names for truth and query. This is a shortcut for "
+                             "-l 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,X,Y "
+                             "--no-fixchr-truth --no-fixchr-query")
+
+    parser.add_argument("-C", "--no-numeric-chromosomes", dest="numeric_chrs", action="store_false",
+                        help="Use chr-prefixed chromosome names for truth and query. This is a shortcut for "
+                             "-l chr1,...,chrY"
+                             "--fixchr-truth --fixchr-query")
 
     parser.add_argument("--fixchr-truth", dest="fixchr_truth", action="store_true", default=None,
                         help="Add chr prefix to truth file (default: auto).")
@@ -349,6 +360,30 @@ def main():
 
         logging.info("Comparing %s and %s" % (args.vcf1, args.vcf2))
 
+        # detect numeric chromosome names
+        if args.numeric_chrs is None:
+            cts = fastaContigLengths(args.ref)
+            cts = set(cts.keys())
+            numeric_names = set(map(str, range(1, 23)) + ["X", "Y", "M"])
+            non_numeric_names = set(["chr" + x for x in numeric_names])
+            numeric_names &= cts
+            non_numeric_names &= cts
+            numeric_names = len(list(numeric_names))
+            non_numeric_names = len(list(non_numeric_names))
+            if numeric_names != 0 and non_numeric_names == 0:
+                args.numeric_chrs = True
+                logging.info("Auto-detected numeric chromosome names")
+            elif numeric_names == 0 and non_numeric_names != 0:
+                args.numeric_chrs = False
+                logging.info("Auto-detected chr-prefixed chromosome names")
+
+        if args.numeric_chrs:
+            args.fixchr_truth = False
+            args.fixchr_query = False
+        elif args.numeric_chrs is not None:
+            args.fixchr_truth = True
+            args.fixchr_query = True
+
         h1 = vcfextract.extractHeadersJSON(args.vcf1)
         if args.auto_index and not h1["tabix"]:
             logging.info("Creating indexed version of %s -- consider creating an index beforehand to save time here." %
@@ -430,7 +465,10 @@ def main():
 
         if args.locations is None or len(args.locations) == 0:
             # all chromosomes
-            args.locations = ["chr" + x for x in map(str, range(1, 23))]
+            if args.numeric_chrs:
+                args.locations = [x for x in map(str, range(1, 23))]
+            else:
+                args.locations = ["chr" + x for x in map(str, range(1, 23))]
 
         if type(args.locations) is not list and args.locations is not None:
             # noinspection PyUnresolvedReferences

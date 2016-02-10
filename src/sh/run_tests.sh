@@ -126,6 +126,19 @@ else
 fi
 
 ##############################################################
+# Test Hap.py + chr prefix detection
+##############################################################
+
+/bin/bash ${DIR}/run_chrprefix_test.sh
+
+if [[ $? -ne 0 ]]; then
+	echo "Chr prefix detection tests FAILED!"
+	exit 1
+else
+	echo "Chr prefix detection tests SUCCEEDED!"
+fi
+
+##############################################################
 # Test PG Counting
 ##############################################################
 
