@@ -475,7 +475,7 @@ def main():
             columns_tps2 = list(tps2)
 
             len1 = tps.shape[0]
-            len2 = tps.shape[0]
+            len2 = tps2.shape[0]
 
             if len1 != len2:
                 raise Exception("Cannot read TP features, lists have different lengths : %i != %i" % (len1, len2))
@@ -570,8 +570,8 @@ def main():
                                                                                   "ALT.truth"]
             af_t_feature = args.af_strat_truth
             af_q_feature = args.af_strat_query
-            for vtype in ["records", "snvs", "indels"]:
-                if vtype == "snvs":
+            for vtype in ["records", "SNVs", "indels"]:
+                if vtype == "SNVs":
                     featuretable_this_type = featuretable[(featuretable["REF"].str.len() > 0) &
                                                           (featuretable["ALT"].str.len() ==
                                                            featuretable["REF"].str.len())]

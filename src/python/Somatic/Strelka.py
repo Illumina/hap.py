@@ -22,7 +22,7 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
     :param avg_depth: average chromosome depths from BAM file
     """
     features = ["CHROM", "POS", "REF", "ALT", "FILTER",
-                "I.NT", "I.SOMATIC", "I.QSS_NT", "I.VQSR",
+                "I.NT", "I.SOMATIC", "I.QSS_NT", "I.VQSR", "I.EVS",
                 "I.SGT", "I.MQ", "I.MQ0", "I.PNOISE", "I.PNOISE2",
                 "I.SNVSB", "I.ReadPosRankSum",
                 "S.1.SDP", "S.2.SDP",
@@ -40,10 +40,12 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
 
         for l in list(extractHeaders(vcfname)):
             x = str(l).lower()
-            x = x.replace("meandepth_", "maxdepth_")
+            x = x.replace("##meandepth_", "##maxdepth_")
+            x = x.replace("##depth_", "##maxdepth_")
             if '##maxdepth_' in x:
+                p, _, l = l.partition("_")
                 xl = str(l).split('=')
-                xchr = xl[0][12:]
+                xchr = xl[0]
                 avg_depth[xchr] = float(xl[1])
                 logging.info("%s depth from VCF header is %f" % (xchr, avg_depth[xchr]))
 
@@ -54,8 +56,20 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
         for i, ff in enumerate(features):
             rec[ff] = vr[i]
 
+        # read EVS value, if it's not present, read VQSR (old versions of Strelka)
+        if "I.EVS" not in rec:
+            if "I.VQSR" in rec:
+                rec["I.EVS"] = rec["I.VQSR"]
+            else:
+                rec["I.EVS"] = 0
+
+        try:
+            rec["I.EVS"] = float(rec["I.EVS"])
+        except:
+            pass
+
         # fix missing features
-        for q in ["I.QSS_NT", "I.MQ", "I.MQ0", "I.PNOISE", "I.PNOISE2", "I.VQSR",
+        for q in ["I.QSS_NT", "I.MQ", "I.MQ0", "I.PNOISE", "I.PNOISE2",
                   "I.SNVSB", "I.ReadPosRankSum", "S.1.SDP", "S.2.SDP",
                   "S.1.FDP", "S.2.FDP",
                   "S.1.DP", "S.2.DP",
@@ -102,29 +116,33 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
         t_DP_ratio = 0
 
         if avg_depth:
-            if rec["CHROM"] in avg_depth:
+            try:
                 n_DP_ratio = n_DP / float(avg_depth[rec["CHROM"]])
                 t_DP_ratio = t_DP / float(avg_depth[rec["CHROM"]])
-            elif not rec["CHROM"] in has_warned:
-                logging.warn("Cannot normalize depths on %s" % rec["CHROM"])
-                has_warned[rec["CHROM"]] = True
+            except:
+                if not rec["CHROM"] in has_warned:
+                    logging.warn("Cannot normalize depths on %s" % rec["CHROM"])
+                    has_warned[rec["CHROM"]] = True
         elif "DPnorm" not in has_warned:
             logging.warn("Cannot normalize depths.")
             has_warned["DPnorm"] = True
 
         # Ref and alt allele counts for tier1 and tier2
         allele_ref = rec["REF"]
-        t_allele_ref_counts = map(float, rec['S.2.' + allele_ref + 'U'])
+        try:
+            t_allele_ref_counts = map(float, rec['S.2.' + allele_ref + 'U'])
+        except:
+            t_allele_ref_counts = [0, 0]
 
         alleles_alt = rec["ALT"]
 
-        if alleles_alt == ['.']:
-            t_allele_alt_counts = [0, 0]
-        else:
+        try:
             t_allele_alt_counts = [0, 0]
             for a in alleles_alt:
                 for i in range(2):
                     t_allele_alt_counts[i] += float(rec['S.2.' + a + 'U'][i])
+        except:
+            t_allele_alt_counts = [0, 0]
 
         # Compute the tier1 and tier2 alt allele rates.
         if t_allele_alt_counts[0] + t_allele_ref_counts[0] == 0:
@@ -137,17 +155,20 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
         else:
             t_tier2_allele_rate = t_allele_alt_counts[1] / float(t_allele_alt_counts[1] + t_allele_ref_counts[1])
 
-        n_allele_ref_counts = map(float, rec['S.1.' + allele_ref + 'U'])
+        try:
+            n_allele_ref_counts = map(float, rec['S.1.' + allele_ref + 'U'])
+        except:
+            n_allele_ref_counts = [0, 0]
 
         alleles_alt = rec["ALT"]
 
-        if alleles_alt == ['.']:
-            n_allele_alt_counts = [0, 0]
-        else:
+        try:
             n_allele_alt_counts = [0, 0]
             for a in alleles_alt:
                 for i in range(2):
                     n_allele_alt_counts[i] += float(rec['S.1.' + a + 'U'][i])
+        except:
+            n_allele_alt_counts = [0, 0]
 
         # Compute the tier1 and tier2 alt allele rates.
         if n_allele_alt_counts[0] + n_allele_ref_counts[0] == 0:
@@ -190,7 +211,7 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
             "NT": NT,
             "NT_REF": NT_is_ref,
             "QSS_NT": QSS_NT,
-            "VQSR": rec["I.VQSR"],
+            "EVS": rec["I.EVS"],
             "N_FDP_RATE": n_FDP_ratio,
             "T_FDP_RATE": t_FDP_ratio,
             "N_SDP_RATE": n_SDP_ratio,
@@ -215,7 +236,7 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
         records.append(qrec)
 
     cols = ["CHROM", "POS", "REF", "ALT",
-            "NT", "NT_REF", "QSS_NT", "FILTER", "VQSR",
+            "NT", "NT_REF", "QSS_NT", "FILTER", "EVS",
             "N_FDP_RATE", "T_FDP_RATE", "N_SDP_RATE", "T_SDP_RATE",
             "N_DP", "T_DP", "N_DP_RATE", "T_DP_RATE",
             "T_TIER1_ALT_RATE", "T_TIER2_ALT_RATE", "N_TIER1_ALT_RATE", "N_TIER2_ALT_RATE",
@@ -238,7 +259,7 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
     :param avg_depth: average chromosome depths from BAM file
     """
     features = ["CHROM", "POS", "REF", "ALT", "FILTER",
-                "I.NT", "I.SOMATIC", "I.QSI_NT", "I.EQSI", "I.ESF",
+                "I.NT", "I.SOMATIC", "I.QSI_NT", "I.EVS", "I.ESF",
                 "I.SGT", "I.RC", "I.RU",
                 "I.IC", "I.IHP",
                 "I.MQ", "I.MQ0",
@@ -264,8 +285,7 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
             "FILTER",
             "NT",
             "NT_REF",
-            "VQSR",
-            "EQSI",
+            "EVS",
             "QSI_NT",
             "N_DP",
             "T_DP",
@@ -320,10 +340,12 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
 
         for l in vcfheaders:
             x = str(l).lower()
-            x = x.replace("meandepth_", "maxdepth_")
+            x = x.replace("##meandepth_", "##maxdepth_")
+            x = x.replace("##depth_", "##maxdepth_")
             if '##maxdepth_' in x:
+                p, _, l = l.partition("_")
                 xl = str(l).split('=')
-                xchr = xl[0][12:]
+                xchr = xl[0]
                 avg_depth[xchr] = float(xl[1])
                 logging.info("%s depth from VCF header is %f" % (xchr, avg_depth[xchr]))
 
@@ -335,7 +357,8 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
         rec["tag"] = tag
 
         # fix missing features
-        for q in ["I.QSI_NT", "I.RC", "I.IC", "I.IHP", "I.EQSI",
+        for q in ["I.QSI_NT", "I.RC", "I.IC", "I.IHP",
+                  "I.EVS",
                   "S.1.DP", "S.2.DP",
                   "S.1.OF", "S.2.OF",
                   "S.1.RR", "S.2.RR",
@@ -384,12 +407,13 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
         t_DP_ratio = 0
 
         if avg_depth:
-            if rec["CHROM"] in avg_depth:
+            try:
                 n_DP_ratio = n_DP / float(avg_depth[rec["CHROM"]])
                 t_DP_ratio = t_DP / float(avg_depth[rec["CHROM"]])
-            elif not rec["CHROM"] in has_warned:
-                logging.warn("Cannot normalize depths on %s" % rec["CHROM"])
-                has_warned[rec["CHROM"]] = True
+            except:
+                if not rec["CHROM"] in has_warned:
+                    logging.warn("Cannot normalize depths on %s" % rec["CHROM"])
+                    has_warned[rec["CHROM"]] = True
         elif "DPnorm" not in has_warned:
             logging.warn("Cannot normalize depths.")
             has_warned["DPnorm"] = True
@@ -416,8 +440,7 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
 
         # fields with defaults
         fields = [
-            {"n": "EQSI", "s": "I.EQSI", "def": 0, "t": float},
-            {"n": "VQSR", "s": "I.EQSI", "def": 0, "t": float},
+            {"n": "EVS", "s": "I.EVS", "def": 0, "t": float},
             {"n": "RC", "s": "I.RC", "def": 0, "t": int},
             {"n": "RU", "s": "I.RU", "def": ""},
             {"n": "RU_LEN", "s": "I.RU", "def": 0, "t": len},
