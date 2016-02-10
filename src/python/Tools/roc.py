@@ -132,7 +132,7 @@ class StrelkaSNVVQSRRoc(ROC):
     def from_table(self, tbl):
         tbl.loc[tbl["NT"] != "ref", "VQSR"] = 0
         return tableROC(tbl, "tag",
-                        "VQSR", "FILTER", "LowQscore")
+                        "EVS", "FILTER", "LowQscore,LowEVS")
 
 ROC.register("strelka.snv", "hcc.strelka.snv", StrelkaSNVVQSRRoc)
 
@@ -155,9 +155,10 @@ class StrelkaIndelVQSRRoc(ROC):
     def from_table(self, tbl):
         # fix QSI for NT != ref
         return tableROC(tbl, "tag",
-                        "EQSI", "FILTER", "LowQscore")
+                        "EVS", "FILTER", "LowEVS")
 
 ROC.register("strelka.indel.vqsr", "hcc.strelka.indel", StrelkaIndelVQSRRoc)
+ROC.register("strelka.indel.evs", "hcc.strelka.indel", StrelkaIndelVQSRRoc)
 
 
 class Varscan2SNVRoc(ROC):
