@@ -102,12 +102,13 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
         t_DP_ratio = 0
 
         if avg_depth:
-            if rec["CHROM"] in avg_depth:
+            try:
                 n_DP_ratio = n_DP / float(avg_depth[rec["CHROM"]])
                 t_DP_ratio = t_DP / float(avg_depth[rec["CHROM"]])
-            elif not rec["CHROM"] in has_warned:
-                logging.warn("Cannot normalize depths on %s" % rec["CHROM"])
-                has_warned[rec["CHROM"]] = True
+            except:
+                if not rec["CHROM"] in has_warned:
+                    logging.warn("Cannot normalize depths on %s" % rec["CHROM"])
+                    has_warned[rec["CHROM"]] = True
         elif "DPnorm" not in has_warned:
             logging.warn("Cannot normalize depths.")
             has_warned["DPnorm"] = True
@@ -384,12 +385,13 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
         t_DP_ratio = 0
 
         if avg_depth:
-            if rec["CHROM"] in avg_depth:
+            try:
                 n_DP_ratio = n_DP / float(avg_depth[rec["CHROM"]])
                 t_DP_ratio = t_DP / float(avg_depth[rec["CHROM"]])
-            elif not rec["CHROM"] in has_warned:
-                logging.warn("Cannot normalize depths on %s" % rec["CHROM"])
-                has_warned[rec["CHROM"]] = True
+            except:
+                if not rec["CHROM"] in has_warned:
+                    logging.warn("Cannot normalize depths on %s" % rec["CHROM"])
+                    has_warned[rec["CHROM"]] = True
         elif "DPnorm" not in has_warned:
             logging.warn("Cannot normalize depths.")
             has_warned["DPnorm"] = True
