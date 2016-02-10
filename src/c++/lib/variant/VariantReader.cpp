@@ -547,6 +547,7 @@ bool VariantReader::advance(bool get_calls, bool get_info)
     vars.len = 0;
     vars.info = "";
     vars.ambiguous_alleles.clear();
+    bool import_fail = false;
     for (auto & si : _impl->samples)
     {
         bcf_sr_t & reader(_impl->files->readers[si.ireader]);
@@ -629,21 +630,41 @@ bool VariantReader::advance(bool get_calls, bool get_info)
         else
         {
             refend = refstart + strlen(line->d.allele[0]) - 1;
+            if (strchr(line->d.allele[0], '.') || strchr(line->d.allele[0], '-'))
+            {
+                // length might be inaccurate now
+                refend = refstart;
+                std::cerr << "[W] Unsupported REF allele with undefined length at " << vars.chr << ":" << refstart << "-" << refend
+                          << " REF allele: " << line->d.allele[0] << "\n";
+                if(!import_fail)
+                {
+                    if (!vars.info.empty())
+                    {
+                        vars.info += ";";
+                    }
+                    vars.info += "IMPORT_FAIL";
+                    import_fail = true;
+                }
+            }
             if(_impl->validateRef)
             {
                 std::string actual_ref_seq = _impl->ref.query(vars.chr.c_str(), refstart, refend);
                 if(actual_ref_seq != line->d.allele[0]) {
                     std::cerr << "[W] REF allele mismatch with reference sequence at " << vars.chr << ":" << refstart << "-" << refend
                               << " VCF: " << line->d.allele[0] << " REF: " << actual_ref_seq << "\n";
-                    if (vars.info != "")
+
+                    if(!import_fail)
                     {
-                        vars.info += ";";
+                        if (!vars.info.empty())
+                        {
+                            vars.info += ";";
+                        }
+                        vars.info += "IMPORT_FAIL";
+                        import_fail = true;
                     }
-                    vars.info += "IMPORT_FAIL_REFALLELE";
                 }
             }
         }
-
 
         // use the position and length of the rightmost variant as a start
         if(vars.pos < refstart)
@@ -672,6 +693,11 @@ bool VariantReader::advance(bool get_calls, bool get_info)
                 rv.alt = "";
             }
 
+            if(import_fail)
+            {
+                continue;
+            }
+
             // check alleles
             for (size_t qq = 0; qq < rv.alt.size(); ++qq)
             {
@@ -692,7 +718,7 @@ bool VariantReader::advance(bool get_calls, bool get_info)
                 /* V	neither T nor U (i.e. A, C or G)	V comes after U */
                 /* N	A C G T U	Nucleic acid */
                 /* X	masked */
-                /* -	gap of indeterminate length - not supported */
+                /* -/.	gap of indeterminate length - not supported */
                 if(rv.alt[qq] != 'A' && \
                    rv.alt[qq] != 'C' && \
                    rv.alt[qq] != 'G' && \
@@ -711,7 +737,12 @@ bool VariantReader::advance(bool get_calls, bool get_info)
                    rv.alt[qq] != 'N' && \
                    rv.alt[qq] != 'X')
                 {
-                    error("Invalid allele %s at %i", rv.alt.c_str(), refstart);
+                    std::cerr << "Invalid allele " << rv.alt.c_str() << " at " << refstart << "\n";
+                    if (!vars.info.empty())
+                    {
+                        vars.info += ";";
+                    }
+                    vars.info += "IMPORT_FAIL";
                 }
             }
 
@@ -890,7 +921,19 @@ bool VariantReader::advance(bool get_calls, bool get_info)
                     }
                     else
                     {
-                        error("Invalid GT at %s:%i in sample %i", vars.chr.c_str(), vars.pos, sid);
+                        if (!import_fail)
+                        {
+                            if (!vars.info.empty())
+                            {
+                                vars.info += ";";
+                            }
+                            vars.info += "IMPORT_FAIL";
+                            import_fail = true;
+                        }
+                        std::cerr << "Invalid GT at " << vars.chr << ":" << vars.pos << " in sample" << sid << "\n";
+                        // turn this into a homref call so it doesn't get lost later on
+                        vars.calls[sid].gt[i] = 0;
+                        break;
                     }
                 }
             }

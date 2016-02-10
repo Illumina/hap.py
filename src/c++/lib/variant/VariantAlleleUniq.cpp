@@ -27,7 +27,7 @@
 
 /**
  * Variant processing step to remove redundant alleles
- *  
+ *
  *
  * \file VariantAlleleUniq.cpp
  * \author Peter Krusche
@@ -81,7 +81,7 @@ VariantAlleleUniq const & VariantAlleleUniq::operator=(VariantAlleleUniq const &
 /** enqueue a set of variants */
 void VariantAlleleUniq::add(Variants const & vs)
 {
-    if (vs.variation.size() <= 1)
+    if (vs.variation.size() <= 1 || vs.info.find("IMPORT_FAIL") != std::string::npos)
     {
         _impl->buffered_variants.push_back(vs);
         return;
@@ -128,7 +128,7 @@ void VariantAlleleUniq::add(Variants const & vs)
     }
 
 #ifdef DEBUG_VARIANTALLELEUNIQ
-    std::cerr << "GT remap at " << vs.chr << ":" << vs.pos << "\n"; 
+    std::cerr << "GT remap at " << vs.chr << ":" << vs.pos << "\n";
     for (size_t i = 0; i < gt_mapping_3.size(); ++i)
     {
         std::cerr << i+1 << " -> " << (gt_mapping_3[i]+1) << "\n";
@@ -181,7 +181,7 @@ bool VariantAlleleUniq::advance()
     {
         _impl->vs = _impl->buffered_variants.front();
         _impl->buffered_variants.pop_front();
-        return true;        
+        return true;
     }
 }
 

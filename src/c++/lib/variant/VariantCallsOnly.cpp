@@ -108,6 +108,16 @@ void VariantCallsOnly::add(Variants const & v)
     {
         error("Variant added out of order at %s:%i / %i", v.chr.c_str(), v.pos, _impl->buffered_variants.back().pos);
     }
+    //
+    // keep fails
+    if(v.info.find("IMPORT_FAIL") != std::string::npos)
+    {
+#ifdef DEBUG_VARIANTCALLSONLY
+        std::cerr << "fail-pass-on: " << v << "\n";
+#endif
+        _impl->buffered_variants.push_back(v);
+        return;
+    }
 #ifdef DEBUG_VARIANTCALLSONLY
     std::cerr << "Variants added: " << v << "\n";
 #endif

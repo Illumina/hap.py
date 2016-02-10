@@ -42,6 +42,7 @@
 #include <string>
 #include <sstream>
 #include <map>
+#include <set>
 
 #include "helpers/StringUtil.hh"
 
@@ -219,6 +220,27 @@ struct Variants
         return false;
     }
 
+    /** canonicalize INFO fields: sort and remove duplicates -- does not actually remove
+     *  duplicate info fields if they have different values! */
+    inline void canonicalize_info() {
+        std::set<std::string> infos;
+        std::vector<std::string> infs;
+        stringutil::split(info, infs, ";");
+        for (std::string & i : infs)
+        {
+            infos.insert(i);
+        }
+        std::string newinfo;
+        for(auto const & i : infos)
+        {
+            if(!newinfo.empty())
+            {
+                newinfo += ";";
+            }
+            newinfo += i;
+        }
+        info = newinfo;
+    }
 };
 
 /** variant comparison operator that makes sure indels go after SNPs

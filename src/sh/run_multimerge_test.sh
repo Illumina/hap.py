@@ -18,7 +18,7 @@ ${HCDIR}/multimerge ${DIR}/../data/merge1.vcf.gz:NA12877 ${DIR}/../data/merge2.v
 diff ${TF} ${DIR}/../data/expected_merge.vcf
 
 if [ $? -ne 0 ]; then
-	echo "Multimerge test FAILED. You can inspect ${TF} for the failed result."
+	echo "Multimerge test FAILED. diff ${TF} ${DIR}/../data/expected_merge.vcf"
 	exit 1
 else
 	echo "Multimerge test SUCCEEDED."
@@ -36,7 +36,7 @@ ${HCDIR}/multimerge ${DIR}/../data/import_errors.vcf.gz:NA12877 -o ${TF} -r ${DI
 diff ${TF} ${DIR}/../data/expected_importtest.vcf
 
 if [ $? -ne 0 ]; then
-	echo "Multimerge test FAILED. You can inspect ${TF} for the failed result."
+	echo "Multimerge test FAILED.  diff ${TF} ${DIR}/../data/expected_importtest.vcf"
 	exit 1
 else
 	echo "Multimerge test SUCCEEDED."

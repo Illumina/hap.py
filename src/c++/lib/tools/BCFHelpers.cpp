@@ -56,9 +56,9 @@ template <typename target_type_t>
 struct bcf_get_numeric_format
 {
     bcf_get_numeric_format() {}
-    /* return true when successful 
+    /* return true when successful
      */
-    get_fmt_outcome operator()(const bcf_hdr_t *hdr, bcf1_t *line, 
+    get_fmt_outcome operator()(const bcf_hdr_t *hdr, bcf1_t *line,
                     const char *tag, int isample,
                     target_type_t * dest, int ndest,
                     target_type_t def) const
@@ -69,7 +69,7 @@ struct bcf_get_numeric_format
         {
             dest[i] = def;
         }
-        
+
         int i;
         int tag_id = bcf_hdr_id2int(hdr, BCF_DT_ID, tag);
 
@@ -81,16 +81,16 @@ struct bcf_get_numeric_format
         if ( !(line->unpacked & BCF_UN_FMT) )
         {
             bcf_unpack(line, BCF_UN_FMT);
-        } 
+        }
 
         for (i = 0; i < line->n_fmt; i++)
         {
-            if ( line->d.fmt[i].id == tag_id ) 
+            if ( line->d.fmt[i].id == tag_id )
             {
                 break;
             }
         }
-            
+
         if ( i == line->n_fmt )
         {
             return result;
@@ -116,9 +116,9 @@ struct bcf_get_numeric_format
 
         for (int i = 0; i < ndest; ++i)
         {
-            if ( type == BCF_BT_FLOAT ) 
+            if ( type == BCF_BT_FLOAT )
             {
-                static const auto make_missing_float = []() -> float 
+                static const auto make_missing_float = []() -> float
                 {
                     float f;
                     int32_t _mfloat = 0x7F800001;
@@ -129,7 +129,7 @@ struct bcf_get_numeric_format
                 float res = ((float*)(fmt->p + isample*fmt->size))[i];
                 if(res != bcf_missing_float)
                 {
-                    dest[i] = target_type_t(res);                    
+                    dest[i] = target_type_t(res);
                 }
             }
             else if (type == BCF_BT_INT8)
@@ -173,7 +173,7 @@ struct bcf_get_numeric_format
                 // TODO handle this
                 std::cerr << "[W] string format field ignored when looking for numeric formats!" << "\n";
                 dest[i] = def;
-            }            
+            }
         }
         result = get_fmt_outcome::success;
         return result;
@@ -187,7 +187,7 @@ struct bcf_get_gts {
 
     /**
      * @brief Extract GT from Format field
-     * 
+     *
      */
     void operator() (bcf_fmt_t* gt, int i, int* igt, bool & phased) const
     {
@@ -304,6 +304,7 @@ void bcfHeaderHG19(bcf_hdr_t * header)
     bcf_hdr_append(header, "##contig=<ID=chr22,length=51304566>");
     bcf_hdr_append(header, "##contig=<ID=chrX,length=155270560>");
     bcf_hdr_append(header, "##INFO=<ID=END,Number=.,Type=Integer,Description=\"SV end position\">");
+    bcf_hdr_append(header, "##INFO=<ID=IMPORT_FAIL,Number=.,Type=Flag,Description=\"Flag to identify variants that could not be imported.\">");
     bcf_hdr_append(header, "##FORMAT=<ID=AGT,Number=1,Type=String,Description=\"Genotypes at ambiguous locations\">");
     bcf_hdr_append(header, "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">");
     bcf_hdr_append(header, "##FORMAT=<ID=GQ,Number=1,Type=Float,Description=\"Genotype Quality\">");
@@ -314,7 +315,7 @@ void bcfHeaderHG19(bcf_hdr_t * header)
 
 /**
  * @brief Retrieve an info field as an integer
- * 
+ *
  * @param result the default to return if the field is not present
  */
 int getInfoInt(bcf_hdr_t * header, bcf1_t * line, const char * field, int result)
@@ -354,7 +355,7 @@ void getGT(bcf_hdr_t * header, bcf1_t * line, int isample, int * gt, int & ngt, 
             case BCF_BT_INT8:  {static const bcfhelpers::_impl::bcf_get_gts<int8_t> b; b(fmt_ptr, isample, gt, phased);} break;
             case BCF_BT_INT16: {static const bcfhelpers::_impl::bcf_get_gts<int16_t> b; b(fmt_ptr, isample, gt, phased);} break;
             case BCF_BT_INT32: {static const bcfhelpers::_impl::bcf_get_gts<int32_t> b; b(fmt_ptr, isample, gt, phased);} break;
-            default: error("Unsupported GT type: %d at %s:%d\n", fmt_ptr->type, 
+            default: error("Unsupported GT type: %d at %s:%d\n", fmt_ptr->type,
                 header->id[BCF_DT_CTG][line->rid].key, line->pos+1);  break;
         }
     }
