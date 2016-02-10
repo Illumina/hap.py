@@ -160,6 +160,7 @@ bool VariantAlleleSplitter::advance()
             bool is_homref;
             size_t sample;
             CallInfo ci;
+            std::string info;
         };
 
         std::vector<HCall> loc_alleles;
@@ -177,7 +178,7 @@ bool VariantAlleleSplitter::advance()
                 {
                     if (c.gt[0] > 0)
                     {
-                        loc_alleles.push_back(HCall{v.variation[c.gt[0]-1], c.ad[0], false, false, i, CallInfo(c)});
+                        loc_alleles.push_back(HCall{v.variation[c.gt[0]-1], c.ad[0], false, false, i, CallInfo(c), v.info});
                     }
                     else if (c.gt[0] == 0)
                     {
@@ -185,7 +186,7 @@ bool VariantAlleleSplitter::advance()
                         hrv.start = v.pos;
                         hrv.end = v.pos + v.len - 1;
                         hrv.alt = ".";
-                        loc_alleles.push_back(HCall{hrv, c.ad_ref, false, true, i, CallInfo(c)});
+                        loc_alleles.push_back(HCall{hrv, c.ad_ref, false, true, i, CallInfo(c), v.info});
                     }
                 }
                 else // everything else
@@ -195,7 +196,7 @@ bool VariantAlleleSplitter::advance()
                     {
                         if (c.gt[j] > 0)
                         {
-                            loc_alleles.push_back(HCall{v.variation[c.gt[j]-1], c.ad[j], true, false, i, CallInfo(c)});
+                            loc_alleles.push_back(HCall{v.variation[c.gt[j]-1], c.ad[j], true, false, i, CallInfo(c), v.info});
                             any_nonref = true;
                         }
                     }
@@ -210,7 +211,7 @@ bool VariantAlleleSplitter::advance()
                                 hrv.start = v.pos;
                                 hrv.end = v.pos + v.len - 1;
                                 hrv.alt = ".";
-                                loc_alleles.push_back(HCall{hrv, c.ad_ref, true, true, i, CallInfo(c)});
+                                loc_alleles.push_back(HCall{hrv, c.ad_ref, true, true, i, CallInfo(c), v.info});
                             }
                         }
                     }
@@ -224,7 +225,7 @@ bool VariantAlleleSplitter::advance()
                 {
                     if(i > 0)
                     {
-                        loc_alleles.push_back(HCall{v.variation[i-1], -1, true, false, sample, CallInfo()});
+                        loc_alleles.push_back(HCall{v.variation[i-1], -1, true, false, sample, CallInfo(), v.info});
                     }
                 }
                 ++sample;
@@ -282,9 +283,11 @@ bool VariantAlleleSplitter::advance()
         cur.len = 0;
         cur.variation.reserve(1);
         cur.calls.resize(n_samples);
+        std::string info;
 
         for (auto & p : loc_alleles)
         {
+            // preserve INFO
             if (cur.pos < 0                                 // first one
              || (p.is_homref && cur.variation.size() > 0)   // var -> homref
              || (!p.is_homref && cur.variation.size() == 0) // new refvar
@@ -293,6 +296,9 @@ bool VariantAlleleSplitter::advance()
             {
                 if (cur.pos >= 0)
                 {
+                    cur.info = info;
+                    info = "";
+                    cur.canonicalize_info();
                     _impl->output_variants.push_back(cur);
                 }
                 for (size_t i = 0; i < cur.calls.size(); ++i)
@@ -342,9 +348,20 @@ bool VariantAlleleSplitter::advance()
                 cur.calls[p.sample].ad[0] = p.ad;
                 cur.calls[p.sample].ad[1] = p.ad;
             }
+            if(info.find(p.info) == std::string::npos)
+            {
+                if(!info.empty())
+                {
+                    info += ";";
+                }
+                info += p.info;
+            }
         }
         if (cur.pos >= 0)
         {
+            cur.info = info;
+            info = "";
+            cur.canonicalize_info();
             _impl->output_variants.push_back(cur);
         }
     }

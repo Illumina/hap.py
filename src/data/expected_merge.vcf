@@ -25,6 +25,7 @@
 ##contig=<ID=chr22,length=51304566>
 ##contig=<ID=chrX,length=155270560>
 ##INFO=<ID=END,Number=.,Type=Integer,Description="SV end position">
+##INFO=<ID=IMPORT_FAIL,Number=.,Type=Flag,Description="Flag to identify variants that could not be imported.">
 ##FORMAT=<ID=AGT,Number=1,Type=String,Description="Genotypes at ambiguous locations">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=GQ,Number=1,Type=Float,Description="Genotype Quality">

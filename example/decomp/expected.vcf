@@ -25,6 +25,7 @@
 ##contig=<ID=chr22,length=51304566>
 ##contig=<ID=chrX,length=155270560>
 ##INFO=<ID=END,Number=.,Type=Integer,Description="SV end position">
+##INFO=<ID=IMPORT_FAIL,Number=.,Type=Flag,Description="Flag to identify variants that could not be imported.">
 ##FORMAT=<ID=AGT,Number=1,Type=String,Description="Genotypes at ambiguous locations">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=GQ,Number=1,Type=Float,Description="Genotype Quality">
@@ -71,6 +72,6 @@
 ##Method=<ID=cortex,Description="Method=cortex-1.0.5.11">
 ##Method=<ID=isaac2,Description="Aligner=isaac_aligner-02.14.10.23;VariantCaller=isaac_variant_caller-2.1.4.1">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	TRUTH	QUERY
-chr1	237636278	.	T	<DEL>	0	.	T_VT=INDEL;Q_VT=INDEL;T_LT=homalt;Q_LT=homalt;type=TP;kind=match;Regions=CONF	GT	1/1	1/1
-chr1	237636291	.	G	C	0	.	T_VT=SNP;Q_VT=SNP;T_LT=homalt;Q_LT=homalt;type=TP;kind=match;Regions=CONF	GT	1/1	1/1
-chr1	237636309	.	A	T	0	.	T_VT=SNP;Q_VT=SNP;T_LT=homalt;Q_LT=homalt;type=TP;kind=match;Regions=CONF	GT	1/1	1/1
+chr1	237636278	.	T	<DEL>	0	.	bwa_freebayes=HD:0,LOOHD:0;bwa_gatk3=HD:0,LOOHD:0;bwa_platypus=.;cgi=.;cortex=.;dist2closest=13;isaac2=HD:0,LOOHD:0;metal=platinum;T_VT=INDEL;Q_VT=INDEL;T_LT=homalt;Q_LT=homalt;type=TP;kind=match;Regions=CONF	GT	1/1	1/1
+chr1	237636291	.	G	C	0	.	bwa_freebayes=HD:0,LOOHD:0;bwa_gatk3=HD:0,LOOHD:0;bwa_platypus=HD:0,LOOHD:0;cgi=HD:2,LOOHD:2;cortex=.;dist2closest=13;isaac2=HD:2,LOOHD:2;metal=platinum;T_VT=SNP;Q_VT=SNP;T_LT=homalt;Q_LT=homalt;type=TP;kind=match;Regions=CONF	GT	1/1	1/1
+chr1	237636309	.	A	T	0	.	bwa_freebayes=HD:0,LOOHD:0;bwa_gatk3=HD:0,LOOHD:0;bwa_platypus=.;cgi=HD:0,LOOHD:0;cortex=.;dist2closest=18;isaac2=HD:0,LOOHD:0;metal=platinum;T_VT=SNP;Q_VT=SNP;T_LT=homalt;Q_LT=homalt;type=TP;kind=match;Regions=CONF	GT	1/1	1/1

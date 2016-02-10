@@ -87,6 +87,7 @@ const uint64_t CT_HALFCALL = 0x70;     // locations with one allele, and one mis
 const uint64_t CT_NOCALL = 0x80;       // locations with one allele, and one missing call
 const uint64_t CT_HOMALT = 0x90;       // locations with one allele, and one missing call
 const uint64_t CT_UNKNOWN = 0xa0;      // unknown locations / counts
+const uint64_t CT_FAIL = 0xb0;         // import / processing fails
 
 const char * CT_NAMES [] = {
     "nuc", // 0x00
@@ -100,7 +101,7 @@ const char * CT_NAMES [] = {
     "nocall",      // 0x80
     "homalt",      // 0x90
     "unknown",     // 0xa0
-    "unknown",     // 0xb0
+    "fail",        // 0xb0
     "unknown",     // 0xc0
     "unknown",     // 0xd0
     "unknown",     // 0xe0
@@ -359,60 +360,66 @@ void VariantStatistics::add(Variants const & rhs, int sample, int ** rtypes, int
 {
     if(rtypes && nrtypes) { _impl->reset_rtypes(); }
 
-    int types = 0;
-    // count hom-alt alleles only once
-    if(rhs.calls[sample].isHomalt())
-    {
-        types = _impl->add_al(rhs.chr.c_str(), rhs.variation[rhs.calls[sample].gt[0]-1]);
-    } else if(rhs.calls[sample].isHomref()) {
-        types = VT_REF;
-    } else {
-        for(size_t i = 0; i < rhs.calls[sample].ngt; ++i)
-        {
-            if (rhs.calls[sample].gt[i] > 0)
-            {
-                types |= _impl->add_al(rhs.chr.c_str(), rhs.variation[rhs.calls[sample].gt[i]-1]);
-            }
-            else if(rhs.calls[sample].gt[i] == 0)
-            {
-                types |= VT_REF;
-            }
-        }
-    }
-
-    bool is_ambi = false;
-    for(auto i : rhs.ambiguous_alleles[sample])
-    {
-        is_ambi = true;
-        if (i > 0)
-        {
-            types |= _impl->add_al(rhs.chr.c_str(), rhs.variation[i]);
-        } else if(i == 0) {
-            types |= VT_REF;
-        } else {
-            types |= VT_NOCALL;
-        }
-    }
-
     int location_type = CT_UNKNOWN;
-    if(is_ambi) {
-        location_type = CT_AMBI;
-    } else if(rhs.calls[sample].isHomref()) {
-        location_type = CT_HOMREF;
-    } else if(rhs.calls[sample].isHet()) {
-        location_type = CT_HET;
-    } else if(rhs.calls[sample].isHomalt()) {
-        location_type = CT_HOMALT;
-    } else if(rhs.calls[sample].isHetAlt()) {
-        location_type = CT_HETALT;
-    } else if(rhs.calls[sample].isHalfcall()) {
-        location_type = CT_HALFCALL;
-    } else if(rhs.calls[sample].isNocall()) {
-        location_type = CT_NOCALL;
-    } else if(rhs.calls[sample].isHemi()) {
-        location_type = CT_HEMI;
-    }
+    int types = 0;
 
+    if(rhs.info.find("IMPORT_FAIL") != std::string::npos) {
+        // ignore fail calls when counting
+        location_type = CT_FAIL;
+        types = VT_NOCALL;
+    } else {
+        // count hom-alt alleles only once
+        if(rhs.calls[sample].isHomalt())
+        {
+            types = _impl->add_al(rhs.chr.c_str(), rhs.variation[rhs.calls[sample].gt[0]-1]);
+        } else if(rhs.calls[sample].isHomref()) {
+            types = VT_REF;
+        } else {
+            for(size_t i = 0; i < rhs.calls[sample].ngt; ++i)
+            {
+                if (rhs.calls[sample].gt[i] > 0)
+                {
+                    types |= _impl->add_al(rhs.chr.c_str(), rhs.variation[rhs.calls[sample].gt[i]-1]);
+                }
+                else if(rhs.calls[sample].gt[i] == 0)
+                {
+                    types |= VT_REF;
+                }
+            }
+        }
+
+        bool is_ambi = false;
+        for(auto i : rhs.ambiguous_alleles[sample])
+        {
+            is_ambi = true;
+            if (i > 0)
+            {
+                types |= _impl->add_al(rhs.chr.c_str(), rhs.variation[i]);
+            } else if(i == 0) {
+                types |= VT_REF;
+            } else {
+                types |= VT_NOCALL;
+            }
+        }
+
+        if(is_ambi) {
+            location_type = CT_AMBI;
+        } else if(rhs.calls[sample].isHomref()) {
+            location_type = CT_HOMREF;
+        } else if(rhs.calls[sample].isHet()) {
+            location_type = CT_HET;
+        } else if(rhs.calls[sample].isHomalt()) {
+            location_type = CT_HOMALT;
+        } else if(rhs.calls[sample].isHetAlt()) {
+            location_type = CT_HETALT;
+        } else if(rhs.calls[sample].isHalfcall()) {
+            location_type = CT_HALFCALL;
+        } else if(rhs.calls[sample].isNocall()) {
+            location_type = CT_NOCALL;
+        } else if(rhs.calls[sample].isHemi()) {
+            location_type = CT_HEMI;
+        }
+    }
     _impl->count(location_type | types, 1);
 
     if(rtypes && nrtypes) { *rtypes = _impl->rtypes; *nrtypes = _impl->nrtypes; }

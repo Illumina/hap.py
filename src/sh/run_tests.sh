@@ -113,6 +113,19 @@ else
 fi
 
 ##############################################################
+# Test Hap.py + Faulty input variants
+##############################################################
+
+/bin/bash ${DIR}/run_faulty_variant_test.sh
+
+if [[ $? -ne 0 ]]; then
+	echo "Faulty variant test FAILED!"
+	exit 1
+else
+	echo "Faulty variant test SUCCEEDED!"
+fi
+
+##############################################################
 # Test PG Counting
 ##############################################################
 

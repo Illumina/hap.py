@@ -373,7 +373,7 @@ int main(int argc, char* argv[]) {
         }
 
         /** local function to count variants in all samples */
-        const auto count_variants = [ref_fasta, &count_map, &samples, 
+        const auto count_variants = [ref_fasta, &count_map, &samples,
                                      count_homref,
                                      output_vtc
                                     ]
@@ -421,11 +421,11 @@ int main(int argc, char* argv[]) {
                         }
                     }
                     if(s.second == "TRUTH") {
-                        hl_vt_truth = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP 
+                        hl_vt_truth = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP
                                                                  || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0 : 1);
                         hl_lt_truth = lt;
                     } else if(s.second == "QUERY") {
-                        hl_vt_query = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP 
+                        hl_vt_query = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP
                                                                  || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0 : 1);
                         hl_lt_query = lt;
                     }
@@ -442,7 +442,7 @@ int main(int argc, char* argv[]) {
                 if(hl_vt_truth < 4)
                 {
                     if (vars.info != "") { vars.info += ";"; }
-                    vars.info += std::string("T_VT=") + nvs[hl_vt_truth + 1];                    
+                    vars.info += std::string("T_VT=") + nvs[hl_vt_truth + 1];
                 }
                 if(hl_vt_truth < 4)
                 {
@@ -538,6 +538,12 @@ int main(int argc, char* argv[]) {
             v.info = "";
             for (std::string & i : infs)
             {
+                if(i == "IMPORT_FAIL")
+                {
+                    // preserve import fail annotation
+                    v.info += i + ";";
+                    continue;
+                }
                 if(infs.size() < 2)
                 {
                     continue;

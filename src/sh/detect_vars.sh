@@ -51,3 +51,7 @@ if [[ -z ${PYTHON} ]]; then
 fi
 
 export HCVERSION=`${PYTHON} ${HCDIR}/hap.py --version`
+if [[ "$HCVERSION" == "" ]]; then
+    echo "Cannot run hap.py to extract version information!"
+    exit 1
+fi

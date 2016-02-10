@@ -199,7 +199,7 @@ def simplify_counts(counts, snames=None):
                 else:
                     altype = "COMPLEX"
                 keys1 = ["Alleles", "Alleles." + altype]
-            elif not (vt == "nc" or ct == "homref" or vt == "r"):  # ignore non-called locations in a sample
+            elif not (vt == "nc" or ct == "homref" or ct == "fail" or vt == "r"):  # ignore non-called locations in a sample
                 # process locations
                 if ct in ["Transitions", "Transversions"]:
                     # these are additional counts. Every SNP we see in
@@ -218,6 +218,8 @@ def simplify_counts(counts, snames=None):
                     for k in xkeys1:
                         if k != "Locations":
                             keys1.append(k + "." + ct)
+            elif ct == "fail":
+                keys1 = ["Records.fail"]
             elif vt == "nc" or ct == "homref" or vt == "r":
                 if vt == "nc":
                     keys1 = ["Records.nocall"]

@@ -178,6 +178,13 @@ void VariantAlleleNormalizer::add(Variants const & vs)
         return;
     }
 
+    // don't touch import fails
+    if (vs.info.find("IMPORT_FAIL") != std::string::npos)
+    {
+        _impl->buffered_variants.push(vs);
+        return;
+    }
+
     Variants nv(vs);
     size_t tmp = 0;
     _impl->current_maxpos.resize(std::max(_impl->current_maxpos.size(), nv.calls.size()), tmp);
@@ -185,7 +192,8 @@ void VariantAlleleNormalizer::add(Variants const & vs)
 #ifdef DEBUG_VARIANTNORMALIZER
     std::cerr << "before: " << nv << "\n";
 #endif
-    if (_impl->ref_fasta)
+
+    if(_impl->ref_fasta)
     {
         int64_t new_start = -1;
         int64_t new_end = -1;

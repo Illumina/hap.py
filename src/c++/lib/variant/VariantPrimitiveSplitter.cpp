@@ -168,7 +168,7 @@ bool VariantPrimitiveSplitter::advance()
         for (Variants & v : _impl->buffered_variants)
         {
             // homref?
-            if(v.variation.size() == 0) {
+            if(v.variation.size() == 0 || v.info.find("IMPORT_FAIL") != std::string::npos) {
                 _impl->output_variants.push(v);
                 continue;
             }

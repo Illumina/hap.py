@@ -225,7 +225,7 @@ def extractHeadersJSON(vcfname):
         o, e = sp.communicate()
 
         if sp.returncode != 0:
-            raise Exception("vcfhdr2json call failed: %s / %s" % (o, e))
+            raise Exception("vcfhdr2json call failed on file %s: %s / %s" % (vcfname, o, e))
 
         vfh = json.load(open(tf.name))
     finally:
