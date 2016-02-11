@@ -6,7 +6,6 @@ P3 (Major)  Bug HAP-147 Normalisation problem where het-alts cancel each other o
 P3 (Major)  Bug HAP-151 handle INDELs of undetermined length   
 P3 (Major)  Task    HAP-152 Implement Ti/Tv computation
 P3 (Major)  Task    HAP-155 Improve support for GRC37 / non-chr-prefix references  
-P3 (Major)  Bug HAP-156 Hap.py ignores the first line of the FP bed file   
 P3 (Major)  Task    HAP-157 Calculate per-MB FP rate (as an "absolute" equivalent to precision)s   
 P3 (Major)  Bug HAP-162 Som.py outputs INF precision when FP and TP are 0  
 P3 (Major)  Task    HAP-163 Release notes and final test   
