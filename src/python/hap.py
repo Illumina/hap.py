@@ -637,7 +637,8 @@ def main():
                                                        {"CONF": args.fp_bedfile} if args.fp_bedfile else None,
                                                        args.ref,
                                                        h1["samples"][0],
-                                                       locations=args.locations)
+                                                       locations=args.locations,
+                                                       threads=args.threads)
         else:
             counts_truth = None
 
@@ -650,7 +651,8 @@ def main():
                                                        {"CONF": args.fp_bedfile} if args.fp_bedfile else None,
                                                        args.ref,
                                                        h2["samples"][0],
-                                                       locations=args.locations)
+                                                       locations=args.locations,
+                                                       threads=args.threads)
         else:
             counts_query = None
 
@@ -722,7 +724,8 @@ def main():
                                              json_name,
                                              args.reports_prefix + ".vcf.gz" if args.write_vcf else False,
                                              {"CONF": args.fp_bedfile} if args.fp_bedfile else None,
-                                             args.ref)
+                                             args.ref,
+                                             threads=args.threads)
 
         df = pandas.DataFrame(counts)
         if args.write_counts:

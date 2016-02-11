@@ -61,7 +61,7 @@ def _locations_tmp_bed_file(locations):
 
 def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
                  reference=Tools.defaultReference(), sample_column="*",
-                 locations=None):
+                 locations=None, threads=1):
     """Run quantify and return parsed JSON
 
     :param filename: the VCF file name
@@ -80,6 +80,7 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
 
     run_str = "quantify '%s:%s' -o '%s'" % (filename.replace(" ", "\\ "), sample_column, json_name)
     run_str += " -r '%s'" % reference.replace(" ", "\\ ")
+    run_str += " --threads %i" % threads
 
     if write_vcf:
         if not write_vcf.endswith(".vcf.gz"):

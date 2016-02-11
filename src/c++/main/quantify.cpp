@@ -49,6 +49,9 @@
 #include <fstream>
 #include <map>
 #include <memory>
+#include <queue>
+#include <mutex>
+#include <future>
 
 #include "Error.hh"
 
@@ -79,6 +82,9 @@ int main(int argc, char* argv[]) {
     bool count_homref = false;
     bool output_vtc = false;
 
+    int threads = 1;
+    int blocksize = 10000;
+
     QuantifyRegions regions;
 
     try
@@ -101,6 +107,8 @@ int main(int argc, char* argv[]) {
             ("apply-filters,f", po::value<bool>(), "Apply filtering in VCF.")
             ("count-homref", po::value<bool>(), "Count homref locations.")
             ("output-vtc", po::value<bool>(), "Output variant types counted (debugging).")
+            ("threads", po::value<int>(), "Number of threads to use.")
+            ("blocksize", po::value<int>(), "Number of variants per block.")
         ;
 
         po::positional_options_description popts;
@@ -186,6 +194,16 @@ int main(int argc, char* argv[]) {
         if (vm.count("output-vtc"))
         {
             output_vtc = vm["output-vtc"].as< bool >();
+        }
+
+        if (vm.count("threads"))
+        {
+            threads = vm["threads"].as< int >();
+        }
+
+        if (vm.count("blocksize"))
+        {
+            blocksize = vm["blocksize"].as< int >();
         }
 
         if(files.size() == 0)
@@ -285,7 +303,50 @@ int main(int argc, char* argv[]) {
         /** local function to count variants in all samples */
         int64_t rcount = 0;
         std::string current_chr = "";
-        BlockQuantify bq(r, regions, ref_fasta, output_vtc, count_homref);
+        int vars_in_block = 0;
+        std::unique_ptr<BlockQuantify> p_bq(new BlockQuantify(r, regions, ref_fasta, output_vtc, count_homref));
+
+        /** async stuff. each block can be counted in parallel, but we need to
+         *  write out the variants sequentially.
+         *  Therefore, we keep a future for each block to be able to join
+         *  when it's processed
+         */
+        std::queue<std::pair <
+            std::future<void>,
+            std::unique_ptr<BlockQuantify>
+        >> blocks;
+
+        std::map<std::string, VariantStatistics> count_map;
+        auto output_counts = [&count_map, &writer, &blocks](int min_size) {
+            while(blocks.size() > (unsigned )min_size)
+            {
+                blocks.front().first.get();
+                if(writer)
+                {
+                    auto const & variants = blocks.front().second->getVariants();
+                    for(auto & v : variants)
+                    {
+                        writer->put(v);
+                    }
+                }
+
+                auto const & cm = blocks.front().second->getCounts();
+                for(auto const & c : cm)
+                {
+                    auto it = count_map.find(c.first);
+                    if (it == count_map.end()) {
+                        count_map.insert(c);
+                    }
+                    else
+                    {
+                        it->second.add(c.second);
+                    }
+                }
+
+                blocks.pop();
+            }
+        };
+
         while(r.advance())
         {
             Variants & v = r.current();
@@ -303,26 +364,33 @@ int main(int argc, char* argv[]) {
                 break;
             }
             current_chr = v.chr;
-            bq.add(v);
-            if (message > 0 && (rcount % message) == 0) {
+            p_bq->add(v);
+
+            ++vars_in_block;
+            if(vars_in_block > blocksize)
+            {
+                std::future<void> f = std::async(std::launch::async, &BlockQuantify::count, p_bq.get());
+                // clear / write out some blocks (make sure we have at least 2xthreads tasks left)
+                output_counts(4*threads);
+                blocks.emplace(std::move(f), std::move(p_bq));
+                p_bq.reset(new BlockQuantify(r, regions, ref_fasta, output_vtc, count_homref));
+            }
+
+            if (message > 0 && (rcount % message) == 0)
+            {
                 std::cout << stringutil::formatPos(v.chr.c_str(), v.pos) << ": " << v << "\n";
             }
             // count variants here
             ++rcount;
         }
 
-        bq.count();
-
-        if(writer)
         {
-            auto const & variants = bq.getVariants();
-            for(auto & v : variants)
-            {
-                writer->put(v);
-            }
+            std::future<void> f = std::async(std::launch::async, &BlockQuantify::count, p_bq.get());
+            // clear / write out some blocks (make sure we have at least 2xthreads tasks left)
+            blocks.emplace(std::move(f), std::move(p_bq));
         }
-
-        auto const & count_map = bq.getCounts();
+        // clear remaining
+        output_counts(0);
 
         Json::Value counts;
         for (auto & p : count_map)
