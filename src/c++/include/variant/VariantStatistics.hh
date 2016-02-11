@@ -60,7 +60,7 @@ public:
      * @brief Read and write from/to JSON files
      */
     void read(Json::Value const & );
-    Json::Value write();
+    Json::Value write() const;
 
     /**
      * @brief add counts

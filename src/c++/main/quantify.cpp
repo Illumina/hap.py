@@ -50,22 +50,12 @@
 #include <map>
 #include <memory>
 
-#include <htslib/hts.h>
-
 #include "Error.hh"
 
-#include "IntervalTree.h"
+#include "BlockQuantify.hh"
 
 using namespace variant;
 
-namespace std
-{
-    template<typename T, typename ...Args>
-    unique_ptr<T> make_unique( Args&& ...args )
-    {
-        return unique_ptr<T>( new T( forward<Args>(args)... ) );
-    }
-}
 
 int main(int argc, char* argv[]) {
     namespace po = boost::program_options;
@@ -76,9 +66,6 @@ int main(int argc, char* argv[]) {
     std::string output_vcf;
     std::string ref_fasta;
     std::string only_regions;
-
-    std::map<std::string, IntervalTree<std::string, int64_t> > regions;
-    std::set<std::string> region_names;
 
     // limits
     std::string chr;
@@ -91,6 +78,8 @@ int main(int argc, char* argv[]) {
     bool apply_filters = false;
     bool count_homref = false;
     bool output_vtc = false;
+
+    QuantifyRegions regions;
 
     try
     {
@@ -214,85 +203,7 @@ int main(int argc, char* argv[]) {
         if (vm.count("regions"))
         {
             std::vector<std::string> rnames = vm["regions"].as< std::vector<std::string> >();
-            std::map<std::string, std::vector< Interval<std::string, int64_t > > > intervals;
-            for(std::string const & f : rnames)
-            {
-                std::vector<std::string> v;
-                stringutil::split(f, v, ":");
-
-                std::string filename, label = "";
-
-                // in case someone passes a ":"
-                if(v.size() == 0)
-                {
-                    error("Invalid region name: %s", f.c_str());
-                }
-
-                if(v.size() > 1)
-                {
-                    label = v[0];
-                    filename = v[1];
-                }
-                else
-                {
-                    filename = v[0];
-                    label = boost::filesystem::path(filename).stem().string();
-                }
-
-                region_names.insert(label);
-
-                htsFile * bedfile = NULL;
-
-                if (stringutil::endsWith(filename, ".gz"))
-                {
-                    bedfile = hts_open(filename.c_str(), "rz");
-                }
-                else
-                {
-                    bedfile = hts_open(filename.c_str(), "r");
-                }
-
-                size_t icount = 0;
-                kstring_t l;
-                l.l = l.m = 0; l.s = NULL;
-                while ( hts_getline(bedfile, 2, &l) > 0 )
-                {
-                    std::string line(l.s);
-                    v.clear();
-                    stringutil::split(line, v, "\t");
-                    // we want >= 3 columns
-                    if(v.size() >= 3)
-                    {
-                        auto chr_it = intervals.find(v[0]);
-                        if (chr_it == intervals.end())
-                        {
-                            chr_it = intervals.emplace(
-                                v[0],
-                                std::vector< Interval<std::string, int64_t > >()).first;
-                        }
-                        // intervals are both zero-based
-                        int64_t start = std::stoll(v[1]), stop = std::stoll(v[2])-1;
-                        if (start > stop)
-                        {
-                            std::cerr << "[W] ignoring invalid interval in " << filename << " : " << line << "\n";
-                        }
-                        chr_it->second.push_back(Interval<std::string, int64_t>(start, stop, label));
-                        ++icount;
-                    }
-                    else if(line != "" && line != "\n")
-                    {
-                        std::cerr << "[W] ignoring mis-formatted input line in " << filename << " : " << line << "\n";
-                    }
-                }
-                free(l.s);
-                hts_close(bedfile);
-                std::cerr << "Added region file '" << filename << "' as '" << label << "' (" << icount << " intervals)" << "\n";
-            }
-
-            for (auto & p : intervals)
-            {
-                regions[p.first] = IntervalTree<std::string, int64_t> (p.second);
-            }
+            regions.load(rnames);
         }
 
     }
@@ -330,17 +241,16 @@ int main(int argc, char* argv[]) {
             r.addSample(filename.c_str(), sample.c_str());
         }
 
-        std::list< std::pair<std::string, std::string> > samples;
-        r.getSampleList(samples);
         r.rewind(chr.c_str(), start);
 
-        std::map<std::string, VariantStatistics> count_map;
-        std::unique_ptr<VariantWriter> writer;
+        std::shared_ptr<VariantWriter> writer;
 
         if (output_vcf != "")
         {
-            writer = std::make_unique<VariantWriter>(output_vcf.c_str(), ref_fasta.c_str());
+            writer = std::make_shared<VariantWriter>(output_vcf.c_str(), ref_fasta.c_str());
             std::set<std::string> samplenames;
+            std::list< std::pair<std::string, std::string> > samples;
+            r.getSampleList(samples);
             for (auto const & p : samples)
             {
                 std::string sname = p.second;
@@ -373,112 +283,9 @@ int main(int argc, char* argv[]) {
         }
 
         /** local function to count variants in all samples */
-        const auto count_variants = [ref_fasta, &count_map, &samples,
-                                     count_homref,
-                                     output_vtc
-                                    ]
-                                    (std::string const & name, Variants & vars, bool update_info)
-        {
-            int i = 0;
-            std::set<int> vtypes;
-            uint64_t hl_lt_truth = -1;
-            uint64_t hl_lt_query = -1;
-            uint64_t hl_vt_truth = -1;
-            uint64_t hl_vt_query = -1;
-
-            std::string lt_truth = "unk";
-            std::string lt_query = "unk";
-
-            for (auto const & s : samples)
-            {
-                std::string key;
-                if(s.second == "")
-                {
-                    key = name + ":" + s.first + ":" + s.second + ":" + std::to_string(i);
-                }
-                else
-                {
-                    key = name + ":" + s.second;
-                }
-
-                auto it = count_map.find(key);
-                if (it == count_map.end())
-                {
-                    it = count_map.emplace(key, VariantStatistics(ref_fasta.c_str(), count_homref)).first;
-                }
-                if(update_info)
-                {
-                    int * types;
-                    int ntypes = 0;
-                    it->second.add(vars, i, &types, &ntypes);
-                    uint64_t vts_seen = 0;
-                    uint64_t lt = -1;
-                    for(int j = 0; j < ntypes; ++j) {
-                        vts_seen |= types[j] & 0xf;
-                        vtypes.insert(types[j]);
-                        if((types[j] & 0xf0) > 0x10) {
-                            lt = types[j] >> 4;
-                        }
-                    }
-                    if(s.second == "TRUTH") {
-                        hl_vt_truth = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP
-                                                                 || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0 : 1);
-                        hl_lt_truth = lt;
-                    } else if(s.second == "QUERY") {
-                        hl_vt_query = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP
-                                                                 || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0 : 1);
-                        hl_lt_query = lt;
-                    }
-                }
-                else
-                {
-                    it->second.add(vars, i);
-                }
-                ++i;
-            }
-            if(update_info)
-            {
-                static const char * nvs[] = { "UNK", "SNP", "INDEL", "NOCALL" };
-                if(hl_vt_truth < 4)
-                {
-                    if (vars.info != "") { vars.info += ";"; }
-                    vars.info += std::string("T_VT=") + nvs[hl_vt_truth + 1];
-                }
-                if(hl_vt_truth < 4)
-                {
-                    if (vars.info != "") { vars.info += ";"; }
-                    vars.info += std::string("Q_VT=") + nvs[hl_vt_query + 1];
-                }
-                if(hl_lt_truth < 0x10)
-                {
-                    if (vars.info != "") { vars.info += ";"; }
-                    vars.info += std::string(";T_LT=") + CT_NAMES[hl_lt_truth];
-                }
-                if(hl_lt_query < 0x10)
-                {
-                    if (vars.info != "") { vars.info += ";"; }
-                    vars.info += std::string(";Q_LT=") + CT_NAMES[hl_lt_query];
-                }
-            }
-            if(output_vtc && update_info && !vtypes.empty())
-            {
-                std::string s = "VTC=";
-                int j = 0;
-                for(int t : vtypes)
-                {
-                    if(j++ > 0) { s += ","; }
-                    s += VariantStatistics::type2string(t);
-                }
-                if (vars.info != "") { vars.info += ";"; }
-                vars.info += s;
-            }
-        };
-
         int64_t rcount = 0;
-
-        std::string chr = "";
-        IntervalTree<std::string, int64_t> * current_chr_intervals = NULL;
-
+        std::string current_chr = "";
+        BlockQuantify bq(r, regions, ref_fasta, output_vtc, count_homref);
         while(r.advance())
         {
             Variants & v = r.current();
@@ -491,112 +298,31 @@ int main(int argc, char* argv[]) {
                 }
             }
 
-            if(end != -1 && v.pos > end)
+            if(end != -1 && ((!current_chr.empty() && chr != current_chr) || v.pos > end))
             {
                 break;
             }
-
-            if (!regions.empty() && (current_chr_intervals == NULL || v.chr != chr))
-            {
-                auto qit = regions.find(v.chr);
-                if (qit != regions.end())
-                {
-                    current_chr_intervals = &qit->second;
-                }
+            current_chr = v.chr;
+            bq.add(v);
+            if (message > 0 && (rcount % message) == 0) {
+                std::cout << stringutil::formatPos(v.chr.c_str(), v.pos) << ": " << v << "\n";
             }
-            chr = v.chr;
-            count_variants("all", v, true);
-            // resolve tags
-            std::set<std::string> to_count;
-            std::string tag_string = "";
-            if (current_chr_intervals != NULL)
-            {
-                std::vector< Interval<std::string, int64_t > > overlapping;
-                current_chr_intervals->findOverlapping(v.pos, v.pos + v.len - 1, overlapping);
-                for (auto const & iv : overlapping)
-                {
-                    to_count.insert(iv.value);
-                }
-                for (std::string const & r : to_count)
-                {
-                    if (tag_string != "")
-                    {
-                        tag_string += ",";
-                    }
-                    tag_string += r;
-                }
-            }
+            // count variants here
+            ++rcount;
+        }
 
-            std::string type = ".";
-            std::string kind = ".";
-            std::string gtt1 = ".";
-            std::string gtt2 = ".";
-            bool hapmatch = false;
+        bq.count();
 
-            std::vector<std::string> infs;
-            stringutil::split(v.info, infs, ";");
-            v.info = "";
-            for (std::string & i : infs)
-            {
-                if(i == "IMPORT_FAIL")
-                {
-                    // preserve import fail annotation
-                    v.info += i + ";";
-                    continue;
-                }
-                if(infs.size() < 2)
-                {
-                    continue;
-                }
-                std::vector<std::string> ifo;
-                stringutil::split(i, ifo, "=");
-                if(ifo[0] == "HapMatch") {
-                    hapmatch = true;
-                } else if(ifo.size() < 2) {
-                    v.info += i + ";";
-                } else if(ifo[0] == "type") {
-                    type = ifo[1];
-                } else if(ifo[0] == "kind") {
-                    kind = ifo[1];
-                } else if(ifo[0] == "gtt1") {
-                    gtt1 = ifo[1];
-                } else if(ifo[0] == "gtt2") {
-                    gtt2 = ifo[1];
-                } else if(ifo[0] != "ctype") {
-                    v.info += i + ";";
-                }
-            }
-
-            if(hapmatch && type != "TP") {
-                kind = "hapmatch__" + type + "__" + kind;
-                type = "TP";
-            }
-
-            if(!regions.empty() && tag_string.empty() && type == "FP" && kind == "missing") {
-                type = "UNK";
-            }
-
-            v.info += std::string("type=") + type;
-            v.info += std::string(";kind=") + kind;
-            // v.info += std::string(";gtt1=") + gtt1;
-            // v.info += std::string(";gtt2=") + gtt2;
-            if(!tag_string.empty()) {
-                v.info += std::string(";Regions=") + tag_string;
-            }
-
-            if (writer)
+        if(writer)
+        {
+            auto const & variants = bq.getVariants();
+            for(auto & v : variants)
             {
                 writer->put(v);
             }
-
-            count_variants(type + ":" + kind + ":" + tag_string, v, false);
-
-            if(message > 0 && (rcount % message) == 0)
-            {
-                std::cout << stringutil::formatPos(v.chr.c_str(), v.pos) << ": " << v << "\n";
-            }
-            ++rcount;
         }
+
+        auto const & count_map = bq.getCounts();
 
         Json::Value counts;
         for (auto & p : count_map)
@@ -614,6 +340,8 @@ int main(int argc, char* argv[]) {
             std::ofstream o(output);
             o << fastWriter.write(counts);
         }
+
+        // also print / write
     }
     catch(std::runtime_error & e)
     {

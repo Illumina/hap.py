@@ -186,10 +186,10 @@ public:
         }
     }
 
-    void findOverlapping(K start, K stop, intervalVector& overlapping) {
+    void findOverlapping(K start, K stop, intervalVector& overlapping) const {
         if (!intervals.empty() && ! (stop < intervals.front().start)) {
-            for (typename intervalVector::iterator i = intervals.begin(); i != intervals.end(); ++i) {
-                interval& interval = *i;
+            for (typename intervalVector::const_iterator i = intervals.cbegin(); i != intervals.cend(); ++i) {
+                interval const& interval = *i;
                 if (interval.stop >= start && interval.start <= stop) {
                     overlapping.push_back(interval);
                 }
@@ -206,10 +206,10 @@ public:
 
     }
 
-    void findContained(K start, K stop, intervalVector& contained) {
+    void findContained(K start, K stop, intervalVector& contained) const {
         if (!intervals.empty() && ! (stop < intervals.front().start)) {
-            for (typename intervalVector::iterator i = intervals.begin(); i != intervals.end(); ++i) {
-                interval& interval = *i;
+            for (typename intervalVector::const_iterator i = intervals.cbegin(); i != intervals.cend(); ++i) {
+                interval const& interval = *i;
                 if (interval.start >= start && interval.stop <= stop) {
                     contained.push_back(interval);
                 }

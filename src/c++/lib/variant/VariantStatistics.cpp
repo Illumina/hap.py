@@ -317,7 +317,7 @@ void VariantStatistics::read(Json::Value const & root)
     }
 }
 
-Json::Value VariantStatistics::write()
+Json::Value VariantStatistics::write() const
 {
     Json::Value root;
     for (int i = 0; i < VS_COUNTS; ++i)
