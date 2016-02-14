@@ -60,7 +60,7 @@ def _locations_tmp_bed_file(locations):
 
 
 def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
-                 reference=Tools.defaultReference(), sample_column="*",
+                 reference=Tools.defaultReference(),
                  locations=None, threads=1):
     """Run quantify and return parsed JSON
 
@@ -70,7 +70,6 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
     :type write_vcf: str
     :param regions: dictionary of stratification region names and file names
     :param reference: reference fasta path
-    :param sample_column: column to use (or * for all)
     :param locations: a location to use
     :returns: parsed counts JSON
     """
@@ -78,7 +77,7 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
     if not json_name:
         json_name = tempfile.NamedTemporaryFile().name
 
-    run_str = "quantify '%s:%s' -o '%s'" % (filename.replace(" ", "\\ "), sample_column, json_name)
+    run_str = "quantify '%s' -o '%s'" % (filename.replace(" ", "\\ "), json_name)
     run_str += " -r '%s'" % reference.replace(" ", "\\ ")
     run_str += " --threads %i" % threads
 

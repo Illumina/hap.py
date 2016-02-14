@@ -56,32 +56,71 @@ extern "C" {
 
 namespace bcfhelpers {
 
-/**
- * @brief Set hg19 contig names in header.
- * @param header BCF header
- */
-void bcfHeaderHG19(bcf_hdr_t * header);
+    /** when things go wrong, this gets thrown */
+    struct importexception : public std::runtime_error {
+        importexception(std::string const what) : std::runtime_error(what) {}
+    };
 
-/**
- * @brief Retrieve an info field as an integer
- * @details [long description]
- * 
- * @param result the default to return if the field is not present
- */
-int getInfoInt(bcf_hdr_t * header, bcf1_t * line, const char * field, int result = -1);
+    /**
+     * @brief Set hg19 contig names in header.
+     * @param header BCF header
+     */
+    void bcfHeaderHG19(bcf_hdr_t * header);
 
-/**
- * @brief Read the GT field
- */
-void getGT(bcf_hdr_t * header, bcf1_t * line, int isample, int * gt, int & ngt, bool & phased);
+    /* get list of sample names from BCF header */
+    std::list<std::string> getSampleNames(const bcf_hdr_t * hdr);
 
-/** read GQ(X) -- will use in this order: GQ, GQX, -1 */
-void getGQ(const bcf_hdr_t * header, bcf1_t * line, int isample, float & gq);
+    /** shortcut to get chromosome name */
+    static inline std::string getChrom(const bcf_hdr_t * hdr, const bcf1_t * rec)
+    {
+        return hdr->id[BCF_DT_CTG][rec->rid].key;
+    }
 
-/** read AD */
-void getAD(const bcf_hdr_t * header, bcf1_t * line, int isample, int *ad, int max_ad);
+    /** extract pos / length */
+    void getLocation(bcf_hdr_t * hdr, bcf1_t * rec, int64_t start, int64_t & end);
 
-/** read DP(I) -- will use in this order: DP, DPI, -1 */
-void getDP(const bcf_hdr_t * header, bcf1_t * line, int isample, int & dp);
+    /**
+     * @brief Retrieve an info field as an integer
+     * @details [long description]
+     *
+     * @param result the default to return if the field is not present
+     */
+    std::string getInfoString(bcf_hdr_t * header, bcf1_t * line, const char * field, const char * def_result = ".");
+
+    /**
+     * @brief Retrieve an info field as an integer
+     * @details [long description]
+     *
+     * @param result the default to return if the field is not present
+     */
+    int getInfoInt(bcf_hdr_t * header, bcf1_t * line, const char * field, int result = -1);
+
+    /**
+     * @brief Retrieve an info field as a double
+     *
+     * @return the value or NaN
+     */
+    double getInfoDouble(bcf_hdr_t * header, bcf1_t * line, const char * field);
+
+    /**
+     * @brief Retrieve an info flag
+     *
+     * @return true of the flag is set
+     */
+    bool getInfoFlag(bcf_hdr_t * header, bcf1_t * line, const char * field);
+
+    /**
+     * @brief Read the GT field
+     */
+    void getGT(bcf_hdr_t * header, bcf1_t * line, int isample, int * gt, int & ngt, bool & phased);
+
+    /** read GQ(X) -- will use in this order: GQ, GQX, -1 */
+    void getGQ(const bcf_hdr_t * header, bcf1_t * line, int isample, float & gq);
+
+    /** read AD */
+    void getAD(const bcf_hdr_t * header, bcf1_t * line, int isample, int *ad, int max_ad);
+
+    /** read DP(I) -- will use in this order: DP, DPI, -1 */
+    void getDP(const bcf_hdr_t * header, bcf1_t * line, int isample, int & dp);
 
 } // namespace bcfhelpers

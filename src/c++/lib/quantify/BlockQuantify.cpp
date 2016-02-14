@@ -40,6 +40,7 @@
 #include <boost/iostreams/filter/gzip.hpp>
 
 #include "helpers/StringUtil.hh"
+#include "helpers/BCFHelpers.hh"
 #include "Variant.hh"
 #include "Error.hh"
 
@@ -47,6 +48,8 @@
 
 #include <array>
 #include <list>
+#include <htslib/vcf.h>
+#include <thread>
 
 #include "BlockQuantify.hh"
 
@@ -123,15 +126,23 @@ namespace variant {
     }
 
     struct BlockQuantify::BlockQuantifyImpl {
-        VariantReader & r;
+        ~BlockQuantifyImpl()
+        {
+            for(auto x : variants)
+            {
+                bcf_destroy(x);
+            }
+        }
+
+        bcf_hdr_t * hdr;
         QuantifyRegions const & qregions;
         std::string ref_fasta;
         bool output_vtc;
         bool count_homref;
 
-        typedef std::list< std::pair<std::string, std::string> > samplenames_t;
+        typedef std::list<std::string> samplenames_t;
         typedef std::map<std::string, VariantStatistics> count_map_t;
-        typedef std::list<Variants> variantlist_t;
+        typedef std::list<bcf1_t *> variantlist_t;
 
         count_map_t count_map;
         variantlist_t variants;
@@ -139,12 +150,12 @@ namespace variant {
         samplenames_t samples;
     };
 
-    BlockQuantify::BlockQuantify(VariantReader & r,
+    BlockQuantify::BlockQuantify(bcf_hdr_t * hdr,
                                  QuantifyRegions const & qregions,
                                  std::string const & ref_fasta,
                                  bool output_vtc,
                                  bool count_homref) :
-        _impl(std::unique_ptr<BlockQuantifyImpl>(new BlockQuantifyImpl{r,
+        _impl(std::unique_ptr<BlockQuantifyImpl>(new BlockQuantifyImpl{hdr,
                                                     qregions,
                                                     ref_fasta,
                                                     output_vtc,
@@ -152,9 +163,8 @@ namespace variant {
                                                     BlockQuantifyImpl::count_map_t(),
                                                     BlockQuantifyImpl::variantlist_t(),
                                                     qregions.regions.cend(),
-                                                    BlockQuantifyImpl::samplenames_t()}))
+                                                    bcfhelpers::getSampleNames(hdr)}))
     {
-        r.getSampleList(_impl->samples);
     }
 
     BlockQuantify::~BlockQuantify() {}
@@ -167,17 +177,20 @@ namespace variant {
         return *this;
     }
 
-    void BlockQuantify::add(Variants const &v)
+    void BlockQuantify::add(bcf1_t * v)
     {
         _impl->variants.push_back(v);
     }
 
     void BlockQuantify::count()
     {
+        int lastpos = 0;
         for(auto & v : _impl->variants)
         {
+            lastpos = v->pos;
             count_variants(v);
         }
+        std::cerr << "finished block " << lastpos << " - " << _impl->variants.size() << " records on thread " << std::this_thread::get_id() << "\n";
     }
 
     // result output
@@ -186,7 +199,7 @@ namespace variant {
         return _impl->count_map;
     }
 
-    std::list<Variants> const & BlockQuantify::getVariants() const
+    std::list<bcf1_t*> const & BlockQuantify::getVariants()
     {
         return _impl->variants;
     }
@@ -200,15 +213,18 @@ namespace variant {
         }
     }
 
-    void BlockQuantify::count_variants(Variants & v) {
+    void BlockQuantify::count_variants(bcf1_t * v) {
         // resolve tags
         std::set<std::string> to_count;
         std::string tag_string = "";
 
-        start_chr(v.chr);
+        const char * chr = _impl->hdr->id[BCF_DT_CTG][v->rid].key;
+        start_chr(chr);
         if (_impl->current_chr != _impl->qregions.regions.cend()) {
+            int64_t refstart = 0, refend = 0;
+            bcfhelpers::getLocation(_impl->hdr, v, refstart, refend);
             std::vector<Interval<std::string, int64_t> > overlapping;
-            _impl->current_chr->second.findOverlapping(v.pos, v.pos + v.len - 1, overlapping);
+            _impl->current_chr->second.findOverlapping(refstart, refend, overlapping);
             for (auto const &iv : overlapping) {
                 to_count.insert(iv.value);
             }
@@ -220,42 +236,9 @@ namespace variant {
             }
         }
 
-        std::string type = ".";
-        std::string kind = ".";
-        std::string gtt1 = ".";
-        std::string gtt2 = ".";
-        bool hapmatch = false;
-
-        std::vector<std::string> infs;
-        stringutil::split(v.info, infs, ";");
-        v.info = "";
-        for (std::string &i : infs) {
-            if (i == "IMPORT_FAIL") {
-                // preserve import fail annotation
-                v.info += i + ";";
-                continue;
-            }
-            if (i.size() < 2) {
-                continue;
-            }
-            std::vector<std::string> ifo;
-            stringutil::split(i, ifo, "=");
-            if (ifo[0] == "HapMatch") {
-                hapmatch = true;
-            } else if (ifo.size() < 2) {
-                v.info += i + ";";
-            } else if (ifo[0] == "type") {
-                type = ifo[1];
-            } else if (ifo[0] == "kind") {
-                kind = ifo[1];
-            } else if (ifo[0] == "gtt1") {
-                gtt1 = ifo[1];
-            } else if (ifo[0] == "gtt2") {
-                gtt2 = ifo[1];
-            } else if (ifo[0] != "ctype") {
-                v.info += i + ";";
-            }
-        }
+        std::string type = bcfhelpers::getInfoString(_impl->hdr, v, "type");
+        std::string kind = bcfhelpers::getInfoString(_impl->hdr, v, "kind");
+        bool hapmatch = bcfhelpers::getInfoFlag(_impl->hdr, v, "HapMatch");
 
         if (hapmatch && type != "TP") {
             kind = "hapmatch__" + type + "__" + kind;
@@ -266,12 +249,9 @@ namespace variant {
             type = "UNK";
         }
 
-        std::string matchtypeinfo;
-        matchtypeinfo += std::string("type=") + type;
-        matchtypeinfo += std::string(";kind=") + kind;
-        if (!tag_string.empty()) {
-            matchtypeinfo += std::string(";Regions=") + tag_string;
-        }
+        bcf_update_info_string(_impl->hdr, v, "type", type.c_str());
+        bcf_update_info_string(_impl->hdr, v, "kind", kind.c_str());
+        bcf_update_info_string(_impl->hdr, v, "Regions", tag_string.c_str());
 
         std::set<int> vtypes;
         uint64_t hl_lt_truth = (uint64_t) -1;
@@ -289,22 +269,23 @@ namespace variant {
         {
             int i = 0;
             for (auto const &s : _impl->samples) {
-                std::string key;
-                if (s.second == "") {
-                    key = name + ":" + s.first + ":" + s.second + ":" + std::to_string(i);
-                }
-                else {
-                    key = name + ":" + s.second;
-                }
+                std::string key = name + ":" + s;
 
+                // see if we already have a statistics counter for this kind of variant
                 auto it = _impl->count_map.find(key);
                 if (it == _impl->count_map.end()) {
                     it = _impl->count_map.emplace(key, VariantStatistics(_impl->ref_fasta.c_str(),
                                                                          _impl->count_homref)).first;
                 }
+
+                // determine the types seen in the variant
                 int *types;
                 int ntypes = 0;
-                it->second.add(v, i, &types, &ntypes);
+
+                // count this variant
+                it->second.add(_impl->hdr, v, i, &types, &ntypes);
+
+                // aggregate the things we have seen across samples
                 uint64_t vts_seen = 0;
                 uint64_t lt = (uint64_t) -1;
                 for (int j = 0; j < ntypes; ++j) {
@@ -314,15 +295,14 @@ namespace variant {
                         lt = (uint64_t) (types[j] >> 4);
                     }
                 }
-                if (s.second == "TRUTH") {
+
+                if (s == "TRUTH") {
                     hl_vt_truth = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP
-                                                                || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0
-                                                                                                                    : 1);
+                                                    || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0 : 1);
                     hl_lt_truth = lt;
-                } else if (s.second == "QUERY") {
+                } else if (s == "QUERY") {
                     hl_vt_query = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP
-                                                                || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0
-                                                                                                                    : 1);
+                                                    || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0 : 1);
                     hl_lt_query = lt;
                 }
                 ++i;
@@ -332,46 +312,26 @@ namespace variant {
         static const char *nvs[] = {"UNK", "SNP", "INDEL", "NOCALL"};
         std::string type_info;
         if (hl_vt_truth < 4) {
-            if(type_info != "") { type_info += ";"; }
-            type_info += std::string("T_VT=") + nvs[hl_vt_truth + 1];
+            bcf_update_info_string(_impl->hdr, v, "T_VT", nvs[hl_vt_truth + 1]);
         }
         if (hl_vt_query < 4) {
-            if (type_info != "") { type_info += ";"; }
-            type_info += std::string("Q_VT=") + nvs[hl_vt_query + 1];
+            bcf_update_info_string(_impl->hdr, v, "Q_VT", nvs[hl_vt_query + 1]);
         }
         if (hl_lt_truth < 0x10) {
             if (type_info != "") { type_info += ";"; }
-            type_info += std::string(";T_LT=") + CT_NAMES[hl_lt_truth];
+            bcf_update_info_string(_impl->hdr, v, "T_LT", CT_NAMES[hl_lt_truth]);
         }
         if (hl_lt_query < 0x10) {
-            if (type_info != "") { type_info += ";"; }
-            type_info += std::string(";Q_LT=") + CT_NAMES[hl_lt_query];
+            bcf_update_info_string(_impl->hdr, v, "Q_LT", CT_NAMES[hl_lt_query]);
         }
         if (_impl->output_vtc && !vtypes.empty()) {
-            std::string s = "VTC=";
+            std::string s = "";
             int j = 0;
             for (int t : vtypes) {
                 if (j++ > 0) { s += ","; }
                 s += VariantStatistics::type2string(t);
             }
-            if (type_info != "") { type_info += ";"; }
-            type_info += s;
-        }
-        if(!type_info.empty())
-        {
-            if(!v.info.empty())
-            {
-                v.info += ";";
-            }
-            v.info += type_info;
-        }
-        if(!matchtypeinfo.empty())
-        {
-            if(!v.info.empty())
-            {
-                v.info += ";";
-            }
-            v.info += matchtypeinfo;
+            bcf_update_info_string(_impl->hdr, v, "VTC", s.c_str());
         }
     }
 }

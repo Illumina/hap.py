@@ -40,6 +40,8 @@
 #include <map>
 #include <string>
 
+#include <htslib/vcf.h>
+
 #include "Variant.hh"
 #include "IntervalTree.h"
 
@@ -55,7 +57,9 @@ namespace variant {
 
     class BlockQuantify {
     public:
-        explicit BlockQuantify(VariantReader & r,
+        // hdr must be destroyed externally, the reason it's not const is
+        // that htslib doesn't do const
+        explicit BlockQuantify(bcf_hdr_t * hdr,
                                QuantifyRegions const & qregions,
                                std::string const & ref_fasta,
                                bool output_vtc,
@@ -68,17 +72,17 @@ namespace variant {
         BlockQuantify(BlockQuantify const& rhs) = delete;
         BlockQuantify & operator=(BlockQuantify const& rhs) = delete;
 
-        // add a Variants() record
-        void add(Variants const &v);
+        // add a bcf record (will take ownership of this record)
+        void add(bcf1_t * v);
 
         // count saved variants
         void count();
 
         // result output
         std::map<std::string, VariantStatistics> const & getCounts() const;
-        std::list<Variants> const & getVariants() const;
+        std::list<bcf1_t*> const & getVariants();
     protected:
-        void count_variants(Variants & v);
+        void count_variants(bcf1_t * v);
 
         /** save lookups when reading from the same chromosome */
         void start_chr(std::string const & chr);
