@@ -59,6 +59,7 @@
 #include "Error.hh"
 
 #include "BlockQuantify.hh"
+#include "QuantifyRegions.hh"
 
 using namespace variant;
 
@@ -311,7 +312,7 @@ int main(int argc, char* argv[]) {
         int64_t rcount = 0;
         std::string current_chr = "";
         int vars_in_block = 0;
-        std::unique_ptr<BlockQuantify> p_bq(new BlockQuantify(hdr, regions, ref_fasta, output_vtc, count_homref));
+        std::unique_ptr<BlockQuantify> p_bq(new BlockQuantify(hdr, ref_fasta, output_vtc, count_homref));
 
         /** async stuff. each block can be counted in parallel, but we need to
          *  write out the variants sequentially.
@@ -409,6 +410,9 @@ int main(int argc, char* argv[]) {
                 }
             }
 
+            bcf_unpack(line, BCF_UN_INFO);
+            regions.annotate(hdr, line);
+
             current_chr = vchr;
 
             p_bq->add(bcf_dup(line));
@@ -420,7 +424,7 @@ int main(int argc, char* argv[]) {
                 // clear / write out some blocks (make sure we have at least 2xthreads tasks left)
                 output_counts(threads);
                 blocks.emplace(std::move(f), std::move(p_bq));
-                p_bq.reset(new BlockQuantify(hdr, regions, ref_fasta, output_vtc, count_homref));
+                p_bq.reset(new BlockQuantify(hdr, ref_fasta, output_vtc, count_homref));
                 vars_in_block = 0;
             }
 

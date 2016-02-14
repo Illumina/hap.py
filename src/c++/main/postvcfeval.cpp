@@ -55,8 +55,6 @@
 
 #include "Error.hh"
 
-#include "IntervalTree.h"
-
 using namespace variant;
 
 namespace std

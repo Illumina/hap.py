@@ -141,7 +141,7 @@ public:
     }
 
     /** get all intervals that overlap a range */
-    interval_t query(int64_t start, int64_t end)
+    interval_t query(int64_t start, int64_t end) const
     {
         interval_t ivs;
 

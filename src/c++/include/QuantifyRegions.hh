@@ -25,16 +25,16 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /**
- * Count variants
+ * Track named regions
  *
- * \file BlockQuantify.hh
+ * \file QuantifyRegions.hh
  * \author Peter Krusche
  * \email pkrusche@illumina.com
  *
  */
 
-#ifndef HAPLOTYPES_BLOCKQUANTIFY_HH
-#define HAPLOTYPES_BLOCKQUANTIFY_HH
+#ifndef HAPLOTYPES_QUANTIFYREGIONS_HH
+#define HAPLOTYPES_QUANTIFYREGIONS_HH
 
 #include <memory>
 #include <map>
@@ -44,40 +44,33 @@
 
 #include "Variant.hh"
 
-namespace variant {
-
-    class BlockQuantify {
+namespace variant
+{
+    /** store regions for quantification in a file */
+    class QuantifyRegions
+    {
     public:
-        // hdr must be destroyed externally, the reason it's not const is
-        // that htslib doesn't do const
-        explicit BlockQuantify(bcf_hdr_t * hdr,
-                               std::string const & ref_fasta,
-                               bool output_vtc,
-                               bool count_homref);
-        ~BlockQuantify();
+        QuantifyRegions();
+        ~QuantifyRegions();
+        /** load named regions
+         *
+         *  Each name must give a region name and a bed file:
+         *
+         *  FP:fp.bed
+         *
+         */
+        void load(std::vector<std::string> const & rnames);
 
-        BlockQuantify(BlockQuantify && rhs);
-        BlockQuantify & operator=(BlockQuantify && rhs);
-
-        BlockQuantify(BlockQuantify const& rhs) = delete;
-        BlockQuantify & operator=(BlockQuantify const& rhs) = delete;
-
-        // add a bcf record (will take ownership of this record)
-        void add(bcf1_t * v);
-
-        // count saved variants
-        void count();
-
-        // result output
-        std::map<std::string, VariantStatistics> const & getCounts() const;
-        std::list<bcf1_t*> const & getVariants();
-    protected:
-        void count_variants(bcf1_t * v);
+        /** add Regions annotation to a record
+         *
+         * Records must be passed in sorted order.
+         *
+         */
+        void annotate(bcf_hdr_t * hdr, bcf1_t * record);
     private:
-        struct BlockQuantifyImpl;
-        std::unique_ptr<BlockQuantifyImpl> _impl;
+        struct QuantifyRegionsImpl;
+        std::unique_ptr<QuantifyRegionsImpl> _impl;
     };
-
 }
 
-#endif //HAPLOTYPES_BLOCKQUANTIFY_HH
+#endif //HAPLOTYPES_QUANTIFYREGIONS_HH_HH
