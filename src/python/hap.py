@@ -107,6 +107,10 @@ def main():
                         default=False, action="store_true",
                         help="Count variants in unprocessed input VCFs and output as TOTAL.*.RAW.")
 
+    parser.add_argument("--output-vtc", dest="output_vtc",
+                        default=False, action="store_true",
+                        help="Write VTC field in the final VCF which gives the counts each position has contributed to.")
+
     parser.add_argument("--roc", dest="roc", default=False,
                         help="Select an INFO feature to produce a ROC on. This works best with "
                              "--no-internal-preprocessing and --no-internal-leftshift since these "
@@ -636,8 +640,9 @@ def main():
                                                        None,
                                                        {"CONF": args.fp_bedfile} if args.fp_bedfile else None,
                                                        args.ref,
-                                                       h1["samples"][0],
-                                                       locations=args.locations)
+                                                       locations=args.locations,
+                                                       threads=args.threads,
+                                                       output_vtc=args.output_vtc)
         else:
             counts_truth = None
 
@@ -649,8 +654,9 @@ def main():
                                                        None,
                                                        {"CONF": args.fp_bedfile} if args.fp_bedfile else None,
                                                        args.ref,
-                                                       h2["samples"][0],
-                                                       locations=args.locations)
+                                                       locations=args.locations,
+                                                       threads=args.threads,
+                                                       output_vtc=args.output_vtc)
         else:
             counts_query = None
 
@@ -722,7 +728,9 @@ def main():
                                              json_name,
                                              args.reports_prefix + ".vcf.gz" if args.write_vcf else False,
                                              {"CONF": args.fp_bedfile} if args.fp_bedfile else None,
-                                             args.ref)
+                                             args.ref,
+                                             threads=args.threads,
+                                             output_vtc=args.output_vtc)
 
         df = pandas.DataFrame(counts)
         if args.write_counts:

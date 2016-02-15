@@ -60,8 +60,9 @@ def _locations_tmp_bed_file(locations):
 
 
 def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
-                 reference=Tools.defaultReference(), sample_column="*",
-                 locations=None):
+                 reference=Tools.defaultReference(),
+                 locations=None, threads=1,
+                 output_vtc=False):
     """Run quantify and return parsed JSON
 
     :param filename: the VCF file name
@@ -70,16 +71,22 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
     :type write_vcf: str
     :param regions: dictionary of stratification region names and file names
     :param reference: reference fasta path
-    :param sample_column: column to use (or * for all)
     :param locations: a location to use
+    :param output_vtc: enable / disable the VTC field
     :returns: parsed counts JSON
     """
 
     if not json_name:
         json_name = tempfile.NamedTemporaryFile().name
 
-    run_str = "quantify '%s:%s' -o '%s'" % (filename.replace(" ", "\\ "), sample_column, json_name)
+    run_str = "quantify '%s' -o '%s'" % (filename.replace(" ", "\\ "), json_name)
     run_str += " -r '%s'" % reference.replace(" ", "\\ ")
+    run_str += " --threads %i" % threads
+
+    if output_vtc:
+        run_str += " --output-vtc 1"
+    else:
+        run_str += " --output-vtc 0"
 
     if write_vcf:
         if not write_vcf.endswith(".vcf.gz"):

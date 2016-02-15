@@ -43,15 +43,10 @@
 ##INFO=<ID=CIGAR,Number=A,Type=String,Description="CIGAR alignment for each alternate indel allele">
 ##INFO=<ID=HapMatch,Number=0,Type=Flag,Description="Variant is in matching haplotype block">
 ##INFO=<ID=IDREP,Number=A,Type=Integer,Description="Number of times RU is repeated in indel allele.">
-##INFO=<ID=Q_LT,Number=1,Type=String,Description="High-level location type in query (het|hom|hetalt).">
-##INFO=<ID=Q_VT,Number=1,Type=String,Description="High-level variant type in query (SNP|INDEL).">
 ##INFO=<ID=REFREP,Number=A,Type=Integer,Description="Number of times RU is repeated in reference.">
 ##INFO=<ID=RU,Number=A,Type=String,Description="Smallest repeating sequence unit extended or contracted in the indel allele relative to the reference. RUs are not reported if longer than 20 bases.">
-##INFO=<ID=Regions,Number=.,Type=String,Description="Tags for regions.">
 ##INFO=<ID=SNVHPOL,Number=1,Type=Integer,Description="SNV contextual homopolymer length">
 ##INFO=<ID=SNVSB,Number=1,Type=Float,Description="SNV site strand bias">
-##INFO=<ID=T_LT,Number=1,Type=String,Description="High-level location type in truth (het|hom|hetalt).">
-##INFO=<ID=T_VT,Number=1,Type=String,Description="High-level variant type in truth (SNP|INDEL).">
 ##INFO=<ID=bwa_freebayes,Number=2,Type=String,Description="Variant calling method.">
 ##INFO=<ID=bwa_gatk3,Number=2,Type=String,Description="Variant calling method.">
 ##INFO=<ID=bwa_platypus,Number=2,Type=String,Description="Variant calling method.">
@@ -71,7 +66,12 @@
 ##Method=<ID=cgi,Description="Method=CompleteGenomics">
 ##Method=<ID=cortex,Description="Method=cortex-1.0.5.11">
 ##Method=<ID=isaac2,Description="Aligner=isaac_aligner-02.14.10.23;VariantCaller=isaac_variant_caller-2.1.4.1">
+##INFO=<ID=Regions,Number=.,Type=String,Description="Tags for regions.">
+##INFO=<ID=T_VT,Number=1,Type=String,Description="High-level variant type in truth (SNP|INDEL).">
+##INFO=<ID=Q_VT,Number=1,Type=String,Description="High-level variant type in query (SNP|INDEL).">
+##INFO=<ID=T_LT,Number=1,Type=String,Description="High-level location type in truth (het|hom|hetalt).">
+##INFO=<ID=Q_LT,Number=1,Type=String,Description="High-level location type in query (het|hom|hetalt).">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	TRUTH	QUERY
-chr1	237636278	.	T	<DEL>	0	.	bwa_freebayes=HD:0,LOOHD:0;bwa_gatk3=HD:0,LOOHD:0;bwa_platypus=.;cgi=.;cortex=.;dist2closest=13;isaac2=HD:0,LOOHD:0;metal=platinum;T_VT=INDEL;Q_VT=INDEL;T_LT=homalt;Q_LT=homalt;type=TP;kind=match;Regions=CONF	GT	1/1	1/1
-chr1	237636291	.	G	C	0	.	bwa_freebayes=HD:0,LOOHD:0;bwa_gatk3=HD:0,LOOHD:0;bwa_platypus=HD:0,LOOHD:0;cgi=HD:2,LOOHD:2;cortex=.;dist2closest=13;isaac2=HD:2,LOOHD:2;metal=platinum;T_VT=SNP;Q_VT=SNP;T_LT=homalt;Q_LT=homalt;type=TP;kind=match;Regions=CONF	GT	1/1	1/1
-chr1	237636309	.	A	T	0	.	bwa_freebayes=HD:0,LOOHD:0;bwa_gatk3=HD:0,LOOHD:0;bwa_platypus=.;cgi=HD:0,LOOHD:0;cortex=.;dist2closest=18;isaac2=HD:0,LOOHD:0;metal=platinum;T_VT=SNP;Q_VT=SNP;T_LT=homalt;Q_LT=homalt;type=TP;kind=match;Regions=CONF	GT	1/1	1/1
+chr1	237636278	.	T	<DEL>	0	.	bwa_freebayes=HD:0,LOOHD:0;bwa_gatk3=HD:0,LOOHD:0;bwa_platypus=.;cgi=.;cortex=.;dist2closest=13;isaac2=HD:0,LOOHD:0;metal=platinum;gtt1=gt_homalt;gtt2=gt_homalt;type=TP;kind=match;ctype=simple:match;Regions=CONF;T_VT=INDEL;Q_VT=INDEL;T_LT=homalt;Q_LT=homalt	GT	1/1	1/1
+chr1	237636291	.	G	C	0	.	bwa_freebayes=HD:0,LOOHD:0;bwa_gatk3=HD:0,LOOHD:0;bwa_platypus=HD:0,LOOHD:0;cgi=HD:2,LOOHD:2;cortex=.;dist2closest=13;isaac2=HD:2,LOOHD:2;metal=platinum;gtt1=gt_homalt;gtt2=gt_homalt;type=TP;kind=match;ctype=simple:match;Regions=CONF;T_VT=SNP;Q_VT=SNP;T_LT=homalt;Q_LT=homalt	GT	1/1	1/1
+chr1	237636309	.	A	T	0	.	bwa_freebayes=HD:0,LOOHD:0;bwa_gatk3=HD:0,LOOHD:0;bwa_platypus=.;cgi=HD:0,LOOHD:0;cortex=.;dist2closest=18;isaac2=HD:0,LOOHD:0;metal=platinum;gtt1=gt_homalt;gtt2=gt_homalt;type=TP;kind=match;ctype=simple:match;Regions=CONF;T_VT=SNP;Q_VT=SNP;T_LT=homalt;Q_LT=homalt	GT	1/1	1/1

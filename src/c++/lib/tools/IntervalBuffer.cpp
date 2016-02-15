@@ -130,7 +130,7 @@ void IntervalBuffer::advance(int64_t to)
 /**
  * @brief Check if interval is fully covered in a given lane
  */
-bool IntervalBuffer::isCovered(int64_t start, int64_t end, size_t lane)
+bool IntervalBuffer::isCovered(int64_t start, int64_t end, size_t lane) const
 {
     if (lane >= _impl->lanes.size())
     {
@@ -152,20 +152,13 @@ bool IntervalBuffer::isCovered(int64_t start, int64_t end, size_t lane)
     }
 
     interval & it = is.front();
-    if (it.start <= start && it.end >= end)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return it.start <= start && it.end >= end;
 }
 
 /**
  * @brief Check if interval is partially covered in a given lane
  */
-bool IntervalBuffer::hasOverlap(int64_t start, int64_t end, size_t lane)
+bool IntervalBuffer::hasOverlap(int64_t start, int64_t end, size_t lane) const
 {
     if (lane >= _impl->lanes.size())
     {
@@ -179,14 +172,7 @@ bool IntervalBuffer::hasOverlap(int64_t start, int64_t end, size_t lane)
     }
 
     interval it = _impl->lanes[lane].query(start, end);
-    if (it.start >= 0 && it.end >= 0 && it.end - it.start + 1 > 0)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return it.start >= 0 && it.end >= 0 && it.end - it.start + 1 > 0;
 }
 
 }

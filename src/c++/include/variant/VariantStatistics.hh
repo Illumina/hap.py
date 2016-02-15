@@ -43,6 +43,8 @@
 #include <list>
 #include <vector>
 
+#include <htslib/vcf.h>
+
 namespace variant
 {
 typedef std::vector<std::string> StrVec;
@@ -60,13 +62,14 @@ public:
      * @brief Read and write from/to JSON files
      */
     void read(Json::Value const & );
-    Json::Value write();
+    Json::Value write() const;
 
     /**
      * @brief add counts
      */
     void add(VariantStatistics const & rhs);
     /** add for variants and alleles can return the types that were added to */
+    void add(bcf_hdr_t * hdr, bcf1_t * rhs, int sample, int ** types = NULL, int * ntypes = NULL);
     void add(Variants const & rhs, int sample, int ** types = NULL, int * ntypes = NULL);
     void add(const char * chr, RefVar const & rhs, int ** types = NULL, int * ntypes = NULL);
 

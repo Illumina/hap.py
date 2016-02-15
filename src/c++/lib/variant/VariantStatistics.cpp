@@ -36,11 +36,12 @@
 #include "Variant.hh"
 #include "Fasta.hh"
 #include "Alignment.hh"
-
+#include "helpers/BCFHelpers.hh"
 #include "Error.hh"
 
 #include <memory>
 #include <bitset>
+#include <htslib/vcf.h>
 
 // #define DEBUG_VARIANTSTATISTICS
 
@@ -148,14 +149,17 @@ struct VariantStatisticsImpl
 
     /** translate name to count key */
     static inline uint8_t n2c(const char * n) {
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedStructInspection"
         static struct _n2clookup {
             _n2clookup() {
                 for(int j = 0; j < VS_COUNTS; ++j) {
-                    t[c2n(j)] = j;
+                    t[c2n((uint64_t) j)] = (unsigned char) j;
                 }
             }
             std::map<std::string, uint8_t> t;
         } lookup;
+#pragma clang diagnostic pop
         auto it = lookup.t.find(std::string(n));
         if(it != lookup.t.end()) {
             return it->second;
@@ -197,7 +201,7 @@ struct VariantStatisticsImpl
         if(total_ins) t |= VT_INS;
         if(total_del) t |= VT_DEL;
 
-        count(CT_ALLELES | t, 1);
+        count((int) (CT_ALLELES | t), 1);
         return t;
     }
 
@@ -317,7 +321,7 @@ void VariantStatistics::read(Json::Value const & root)
     }
 }
 
-Json::Value VariantStatistics::write()
+Json::Value VariantStatistics::write() const
 {
     Json::Value root;
     for (int i = 0; i < VS_COUNTS; ++i)
@@ -354,6 +358,105 @@ void VariantStatistics::add(VariantStatistics const & rhs)
     }
 
     _impl->addExtras(*(rhs._impl));
+}
+
+
+void VariantStatistics::add(bcf_hdr_t * hdr, bcf1_t * rhs, int sample, int ** rtypes, int * nrtypes)
+{
+    if(rtypes && nrtypes) { _impl->reset_rtypes(); }
+
+    int location_type = CT_UNKNOWN;
+    int types = 0;
+
+    bcf_unpack(rhs, BCF_UN_INFO);
+    const std::string _chr = bcfhelpers::getChrom(hdr, rhs);
+    const char * chr = _chr.c_str();
+    int64_t refstart = rhs->pos;
+    int64_t refend = refstart;
+
+    try
+    {
+        bcfhelpers::getLocation(hdr, rhs, refstart, refend);
+        // check for import fails
+        bool fail = bcfhelpers::getInfoFlag(hdr, rhs, "IMPORT_FAIL");
+        if(fail)
+        {
+            throw bcfhelpers::importexception("Variant has failed before.");
+        }
+        bcf_unpack(rhs, BCF_UN_ALL);
+
+        int ngt = 0;
+        int gt[MAX_GT];
+        bool phased = false;
+        bcfhelpers::getGT(hdr, rhs, sample, gt, ngt, phased);
+
+        const bool isHomalt = ngt == 2 && gt[0] == gt[1] && gt[0] > 0;
+        std::list<RefVar> alleles_to_count;
+        if(isHomalt)
+        {
+            if(gt[0] >= rhs->n_allele)
+            {
+                throw bcfhelpers::importexception("Variant has failed before.");
+            }
+            alleles_to_count.emplace_back(refstart, refend, rhs->d.allele[gt[0]]);
+        }
+        else
+        {
+            for(int i = 0; i < ngt; ++i)
+            {
+                if (gt[i] > 0)
+                {
+                    alleles_to_count.emplace_back(refstart, refend, rhs->d.allele[gt[i]]);
+                }
+                else if(gt[i] == 0)
+                {
+                    types |= VT_REF;
+                }
+            }
+        }
+
+        for(auto & rv : alleles_to_count)
+        {
+            // trim ref bases so they don't confuse our counts
+            variant::trimLeft(_impl->ref, chr, rv, false);
+            variant::trimRight(_impl->ref, chr, rv, false);
+            types |= _impl->add_al(chr, rv);
+        }
+
+        const bool isHomref = ngt > 0 && std::all_of(&gt[0], &gt[ngt], [](int x) { return x == 0; });
+        const bool isNoCall = ngt == 0 || std::any_of(&gt[0], &gt[ngt], [](int x) { return x < 0; });
+        const bool isHet = ngt == 2 && ((gt[0] == 0 && gt[1] > 0) || (gt[0] > 0 && gt[1] == 0));
+        const bool isHetAlt = ngt == 2 && (gt[0] > 0) && (gt[1] > 0) && (gt[0] != gt[1]);
+        const bool isHalfCall = ngt == 2 && ( (gt[0] >= 0 && gt[1] < 0) || (gt[1] >= 0 && gt[0] < 0));
+        if(ngt > 2) {
+            location_type = CT_AMBI;
+        } else if(isHomref) {
+            location_type = CT_HOMREF;
+        } else if(isHet) {
+            location_type = CT_HET;
+        } else if(isHomalt) {
+            location_type = CT_HOMALT;
+        } else if(isHetAlt) {
+            location_type = CT_HETALT;
+        } else if(isHalfCall) {
+            location_type = CT_HALFCALL;
+        } else if(isNoCall) {
+            location_type = CT_NOCALL;
+        } else if(ngt == 1) {  // hemi call, not homref since this has been caught above
+            location_type = CT_HEMI;
+        }
+    }
+    catch (bcfhelpers::importexception const & x)
+    {
+        bcf_update_info_flag(hdr, rhs, "IMPORT_FAIL", "", 1);
+        location_type = CT_FAIL;
+        types = VT_NOCALL;
+        std::cerr << "Invalid variant at " << chr << ":" << refstart << "-" << refend << " : " << x.what() << "\n";
+    }
+
+    _impl->count(location_type | types, 1);
+
+    if(rtypes && nrtypes) { *rtypes = _impl->rtypes; *nrtypes = _impl->nrtypes; }
 }
 
 void VariantStatistics::add(Variants const & rhs, int sample, int ** rtypes, int * nrtypes)

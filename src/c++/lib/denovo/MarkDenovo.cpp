@@ -26,7 +26,7 @@
 
 
 /**
- * \brief 
+ * \brief
  *
  * \file MarkDenovo.cpp
  * \author Peter Krusche
@@ -36,9 +36,6 @@
 
 
 #include "denovo/MarkDenovo.hh"
-
-#include "IntervalTree.h"
-
 #include <set>
 
 namespace variant
@@ -48,7 +45,7 @@ struct MarkDenovo::MarkDenovoImpl
 {
     MarkDenovoImpl() : firstone(false), added_new(false) {}
     MarkDenovoImpl(MarkDenovoImpl const & rhs) : buffer(rhs.buffer), tmp(rhs.tmp), firstone(rhs.firstone) {}
-    std::list<Variants> buffer; 
+    std::list<Variants> buffer;
     Variants tmp;
     bool firstone;
     bool added_new;
@@ -82,37 +79,37 @@ MarkDenovo const & MarkDenovo::operator=(MarkDenovo const & rhs)
 
 /** Variant input **/
 /** enqueue a set of variants */
-void MarkDenovo::add(Variants const & vs) 
-{ 
+void MarkDenovo::add(Variants const & vs)
+{
     _impl->added_new = true;
     if (_impl->buffer.empty())
     {
         _impl->firstone = true;
     }
-    _impl->buffer.push_back(vs); 
+    _impl->buffer.push_back(vs);
 }
 
 /** Variant output **/
 /**
  * @brief Return variant block at current position
  **/
-Variants & MarkDenovo::current() 
+Variants & MarkDenovo::current()
 {
-    if( _impl->buffer.empty() ) 
-    { 
-        return _impl->tmp; 
-    } 
-    else 
+    if( _impl->buffer.empty() )
     {
-        return _impl->buffer.front(); 
-    }  
+        return _impl->tmp;
+    }
+    else
+    {
+        return _impl->buffer.front();
+    }
 }
 
 /**
  * @brief Advance one line
  * @return true if a variant was retrieved, false otherwise
  */
-bool MarkDenovo::advance() 
+bool MarkDenovo::advance()
 {
     if(_impl->added_new  && !_impl->buffer.empty())
     {
@@ -200,7 +197,7 @@ bool MarkDenovo::advance()
                 if (mum.ngt == 0 || dad.ngt == 0 || child.ngt == 0)
                 {
                     setVariantInfo(v, "denovo", "");
-                    continue;                    
+                    continue;
                 }
 
                 bool any_nocall = false;
@@ -279,7 +276,7 @@ bool MarkDenovo::advance()
                     {
                         any_nocall = true;
                     }
-                }                
+                }
 
                 if(any_nocall)
                 {
@@ -309,18 +306,18 @@ bool MarkDenovo::advance()
     }
     else
     {
-        if(!_impl->buffer.empty()) 
+        if(!_impl->buffer.empty())
         {
             _impl->buffer.pop_front();
         }
-        return !_impl->buffer.empty(); 
+        return !_impl->buffer.empty();
     }
 }
 
 /** empty internal buffer */
-void MarkDenovo::flush() 
-{ 
-    _impl->buffer.clear(); 
+void MarkDenovo::flush()
+{
+    _impl->buffer.clear();
 }
 
 }

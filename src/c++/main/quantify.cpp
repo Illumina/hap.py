@@ -49,36 +49,30 @@
 #include <fstream>
 #include <map>
 #include <memory>
-
-#include <htslib/hts.h>
+#include <queue>
+#include <mutex>
+#include <future>
+#include <htslib/synced_bcf_reader.h>
+#include <helpers/BCFHelpers.hh>
+#include <htslib/vcf.h>
 
 #include "Error.hh"
 
-#include "IntervalTree.h"
+#include "BlockQuantify.hh"
+#include "QuantifyRegions.hh"
 
 using namespace variant;
 
-namespace std
-{
-    template<typename T, typename ...Args>
-    unique_ptr<T> make_unique( Args&& ...args )
-    {
-        return unique_ptr<T>( new T( forward<Args>(args)... ) );
-    }
-}
 
 int main(int argc, char* argv[]) {
     namespace po = boost::program_options;
     namespace bf = boost::filesystem;
 
-    std::vector<std::string> files;
+    std::string file;
     std::string output;
     std::string output_vcf;
     std::string ref_fasta;
     std::string only_regions;
-
-    std::map<std::string, IntervalTree<std::string, int64_t> > regions;
-    std::set<std::string> region_names;
 
     // limits
     std::string chr;
@@ -90,7 +84,12 @@ int main(int argc, char* argv[]) {
 
     bool apply_filters = false;
     bool count_homref = false;
-    bool output_vtc = false;
+    bool output_vtc = true;
+
+    int threads = 1;
+    int blocksize = 20000;
+
+    QuantifyRegions regions;
 
     try
     {
@@ -99,7 +98,7 @@ int main(int argc, char* argv[]) {
         desc.add_options()
             ("help,h", "produce help message")
             ("version", "Show version")
-            ("input-file", po::value<std::vector< std::string> >(), "The input files")
+            ("input-file", po::value<std::string>(), "The input file")
             ("output-file,o", po::value<std::string>(), "The output file name (JSON Format).")
             ("output-vcf,v", po::value<std::string>(), "Annotated VCF file (with bed annotations).")
             ("reference,r", po::value<std::string>(), "The reference fasta file (needed only for VCF output).")
@@ -112,6 +111,8 @@ int main(int argc, char* argv[]) {
             ("apply-filters,f", po::value<bool>(), "Apply filtering in VCF.")
             ("count-homref", po::value<bool>(), "Count homref locations.")
             ("output-vtc", po::value<bool>(), "Output variant types counted (debugging).")
+            ("threads", po::value<int>(), "Number of threads to use.")
+            ("blocksize", po::value<int>(), "Number of variants per block.")
         ;
 
         po::positional_options_description popts;
@@ -142,7 +143,7 @@ int main(int argc, char* argv[]) {
 
         if (vm.count("input-file"))
         {
-            files = vm["input-file"].as< std::vector<std::string> >();
+            file = vm["input-file"].as< std::string >();
         }
 
         if (vm.count("output-file"))
@@ -199,9 +200,19 @@ int main(int argc, char* argv[]) {
             output_vtc = vm["output-vtc"].as< bool >();
         }
 
-        if(files.size() == 0)
+        if (vm.count("threads"))
         {
-            std::cerr << "Please specify at least one input file / sample.\n";
+            threads = vm["threads"].as< int >();
+        }
+
+        if (vm.count("blocksize"))
+        {
+            blocksize = vm["blocksize"].as< int >();
+        }
+
+        if(file.size() == 0)
+        {
+            std::cerr << "Please specify one input file / sample.\n";
             return 1;
         }
 
@@ -214,85 +225,7 @@ int main(int argc, char* argv[]) {
         if (vm.count("regions"))
         {
             std::vector<std::string> rnames = vm["regions"].as< std::vector<std::string> >();
-            std::map<std::string, std::vector< Interval<std::string, int64_t > > > intervals;
-            for(std::string const & f : rnames)
-            {
-                std::vector<std::string> v;
-                stringutil::split(f, v, ":");
-
-                std::string filename, label = "";
-
-                // in case someone passes a ":"
-                if(v.size() == 0)
-                {
-                    error("Invalid region name: %s", f.c_str());
-                }
-
-                if(v.size() > 1)
-                {
-                    label = v[0];
-                    filename = v[1];
-                }
-                else
-                {
-                    filename = v[0];
-                    label = boost::filesystem::path(filename).stem().string();
-                }
-
-                region_names.insert(label);
-
-                htsFile * bedfile = NULL;
-
-                if (stringutil::endsWith(filename, ".gz"))
-                {
-                    bedfile = hts_open(filename.c_str(), "rz");
-                }
-                else
-                {
-                    bedfile = hts_open(filename.c_str(), "r");
-                }
-
-                size_t icount = 0;
-                kstring_t l;
-                l.l = l.m = 0; l.s = NULL;
-                while ( hts_getline(bedfile, 2, &l) > 0 )
-                {
-                    std::string line(l.s);
-                    v.clear();
-                    stringutil::split(line, v, "\t");
-                    // we want >= 3 columns
-                    if(v.size() >= 3)
-                    {
-                        auto chr_it = intervals.find(v[0]);
-                        if (chr_it == intervals.end())
-                        {
-                            chr_it = intervals.emplace(
-                                v[0],
-                                std::vector< Interval<std::string, int64_t > >()).first;
-                        }
-                        // intervals are both zero-based
-                        int64_t start = std::stoll(v[1]), stop = std::stoll(v[2])-1;
-                        if (start > stop)
-                        {
-                            std::cerr << "[W] ignoring invalid interval in " << filename << " : " << line << "\n";
-                        }
-                        chr_it->second.push_back(Interval<std::string, int64_t>(start, stop, label));
-                        ++icount;
-                    }
-                    else if(line != "" && line != "\n")
-                    {
-                        std::cerr << "[W] ignoring mis-formatted input line in " << filename << " : " << line << "\n";
-                    }
-                }
-                free(l.s);
-                hts_close(bedfile);
-                std::cerr << "Added region file '" << filename << "' as '" << label << "' (" << icount << " intervals)" << "\n";
-            }
-
-            for (auto & p : intervals)
-            {
-                regions[p.first] = IntervalTree<std::string, int64_t> (p.second);
-            }
+            regions.load(rnames);
         }
 
     }
@@ -304,184 +237,141 @@ int main(int argc, char* argv[]) {
 
     try
     {
-        VariantReader r;
+        bcf_srs_t * reader = bcf_sr_init();
+        reader->require_index = 1;
+        reader->collapse = COLLAPSE_NONE;
+        reader->streaming = 0;
         if(!only_regions.empty()) {
-            r.setRegions(only_regions.c_str(), true);
-        }
-        r.setApplyFilters(apply_filters);
-
-        for(std::string const & f : files)
-        {
-            std::vector<std::string> v;
-            stringutil::split(f, v, ":");
-
-            std::string filename, sample = "";
-
-            // in case someone passes a ":"
-            assert(v.size() > 0);
-
-            filename = v[0];
-
-            if(v.size() > 1)
+            int result = bcf_sr_set_regions(reader, only_regions.c_str(), 1);
+            if(result < 0)
             {
-                sample = v[1];
+                error("Failed to set regions string %s.", only_regions.c_str());
             }
-            std::cerr << "Adding file '" << filename << "' / sample '" << sample << "'" << "\n";
-            r.addSample(filename.c_str(), sample.c_str());
+        }
+        if (!bcf_sr_add_reader(reader, file.c_str()))
+        {
+            error("Failed to open or file not indexed: %s\n", file.c_str());
         }
 
-        std::list< std::pair<std::string, std::string> > samples;
-        r.getSampleList(samples);
-        r.rewind(chr.c_str(), start);
+        if(!chr.empty())
+        {
+            int success = 0;
+            if(start < 0)
+            {
+                success = bcf_sr_seek(reader, chr.c_str(), 0);
+            }
+            else
+            {
+                success = bcf_sr_seek(reader, chr.c_str(), start);
+                std::cerr << "starting at " << chr << ":" << start << "\n";
+            }
+            if(success < 0)
+            {
+                error("Cannot seek to %s:%i", chr.c_str(), start);
+            }
+        }
 
-        std::map<std::string, VariantStatistics> count_map;
-        std::unique_ptr<VariantWriter> writer;
+        bcf_hdr_t * hdr = reader->readers[0].header;
+        htsFile * writer = nullptr;
 
         if (output_vcf != "")
         {
-            writer = std::make_unique<VariantWriter>(output_vcf.c_str(), ref_fasta.c_str());
-            std::set<std::string> samplenames;
-            for (auto const & p : samples)
+            bcf_hdr_append(hdr, "##INFO=<ID=gtt1,Number=1,Type=String,Description=\"GT of truth call\">");
+            bcf_hdr_append(hdr, "##INFO=<ID=gtt2,Number=1,Type=String,Description=\"GT of query call\">");
+            bcf_hdr_append(hdr, "##INFO=<ID=type,Number=1,Type=String,Description=\"Decision for call (TP/FP/FN/N)\">");
+            bcf_hdr_append(hdr, "##INFO=<ID=kind,Number=1,Type=String,Description=\"Sub-type for decision (match/mismatch type)\">");
+            bcf_hdr_append(hdr, "##INFO=<ID=Regions,Number=.,Type=String,Description=\"Tags for regions.\">");
+            bcf_hdr_append(hdr, "##INFO=<ID=T_VT,Number=1,Type=String,Description=\"High-level variant type in truth (SNP|INDEL).\">");
+            bcf_hdr_append(hdr, "##INFO=<ID=Q_VT,Number=1,Type=String,Description=\"High-level variant type in query (SNP|INDEL).\">");
+            bcf_hdr_append(hdr, "##INFO=<ID=T_LT,Number=1,Type=String,Description=\"High-level location type in truth (het|hom|hetalt).\">");
+            bcf_hdr_append(hdr, "##INFO=<ID=Q_LT,Number=1,Type=String,Description=\"High-level location type in query (het|hom|hetalt).\">");
+            if(output_vtc)
             {
-                std::string sname = p.second;
-                if (sname == "")
-                {
-                    sname = boost::filesystem::path(p.first).stem().string();
-                }
-                int i = 1;
-                while (samplenames.count(sname))
-                {
-                    sname = p.second + "." + std::to_string(i++);
-                }
-                samplenames.insert(sname);
-                std::cerr << "Writing '" << p.first << ":" << p.second << "' as sample '" << sname << "'" << "\n";
-                writer->addSample(sname.c_str());
+                bcf_hdr_append(hdr, "##INFO=<ID=VTC,Number=.,Type=String,Description=\"Variant types used for counting.\">");
             }
-            writer->addHeader(r);
-            writer->addHeader("##INFO=<ID=gtt1,Number=1,Type=String,Description=\"GT of truth call\">");
-            writer->addHeader("##INFO=<ID=gtt2,Number=1,Type=String,Description=\"GT of query call\">");
-            writer->addHeader("##INFO=<ID=type,Number=1,Type=String,Description=\"Decision for call (TP/FP/FN/N)\">");
-            writer->addHeader("##INFO=<ID=kind,Number=1,Type=String,Description=\"Sub-type for decision (match/mismatch type)\">");
-            writer->addHeader("##INFO=<ID=Regions,Number=.,Type=String,Description=\"Tags for regions.\">");
-            if(output_vtc) {
-                writer->addHeader("##INFO=<ID=VTC,Number=.,Type=String,Description=\"Variant types used for counting.\">");
+
+            const char * mode = "wu";
+
+            if(stringutil::endsWith(output_vcf, ".vcf.gz"))
+            {
+                mode = "wz";
             }
-            writer->addHeader("##INFO=<ID=T_VT,Number=1,Type=String,Description=\"High-level variant type in truth (SNP|INDEL).\">");
-            writer->addHeader("##INFO=<ID=Q_VT,Number=1,Type=String,Description=\"High-level variant type in query (SNP|INDEL).\">");
-            writer->addHeader("##INFO=<ID=T_LT,Number=1,Type=String,Description=\"High-level location type in truth (het|hom|hetalt).\">");
-            writer->addHeader("##INFO=<ID=Q_LT,Number=1,Type=String,Description=\"High-level location type in query (het|hom|hetalt).\">");
+            else if(stringutil::endsWith(output_vcf, ".bcf"))
+            {
+                mode = "wb";
+            }
+
+            if(!output_vcf.empty() && output_vcf[0] == '-')
+            {
+                writer = hts_open("-", mode);
+            }
+            else
+            {
+                writer = hts_open(output_vcf.c_str(), mode);
+            }
+            bcf_hdr_write(writer, hdr);
         }
 
         /** local function to count variants in all samples */
-        const auto count_variants = [ref_fasta, &count_map, &samples,
-                                     count_homref,
-                                     output_vtc
-                                    ]
-                                    (std::string const & name, Variants & vars, bool update_info)
-        {
-            int i = 0;
-            std::set<int> vtypes;
-            uint64_t hl_lt_truth = -1;
-            uint64_t hl_lt_query = -1;
-            uint64_t hl_vt_truth = -1;
-            uint64_t hl_vt_query = -1;
+        int64_t rcount = 0;
+        std::string current_chr = "";
+        int vars_in_block = 0;
+        std::unique_ptr<BlockQuantify> p_bq(new BlockQuantify(hdr, ref_fasta, output_vtc, count_homref, regions.hasRegions()));
 
-            std::string lt_truth = "unk";
-            std::string lt_query = "unk";
+        /** async stuff. each block can be counted in parallel, but we need to
+         *  write out the variants sequentially.
+         *  Therefore, we keep a future for each block to be able to join
+         *  when it's processed
+         */
+        std::queue<std::pair <
+            std::future<void>,
+            std::unique_ptr<BlockQuantify>
+        >> blocks;
 
-            for (auto const & s : samples)
+        std::map<std::string, VariantStatistics> count_map;
+        auto output_counts = [&count_map, &writer, &blocks, hdr](int min_size) {
+            while(blocks.size() > (unsigned )min_size)
             {
-                std::string key;
-                if(s.second == "")
+                blocks.front().first.get();
+                if(writer)
                 {
-                    key = name + ":" + s.first + ":" + s.second + ":" + std::to_string(i);
-                }
-                else
-                {
-                    key = name + ":" + s.second;
-                }
-
-                auto it = count_map.find(key);
-                if (it == count_map.end())
-                {
-                    it = count_map.emplace(key, VariantStatistics(ref_fasta.c_str(), count_homref)).first;
-                }
-                if(update_info)
-                {
-                    int * types;
-                    int ntypes = 0;
-                    it->second.add(vars, i, &types, &ntypes);
-                    uint64_t vts_seen = 0;
-                    uint64_t lt = -1;
-                    for(int j = 0; j < ntypes; ++j) {
-                        vts_seen |= types[j] & 0xf;
-                        vtypes.insert(types[j]);
-                        if((types[j] & 0xf0) > 0x10) {
-                            lt = types[j] >> 4;
-                        }
-                    }
-                    if(s.second == "TRUTH") {
-                        hl_vt_truth = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP
-                                                                 || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0 : 1);
-                        hl_lt_truth = lt;
-                    } else if(s.second == "QUERY") {
-                        hl_vt_query = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP
-                                                                 || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0 : 1);
-                        hl_lt_query = lt;
+                    auto const & variants = blocks.front().second->getVariants();
+                    for(auto & v : variants)
+                    {
+                        bcf_write1(writer, hdr, v);
                     }
                 }
-                else
+
+                auto const & cm = blocks.front().second->getCounts();
+                for(auto const & c : cm)
                 {
-                    it->second.add(vars, i);
+                    auto it = count_map.find(c.first);
+                    if (it == count_map.end()) {
+                        count_map.insert(c);
+                    }
+                    else
+                    {
+                        it->second.add(c.second);
+                    }
                 }
-                ++i;
-            }
-            if(update_info)
-            {
-                static const char * nvs[] = { "UNK", "SNP", "INDEL", "NOCALL" };
-                if(hl_vt_truth < 4)
-                {
-                    if (vars.info != "") { vars.info += ";"; }
-                    vars.info += std::string("T_VT=") + nvs[hl_vt_truth + 1];
-                }
-                if(hl_vt_truth < 4)
-                {
-                    if (vars.info != "") { vars.info += ";"; }
-                    vars.info += std::string("Q_VT=") + nvs[hl_vt_query + 1];
-                }
-                if(hl_lt_truth < 0x10)
-                {
-                    if (vars.info != "") { vars.info += ";"; }
-                    vars.info += std::string(";T_LT=") + CT_NAMES[hl_lt_truth];
-                }
-                if(hl_lt_query < 0x10)
-                {
-                    if (vars.info != "") { vars.info += ";"; }
-                    vars.info += std::string(";Q_LT=") + CT_NAMES[hl_lt_query];
-                }
-            }
-            if(output_vtc && update_info && !vtypes.empty())
-            {
-                std::string s = "VTC=";
-                int j = 0;
-                for(int t : vtypes)
-                {
-                    if(j++ > 0) { s += ","; }
-                    s += VariantStatistics::type2string(t);
-                }
-                if (vars.info != "") { vars.info += ";"; }
-                vars.info += s;
+
+                blocks.pop();
             }
         };
 
-        int64_t rcount = 0;
-
-        std::string chr = "";
-        IntervalTree<std::string, int64_t> * current_chr_intervals = NULL;
-
-        while(r.advance())
+        int nl = 1;
+        while(nl)
         {
-            Variants & v = r.current();
+            nl = bcf_sr_next_line(reader);
+            if (nl <= 0)
+            {
+                break;
+            }
+            if(!bcf_sr_has_line(reader, 0))
+            {
+                continue;
+            }
+            bcf1_t *line = reader->readers[0].buffer[0];
 
             if(rlimit != -1)
             {
@@ -490,113 +380,73 @@ int main(int argc, char* argv[]) {
                     break;
                 }
             }
-
-            if(end != -1 && v.pos > end)
+            const std::string vchr = bcfhelpers::getChrom(hdr, line);
+            if(end != -1 && ((!current_chr.empty() && vchr != current_chr) || line->pos > end))
             {
                 break;
             }
 
-            if (!regions.empty() && (current_chr_intervals == NULL || v.chr != chr))
+            if(apply_filters)
             {
-                auto qit = regions.find(v.chr);
-                if (qit != regions.end())
+                bcf_unpack(line, BCF_UN_FLT);
+
+                bool fail = false;
+                for(int j = 0; j < line->d.n_flt; ++j)
                 {
-                    current_chr_intervals = &qit->second;
-                }
-            }
-            chr = v.chr;
-            count_variants("all", v, true);
-            // resolve tags
-            std::set<std::string> to_count;
-            std::string tag_string = "";
-            if (current_chr_intervals != NULL)
-            {
-                std::vector< Interval<std::string, int64_t > > overlapping;
-                current_chr_intervals->findOverlapping(v.pos, v.pos + v.len - 1, overlapping);
-                for (auto const & iv : overlapping)
-                {
-                    to_count.insert(iv.value);
-                }
-                for (std::string const & r : to_count)
-                {
-                    if (tag_string != "")
+                    std::string filter = "PASS";
+                    int k = line->d.flt[j];
+
+                    if(k >= 0)
                     {
-                        tag_string += ",";
+                        filter = bcf_hdr_int2id(hdr, BCF_DT_ID, line->d.flt[j]);
                     }
-                    tag_string += r;
+                    if(filter != "PASS")
+                    {
+                        fail = true;
+                        break;
+                    }
                 }
-            }
 
-            std::string type = ".";
-            std::string kind = ".";
-            std::string gtt1 = ".";
-            std::string gtt2 = ".";
-            bool hapmatch = false;
-
-            std::vector<std::string> infs;
-            stringutil::split(v.info, infs, ";");
-            v.info = "";
-            for (std::string & i : infs)
-            {
-                if(i == "IMPORT_FAIL")
-                {
-                    // preserve import fail annotation
-                    v.info += i + ";";
-                    continue;
-                }
-                if(infs.size() < 2)
+                // skip failing
+                if(fail)
                 {
                     continue;
                 }
-                std::vector<std::string> ifo;
-                stringutil::split(i, ifo, "=");
-                if(ifo[0] == "HapMatch") {
-                    hapmatch = true;
-                } else if(ifo.size() < 2) {
-                    v.info += i + ";";
-                } else if(ifo[0] == "type") {
-                    type = ifo[1];
-                } else if(ifo[0] == "kind") {
-                    kind = ifo[1];
-                } else if(ifo[0] == "gtt1") {
-                    gtt1 = ifo[1];
-                } else if(ifo[0] == "gtt2") {
-                    gtt2 = ifo[1];
-                } else if(ifo[0] != "ctype") {
-                    v.info += i + ";";
-                }
             }
 
-            if(hapmatch && type != "TP") {
-                kind = "hapmatch__" + type + "__" + kind;
-                type = "TP";
-            }
+            bcf_unpack(line, BCF_UN_INFO);
+            regions.annotate(hdr, line);
 
-            if(!regions.empty() && tag_string.empty() && type == "FP" && kind == "missing") {
-                type = "UNK";
-            }
+            current_chr = vchr;
 
-            v.info += std::string("type=") + type;
-            v.info += std::string(";kind=") + kind;
-            // v.info += std::string(";gtt1=") + gtt1;
-            // v.info += std::string(";gtt2=") + gtt2;
-            if(!tag_string.empty()) {
-                v.info += std::string(";Regions=") + tag_string;
-            }
+            p_bq->add(bcf_dup(line));
 
-            if (writer)
+            ++vars_in_block;
+            if(vars_in_block > blocksize)
             {
-                writer->put(v);
+                std::future<void> f = std::async(std::launch::async, &BlockQuantify::count, p_bq.get());
+                // clear / write out some blocks (make sure we have at least 2xthreads tasks left)
+                output_counts(threads);
+                blocks.emplace(std::move(f), std::move(p_bq));
+                p_bq.reset(new BlockQuantify(hdr, ref_fasta, output_vtc, count_homref, regions.hasRegions()));
+                vars_in_block = 0;
             }
 
-            count_variants(type + ":" + kind + ":" + tag_string, v, false);
-
-            if(message > 0 && (rcount % message) == 0)
+            if (message > 0 && (rcount % message) == 0)
             {
-                std::cout << stringutil::formatPos(v.chr.c_str(), v.pos) << ": " << v << "\n";
+                std::cout << stringutil::formatPos(vchr.c_str(), line->pos) << "\n";
             }
+            // count variants here
             ++rcount;
         }
+
+        {
+            std::future<void> f = std::async(&BlockQuantify::count, p_bq.get());
+            // clear / write out some blocks (make sure we have at least 2xthreads tasks left)
+            blocks.emplace(std::move(f), std::move(p_bq));
+        }
+        // clear remaining
+        output_counts(0);
 
         Json::Value counts;
         for (auto & p : count_map)
@@ -614,6 +464,12 @@ int main(int argc, char* argv[]) {
             std::ofstream o(output);
             o << fastWriter.write(counts);
         }
+
+        if(writer)
+        {
+            hts_close(writer);
+        }
+        bcf_sr_destroy(reader);
     }
     catch(std::runtime_error & e)
     {

@@ -74,12 +74,12 @@ public:
     /**
      * @brief Check if interval is fully covered in a given lane
      */
-    bool isCovered(int64_t start, int64_t end, size_t lane);
+    bool isCovered(int64_t start, int64_t end, size_t lane) const;
 
     /**
      * @brief Check if interval is partially covered in a given lane
      */
-    bool hasOverlap(int64_t start, int64_t end, size_t lane);
+    bool hasOverlap(int64_t start, int64_t end, size_t lane) const;
 
 private:
     struct IntervalBufferImpl;

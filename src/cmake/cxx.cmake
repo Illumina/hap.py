@@ -57,25 +57,18 @@ endif ()
 # add extra compiler specific flags:
 #
 if     (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    if (NOT (${compiler_version} VERSION_LESS "4.2"))
-        set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wlogical-op")
+
+    if (${compiler_version} VERSION_LESS "4.7")
+        message(FATAL_ERROR "You need at least GCC 4.7 to compile hap.py")
     endif ()
 
-    if (NOT (${compiler_version} VERSION_LESS "4.5"))
-        # Force static linking of standard libraries:
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
-    
-        # add LTO for release versions
-        if (NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-            set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
-        endif ()
+    set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wlogical-op")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
+    # add LTO for release versions
+    if (NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+        set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
     endif ()
-
-    if (NOT ((${compiler_version} VERSION_LESS "4.7") OR (${compiler_version} VERSION_GREATER "4.7")))
-        # switching off warning about unused function because otherwise compilation will fail with g++ 4.7.3 in Ubuntu
-        set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wno-unused-function")
-    endif ()
-
+    set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wno-unused-function -Wno-unknown-pragmas")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wunknown-pragmas -Wmissing-prototypes -Wunused-exception-parameter -Wbool-conversion -Wempty-body -Wimplicit-fallthrough -Wsizeof-array-argument -Wstring-conversion -Wno-unused-parameter -Wno-missing-prototypes -Wno-unknown-warning-option -Wno-deprecated-register -Wno-header-guard -Wunused-const-variable")
 

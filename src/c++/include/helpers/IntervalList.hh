@@ -141,7 +141,7 @@ public:
     }
 
     /** get all intervals that overlap a range */
-    interval_t query(int64_t start, int64_t end)
+    interval_t query(int64_t start, int64_t end) const
     {
         interval_t ivs;
 
@@ -151,10 +151,24 @@ public:
         }
 
         // find first interval that ends after start
-        auto it = intervals.lower_bound(start);
+        auto it = intervals.cbegin();
+
+        int x = 0;
+        while(it != intervals.cend() && it->second.end < start && x < 3)
+        {
+            ++it;
+            ++x;
+        }
+
+        // if using advance, we don't need to search -- the first interval will
+        // already be the one we're looking for
+        if(it->second.end < start)
+        {
+            it = intervals.lower_bound(start);
+        }
 
         // overlap if it->second.start <= end
-        while(it != intervals.end() &&
+        while(it != intervals.cend() &&
               // check if overlap
               it->second.start <= end)
         {

@@ -1,5 +1,5 @@
-chrQ	2	.	A	.	0	.	END=2;IMPORT_FAIL;T_VT=NOCALL;Q_VT=NOCALL;T_LT=fail;Q_LT=fail;type=N;kind=match	GT	0/0	0/0
-chrQ	3	.	A	.	0	.	END=3;IMPORT_FAIL;T_VT=NOCALL;Q_VT=NOCALL;T_LT=fail;Q_LT=fail;type=N;kind=match	GT	0/0	./.
-chrQ	4	.	A	.AA	0	.	IMPORT_FAIL;T_VT=NOCALL;Q_VT=NOCALL;T_LT=fail;Q_LT=fail;type=FN;kind=missing	GT	0/1	./.
-chrQ	5	.	A	AA.	0	.	IMPORT_FAIL;T_VT=NOCALL;Q_VT=NOCALL;T_LT=fail;Q_LT=fail;type=FN;kind=missing	GT	0/1	./.
-chrQ	6	.	A	.	0	.	END=6;IMPORT_FAIL;T_VT=NOCALL;Q_VT=NOCALL;T_LT=fail;Q_LT=fail;type=N;kind=match	GT	0/0	./.
+chrQ	2	.	A	.	0	.	END=2;IMPORT_FAIL;gtt1=no_call;gtt2=no_call;type=N;kind=match;ctype=simple:mismatch;T_VT=NOCALL;Q_VT=NOCALL;T_LT=fail;Q_LT=fail	GT	0/0	0/0
+chrQ	3	.	A	.	0	.	END=3;IMPORT_FAIL;gtt1=no_call;gtt2=no_call;type=N;kind=match;ctype=simple:mismatch;T_VT=NOCALL;Q_VT=NOCALL;T_LT=fail;Q_LT=fail	GT	0/0	./.
+chrQ	4	.	A	.AA	0	.	IMPORT_FAIL;gtt1=gt_het;type=FN;kind=missing;ctype=simple:mismatch;T_VT=NOCALL;Q_VT=NOCALL;T_LT=fail;Q_LT=fail	GT	0/1	./.
+chrQ	5	.	A	AA.	0	.	IMPORT_FAIL;gtt1=gt_het;type=FN;kind=missing;ctype=simple:mismatch;T_VT=NOCALL;Q_VT=NOCALL;T_LT=fail;Q_LT=fail	GT	0/1	./.
+chrQ	6	.	A	.	0	.	END=6;IMPORT_FAIL;gtt1=no_call;gtt2=no_call;type=N;kind=match;ctype=simple:mismatch;T_VT=NOCALL;Q_VT=NOCALL;T_LT=fail;Q_LT=fail	GT	0/0	./.

@@ -1,5 +1,5 @@
-chrQ	2	.	A	T	0	.	T_VT=NOCALL;Q_VT=SNP;T_LT=nocall;Q_LT=het;type=FP;kind=missing;Regions=CONF	GT	./.	0/1
-chrQ	4	.	A	T	0	.	T_VT=NOCALL;Q_VT=SNP;T_LT=nocall;Q_LT=het;type=FP;kind=missing;Regions=CONF	GT	./.	0/1
-chrQ	5	.	A	T	0	.	T_VT=SNP;Q_VT=SNP;T_LT=het;Q_LT=het;type=TP;kind=match	GT	0/1	0/1
-chrQ	6	.	A	T	0	.	T_VT=NOCALL;Q_VT=SNP;T_LT=nocall;Q_LT=het;type=FP;kind=missing;Regions=CONF	GT	./.	0/1
-chrQ	7	.	A	T	0	.	T_VT=NOCALL;Q_VT=SNP;T_LT=nocall;Q_LT=het;type=UNK;kind=missing	GT	./.	0/1
+chrQ	2	.	A	T	0	.	gtt2=gt_het;type=FP;kind=missing;ctype=simple:mismatch;Regions=CONF;T_VT=NOCALL;Q_VT=SNP;T_LT=nocall;Q_LT=het	GT	./.	0/1
+chrQ	4	.	A	T	0	.	gtt2=gt_het;type=FP;kind=missing;ctype=simple:mismatch;Regions=CONF;T_VT=NOCALL;Q_VT=SNP;T_LT=nocall;Q_LT=het	GT	./.	0/1
+chrQ	5	.	A	T	0	.	gtt1=gt_het;gtt2=gt_het;type=TP;kind=match;ctype=simple:mismatch;T_VT=SNP;Q_VT=SNP;T_LT=het;Q_LT=het	GT	0/1	0/1
+chrQ	6	.	A	T	0	.	gtt2=gt_het;type=FP;kind=missing;ctype=simple:mismatch;Regions=CONF;T_VT=NOCALL;Q_VT=SNP;T_LT=nocall;Q_LT=het	GT	./.	0/1
+chrQ	7	.	A	T	0	.	gtt2=gt_het;type=UNK;kind=missing;ctype=simple:mismatch;T_VT=NOCALL;Q_VT=SNP;T_LT=nocall;Q_LT=het	GT	./.	0/1
