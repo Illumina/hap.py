@@ -48,7 +48,7 @@ using namespace genetics;
 
 namespace variant {
 
-void trimLeft(FastaFile & f, const char * chr, RefVar & rv, bool refpadding)
+void trimLeft(FastaFile const & f, const char * chr, RefVar & rv, bool refpadding)
 {
     // trim left
     std::string ref = f.query(chr, rv.start, rv.end);
@@ -64,11 +64,11 @@ void trimLeft(FastaFile & f, const char * chr, RefVar & rv, bool refpadding)
     }
     if(rel_start > 0)
     {
-        rv.alt = rv.alt.substr(rel_start);
+        rv.alt = rv.alt.substr((unsigned long) rel_start);
     }
 }
 
-void trimRight(FastaFile & f, const char * chr, RefVar & rv, bool refpadding)
+void trimRight(FastaFile const & f, const char * chr, RefVar & rv, bool refpadding)
 {
     // trim right
 
@@ -105,7 +105,7 @@ void trimRight(FastaFile & f, const char * chr, RefVar & rv, bool refpadding)
     }
 }
 
-void leftShift(FastaFile & f, const char * chr, RefVar & rv, int64_t pos_min)
+void leftShift(FastaFile const & f, const char * chr, RefVar & rv, int64_t pos_min)
 {
     int64_t rstart = -1, rend = -1, reflen;
 
@@ -196,7 +196,7 @@ void leftShift(FastaFile & f, const char * chr, RefVar & rv, int64_t pos_min)
     trimRight(f, chr, rv);
 }
 
-void rightShift(FastaFile & f, const char * chr, RefVar & rv, int64_t pos_max)
+void rightShift(FastaFile const & f, const char * chr, RefVar & rv, int64_t pos_max)
 {
     int64_t rstart = -1, rend = -1, reflen;
 
@@ -290,7 +290,7 @@ void rightShift(FastaFile & f, const char * chr, RefVar & rv, int64_t pos_max)
 /**
  * Convert a list of RefVar records to allele strings
  */
-extern void toAlleles(FastaFile & f,
+extern void toAlleles(FastaFile const & f,
                       const char * chr,
                       std::vector<RefVar> const & in,
                       std::vector<std::string> & out)
@@ -496,7 +496,7 @@ bool appendToRefVar(int64_t refpos, char refchr, char altchr, RefVar &rv)
  * @param rv the RefVar record
  * @param vars the primitive records
  */
-void toPrimitives(FastaFile & f, const char * chr, RefVar const & rv, std::list<variant::RefVar> & vars)
+void toPrimitives(FastaFile const & f, const char * chr, RefVar const & rv, std::list<variant::RefVar> & vars)
 {
     int64_t rstart = rv.start, rend = rv.end, reflen = rend - rstart + 1;
     int64_t altlen = (int64_t)rv.alt.size();
@@ -558,7 +558,7 @@ void toPrimitives(FastaFile & f, const char * chr, RefVar const & rv, std::list<
  * @param dels the number of deletions
  * @param homref the number of calls with no variation
  */
-void countRefVarPrimitives(FastaFile & f, const char * chr, variant::RefVar const & rv,
+void countRefVarPrimitives(FastaFile const & f, const char * chr, variant::RefVar const & rv,
                            size_t & snps, size_t & ins, size_t & dels, size_t & homref,
                            size_t& transitions, size_t& transversions)
 {

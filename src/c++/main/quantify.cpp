@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
     std::string file;
     std::string output;
     std::string output_vcf;
-    std::string ref_fasta;
+    std::string ref;
     std::string only_regions;
 
     // limits
@@ -158,7 +158,7 @@ int main(int argc, char* argv[]) {
 
         if (vm.count("reference"))
         {
-            ref_fasta = vm["reference"].as< std::string >();
+            ref = vm["reference"].as< std::string >();
         }
         else if(output_vcf != "")
         {
@@ -237,6 +237,7 @@ int main(int argc, char* argv[]) {
 
     try
     {
+        FastaFile ref_fasta(ref.c_str());
         bcf_srs_t * reader = bcf_sr_init();
         reader->require_index = 1;
         reader->collapse = COLLAPSE_NONE;

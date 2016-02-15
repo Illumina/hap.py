@@ -38,6 +38,7 @@
 #pragma once
 
 #include "Variant.hh"
+#include "Fasta.hh"
 
 #include <json/json.h>
 #include <list>
@@ -53,7 +54,9 @@ struct VariantStatisticsImpl;
 class VariantStatistics
 {
 public:
-    VariantStatistics(const char * ref_fasta, bool count_homref=false);
+    VariantStatistics(const char *, bool _tmp=false) = delete;
+    VariantStatistics(std::string, bool _tmp=false) = delete;
+    VariantStatistics(FastaFile const & ref_fasta, bool count_homref=false);
     VariantStatistics(VariantStatistics const & rhs);
     ~VariantStatistics();
     VariantStatistics const & operator=(VariantStatistics const & rhs);

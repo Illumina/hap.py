@@ -60,7 +60,7 @@ namespace variant {
          *                  than FP
          */
         explicit BlockQuantify(bcf_hdr_t * hdr,
-                               std::string const & ref_fasta,
+                               FastaFile const & ref_fasta,
                                bool output_vtc,
                                bool count_homref,
                                bool count_unk);

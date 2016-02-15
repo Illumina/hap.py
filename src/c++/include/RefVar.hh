@@ -84,7 +84,7 @@ typedef struct _RefVar
      *  Note that _start and _end will be extended if they aren't contained within
      *  [start, end]
      */
-    inline std::string apply(FastaFile & ref, std::string const & chr, int64_t & _start, int64_t & _end) const
+    inline std::string apply(FastaFile const & ref, std::string const & chr, int64_t & _start, int64_t & _end) const
     {
         if(_start > start)
         {
@@ -131,8 +131,8 @@ static inline std::ostream & operator<<(std::ostream & o, RefVar const & r)
  * @param rv RefVar record
  * @param refpadding enable single-base reference padding
  */
-void trimLeft(FastaFile & f, const char * chr, RefVar & rv, bool refpadding=true);
-void trimRight(FastaFile & f, const char * chr, RefVar & rv, bool refpadding=true);
+void trimLeft(FastaFile const & f, const char * chr, RefVar & rv, bool refpadding=true);
+void trimRight(FastaFile const & f, const char * chr, RefVar & rv, bool refpadding=true);
 
 /**
  * @brief Left/right shifting w.r.t reference fasta
@@ -140,8 +140,8 @@ void trimRight(FastaFile & f, const char * chr, RefVar & rv, bool refpadding=tru
  * Left/right boundary position can be given to prevent overlap with other variation
  *
  */
-extern void leftShift(FastaFile & f, const char * chr, RefVar & rv, int64_t pos_min=-1);
-extern void rightShift(FastaFile & f, const char * chr, RefVar & rv, int64_t pos_max=std::numeric_limits<int64_t>::max());
+extern void leftShift(FastaFile const & f, const char * chr, RefVar & rv, int64_t pos_min=-1);
+extern void rightShift(FastaFile const & f, const char * chr, RefVar & rv, int64_t pos_max=std::numeric_limits<int64_t>::max());
 
 /**
  * @brief List functions making sure variants aren't pushed past each other.
@@ -152,7 +152,7 @@ extern void rightShift(FastaFile & f, const char * chr, RefVar & rv, int64_t pos
  *
  */
 template<class RefVar_t>
-static inline void leftShift(FastaFile & f, const char * chr, std::list<RefVar_t> & rv, int64_t pos_min=-1)
+static inline void leftShift(FastaFile const & f, const char * chr, std::list<RefVar_t> & rv, int64_t pos_min=-1)
 {
     int64_t last_start = -1;
     for(RefVar_t & r : rv)
@@ -167,7 +167,7 @@ static inline void leftShift(FastaFile & f, const char * chr, std::list<RefVar_t
 }
 
 template<class RefVar_t>
-static inline void rightShift(FastaFile & f, const char * chr, std::list<RefVar_t> & rv, int64_t pos_max=std::numeric_limits<int64_t>::max())
+static inline void rightShift(FastaFile const & f, const char * chr, std::list<RefVar_t> & rv, int64_t pos_max=std::numeric_limits<int64_t>::max())
 {
     int64_t last_start = -1;
     for(RefVar_t & r : boost::adaptors::reverse(rv))
@@ -181,7 +181,7 @@ static inline void rightShift(FastaFile & f, const char * chr, std::list<RefVar_
     }
 }
 
-extern void rightShift(FastaFile & f, const char * chr, std::list<RefVar> & rv, int64_t pos_max=std::numeric_limits<int64_t>::max());
+extern void rightShift(FastaFile const & f, const char * chr, std::list<RefVar> & rv, int64_t pos_max=std::numeric_limits<int64_t>::max());
 
 /**
  * @brief Quickly decompose a RefVar into primitive variants (subst / ins / del)
@@ -209,7 +209,7 @@ extern void rightShift(FastaFile & f, const char * chr, std::list<RefVar> & rv, 
  * @param rv the RefVar record
  * @param vars the primitive records
  */
-extern void toPrimitives(FastaFile & f, const char * chr, RefVar const & rv, std::list<variant::RefVar> & vars);
+extern void toPrimitives(FastaFile const & f, const char * chr, RefVar const & rv, std::list<variant::RefVar> & vars);
 
 /**
  * @brief Decompose a RefVar into primitive variants (subst / ins / del) by means of realigning
@@ -222,14 +222,14 @@ extern void toPrimitives(FastaFile & f, const char * chr, RefVar const & rv, std
  * @param dels the number of deletions
  * @param homref the number of calls with no variation
  */
-void countRefVarPrimitives(FastaFile & f, const char * chr, variant::RefVar const & rv,
+void countRefVarPrimitives(FastaFile const & f, const char * chr, variant::RefVar const & rv,
                            size_t & snps, size_t & ins, size_t & dels, size_t & homref,
                            size_t& transitions, size_t& transversions);
 
 /**
  * Convert a list of RefVar records to allele strings
  */
-extern void toAlleles(FastaFile & f,
+extern void toAlleles(FastaFile const & f,
                       const char * chr,
                       std::vector<RefVar> const & in,
                       std::vector<std::string> & out);

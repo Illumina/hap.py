@@ -241,7 +241,7 @@ extern void getCigarStats(std::string const & ref, std::string const & alt,
  * @param aln the alignment interface to use
  * @param vars the primitive records
  */
-void realignRefVar(FastaFile & f, const char * chr, variant::RefVar const & rv, Alignment * aln,
+void realignRefVar(FastaFile const & f, const char * chr, variant::RefVar const & rv, Alignment * aln,
                    std::list<variant::RefVar> & vars);
 
 /**
@@ -256,7 +256,7 @@ void realignRefVar(FastaFile & f, const char * chr, variant::RefVar const & rv, 
  * @param dels the number of deletions
  * @param homref the number of calls with no variation
  */
-void realignRefVar(FastaFile & f, const char * chr, variant::RefVar const & rv, Alignment * aln,
+void realignRefVar(FastaFile const & f, const char * chr, variant::RefVar const & rv, Alignment * aln,
                    size_t & snps, size_t & ins, size_t & dels, size_t & homref,
                    size_t& transitions, size_t& transversions);
 

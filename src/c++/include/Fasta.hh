@@ -49,12 +49,12 @@ public:
 
 	~FastaFile();
 	FastaFile(FastaFile const &);
-	FastaFile const & operator=(FastaFile const &);
+	FastaFile & operator=(FastaFile const &);
 
 	std::string getFilename() const;
 
-	std::string query(std::string const & location);
-	std::string query(const char * chr, int64_t start, int64_t end);
+	std::string query(std::string const & location) const;
+	std::string query(const char * chr, int64_t start, int64_t end) const;
 private:
 	FastaFileImpl * _impl;
 };

@@ -37,6 +37,7 @@
 #include "helpers/StringUtil.hh"
 #include "helpers/BCFHelpers.hh"
 #include "Variant.hh"
+#include "Fasta.hh"
 #include "Error.hh"
 
 #include <htslib/hts.h>
@@ -63,7 +64,8 @@ namespace variant {
         }
 
         bcf_hdr_t * hdr;
-        std::string ref_fasta;
+        FastaFile const & ref_fasta;
+        std::unique_ptr<FastaFile> fasta_to_use;
         bool output_vtc;
         bool count_homref;
         bool count_unk;
@@ -78,12 +80,13 @@ namespace variant {
     };
 
     BlockQuantify::BlockQuantify(bcf_hdr_t * hdr,
-                                 std::string const & ref_fasta,
+                                 FastaFile const & ref_fasta,
                                  bool output_vtc,
                                  bool count_homref,
                                  bool count_unk) :
         _impl(std::unique_ptr<BlockQuantifyImpl>(new BlockQuantifyImpl{hdr,
                                                     ref_fasta,
+                                                    nullptr,
                                                     output_vtc,
                                                     count_homref,
                                                     count_unk,
@@ -110,6 +113,7 @@ namespace variant {
 
     void BlockQuantify::count()
     {
+        _impl->fasta_to_use.reset(new FastaFile(_impl->ref_fasta));
 #ifdef DEBUG_BLOCKQUANTIFY
         int lastpos = 0;
 #endif
@@ -123,6 +127,7 @@ namespace variant {
 #ifdef DEBUG_BLOCKQUANTIFY
         std::cerr << "finished block " << lastpos << " - " << _impl->variants.size() << " records on thread " << std::this_thread::get_id() << "\n";
 #endif
+        _impl->fasta_to_use.reset(nullptr);
     }
 
     // result output
@@ -173,7 +178,7 @@ namespace variant {
                 // see if we already have a statistics counter for this kind of variant
                 auto it = _impl->count_map.find(key);
                 if (it == _impl->count_map.end()) {
-                    it = _impl->count_map.emplace(key, VariantStatistics(_impl->ref_fasta.c_str(),
+                    it = _impl->count_map.emplace(key, VariantStatistics(*(_impl->fasta_to_use),
                                                                          _impl->count_homref)).first;
                 }
 

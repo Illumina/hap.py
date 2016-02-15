@@ -114,7 +114,7 @@ static const int VS_COUNTS = 256;
 
 struct VariantStatisticsImpl
 {
-    VariantStatisticsImpl(const char * ref_fasta, bool _count_homref) :
+    VariantStatisticsImpl(FastaFile const & ref_fasta, bool _count_homref) :
         ref(ref_fasta), count_homref(_count_homref),
         alignment(makeAlignment("klibg")),
         myNumTransitions(0), myNumTransversions(0)
@@ -256,7 +256,7 @@ struct VariantStatisticsImpl
     int nrtypes;
     std::bitset<256> rtype_bs;
 
-    FastaFile ref;
+    FastaFile const & ref;
     bool count_homref;
     std::unique_ptr<Alignment> alignment;
 
@@ -271,7 +271,7 @@ const std::string VariantStatisticsImpl::ourTransitionsName("Transitions");
 const std::string VariantStatisticsImpl::ourTransversionsName("Transversions");
 
 
-VariantStatistics::VariantStatistics(const char * ref_fasta, bool count_homref)
+VariantStatistics::VariantStatistics(FastaFile const & ref_fasta, bool count_homref)
 {
     _impl = new VariantStatisticsImpl(ref_fasta, count_homref);
 }

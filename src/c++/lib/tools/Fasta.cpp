@@ -44,6 +44,7 @@
 #include <limits>
 #include <map>
 #include <fstream>
+#include <mutex>
 
 #include <boost/algorithm/string.hpp>
 
@@ -103,6 +104,7 @@ struct FastaFileImpl
     faidx_t * idx;
     std::string filename;
     std::map<std::string, int64_t> contig_lengths;
+    std::mutex mutex;
 };
 
 FastaFile::FastaFile() {
@@ -132,7 +134,7 @@ FastaFile::FastaFile(FastaFile const & rhs)
     _impl = new FastaFileImpl(rhs._impl->filename.c_str());
 }
 
-FastaFile const & FastaFile::operator=(FastaFile const & rhs)
+FastaFile & FastaFile::operator=(FastaFile const & rhs)
 {
     if (&rhs == this)
     {
@@ -144,7 +146,7 @@ FastaFile const & FastaFile::operator=(FastaFile const & rhs)
 }
 
 
-std::string FastaFile::query(std::string const & location)
+std::string FastaFile::query(std::string const & location) const
 {
     std::string chr;
     int64_t start = -1;
@@ -154,7 +156,7 @@ std::string FastaFile::query(std::string const & location)
     return query(chr.c_str(), start, end);
 }
 
-std::string FastaFile::query(const char * chr, int64_t start, int64_t end)
+std::string FastaFile::query(const char * chr, int64_t start, int64_t end) const
 {
     if(!_impl) {
         error("FastaFile object not initialized before use");
@@ -183,16 +185,27 @@ std::string FastaFile::query(const char * chr, int64_t start, int64_t end)
     {
         return "";
     }
-    int len;
+    int len = 0;
     // faidx_fetch_seq (..., start, end) gets [start, end]
-    char * data = faidx_fetch_seq(_impl->idx, chr, start, end, &len);
+    char * data = nullptr;
+    {
+        // TODO -- this is sub-optimal. for proper thread-safe Fasta support, we should
+        // TODO memory-map the file, which means we can read without blocking
+        std::lock_guard<std::mutex> l(_impl->mutex);
+        data = faidx_fetch_seq(_impl->idx, chr, (int) start, (int) end, &len);
+    }
 
-    if(len <= 0)
+    if(len == 0)
     {
         return "";
     }
 
-    std::string result(data, std::min(requested_length, (int64_t)len));
+    if(len < 0)
+    {
+        error("Fasta retrieval failed with return code %i at %s:%i-%i", len, chr, start, end);
+    }
+
+    std::string result(data, (unsigned long) std::min(requested_length, (int64_t)len));
     free(data);
     boost::to_upper(result);
     return result;

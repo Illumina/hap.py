@@ -55,7 +55,8 @@ BOOST_AUTO_TEST_CASE(testVariantStatisticsCountRefvar)
                                     / boost::filesystem::path("example")
                                     / boost::filesystem::path("chr21.fa");
 
-    VariantStatistics vs(ptp.c_str());
+    FastaFile f(ptp.c_str());
+    VariantStatistics vs(f);
 
     RefVar rv;
 
@@ -149,7 +150,8 @@ BOOST_AUTO_TEST_CASE(testVariantStatisticsCountVariants)
     boost::filesystem::path ftp = ptp / boost::filesystem::path("chr21.fa");
 
     VariantReader r;
-    VariantStatistics vs(ftp.c_str(), true);
+    FastaFile f(ftp.c_str());
+    VariantStatistics vs(f, true);
     int s = r.addSample(tp.c_str(), "NA12878");
 
     size_t count = 0;
