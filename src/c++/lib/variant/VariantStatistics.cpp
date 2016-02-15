@@ -149,14 +149,17 @@ struct VariantStatisticsImpl
 
     /** translate name to count key */
     static inline uint8_t n2c(const char * n) {
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedStructInspection"
         static struct _n2clookup {
             _n2clookup() {
                 for(int j = 0; j < VS_COUNTS; ++j) {
-                    t[c2n(j)] = j;
+                    t[c2n((uint64_t) j)] = (unsigned char) j;
                 }
             }
             std::map<std::string, uint8_t> t;
         } lookup;
+#pragma clang diagnostic pop
         auto it = lookup.t.find(std::string(n));
         if(it != lookup.t.end()) {
             return it->second;
@@ -198,7 +201,7 @@ struct VariantStatisticsImpl
         if(total_ins) t |= VT_INS;
         if(total_del) t |= VT_DEL;
 
-        count(CT_ALLELES | t, 1);
+        count((int) (CT_ALLELES | t), 1);
         return t;
     }
 
@@ -414,6 +417,9 @@ void VariantStatistics::add(bcf_hdr_t * hdr, bcf1_t * rhs, int sample, int ** rt
 
         for(auto & rv : alleles_to_count)
         {
+            // trim ref bases so they don't confuse our counts
+            variant::trimLeft(_impl->ref, chr, rv, false);
+            variant::trimRight(_impl->ref, chr, rv, false);
             types |= _impl->add_al(chr, rv);
         }
 

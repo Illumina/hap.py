@@ -48,6 +48,9 @@
 
 #include "BlockQuantify.hh"
 
+
+//#define DEBUG_BLOCKQUANTIFY
+
 namespace variant {
 
     struct BlockQuantify::BlockQuantifyImpl {
@@ -63,6 +66,7 @@ namespace variant {
         std::string ref_fasta;
         bool output_vtc;
         bool count_homref;
+        bool count_unk;
 
         typedef std::list<std::string> samplenames_t;
         typedef std::map<std::string, VariantStatistics> count_map_t;
@@ -76,11 +80,13 @@ namespace variant {
     BlockQuantify::BlockQuantify(bcf_hdr_t * hdr,
                                  std::string const & ref_fasta,
                                  bool output_vtc,
-                                 bool count_homref) :
+                                 bool count_homref,
+                                 bool count_unk) :
         _impl(std::unique_ptr<BlockQuantifyImpl>(new BlockQuantifyImpl{hdr,
                                                     ref_fasta,
                                                     output_vtc,
                                                     count_homref,
+                                                    count_unk,
                                                     BlockQuantifyImpl::count_map_t(),
                                                     BlockQuantifyImpl::variantlist_t(),
                                                     bcfhelpers::getSampleNames(hdr)}))
@@ -104,13 +110,19 @@ namespace variant {
 
     void BlockQuantify::count()
     {
+#ifdef DEBUG_BLOCKQUANTIFY
         int lastpos = 0;
+#endif
         for(auto & v : _impl->variants)
         {
+#ifdef DEBUG_BLOCKQUANTIFY
             lastpos = v->pos;
+#endif
             count_variants(v);
         }
+#ifdef DEBUG_BLOCKQUANTIFY
         std::cerr << "finished block " << lastpos << " - " << _impl->variants.size() << " records on thread " << std::this_thread::get_id() << "\n";
+#endif
     }
 
     // result output
@@ -126,7 +138,7 @@ namespace variant {
 
     void BlockQuantify::count_variants(bcf1_t * v) {
         bcf_unpack(v, BCF_UN_ALL);
-        std::string tag_string = bcfhelpers::getInfoString(_impl->hdr, v, "tag_string");
+        std::string tag_string = bcfhelpers::getInfoString(_impl->hdr, v, "Regions", "");
         std::string type = bcfhelpers::getInfoString(_impl->hdr, v, "type");
         std::string kind = bcfhelpers::getInfoString(_impl->hdr, v, "kind");
         bool hapmatch = bcfhelpers::getInfoFlag(_impl->hdr, v, "HapMatch");
@@ -136,13 +148,12 @@ namespace variant {
             type = "TP";
         }
 
-        if (tag_string.empty() && type == "FP" && kind == "missing") {
+        if (_impl->count_unk && tag_string.empty() && type == "FP" && kind == "missing") {
             type = "UNK";
         }
 
         bcf_update_info_string(_impl->hdr, v, "type", type.c_str());
         bcf_update_info_string(_impl->hdr, v, "kind", kind.c_str());
-        bcf_update_info_string(_impl->hdr, v, "Regions", tag_string.c_str());
 
         std::set<int> vtypes;
         uint64_t hl_lt_truth = (uint64_t) -1;

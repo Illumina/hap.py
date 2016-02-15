@@ -51,7 +51,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	${DIR}/../../example/integration/integrationtest_empty.vcf \
 			 	${DIR}/../../example/integration/integrationtest_rhs.vcf.gz \
 			 	-o ${TMP_OUT}.e0 -P \
-			 	-V -B -X \
+			 	-V -B -X --output-vtc \
 			 	--force-interactive
 
 if [[ $? != 0 ]]; then
@@ -64,7 +64,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	${DIR}/../../example/integration/integrationtest_lhs.vcf.gz \
 			 	${DIR}/../../example/integration/integrationtest_empty.vcf \
 			 	-o ${TMP_OUT}.e1 -P \
-			 	-V -B -X \
+			 	-V -B -X --output-vtc \
 			 	--force-interactive
 
 if [[ $? != 0 ]]; then
@@ -78,7 +78,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	${DIR}/../../example/integration/integrationtest_lhs.vcf.gz \
 			 	${DIR}/../../example/integration/integrationtest_rhs.vcf.gz \
 			 	-o ${TMP_OUT} -P \
-			 	-V -B -X \
+			 	-V -B -X --output-vtc \
 			 	--force-interactive
 
 if [[ $? != 0 ]]; then
@@ -94,7 +94,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	${DIR}/../../example/integration/integrationtest_lhs.vcf.gz \
 			 	${DIR}/../../example/integration/integrationtest_rhs.vcf.gz \
 			 	-o ${TMP_OUT}.unhappy -P \
-			 	-V -B -X \
+			 	-V -B -X --output-vtc \
 			 	--force-interactive --unhappy
 
 if [[ $? != 0 ]]; then
@@ -104,7 +104,7 @@ fi
 
 cat ${TMP_OUT}.unhappy.vcf.gz | gunzip | grep -v ^# > ${TMP_OUT}.unhappy.vcf
 
-# run hap.py
+# run hap.py for PASS only, without VTC
 ${PYTHON} ${HCDIR}/hap.py \
 			 	-l chr21 \
 			 	${DIR}/../../example/integration/integrationtest_lhs.vcf.gz \
@@ -174,7 +174,7 @@ ${PYTHON} ${HCDIR}/hap.py $@ \
 			 	${DIR}/../../example/PG_performance.vcf.gz \
 			 	${DIR}/../../example/performance.vcf.gz \
 			 	-o ${TMP_OUT}.performance -P \
-			 	-V -B -X \
+			 	-V -B -X --output-vtc \
 			 	-f ${DIR}/../../example/performance.confident.bed.gz \
 			 	--force-interactive --threads 4
 
@@ -216,7 +216,7 @@ ${PYTHON} ${HCDIR}/hap.py $@ \
 			 	${DIR}/../../example/PG_performance.vcf.gz \
 			 	${DIR}/../../example/performance.vcf.gz \
 			 	-o ${TMP_OUT}.performance.t1 -P \
-			 	-V -B -X \
+			 	-V -B -X --output-vtc \
 			 	-f ${DIR}/../../example/performance.confident.bed.gz \
 			 	--force-interactive --threads 1
 

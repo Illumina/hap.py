@@ -48,12 +48,22 @@ namespace variant {
 
     class BlockQuantify {
     public:
-        // hdr must be destroyed externally, the reason it's not const is
-        // that htslib doesn't do const
+        /**
+         * hdr must be destroyed externally, the reason it's not const is
+         * that htslib doesn't do const mostly.
+         *
+         * @param hdr a bcf header
+         * @param ref_fasta reference fasta file for trimming and counting
+         * @param output_vtc set to true to add a VTC info field which gives details on what was counted
+         * @param count_homref set to true to also count REF matches
+         * @param count_unk when this is true, everything that has a missing Regions info tag will become UNK rather
+         *                  than FP
+         */
         explicit BlockQuantify(bcf_hdr_t * hdr,
                                std::string const & ref_fasta,
                                bool output_vtc,
-                               bool count_homref);
+                               bool count_homref,
+                               bool count_unk);
         ~BlockQuantify();
 
         BlockQuantify(BlockQuantify && rhs);

@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
 
     bool apply_filters = false;
     bool count_homref = false;
-    bool output_vtc = false;
+    bool output_vtc = true;
 
     int threads = 1;
     int blocksize = 20000;
@@ -238,6 +238,9 @@ int main(int argc, char* argv[]) {
     try
     {
         bcf_srs_t * reader = bcf_sr_init();
+        reader->require_index = 1;
+        reader->collapse = COLLAPSE_NONE;
+        reader->streaming = 0;
         if(!only_regions.empty()) {
             int result = bcf_sr_set_regions(reader, only_regions.c_str(), 1);
             if(result < 0)
@@ -260,6 +263,7 @@ int main(int argc, char* argv[]) {
             else
             {
                 success = bcf_sr_seek(reader, chr.c_str(), start);
+                std::cerr << "starting at " << chr << ":" << start << "\n";
             }
             if(success < 0)
             {
@@ -312,7 +316,7 @@ int main(int argc, char* argv[]) {
         int64_t rcount = 0;
         std::string current_chr = "";
         int vars_in_block = 0;
-        std::unique_ptr<BlockQuantify> p_bq(new BlockQuantify(hdr, ref_fasta, output_vtc, count_homref));
+        std::unique_ptr<BlockQuantify> p_bq(new BlockQuantify(hdr, ref_fasta, output_vtc, count_homref, regions.hasRegions()));
 
         /** async stuff. each block can be counted in parallel, but we need to
          *  write out the variants sequentially.
@@ -424,7 +428,7 @@ int main(int argc, char* argv[]) {
                 // clear / write out some blocks (make sure we have at least 2xthreads tasks left)
                 output_counts(threads);
                 blocks.emplace(std::move(f), std::move(p_bq));
-                p_bq.reset(new BlockQuantify(hdr, ref_fasta, output_vtc, count_homref));
+                p_bq.reset(new BlockQuantify(hdr, ref_fasta, output_vtc, count_homref, regions.hasRegions()));
                 vars_in_block = 0;
             }
 
@@ -461,7 +465,10 @@ int main(int argc, char* argv[]) {
             o << fastWriter.write(counts);
         }
 
-        hts_close(writer);
+        if(writer)
+        {
+            hts_close(writer);
+        }
         bcf_sr_destroy(reader);
     }
     catch(std::runtime_error & e)

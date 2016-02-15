@@ -61,7 +61,8 @@ def _locations_tmp_bed_file(locations):
 
 def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
                  reference=Tools.defaultReference(),
-                 locations=None, threads=1):
+                 locations=None, threads=1,
+                 output_vtc=False):
     """Run quantify and return parsed JSON
 
     :param filename: the VCF file name
@@ -71,6 +72,7 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
     :param regions: dictionary of stratification region names and file names
     :param reference: reference fasta path
     :param locations: a location to use
+    :param output_vtc: enable / disable the VTC field
     :returns: parsed counts JSON
     """
 
@@ -80,6 +82,11 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
     run_str = "quantify '%s' -o '%s'" % (filename.replace(" ", "\\ "), json_name)
     run_str += " -r '%s'" % reference.replace(" ", "\\ ")
     run_str += " --threads %i" % threads
+
+    if output_vtc:
+        run_str += " --output-vtc 1"
+    else:
+        run_str += " --output-vtc 0"
 
     if write_vcf:
         if not write_vcf.endswith(".vcf.gz"):

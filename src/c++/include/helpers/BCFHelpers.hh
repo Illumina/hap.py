@@ -77,7 +77,7 @@ namespace bcfhelpers {
     }
 
     /** extract pos / length */
-    void getLocation(bcf_hdr_t * hdr, bcf1_t * rec, int64_t start, int64_t & end);
+    void getLocation(bcf_hdr_t * hdr, bcf1_t * rec, int64_t & start, int64_t & end);
 
     /**
      * @brief Retrieve an info field as an integer

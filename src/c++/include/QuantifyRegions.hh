@@ -61,6 +61,16 @@ namespace variant
          */
         void load(std::vector<std::string> const & rnames);
 
+        /**
+         * Returns true if regions were loaded.
+         *
+         * Note that this will also return true when an empty bed file was loaded.
+         * This is intentional to distinguish the case where we don't have confident
+         * regions (everything unknown is a FP) from the one where the confident
+         * region file is empty (every FP is unknown).
+         */
+        bool hasRegions() const;
+
         /** add Regions annotation to a record
          *
          * Records must be passed in sorted order.

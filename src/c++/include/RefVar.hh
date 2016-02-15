@@ -56,7 +56,19 @@ typedef struct _RefVar
 {
     _RefVar() : flags(0) {}
     _RefVar(int64_t _start, int64_t _end, std::string _alt, int64_t _flags=0) :
-        start(_start), end(_end), alt(_alt), flags(_flags) {}
+        start(_start), end(_end), alt(_alt), flags(_flags) {
+        if(alt == "<DEL>")
+        {
+            alt = "";
+        }
+        else
+        {
+            if(alt.find("<") != std::string::npos || alt.find(">") != std::string::npos)
+            {
+                error("Invalid allele at %i: %s", _start, alt.c_str());
+            }
+        }
+    }
 
     int64_t start, end;
     std::string alt;

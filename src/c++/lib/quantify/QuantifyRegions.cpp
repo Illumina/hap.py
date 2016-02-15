@@ -54,6 +54,8 @@ namespace variant
     {
         std::vector<std::string> names;
         std::unordered_map<std::string, std::unique_ptr<intervals::IntervalBuffer>> ib;
+        std::unordered_map<std::string, std::unique_ptr<intervals::IntervalBuffer>>::iterator current_chr = ib.end();
+        int64_t current_pos = -1;
     };
 
     QuantifyRegions::QuantifyRegions() : _impl(new QuantifyRegionsImpl())
@@ -61,6 +63,19 @@ namespace variant
 
     QuantifyRegions::~QuantifyRegions()
     { }
+
+    /**
+     * Returns true if regions were loaded.
+     *
+     * Note that this will also return true when an empty bed file was loaded.
+     * This is intentional to distinguish the case where we don't have confident
+     * regions (everything unknown is a FP) from the one where the confident
+     * region file is empty (every FP is unknown).
+     */
+    bool QuantifyRegions::hasRegions() const
+    {
+        return !_impl->names.empty();
+    }
 
     void QuantifyRegions::load(std::vector<std::string> const &rnames)
     {
@@ -165,9 +180,20 @@ namespace variant
         bcfhelpers::getLocation(hdr, record, refstart, refend);
 
         std::string tag_string = "";
-        auto p_chr = _impl->ib.find(chr);
+
+        auto p_chr = _impl->current_chr;
+        if(p_chr == _impl->ib.end() || p_chr->first != chr)
+        {
+            _impl->current_pos = -1;
+            p_chr = _impl->ib.find(chr);
+        }
+
         if(p_chr != _impl->ib.end())
         {
+            if(refstart < _impl->current_pos)
+            {
+                error("Variants out of order at %s:%i", chr.c_str(), refstart);
+            }
             for(size_t i = 0; i < _impl->names.size(); ++i)
             {
                 if(p_chr->second->hasOverlap(refstart, refend, i))
@@ -179,8 +205,20 @@ namespace variant
                     tag_string += _impl->names[i];
                 }
             }
+            if(refstart > 1)
+            {
+                _impl->current_pos = refstart - 1;
+                p_chr->second->advance(refstart-1);
+            }
         }
-        bcf_update_info_string(hdr, record, "Regions", tag_string.c_str());
+        if(!tag_string.empty())
+        {
+            bcf_update_info_string(hdr, record, "Regions", tag_string.c_str());
+        }
+        else
+        {
+            bcf_update_info_string(hdr, record, "Regions", nullptr);
+        }
     }
 }
 

@@ -335,7 +335,7 @@ namespace bcfhelpers
 
 
     /** extract chrom / pos / length */
-    void getLocation(bcf_hdr_t * hdr, bcf1_t * rec, int64_t refstart, int64_t & refend)
+    void getLocation(bcf_hdr_t * hdr, bcf1_t * rec, int64_t & refstart, int64_t & refend)
     {
         bcf_unpack(rec, BCF_UN_STR);
         refstart = rec->pos;

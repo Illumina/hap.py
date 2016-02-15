@@ -152,7 +152,7 @@ bool IntervalBuffer::isCovered(int64_t start, int64_t end, size_t lane) const
     }
 
     interval & it = is.front();
-    return it.start <= start && it.end >= end ? true : false;
+    return it.start <= start && it.end >= end;
 }
 
 /**
