@@ -30,16 +30,6 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-# Disabled after v0.2.1-public -- the counts that come out are approximately the same
-# but will vary from system to system because allele sorting is not deterministic in this
-# version, which leads to slightly different postprocessing.
-#
-# diff -I fileDate -I source_version ${TMP_OUT}.counts.json ${DIR}/../../example/happy/expected.counts.json
-# if [[ $? != 0 ]]; then
-# 	echo "Counts differ! -- diff ${TMP_OUT}.counts.json ${DIR}/../../example/happy/expected.counts.json"
-# 	exit 1
-# fi
-
 # This script checks if the summary precision / recall figures have changed significantly
 ${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.summary.csv ${DIR}/../../example/happy/expected.summary.csv
 if [[ $? != 0 ]]; then
@@ -62,16 +52,6 @@ if [[ $? != 0 ]]; then
 	echo "hap.py failed!"
 	exit 1
 fi
-
-# Disabled after v0.2.1-public -- the counts that come out are approximately the same
-# but will vary from system to system because allele sorting is not deterministic in this
-# version, which leads to slightly different postprocessing.
-#
-# diff -I fileDate -I source_version ${TMP_OUT}.pass.counts.json ${DIR}/../../example/happy/expected.pass.counts.json
-# if [[ $? != 0 ]]; then
-# 	echo "PASS counts differ! -- diff ${TMP_OUT}.pass.counts.json ${DIR}/../../example/happy/expected.pass.counts.json"
-# 	exit 1
-# fi
 
 ${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.pass.summary.csv ${DIR}/../../example/happy/expected.pass.summary.csv
 if [[ $? != 0 ]]; then
@@ -97,16 +77,6 @@ if [[ $? != 0 ]]; then
 	echo "hap.py failed!"
 	exit 1
 fi
-
-# Disabled after v0.2.1-public -- the counts that come out are approximately the same
-# but will vary from system to system because allele sorting is not deterministic in this
-# version, which leads to slightly different postprocessing.
-#
-# diff -I fileDate -I source_version ${TMP_OUT}.pass.counts.json ${DIR}/../../example/happy/expected.pass.counts.json
-# if [[ $? != 0 ]]; then
-# 	echo "PASS counts differ! -- diff ${TMP_OUT}.pass.counts.json ${DIR}/../../example/happy/expected.pass.counts.json"
-# 	exit 1
-# fi
 
 ${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.unhappy.summary.csv ${DIR}/../../example/happy/expected.unhappy.summary.csv
 if [[ $? != 0 ]]; then
