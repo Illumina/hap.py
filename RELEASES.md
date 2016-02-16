@@ -10,6 +10,7 @@ P3 (Major)  Task    HAP-157 Calculate per-MB FP rate (as an "absolute" equivalen
 P3 (Major)  Bug HAP-162 Som.py outputs INF precision when FP and TP are 0  
 P3 (Major)  Task    HAP-163 Release notes and final test   
 P3 (Major)  Task    HAP-164 Sync up som.py empirical scoring features
+P3 (Major)  Task    HAP-165 Speed improvements in quantify and upgrade to htslib 1.3
 
 ## v0.2.7
 
