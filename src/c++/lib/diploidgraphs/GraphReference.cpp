@@ -484,6 +484,9 @@ void GraphReference::enumeratePaths(
                 error("Maximum number of hets in block exceeded for %s:%i-%i", chr, start, end);
             }
             node_masks[ni] = het_mask;
+#ifdef _DEBUG_GRAPHREFERENCE
+            std::cerr << "Node " << n << " has mask " << std::bitset<64>(het_mask).to_string() << "\n";
+#endif
             het_mask <<= 1;
         }
     }
@@ -576,7 +579,9 @@ void GraphReference::enumeratePaths(
 
 #ifdef _DEBUG_GRAPHREFERENCE
             std::cerr << "(Re)starting at bp " << current.bp_id << ": "
-                                               << current.up_to_here.repr();
+                                               << current.up_to_here.repr()
+                                               << " nu: "
+                                               << std::bitset<64>(current.nodes_used).to_string();
 
             std::cerr << " sequences_seen: ";
             for (auto x : sequences_seen) {
@@ -617,6 +622,8 @@ void GraphReference::enumeratePaths(
                 // Note we only need to do this if we already used het variants. Otherwise,
                 // we don't really have a choice and need to produce the same sequence twice.
                 std::string modified_rp = ht.seq(start, end);
+                // mark that we used this node on this path
+                nodes_used |= node_masks[nextone];
                 if(nodes[nextone].type == ReferenceNode::alternative && nodes_used != 0)
                 {
                     if(sequences_seen.count(modified_rp))
@@ -633,9 +640,6 @@ void GraphReference::enumeratePaths(
                     }
                     sequences_seen.insert(modified_rp);
                 }
-
-                // mark that we used this node on this path
-                nodes_used |= node_masks[nextone];
 
                 if(nodes[nextone].color == ReferenceNode::black && nodes[nextone].type == ReferenceNode::alternative)
                 {
