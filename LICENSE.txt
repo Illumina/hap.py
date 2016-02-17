@@ -32,35 +32,33 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -------------------------------------------------------------------------------
 
 The dependencies supplied in the external subfolder are covered by their own
-respective licenses as follows (original license text included in the 
+respective licenses as follows (original license text included in the
 respective source files / tarballs):
 
-*   Htslib 1.2.1 (MIT license - 
+*   Htslib 1.3 (MIT license -
     https://github.com/samtools/htslib/blob/develop/LICENSE)
-*   bcftools 1.2.1 (MIT license - 
+*   bcftools 1.3 (MIT license -
     https://github.com/samtools/bcftools/blob/develop/LICENSE)
-*   samtools 1.2.1 (MIT license - 
+*   samtools 1.3 (MIT license -
     https://github.com/samtools/samtools/blob/develop/LICENSE)
 *   Klib/ksw (from https://github.com/attractivechaos/klib -- MIT license)
-*   JsonCPP (MIT license -- 
+*   JsonCPP (MIT license --
     https://github.com/open-source-parsers/jsoncpp/blob/master/LICENSE)
-*   Intervaltree ((c) Erik Garrison, MIT license, 
-    see https://github.com/ekg/intervaltree)
-*   GetGitRevisionDescription.cmake from 
+*   GetGitRevisionDescription.cmake from
     https://github.com/rpavlik/cmake-modules/blob/master/GetGitRevisionDescription.cmake
     Copyright Iowa State University 2009-2014
     Distributed under the Boost Software License, Version 1.0.
     (See http://www.boost.org/LICENSE_1_0.txt)
-*   Python virtualenv: MIT-like 
+*   Python virtualenv: MIT-like
     (https://raw.githubusercontent.com/pypa/virtualenv/master/LICENSE.txt)
 
 Further dependencies (to be installed by the user of this software):
 
-*   Python/Pandas: BSD-compatible 
+*   Python/Pandas: BSD-compatible
     (http://pandas.pydata.org/pandas-docs/stable/overview.html#license)
 *   Python/PySAM: MIT license (https://github.com/pysam-developers/pysam)
 *   bx-python: Copyright (c) 2005-2015 The Pennsylvania State University
                Copyright (c) 2013-2015 The Johns Hopkins University
                (https://bitbucket.org/james_taylor/bx-python)
-*   Boost C++ library: Boost software license 
+*   Boost C++ library: Boost software license
     (http://www.boost.org/users/license.html)
