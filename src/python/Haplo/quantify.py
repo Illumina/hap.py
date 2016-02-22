@@ -62,7 +62,8 @@ def _locations_tmp_bed_file(locations):
 def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
                  reference=Tools.defaultReference(),
                  locations=None, threads=1,
-                 output_vtc=False):
+                 output_vtc=False,
+                 qtype=None):
     """Run quantify and return parsed JSON
 
     :param filename: the VCF file name
@@ -87,6 +88,9 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
         run_str += " --output-vtc 1"
     else:
         run_str += " --output-vtc 0"
+
+    if qtype:
+        run_str += " --type %s" % qtype
 
     if write_vcf:
         if not write_vcf.endswith(".vcf.gz"):
@@ -173,10 +177,13 @@ def simplify_counts(counts, snames=None):
         # k1 is made in quantify.cpp
         # type + ":" + kind + ":" + tag_string + ":" + sample
         try:
-            vtype, kind, tags, tq = k1.split(":", 4)
+            vtype, kind, tags, tq = k1.split(":", 3)
         except:
             logging.warn("Invalid k1 : %s" % k1)
-            continue
+            vtype = "N"
+            # kind = "qerr"
+            # tags = ""
+            tq = ""
 
         if type(snames) is list and tq not in snames:
             logging.warn("Ignoring invalid key %s" % k1)
@@ -235,7 +242,11 @@ def simplify_counts(counts, snames=None):
             else:
                 keys1 = ["Records.unknown"]
 
-            keys2 = [tq + ".TOTAL", tq + "." + vtype]
+            # don't count "." records and N records towards total
+            if vtype == "N" or vtype == ".":
+                keys2 = [tq + ".IGN"]
+            else:
+                keys2 = [tq + ".TOTAL", tq + "." + vtype]
 
             for key1 in keys1:
                 if key1 not in simplified_numbers:

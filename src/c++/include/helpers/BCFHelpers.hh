@@ -123,4 +123,16 @@ namespace bcfhelpers {
     /** read DP(I) -- will use in this order: DP, DPI, -1 */
     void getDP(const bcf_hdr_t * header, bcf1_t * line, int isample, int & dp);
 
+    /** read a format field as a single int. */
+    int getFormatInt(const bcf_hdr_t * header, bcf1_t * line, const char * field, int isample, int defaultresult = -1);
+
+    /** read a format field as a single double. default return value is NaN */
+    double getFormatDouble(const bcf_hdr_t * header, bcf1_t * line, const char * field, int isample);
+
+    /** read a format field as string. result will not be overwritten on failure */
+    std::string getFormatString(const bcf_hdr_t * header, bcf1_t * line, const char * field, int isample, const char * def_result = ".");
+
+    /** update format string for a single sample.  */
+    void setFormatStrings(const bcf_hdr_t * header, bcf1_t * line, const char * field,
+                          const std::vector<std::string> & value);
 } // namespace bcfhelpers

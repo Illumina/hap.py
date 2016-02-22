@@ -73,6 +73,7 @@ int main(int argc, char* argv[]) {
     std::string output_vcf;
     std::string ref;
     std::string only_regions;
+    std::string qtype = "xcmp";
 
     // limits
     std::string chr;
@@ -89,154 +90,160 @@ int main(int argc, char* argv[]) {
     int threads = 1;
     int blocksize = 20000;
 
-    QuantifyRegions regions;
-
     try
     {
-        // Declare the supported options.
-        po::options_description desc("Allowed options");
-        desc.add_options()
-            ("help,h", "produce help message")
-            ("version", "Show version")
-            ("input-file", po::value<std::string>(), "The input file")
-            ("output-file,o", po::value<std::string>(), "The output file name (JSON Format).")
-            ("output-vcf,v", po::value<std::string>(), "Annotated VCF file (with bed annotations).")
-            ("reference,r", po::value<std::string>(), "The reference fasta file (needed only for VCF output).")
-            ("location,l", po::value<std::string>(), "Start location.")
-            ("regions,R", po::value< std::vector<std::string> >(),
-                "Region bed file. You can attach a label by prefixing with a colon, e.g. -R FP2:false-positives-type2.bed")
-            ("only,O", po::value< std::string >(), "Bed file of locations (equivalent to -R in bcftools)")
-            ("limit-records", po::value<int64_t>(), "Maximum umber of records to process")
-            ("message-every", po::value<int64_t>(), "Print a message every N records.")
-            ("apply-filters,f", po::value<bool>(), "Apply filtering in VCF.")
-            ("count-homref", po::value<bool>(), "Count homref locations.")
-            ("output-vtc", po::value<bool>(), "Output variant types counted (debugging).")
-            ("threads", po::value<int>(), "Number of threads to use.")
-            ("blocksize", po::value<int>(), "Number of variants per block.")
-        ;
+        QuantifyRegions regions;
 
-        po::positional_options_description popts;
-        popts.add("input-file", -1);
-
-        po::options_description cmdline_options;
-        cmdline_options
-            .add(desc)
-        ;
-
-        po::variables_map vm;
-
-        po::store(po::command_line_parser(argc, argv).
-                  options(cmdline_options).positional(popts).run(), vm);
-        po::notify(vm);
-
-        if (vm.count("version"))
+        try
         {
-            std::cout << "quantify version " << HAPLOTYPES_VERSION << "\n";
-            return 0;
+            // Declare the supported options.
+            po::options_description desc("Allowed options");
+            desc.add_options()
+                ("help,h", "produce help message")
+                ("version", "Show version")
+                ("input-file", po::value<std::string>(), "The input file")
+                ("output-file,o", po::value<std::string>(), "The output file name (JSON Format).")
+                ("output-vcf,v", po::value<std::string>(), "Annotated VCF file (with bed annotations).")
+                ("reference,r", po::value<std::string>(), "The reference fasta file (needed only for VCF output).")
+                ("location,l", po::value<std::string>(), "Start location.")
+                ("regions,R", po::value< std::vector<std::string> >(),
+                    "Region bed file. You can attach a label by prefixing with a colon, e.g. -R FP2:false-positives-type2.bed")
+                ("type", po::value<std::string>(), "Quantification method to use. Current choices are xcmp or ga4gh.")
+                ("only,O", po::value< std::string >(), "Bed file of locations (equivalent to -R in bcftools)")
+                ("limit-records", po::value<int64_t>(), "Maximum umber of records to process")
+                ("message-every", po::value<int64_t>(), "Print a message every N records.")
+                ("apply-filters,f", po::value<bool>(), "Apply filtering in VCF.")
+                ("count-homref", po::value<bool>(), "Count homref locations.")
+                ("output-vtc", po::value<bool>(), "Output variant types counted (debugging).")
+                ("threads", po::value<int>(), "Number of threads to use.")
+                ("blocksize", po::value<int>(), "Number of variants per block.")
+            ;
+
+            po::positional_options_description popts;
+            popts.add("input-file", -1);
+
+            po::options_description cmdline_options;
+            cmdline_options
+                .add(desc)
+            ;
+
+            po::variables_map vm;
+
+            po::store(po::command_line_parser(argc, argv).
+                      options(cmdline_options).positional(popts).run(), vm);
+            po::notify(vm);
+
+            if (vm.count("version"))
+            {
+                std::cout << "quantify version " << HAPLOTYPES_VERSION << "\n";
+                return 0;
+            }
+
+            if (vm.count("help"))
+            {
+                std::cout << desc << "\n";
+                return 1;
+            }
+
+            if (vm.count("input-file"))
+            {
+                file = vm["input-file"].as< std::string >();
+            }
+
+            if (vm.count("output-file"))
+            {
+                output = vm["output-file"].as< std::string >();
+            }
+
+            if (vm.count("output-vcf"))
+            {
+                output_vcf = vm["output-vcf"].as< std::string >();
+            }
+
+            if (vm.count("reference"))
+            {
+                ref = vm["reference"].as< std::string >();
+            }
+            else if(output_vcf != "")
+            {
+                error("To write an output VCF, you need to specify a reference file, too.");
+            }
+
+            if (vm.count("location"))
+            {
+                stringutil::parsePos(vm["location"].as< std::string >(), chr, start, end);
+            }
+
+            if (vm.count("only"))
+            {
+                only_regions = vm["only"].as< std::string >();
+            }
+
+            if (vm.count("type"))
+            {
+                qtype = vm["type"].as< std::string >();
+            }
+
+            if (vm.count("limit-records"))
+            {
+                rlimit = vm["limit-records"].as< int64_t >();
+            }
+
+            if (vm.count("message-every"))
+            {
+                message = vm["message-every"].as< int64_t >();
+            }
+
+            if (vm.count("apply-filters"))
+            {
+                apply_filters = vm["apply-filters"].as< bool >();
+            }
+
+            if (vm.count("count-homref"))
+            {
+                count_homref = vm["count-homref"].as< bool >();
+            }
+
+            if (vm.count("output-vtc"))
+            {
+                output_vtc = vm["output-vtc"].as< bool >();
+            }
+
+            if (vm.count("threads"))
+            {
+                threads = vm["threads"].as< int >();
+            }
+
+            if (vm.count("blocksize"))
+            {
+                blocksize = vm["blocksize"].as< int >();
+            }
+
+            if(file.size() == 0)
+            {
+                std::cerr << "Please specify one input file / sample.\n";
+                return 1;
+            }
+
+            if (output == "")
+            {
+                std::cerr << "Please specify an output file.\n";
+                return 1;
+            }
+
+            if (vm.count("regions"))
+            {
+                std::vector<std::string> rnames = vm["regions"].as< std::vector<std::string> >();
+                regions.load(rnames);
+            }
+
         }
-
-        if (vm.count("help"))
+        catch (po::error & e)
         {
-            std::cout << desc << "\n";
+            std::cerr << e.what() << "\n";
             return 1;
         }
 
-        if (vm.count("input-file"))
-        {
-            file = vm["input-file"].as< std::string >();
-        }
-
-        if (vm.count("output-file"))
-        {
-            output = vm["output-file"].as< std::string >();
-        }
-
-        if (vm.count("output-vcf"))
-        {
-            output_vcf = vm["output-vcf"].as< std::string >();
-        }
-
-        if (vm.count("reference"))
-        {
-            ref = vm["reference"].as< std::string >();
-        }
-        else if(output_vcf != "")
-        {
-            error("To write an output VCF, you need to specify a reference file, too.");
-        }
-
-        if (vm.count("location"))
-        {
-            stringutil::parsePos(vm["location"].as< std::string >(), chr, start, end);
-        }
-
-        if (vm.count("only"))
-        {
-            only_regions = vm["only"].as< std::string >();
-        }
-
-        if (vm.count("limit-records"))
-        {
-            rlimit = vm["limit-records"].as< int64_t >();
-        }
-
-        if (vm.count("message-every"))
-        {
-            message = vm["message-every"].as< int64_t >();
-        }
-
-        if (vm.count("apply-filters"))
-        {
-            apply_filters = vm["apply-filters"].as< bool >();
-        }
-
-        if (vm.count("count-homref"))
-        {
-            count_homref = vm["count-homref"].as< bool >();
-        }
-
-        if (vm.count("output-vtc"))
-        {
-            output_vtc = vm["output-vtc"].as< bool >();
-        }
-
-        if (vm.count("threads"))
-        {
-            threads = vm["threads"].as< int >();
-        }
-
-        if (vm.count("blocksize"))
-        {
-            blocksize = vm["blocksize"].as< int >();
-        }
-
-        if(file.size() == 0)
-        {
-            std::cerr << "Please specify one input file / sample.\n";
-            return 1;
-        }
-
-        if (output == "")
-        {
-            std::cerr << "Please specify an output file.\n";
-            return 1;
-        }
-
-        if (vm.count("regions"))
-        {
-            std::vector<std::string> rnames = vm["regions"].as< std::vector<std::string> >();
-            regions.load(rnames);
-        }
-
-    }
-    catch (po::error & e)
-    {
-        std::cerr << e.what() << "\n";
-        return 1;
-    }
-
-    try
-    {
         FastaFile ref_fasta(ref.c_str());
         bcf_srs_t * reader = bcf_sr_init();
         reader->require_index = 1;
@@ -273,23 +280,26 @@ int main(int argc, char* argv[]) {
         }
 
         bcf_hdr_t * hdr = reader->readers[0].header;
-        htsFile * writer = nullptr;
 
-        // we need these, otherwise all the update info calls will fail
-        bcf_hdr_append(hdr, "##INFO=<ID=gtt1,Number=1,Type=String,Description=\"GT of truth call\">");
-        bcf_hdr_append(hdr, "##INFO=<ID=gtt2,Number=1,Type=String,Description=\"GT of query call\">");
-        bcf_hdr_append(hdr, "##INFO=<ID=type,Number=1,Type=String,Description=\"Decision for call (TP/FP/FN/N)\">");
-        bcf_hdr_append(hdr, "##INFO=<ID=kind,Number=1,Type=String,Description=\"Sub-type for decision (match/mismatch type)\">");
-        bcf_hdr_append(hdr, "##INFO=<ID=Regions,Number=.,Type=String,Description=\"Tags for regions.\">");
-        bcf_hdr_append(hdr, "##INFO=<ID=T_VT,Number=1,Type=String,Description=\"High-level variant type in truth (SNP|INDEL).\">");
-        bcf_hdr_append(hdr, "##INFO=<ID=Q_VT,Number=1,Type=String,Description=\"High-level variant type in query (SNP|INDEL).\">");
-        bcf_hdr_append(hdr, "##INFO=<ID=T_LT,Number=1,Type=String,Description=\"High-level location type in truth (het|hom|hetalt).\">");
-        bcf_hdr_append(hdr, "##INFO=<ID=Q_LT,Number=1,Type=String,Description=\"High-level location type in query (het|hom|hetalt).\">");
+        std::string qparams = "";
         if(output_vtc)
         {
-            bcf_hdr_append(hdr, "##INFO=<ID=VTC,Number=.,Type=String,Description=\"Variant types used for counting.\">");
+            qparams += "output_vtc;";
         }
-        bcf_hdr_sync(hdr);
+        if(regions.hasRegions())
+        {
+            qparams += "count_unk;";
+        }
+        if(count_homref)
+        {
+            qparams += "count_homref;";
+        }
+        std::unique_ptr<BlockQuantify> p_bq(std::move(makeQuantifier(hdr, ref_fasta, qtype, qparams)));
+
+        // update the header
+        p_bq->updateHeader(hdr);
+
+        htsFile * writer = nullptr;
 
         if (output_vcf != "")
         {
@@ -320,8 +330,6 @@ int main(int argc, char* argv[]) {
         int64_t rcount = 0;
         std::string current_chr = "";
         int vars_in_block = 0;
-        std::unique_ptr<BlockQuantify> p_bq(new BlockQuantify(hdr, ref_fasta, output_vtc, count_homref, regions.hasRegions()));
-
         /** async stuff. each block can be counted in parallel, but we need to
          *  write out the variants sequentially.
          *  Therefore, we keep a future for each block to be able to join
@@ -432,7 +440,7 @@ int main(int argc, char* argv[]) {
                 // clear / write out some blocks (make sure we have at least 2xthreads tasks left)
                 output_counts(threads);
                 blocks.emplace(std::move(f), std::move(p_bq));
-                p_bq.reset(new BlockQuantify(hdr, ref_fasta, output_vtc, count_homref, regions.hasRegions()));
+                p_bq = std::move(makeQuantifier(hdr, ref_fasta, qtype, qparams));
                 vars_in_block = 0;
             }
 
@@ -455,7 +463,8 @@ int main(int argc, char* argv[]) {
         Json::Value counts;
         for (auto & p : count_map)
         {
-            counts[p.first.c_str()] = p.second.write();
+            std::cerr << p.first << "\n";
+            counts[p.first] = p.second.write();
         }
 
         Json::FastWriter fastWriter;
