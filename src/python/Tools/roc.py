@@ -132,9 +132,20 @@ class StrelkaSNVVQSRRoc(ROC):
     def from_table(self, tbl):
         tbl.loc[tbl["NT"] != "ref", "VQSR"] = 0
         return tableROC(tbl, "tag",
-                        "EVS", "FILTER", "LowQscore,LowEVS")
+                        "VQSR", "FILTER", "LowQscore")
 
-ROC.register("strelka.snv", "hcc.strelka.snv", StrelkaSNVVQSRRoc)
+ROC.register("strelka.snv.vqsr", "hcc.strelka.snv", StrelkaSNVVQSRRoc)
+
+
+class StrelkaSNVEVSRoc(ROC):
+    """ROC calculator for Strelka SNVs (newer versions where VQSR is called EVS)"""
+
+    def from_table(self, tbl):
+        tbl.loc[tbl["NT"] != "ref", "EVS"] = 0
+        return tableROC(tbl, "tag",
+                        "EVS", "FILTER", "LowEVS")
+
+ROC.register("strelka.snv", "hcc.strelka.snv", StrelkaSNVEVSRoc)
 
 
 class StrelkaIndelRoc(ROC):
@@ -149,7 +160,7 @@ class StrelkaIndelRoc(ROC):
 ROC.register("strelka.indel", "hcc.strelka.indel", StrelkaIndelRoc)
 
 
-class StrelkaIndelVQSRRoc(ROC):
+class StrelkaIndelEVSRoc(ROC):
     """ROC calculator for Strelka Indels"""
 
     def from_table(self, tbl):
@@ -157,8 +168,7 @@ class StrelkaIndelVQSRRoc(ROC):
         return tableROC(tbl, "tag",
                         "EVS", "FILTER", "LowEVS")
 
-ROC.register("strelka.indel.vqsr", "hcc.strelka.indel", StrelkaIndelVQSRRoc)
-ROC.register("strelka.indel.evs", "hcc.strelka.indel", StrelkaIndelVQSRRoc)
+ROC.register("strelka.indel.evs", "hcc.strelka.indel", StrelkaIndelEVSRoc)
 
 
 class Varscan2SNVRoc(ROC):

@@ -56,17 +56,17 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
         for i, ff in enumerate(features):
             rec[ff] = vr[i]
 
-        # read EVS value, if it's not present, read VQSR (old versions of Strelka)
-        if "I.EVS" not in rec:
-            if "I.VQSR" in rec:
-                rec["I.EVS"] = rec["I.VQSR"]
-            else:
-                rec["I.EVS"] = 0
+        # read VQSR value, if it's not present, set to -1 (old versions of Strelka)
+        try:
+            rec["I.VQSR"] = float(rec["I.VQSR"])
+        except:
+            rec["I.VQSR"] = -1.0
 
+        # read EVS value, if it's not present, set to -1 (old versions of Strelka)
         try:
             rec["I.EVS"] = float(rec["I.EVS"])
         except:
-            pass
+            rec["I.EVS"] = -1.0
 
         # fix missing features
         for q in ["I.QSS_NT", "I.MQ", "I.MQ0", "I.PNOISE", "I.PNOISE2",
@@ -150,11 +150,6 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
         else:
             t_tier1_allele_rate = t_allele_alt_counts[0] / float(t_allele_alt_counts[0] + t_allele_ref_counts[0])
 
-        if t_allele_alt_counts[1] + t_allele_ref_counts[1] == 0:
-            t_tier2_allele_rate = 0
-        else:
-            t_tier2_allele_rate = t_allele_alt_counts[1] / float(t_allele_alt_counts[1] + t_allele_ref_counts[1])
-
         try:
             n_allele_ref_counts = map(float, rec['S.1.' + allele_ref + 'U'])
         except:
@@ -175,11 +170,6 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
             n_tier1_allele_rate = 0
         else:
             n_tier1_allele_rate = n_allele_alt_counts[0] / float(n_allele_alt_counts[0] + n_allele_ref_counts[0])
-
-        if n_allele_alt_counts[1] + n_allele_ref_counts[1] == 0:
-            n_tier2_allele_rate = 0
-        else:
-            n_tier2_allele_rate = n_allele_alt_counts[1] / float(n_allele_alt_counts[1] + n_allele_ref_counts[1])
 
         try:
             pnoise = rec["I.PNOISE"]
@@ -211,6 +201,7 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
             "NT": NT,
             "NT_REF": NT_is_ref,
             "QSS_NT": QSS_NT,
+            "VQSR": rec["I.VQSR"],
             "EVS": rec["I.EVS"],
             "N_FDP_RATE": n_FDP_ratio,
             "T_FDP_RATE": t_FDP_ratio,
@@ -220,13 +211,10 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
             "T_DP": t_DP,
             "N_DP_RATE": n_DP_ratio,
             "T_DP_RATE": t_DP_ratio,
-            "T_TIER1_ALT_RATE": t_tier1_allele_rate,
+            "N_AF": n_tier1_allele_rate,
             "T_AF": t_tier1_allele_rate,
-            "T_TIER2_ALT_RATE": t_tier2_allele_rate,
-            "N_TIER1_ALT_RATE": n_tier1_allele_rate,
-            "N_TIER2_ALT_RATE": n_tier2_allele_rate,
-            "MQ_SCORE": MQ,
-            "MQ_ZERO_RATE": MQ_ZERO,
+            "MQ": MQ,
+            "MQ0": MQ_ZERO,
             "PNOISE": pnoise,
             "PNOISE2": pnoise2,
             "SNVSB": snvsb,
@@ -236,12 +224,12 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
         records.append(qrec)
 
     cols = ["CHROM", "POS", "REF", "ALT",
-            "NT", "NT_REF", "QSS_NT", "FILTER", "EVS",
+            "NT", "NT_REF", "QSS_NT", "FILTER", "EVS", "VQSR",
             "N_FDP_RATE", "T_FDP_RATE", "N_SDP_RATE", "T_SDP_RATE",
             "N_DP", "T_DP", "N_DP_RATE", "T_DP_RATE",
-            "T_TIER1_ALT_RATE", "T_TIER2_ALT_RATE", "N_TIER1_ALT_RATE", "N_TIER2_ALT_RATE",
-            "T_AF",
-            "MQ_SCORE", "MQ_ZERO_RATE", "PNOISE", "PNOISE2", "SNVSB",
+            "N_AF", "T_AF",
+            "MQ", "MQ0",
+            "PNOISE", "PNOISE2", "SNVSB",
             "ReadPosRankSum", "tag"]
 
     if records:
@@ -267,12 +255,6 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
                 "S.1.TAR", "S.2.TAR",
                 "S.1.TIR", "S.2.TIR",
                 "S.1.TOR", "S.2.TOR",
-                "S.1.AF", "S.2.AF",
-                "S.1.OF", "S.2.OF",
-                "S.1.SOR", "S.2.SOR",
-                "S.1.FS", "S.2.FS",
-                "S.1.BSA", "S.2.BSA",
-                "S.1.RR", "S.2.RR",
                 "S.1.BCN50", "S.2.BCN50",
                 ]
 
@@ -291,20 +273,10 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
             "T_DP",
             "N_DP_RATE",
             "T_DP_RATE",
-            "N_AF",
-            "T_AF",
-            "N_OF",
-            "T_OF",
-            "N_SOR",
-            "T_SOR",
-            "N_FS",
-            "T_FS",
-            "N_BSA",
-            "T_BSA",
-            "N_RR",
-            "T_RR",
             "N_BCN",
             "T_BCN",
+            "N_AF",
+            "T_AF",
             "SGT",
             "RC",
             "RU",
@@ -360,12 +332,7 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
         for q in ["I.QSI_NT", "I.RC", "I.IC", "I.IHP",
                   "I.EVS",
                   "S.1.DP", "S.2.DP",
-                  "S.1.OF", "S.2.OF",
-                  "S.1.RR", "S.2.RR",
-                  "S.1.FS", "S.2.FS",
-                  "S.1.BSA", "S.2.BSA",
-                  "S.1.BCN50", "S.2.BCN50",
-                  "S.1.AF", "S.2.AF"]:
+                  "S.1.BCN50", "S.2.BCN50"]:
             if q not in rec or rec[q] is None:
                 rec[q] = 0
                 if not ("feat:" + q) in has_warned:
@@ -418,6 +385,17 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
             logging.warn("Cannot normalize depths.")
             has_warned["DPnorm"] = True
 
+        # extract observed AF from strelka counts. TIR = ALT; TAR = REF
+        try:
+            n_af = float(rec["S.1.TIR"][0]) / (float(rec["S.1.TIR"][0]) + float(rec["S.1.TAR"][0]))
+        except:
+            n_af = 0
+
+        try:
+            t_af = float(rec["S.2.TIR"][0]) / (float(rec["S.2.TIR"][0]) + float(rec["S.2.TAR"][0]))
+        except:
+            t_af = 0
+
         # Gather the computed data into a dict
         qrec = {
             "CHROM": rec["CHROM"],
@@ -434,6 +412,8 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
             "T_DP": t_DP,
             "N_DP_RATE": n_DP_ratio,
             "T_DP_RATE": t_DP_ratio,
+            "N_AF": n_af,
+            "T_AF": t_af,
             "SGT": rec["I.SGT"],
             "tag": tag
         }
@@ -441,6 +421,7 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
         # fields with defaults
         fields = [
             {"n": "EVS", "s": "I.EVS", "def": 0, "t": float},
+            {"n": "VQSR", "s": "I.VQSR", "def": 0, "t": float},
             {"n": "RC", "s": "I.RC", "def": 0, "t": int},
             {"n": "RU", "s": "I.RU", "def": ""},
             {"n": "RU_LEN", "s": "I.RU", "def": 0, "t": len},
@@ -448,18 +429,6 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
             {"n": "IHP", "s": "I.IHP", "def": 0, "t": int},
             {"n": "MQ", "s": "I.MQ", "def": 0.0, "t": float},
             {"n": "MQ0", "s": "I.MQ0", "def": 0.0, "t": float},
-            {"n": "N_AF", "s": "S.1.AF", "def": 0.0, "t": float},
-            {"n": "T_AF", "s": "S.2.AF", "def": 0.0, "t": float},
-            {"n": "N_OF", "s": "S.1.OF", "def": 0.0, "t": float},
-            {"n": "T_OF", "s": "S.2.OF", "def": 0.0, "t": float},
-            {"n": "N_SOR", "s": "S.1.SOR", "def": 0.0, "t": float},
-            {"n": "T_SOR", "s": "S.2.SOR", "def": 0.0, "t": float},
-            {"n": "N_FS", "s": "S.1.FS", "def": 0.0, "t": float},
-            {"n": "T_FS", "s": "S.2.FS", "def": 0.0, "t": float},
-            {"n": "N_BSA", "s": "S.1.BSA", "def": 0.0, "t": float},
-            {"n": "T_BSA", "s": "S.2.BSA", "def": 0.0, "t": float},
-            {"n": "N_RR", "s": "S.1.RR", "def": 0.0, "t": float},
-            {"n": "T_RR", "s": "S.2.RR", "def": 0.0, "t": float},
             {"n": "N_BCN", "s": "S.1.BCN50", "def": 0.0, "t": float},
             {"n": "T_BCN", "s": "S.2.BCN50", "def": 0.0, "t": float},
         ]
@@ -474,20 +443,20 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
 
             qrec[fd["n"]] = res
 
-        # VQSR features
+        # ESF features
         try:
             for i, v in enumerate(rec["I.ESF"]):
                 if i in vqsr_featurenames:
                     try:
-                        qrec["VQSR." + vqsr_featurenames[i]] = float(v)
+                        qrec["ESF." + vqsr_featurenames[i]] = float(v)
                     except:
                         # failure to parse
                         pass
         except:
             pass
         for k, v in vqsr_featurenames.iteritems():
-            if not "VQSR." + v in qrec:
-                qrec["VQSR." + v] = 0
+            if not "ESF." + v in qrec:
+                qrec["ESF." + v] = 0
 
         records.append(qrec)
 
