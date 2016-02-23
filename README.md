@@ -72,15 +72,12 @@ This example compares an example run of GATK 1.6 on NA12878 agains the Platinum
 Genomes reference dataset (***Note: this is a fairly old version of GATK, so
 don't rely on these particular numbers for competitive comparisons!***).
 
-The summary CSV file contains all computed metrics:
+The summary CSV file contains all high-level metrics:
 
-|         Type         | TRUTH.TOTAL | QUERY.TOTAL | METRIC.Recall.HC | METRIC.Precision.HC | METRIC.Frac_NA.HC |
-|----------------------|-------------|-------------|------------------|---------------------|-------------------|
-| Alleles.DEL          |        6069 |        7020 |         0.907460 |            0.973996 |          0.205698 |
-| Alleles.INS          |        6654 |        7179 |         0.880879 |            0.975355 |          0.186098 |
-| Alleles.SNP          |       72752 |       67481 |         0.904442 |            0.998361 |          0.023547 |
-| Locations.SNP.het    |       32254 |       28665 |         0.873368 |            0.997875 |          0.015175 |
-| Locations.SNP.homalt |       20231 |       19270 |         0.929317 |            0.999097 |          0.023560 |
+| Type          |  TRUTH.TOTAL|  QUERY.TOTAL | METRIC.Recall | METRIC.Precision | METRIC.Frac\_NA | TRUTH.TOTAL.TiTv\_ratio | QUERY.TOTAL.TiTv\_ratio | TRUTH.TOTAL.het\_hom\_ratio | QUERY.TOTAL.het\_hom\_ratio|
+|---------------|-------------|--------------|---------------|------------------|-----------------|-------------------------|-------------------------|-----------------------------|----------------------------|
+|Locations.INDEL|         9124|         9905 |      0.869406 |         0.978441 |        0.194548 |                     NaN |                     NaN |                    1.463852 |                    1.209105|
+|Locations.SNP  |        52520|        48078 |      0.894478 |         0.998258 |        0.021070 |                2.081002 |                2.082603 |                    1.595621 |                    1.487599|
 
 These numbers tell us the SNP and indel recall of our query VCF against the
 truth dataset. See [doc/happy.md](doc/happy.md) for more documentation and some
@@ -115,8 +112,8 @@ Installation
 
 Compiling and testing can be done on a standard desktop system with 8GB of RAM. Whole-genome
 comparisons (e.g. comparing a gVCF file against the [Platinum Genomes truth dataset](http://www.illumina.com/platinumgenomes/))
-can use up to 64GB of RAM (20GB typical, depending on the input VCF) and about 10-20 minutes
-using 32 processor cores. Whole exome comparison (using an exome bed mask and the `-T` switch)
+can use up to 64GB of RAM (20GB typical, depending on the input VCF) and about 4-12 minutes
+using 40 processor cores. Whole exome comparison (using an exome bed mask and the `-T` switch)
 can be carried out on a desktop system.
 
 ## Linux
