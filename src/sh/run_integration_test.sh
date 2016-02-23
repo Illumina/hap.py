@@ -51,7 +51,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	${DIR}/../../example/integration/integrationtest_empty.vcf \
 			 	${DIR}/../../example/integration/integrationtest_rhs.vcf.gz \
 			 	-o ${TMP_OUT}.e0 -P \
-			 	-V -B -X --output-vtc \
+			 	-V -X --output-vtc \
 			 	--force-interactive
 
 if [[ $? != 0 ]]; then
@@ -64,7 +64,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	${DIR}/../../example/integration/integrationtest_lhs.vcf.gz \
 			 	${DIR}/../../example/integration/integrationtest_empty.vcf \
 			 	-o ${TMP_OUT}.e1 -P \
-			 	-V -B -X --output-vtc \
+			 	-V -X --output-vtc \
 			 	--force-interactive
 
 if [[ $? != 0 ]]; then
@@ -78,7 +78,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	${DIR}/../../example/integration/integrationtest_lhs.vcf.gz \
 			 	${DIR}/../../example/integration/integrationtest_rhs.vcf.gz \
 			 	-o ${TMP_OUT} -P \
-			 	-V -B -X --output-vtc \
+			 	-V -X --output-vtc \
 			 	--force-interactive
 
 if [[ $? != 0 ]]; then
@@ -94,7 +94,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	${DIR}/../../example/integration/integrationtest_lhs.vcf.gz \
 			 	${DIR}/../../example/integration/integrationtest_rhs.vcf.gz \
 			 	-o ${TMP_OUT}.unhappy -P \
-			 	-V -B -X --output-vtc \
+			 	-V -X --output-vtc \
 			 	--force-interactive --unhappy
 
 if [[ $? != 0 ]]; then
@@ -110,7 +110,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	${DIR}/../../example/integration/integrationtest_lhs.vcf.gz \
 			 	${DIR}/../../example/integration/integrationtest_rhs.vcf.gz \
 			 	-o ${TMP_OUT}.pass \
-			 	-V -B -X \
+			 	-V -X \
 			 	--force-interactive
 
 if [[ $? != 0 ]]; then
@@ -135,12 +135,6 @@ fi
 diff -I fileDate -I source_version ${TMP_OUT}.pass.vcf ${DIR}/../../example/integration/integrationtest.pass.vcf
 if [[ $? != 0 ]]; then
 	echo "Pass output variants differ -- vimdiff ${TMP_OUT}.pass.vcf ${DIR}/../../example/integration/integrationtest.pass.vcf !"
-	exit 1
-fi
-
-diff -I fileDate -I source_version ${TMP_OUT}.blocks.bed ${DIR}/../../example/integration/integrationtest.blocks.bed
-if [[ $? != 0 ]]; then
-	echo "Haplotype blocks differ! diff ${TMP_OUT}.blocks.bed ${DIR}/../../example/integration/integrationtest.blocks.bed"
 	exit 1
 fi
 
@@ -174,7 +168,7 @@ ${PYTHON} ${HCDIR}/hap.py $@ \
 			 	${DIR}/../../example/PG_performance.vcf.gz \
 			 	${DIR}/../../example/performance.vcf.gz \
 			 	-o ${TMP_OUT}.performance -P \
-			 	-V -B -X --output-vtc \
+			 	-V -X --output-vtc \
 			 	-f ${DIR}/../../example/performance.confident.bed.gz \
 			 	--force-interactive --threads 4
 
@@ -216,20 +210,12 @@ ${PYTHON} ${HCDIR}/hap.py $@ \
 			 	${DIR}/../../example/PG_performance.vcf.gz \
 			 	${DIR}/../../example/performance.vcf.gz \
 			 	-o ${TMP_OUT}.performance.t1 -P \
-			 	-V -B -X --output-vtc \
+			 	-V -X --output-vtc \
 			 	-f ${DIR}/../../example/performance.confident.bed.gz \
 			 	--force-interactive --threads 1
 
 if [[ $? != 0 ]]; then
 	echo "hap.py failed!"
-	exit 1
-fi
-
-echo "Comparing beds"
-
-diff ${TMP_OUT}.performance.blocks.bed ${TMP_OUT}.performance.t1.blocks.bed
-if [[ $? != 0 ]]; then
-	echo "Performance output blocks differ between single and multi-threaded! vimdiff ${TMP_OUT}.performance.blocks.bed ${TMP_OUT}.performance.t1.blocks.bed "
 	exit 1
 fi
 

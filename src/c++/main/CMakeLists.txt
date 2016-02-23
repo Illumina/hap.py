@@ -42,10 +42,6 @@ target_link_libraries(vcfhdr2json ${HAPLOTYPES_ALL_LIBS})
 add_executable(roc roc.cpp)
 target_link_libraries(roc ${HAPLOTYPES_ALL_LIBS})
 
-# postvcfeval merges TP/FP/FN files into a single file that is understood by quantify
-add_executable(postvcfeval postvcfeval.cpp)
-target_link_libraries(postvcfeval ${HAPLOTYPES_ALL_LIBS})
-
 # validatevcf checks ref alleles and tests if haplotypes can be enumerated
 add_executable(validatevcf validatevcf.cpp)
 target_link_libraries(validatevcf ${HAPLOTYPES_ALL_LIBS})

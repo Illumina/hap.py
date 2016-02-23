@@ -48,7 +48,7 @@ def runVCFEval(vcf1, vcf2, target, args):
             vcf2 = Tools.bcftools.makeIndex(vcf2)
             del_vcf2 = True
 
-        runme = "%s vcfeval -b %s -c %s -t %s -o %s -T %i --baseline-tp" % (
+        runme = "%s vcfeval -b %s -c %s -t %s -o %s -T %i -m ga4gh" % (
             args.engine_vcfeval,
             vcf1.replace(" ", "\\ "),
             vcf2.replace(" ", "\\ "),
@@ -75,25 +75,9 @@ def runVCFEval(vcf1, vcf2, target, args):
         else:
             logging.info("vcfeval output: \n%s\n / \n%s\n" % (o, e))
 
-        runme = "postvcfeval %s %s -r %s" % (vtf.name, target, args.ref)
-        logging.info(runme)
-        po = subprocess.Popen(runme,
-                              shell=True,
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE)
-
-        o, e = po.communicate()
-
-        po.wait()
-
-        rc = po.returncode
-
-        if rc != 0:
-            raise Exception("Error running postvcfeval. Return code was %i, output: %s / %s \n" % (rc, o, e))
-        else:
-            logging.info("postvcfeval output: %s / %s" % (o, e))
-
-        Tools.bcftools.runBcftools("index", "-t", target)
+        # in GA4GH mode, this is what vcfeval should output
+        shutil.copy(os.path.join(vtf.name, "output.vcf.gz"), target)
+        shutil.copy(os.path.join(vtf.name, "output.vcf.gz.tbi"), target + ".tbi")
     finally:
         if del_vcf1:
             try:
@@ -116,4 +100,7 @@ def runVCFEval(vcf1, vcf2, target, args):
     elapsed = time.time() - starttime
     logging.info("vcfeval for %s vs. %s -- time taken %.2f" % (vcf1, vcf2, elapsed))
 
-    return [target, target + ".tbi"]
+    if os.path.exists(target) and os.path.exists(target + ".tbi"):
+        return [target, target + ".tbi"]
+    else:
+        return None

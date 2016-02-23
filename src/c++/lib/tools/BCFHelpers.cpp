@@ -40,6 +40,7 @@
 #include <cstdio>
 #include <sstream>
 #include <htslib/vcf.h>
+#include <memory>
 
 /**
  * @brief Helper to get out GT fields
@@ -505,6 +506,183 @@ namespace bcfhelpers
         if(res == get_fmt_outcome::too_many)
         {
             std::cerr << "[W] too many DP fields at " << header->id[BCF_DT_CTG][line->rid].key << ":" << line->pos << "\n";
+        }
+    }
+
+    /** read a format field as a single int. */
+    int getFormatInt(const bcf_hdr_t * header, bcf1_t * line, const char * field, int isample, int defaultresult)
+    {
+        using namespace _impl;
+        static const bcf_get_numeric_format<int> gf;
+
+        get_fmt_outcome res;
+        res = gf(header, line, "DP", isample, &defaultresult, 1, 0);
+        if(res == get_fmt_outcome::too_many)
+        {
+            std::ostringstream os;
+            os << "[W] too many " << field << " fields at " << header->id[BCF_DT_CTG][line->rid].key << ":" << line->pos;
+            throw importexception(os.str());
+        }
+        return defaultresult;
+    }
+
+    /** read a format field as a single double. default return value is NaN */
+    double getFormatDouble(const bcf_hdr_t * header, bcf1_t * line, const char * field, int isample)
+    {
+        using namespace _impl;
+        double result = std::numeric_limits<double>::quiet_NaN();
+        static const bcf_get_numeric_format<double> gf;
+
+        get_fmt_outcome res;
+        res = gf(header, line, "DP", isample, &result, 1, 0);
+        if(res == get_fmt_outcome::too_many)
+        {
+            std::ostringstream os;
+            os << "[W] too many " << field << " fields at " << header->id[BCF_DT_CTG][line->rid].key << ":" << line->pos;
+            throw importexception(os.str());
+        }
+
+        return result;
+    }
+
+    /** read a format field as a single double. result will not be overwritten on failure */
+    std::string getFormatString(const bcf_hdr_t * hdr, bcf1_t * line, const char * field, int isample, const char * result)
+    {
+        int nsmpl = bcf_hdr_nsamples(hdr);
+        if (isample >= nsmpl)
+        {
+            return result;
+        }
+
+        int tag_id = bcf_hdr_id2int(hdr, BCF_DT_ID, field);
+
+        if ( !bcf_hdr_idinfo_exists(hdr,BCF_HL_FMT,tag_id) )
+        {
+            return result;
+        }
+
+        if ( !(line->unpacked & BCF_UN_FMT) )
+        {
+            bcf_unpack(line, BCF_UN_FMT);
+        }
+
+        // index in format fields
+        int i = 0;
+        for (i = 0; i < line->n_fmt; i++)
+        {
+            if ( line->d.fmt[i].id == tag_id )
+            {
+                break;
+            }
+        }
+
+        if ( i == line->n_fmt )
+        {
+            return result;
+        }
+
+        bcf_fmt_t *fmt = &line->d.fmt[i];
+
+        if(fmt == NULL)
+        {
+            return result;
+        }
+
+        int type = fmt->type;
+
+        if(fmt->n < 1)
+        {
+            return result;
+        }
+
+        std::string str_result = result;
+        if ( type == BCF_BT_FLOAT )
+        {
+            static const auto make_missing_float = []() -> float
+            {
+                float f;
+                int32_t _mfloat = 0x7F800001;
+                memcpy(&f, &_mfloat, 4);
+                return f;
+            };
+            static const float bcf_missing_float = make_missing_float();
+            float res = *((float*)(fmt->p + isample*fmt->size));
+            if(res != bcf_missing_float)
+            {
+                str_result = std::to_string(res);
+            }
+        }
+        else if (type == BCF_BT_INT8)
+        {
+            int8_t r = *((int8_t*)(fmt->p + isample*fmt->size ));
+            if(r != bcf_int8_missing && r != bcf_int8_vector_end)
+            {
+                str_result = std::to_string(r);
+            }
+        }
+        else if (type == BCF_BT_INT16)
+        {
+            int16_t r = *(((int16_t*)(fmt->p)) + isample*fmt->size);
+            if(r != bcf_int16_missing && r != bcf_int16_vector_end)
+            {
+                str_result = std::to_string(r);
+            }
+        }
+        else if (type == BCF_BT_INT32)
+        {
+            int32_t r = *((int32_t*)(fmt->p + isample*fmt->size));
+            if(r != bcf_int32_missing && r == bcf_int32_vector_end)
+            {
+                str_result = std::to_string(r);
+            }
+        }
+        else
+        {
+            const char * src = (const char *)fmt->p + isample*fmt->size;
+            str_result = std::string(src, (unsigned long) fmt->size);
+            // deal with 0 padding
+            str_result.resize(strlen(str_result.c_str()));
+        }
+
+        return str_result;
+    }
+
+    /** update format string for a single sample.  */
+    void setFormatStrings(const bcf_hdr_t * hdr, bcf1_t * line, const char * field,
+                         const std::vector<std::string> & formats)
+    {
+        // TODO this can probably be done faster / better
+        std::unique_ptr<const char *[]> p_fmts = std::unique_ptr<const char *[]>(new const char *[line->n_sample]);
+        bool any_nonempty = false;
+        if(formats.size() != line->n_sample)
+        {
+            std::ostringstream os;
+            os << "[W] cannot update format " << field << " " << hdr->id[BCF_DT_CTG][line->rid].key << ":" << line->pos;
+            throw importexception(os.str());
+        }
+        for (int si = 0; si < line->n_sample; ++si)
+        {
+            p_fmts.get()[si] = formats[si].c_str();
+            if(!formats[si].empty())
+            {
+                any_nonempty = true;
+            }
+        }
+        int res = -1;
+        if(any_nonempty)
+        {
+            res = bcf_update_format_string(hdr, line, field, p_fmts.get(), line->n_sample);
+        }
+        else
+        {
+            res = bcf_update_format_string(hdr, line, field, NULL, 0);
+        }
+
+        if(res != 0)
+        {
+            std::ostringstream os;
+            os << "[W] cannot update format " << field << " " << hdr->id[BCF_DT_CTG][line->rid].key << ":" << line->pos;
+            throw importexception(os.str());
         }
     }
 

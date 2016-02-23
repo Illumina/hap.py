@@ -25,40 +25,22 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /**
- * Count variants
+ * Count variants coming out of xcmp, use hap.py output format
  *
- * \file BlockQuantify.hh
+ * \file XCmpQuantify.hh
  * \author Peter Krusche
  * \email pkrusche@illumina.com
  *
  */
 
-#ifndef HAPLOTYPES_BLOCKQUANTIFY_HH
-#define HAPLOTYPES_BLOCKQUANTIFY_HH
+#ifndef HAPLOTYPES_XCMPQUANTIFY_HH
+#define HAPLOTYPES_XCMPQUANTIFY_HH
 
-#include <memory>
-#include <map>
-#include <string>
-
-#include <htslib/vcf.h>
-
-#include "Variant.hh"
+#include "BlockQuantify.hh"
+#include "BlockQuantifyImpl.hh"
 
 namespace variant {
-
-    class BlockQuantify;
-
-    /** factory method */
-    std::unique_ptr<BlockQuantify> makeQuantifier(
-        bcf_hdr_t * hdr,
-        FastaFile const & ref_fasta,
-        std::string const & type,
-        std::string const & params);
-
-    /** list all quantification methods */
-    std::list<std::string> listQuantificationMethods();
-
-    class BlockQuantify {
+    class XCMPQuantify : public BlockQuantify {
     public:
         /**
          * hdr must be destroyed externally, the reason it's not const is
@@ -66,35 +48,19 @@ namespace variant {
          *
          * @param hdr a bcf header
          * @param ref_fasta reference fasta file for trimming and counting
+         * @param params string that may contain any of the following:
+         *               "output_vtc" add a VTC info field which gives details on what was counted
+         *               "count_homref" set to true to also count REF matches
+         *               "count_unk" everything that has a missing Regions info tag will become UNK rather
+         *                           than FP
          */
-        explicit BlockQuantify(bcf_hdr_t * hdr,
-                               FastaFile const & ref_fasta,
-                               std::string const & params);
-        virtual ~BlockQuantify();
-
-        BlockQuantify(BlockQuantify && rhs);
-        BlockQuantify & operator=(BlockQuantify && rhs);
-
-        BlockQuantify(BlockQuantify const& rhs) = delete;
-        BlockQuantify & operator=(BlockQuantify const& rhs) = delete;
-
-        // add a bcf record (will take ownership of this record)
-        void add(bcf1_t * v);
-
-        // count saved variants
-        void count();
-
-        // result output
-        std::map<std::string, VariantStatistics> const & getCounts() const;
-        std::list<bcf1_t*> const & getVariants();
-        // update a header with new required fields
-        virtual void updateHeader(bcf_hdr_t * hdr) = 0;
+        explicit XCMPQuantify(bcf_hdr_t * hdr,
+                              FastaFile const & ref_fasta,
+                              const std::string & params);
+        virtual void updateHeader(bcf_hdr_t * hdr);
     protected:
-        virtual void countVariants(bcf1_t * v) = 0;
-        struct BlockQuantifyImpl;
-        std::unique_ptr<BlockQuantifyImpl> _impl;
+        virtual void countVariants(bcf1_t * v);
     };
-
 }
 
-#endif //HAPLOTYPES_BLOCKQUANTIFY_HH
+#endif //HAPLOTYPES_XCMPQUANTIFY_HH

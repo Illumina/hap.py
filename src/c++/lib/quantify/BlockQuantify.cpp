@@ -48,51 +48,64 @@
 #include <thread>
 
 #include "BlockQuantify.hh"
+#include "BlockQuantifyImpl.hh"
 
+#include "XCmpQuantify.hh"
+#include "GA4GHQuantify.hh"
 
 //#define DEBUG_BLOCKQUANTIFY
 
 namespace variant {
 
-    struct BlockQuantify::BlockQuantifyImpl {
-        ~BlockQuantifyImpl()
+    /** factory method */
+    std::unique_ptr<BlockQuantify> makeQuantifier(
+        bcf_hdr_t * hdr,
+        FastaFile const & ref_fasta,
+        std::string const & type,
+        std::string const & params)
+    {
+        if(type == "xcmp")
         {
-            for(auto x : variants)
-            {
-                bcf_destroy(x);
-            }
+            return std::unique_ptr<BlockQuantify>((BlockQuantify*)new XCMPQuantify(hdr, ref_fasta, params));
         }
+        else if(type == "ga4gh")
+        {
+            return std::unique_ptr<BlockQuantify>((BlockQuantify*)new GA4GHQuantify(hdr, ref_fasta, params));
+        }
+        else
+        {
+            error("Unknown quantification method: '%s'", type.c_str());
+        }
+        return nullptr;
+    }
 
-        bcf_hdr_t * hdr;
-        FastaFile const & ref_fasta;
-        std::unique_ptr<FastaFile> fasta_to_use;
-        bool output_vtc;
-        bool count_homref;
-        bool count_unk;
+    /** list all quantification methods */
+    std::list<std::string> listQuantificationMethods()
+    {
+        return {"xcmp", "ga4gh"};
+    }
 
-        typedef std::list<std::string> samplenames_t;
-        typedef std::map<std::string, VariantStatistics> count_map_t;
-        typedef std::list<bcf1_t *> variantlist_t;
-
-        count_map_t count_map;
-        variantlist_t variants;
-        samplenames_t samples;
-    };
+    BlockQuantify::BlockQuantifyImpl::~BlockQuantifyImpl()
+    {
+        for(auto x : variants)
+        {
+            bcf_destroy(x);
+        }
+    }
 
     BlockQuantify::BlockQuantify(bcf_hdr_t * hdr,
                                  FastaFile const & ref_fasta,
-                                 bool output_vtc,
-                                 bool count_homref,
-                                 bool count_unk) :
+                                 std::string const & params) :
         _impl(std::unique_ptr<BlockQuantifyImpl>(new BlockQuantifyImpl{hdr,
                                                     ref_fasta,
                                                     nullptr,
-                                                    output_vtc,
-                                                    count_homref,
-                                                    count_unk,
                                                     BlockQuantifyImpl::count_map_t(),
                                                     BlockQuantifyImpl::variantlist_t(),
-                                                    bcfhelpers::getSampleNames(hdr)}))
+                                                    bcfhelpers::getSampleNames(hdr),
+                                                    params.find("count_unk") != std::string::npos,
+                                                    params.find("output_vtc") != std::string::npos,
+                                                    params.find("count_homref") != std::string::npos
+        }))
     {
     }
 
@@ -122,7 +135,7 @@ namespace variant {
 #ifdef DEBUG_BLOCKQUANTIFY
             lastpos = v->pos;
 #endif
-            count_variants(v);
+            countVariants(v);
         }
 #ifdef DEBUG_BLOCKQUANTIFY
         std::cerr << "finished block " << lastpos << " - " << _impl->variants.size() << " records on thread " << std::this_thread::get_id() << "\n";
@@ -141,99 +154,4 @@ namespace variant {
         return _impl->variants;
     }
 
-    void BlockQuantify::count_variants(bcf1_t * v) {
-        bcf_unpack(v, BCF_UN_ALL);
-        std::string tag_string = bcfhelpers::getInfoString(_impl->hdr, v, "Regions", "");
-        std::string type = bcfhelpers::getInfoString(_impl->hdr, v, "type");
-        std::string kind = bcfhelpers::getInfoString(_impl->hdr, v, "kind");
-        bool hapmatch = bcfhelpers::getInfoFlag(_impl->hdr, v, "HapMatch");
-
-        if (hapmatch && type != "TP") {
-            kind = "hapmatch__" + type + "__" + kind;
-            type = "TP";
-        }
-
-        if (_impl->count_unk && tag_string.empty() && type == "FP" && kind == "missing") {
-            type = "UNK";
-        }
-
-        bcf_update_info_string(_impl->hdr, v, "type", type.c_str());
-        bcf_update_info_string(_impl->hdr, v, "kind", kind.c_str());
-
-        std::set<int> vtypes;
-        uint64_t hl_lt_truth = (uint64_t) -1;
-        uint64_t hl_lt_query = (uint64_t) -1;
-        uint64_t hl_vt_truth = (uint64_t) -1;
-        uint64_t hl_vt_query = (uint64_t) -1;
-
-        // count all and specific type instance in
-        // all samples
-        const std::array<std::string, 2> names {"all", type + ":" + kind + ":" + tag_string};
-        for (auto const & name : names)
-        {
-            int i = 0;
-            for (auto const &s : _impl->samples) {
-                std::string key = name + ":" + s;
-
-                // see if we already have a statistics counter for this kind of variant
-                auto it = _impl->count_map.find(key);
-                if (it == _impl->count_map.end()) {
-                    it = _impl->count_map.emplace(key, VariantStatistics(*(_impl->fasta_to_use),
-                                                                         _impl->count_homref)).first;
-                }
-
-                // determine the types seen in the variant
-                int *types;
-                int ntypes = 0;
-
-                // count this variant
-                it->second.add(_impl->hdr, v, i, &types, &ntypes);
-
-                // aggregate the things we have seen across samples
-                uint64_t vts_seen = 0;
-                uint64_t lt = (uint64_t) -1;
-                for (int j = 0; j < ntypes; ++j) {
-                    vts_seen |= types[j] & 0xf;
-                    vtypes.insert(types[j]);
-                    if ((types[j] & 0xf0) > 0x10) {
-                        lt = (uint64_t) (types[j] >> 4);
-                    }
-                }
-
-                if (s == "TRUTH") {
-                    hl_vt_truth = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP
-                                                    || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0 : 1);
-                    hl_lt_truth = lt;
-                } else if (s == "QUERY") {
-                    hl_vt_query = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP
-                                                    || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0 : 1);
-                    hl_lt_query = lt;
-                }
-                ++i;
-            }
-        }
-
-        static const char *nvs[] = {"UNK", "SNP", "INDEL", "NOCALL"};
-        if (hl_vt_truth < 4) {
-            bcf_update_info_string(_impl->hdr, v, "T_VT", nvs[hl_vt_truth + 1]);
-        }
-        if (hl_vt_query < 4) {
-            bcf_update_info_string(_impl->hdr, v, "Q_VT", nvs[hl_vt_query + 1]);
-        }
-        if (hl_lt_truth < 0x10) {
-            bcf_update_info_string(_impl->hdr, v, "T_LT", CT_NAMES[hl_lt_truth]);
-        }
-        if (hl_lt_query < 0x10) {
-            bcf_update_info_string(_impl->hdr, v, "Q_LT", CT_NAMES[hl_lt_query]);
-        }
-        if (_impl->output_vtc && !vtypes.empty()) {
-            std::string s = "";
-            int j = 0;
-            for (int t : vtypes) {
-                if (j++ > 0) { s += ","; }
-                s += VariantStatistics::type2string(t);
-            }
-            bcf_update_info_string(_impl->hdr, v, "VTC", s.c_str());
-        }
-    }
 }

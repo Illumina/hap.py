@@ -25,40 +25,26 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /**
- * Count variants
+ * GA4GH GT match quantification
  *
- * \file BlockQuantify.hh
+ * See
+ * https://github.com/ga4gh/benchmarking-tools/blob/master/doc/ref-impl/intermediate.md
+ *
+ * \file GA4GHQuantify.hh
  * \author Peter Krusche
  * \email pkrusche@illumina.com
  *
  */
 
-#ifndef HAPLOTYPES_BLOCKQUANTIFY_HH
-#define HAPLOTYPES_BLOCKQUANTIFY_HH
+#ifndef HAPLOTYPES_GA4GHQUANTIFYGTMATCH_HH
+#define HAPLOTYPES_GA4GHQUANTIFYGTMATCH_HH
 
-#include <memory>
-#include <map>
-#include <string>
+#include "BlockQuantify.hh"
+#include "BlockQuantifyImpl.hh"
 
-#include <htslib/vcf.h>
-
-#include "Variant.hh"
 
 namespace variant {
-
-    class BlockQuantify;
-
-    /** factory method */
-    std::unique_ptr<BlockQuantify> makeQuantifier(
-        bcf_hdr_t * hdr,
-        FastaFile const & ref_fasta,
-        std::string const & type,
-        std::string const & params);
-
-    /** list all quantification methods */
-    std::list<std::string> listQuantificationMethods();
-
-    class BlockQuantify {
+    class GA4GHQuantify : public BlockQuantify {
     public:
         /**
          * hdr must be destroyed externally, the reason it's not const is
@@ -66,35 +52,15 @@ namespace variant {
          *
          * @param hdr a bcf header
          * @param ref_fasta reference fasta file for trimming and counting
+         * @param params parameters
          */
-        explicit BlockQuantify(bcf_hdr_t * hdr,
-                               FastaFile const & ref_fasta,
-                               std::string const & params);
-        virtual ~BlockQuantify();
-
-        BlockQuantify(BlockQuantify && rhs);
-        BlockQuantify & operator=(BlockQuantify && rhs);
-
-        BlockQuantify(BlockQuantify const& rhs) = delete;
-        BlockQuantify & operator=(BlockQuantify const& rhs) = delete;
-
-        // add a bcf record (will take ownership of this record)
-        void add(bcf1_t * v);
-
-        // count saved variants
-        void count();
-
-        // result output
-        std::map<std::string, VariantStatistics> const & getCounts() const;
-        std::list<bcf1_t*> const & getVariants();
-        // update a header with new required fields
-        virtual void updateHeader(bcf_hdr_t * hdr) = 0;
+        explicit GA4GHQuantify(bcf_hdr_t * hdr,
+                                      FastaFile const & ref_fasta,
+                                      const std::string & params);
+        virtual void updateHeader(bcf_hdr_t * hdr);
     protected:
-        virtual void countVariants(bcf1_t * v) = 0;
-        struct BlockQuantifyImpl;
-        std::unique_ptr<BlockQuantifyImpl> _impl;
+        virtual void countVariants(bcf1_t * v);
     };
-
 }
 
-#endif //HAPLOTYPES_BLOCKQUANTIFY_HH
+#endif //HAPLOTYPES_GA4GHQUANTIFYGTMATCH_HH
