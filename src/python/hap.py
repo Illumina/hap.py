@@ -32,9 +32,6 @@ import subprocess
 import multiprocessing
 import gzip
 import tempfile
-import pandas
-import numpy
-import json
 
 scriptDir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'lib', 'python27')))
@@ -43,13 +40,14 @@ import Tools
 from Tools import vcfextract
 from Tools.bcftools import preprocessVCF, bedOverlapCheck
 from Tools.parallel import runParallel
-from Tools.metric import makeMetricsObject, dataframeToMetricsTable
 from Tools.fastasize import fastaContigLengths
 import Haplo.blocksplit
 import Haplo.xcmp
 import Haplo.vcfeval
 import Haplo.quantify
 import Haplo.happyroc
+
+import qfy
 
 
 def main():
@@ -76,10 +74,6 @@ def main():
                         default=None, type=str,
                         help="Restrict analysis to given (dense) regions (using -T in bcftools).")
 
-    parser.add_argument("-f", "--false-positives", dest="fp_bedfile",
-                        default=None, type=str,
-                        help="False positive / confident call regions (.bed or .bed.gz).")
-
     parser.add_argument("-r", "--reference", dest="ref", default=None, help="Specify a reference file.")
 
     # output
@@ -87,40 +81,13 @@ def main():
                         default=None,
                         help="Filename prefix for report output.")
 
-    parser.add_argument("-V", "--write-vcf", dest="write_vcf",
-                        default=False, action="store_true",
-                        help="Write an annotated VCF.")
-
+    # DEPRECATED: we don't write bed files after 0.2.9
     parser.add_argument("-B", "--write-bed", dest="write_bed",
                         default=False, action="store_true",
-                        help="Write a bed file with the haplotype blocks that were used.")
+                        help="This option is deprecated. BED files will not be written anymore.")
 
-    parser.add_argument("-X", "--write-counts", dest="write_counts",
-                        default=True, action="store_true",
-                        help="Write advanced counts and metrics.")
-
-    parser.add_argument("--no-write-counts", dest="write_counts",
-                        default=True, action="store_false",
-                        help="Do not write advanced counts and metrics.")
-
-    parser.add_argument("--raw-counts", dest="raw_counts",
-                        default=False, action="store_true",
-                        help="Count variants in unprocessed input VCFs and output as TOTAL.*.RAW.")
-
-    parser.add_argument("--output-vtc", dest="output_vtc",
-                        default=False, action="store_true",
-                        help="Write VTC field in the final VCF which gives the counts each position has contributed to.")
-
-    parser.add_argument("--roc", dest="roc", default=False,
-                        help="Select an INFO feature to produce a ROC on. This works best with "
-                             "--no-internal-preprocessing and --no-internal-leftshift since these "
-                             "flags preserve the most INFO flags from the input files.")
-
-    parser.add_argument("--roc-filter", dest="roc_filter", default=False,
-                        help="Select a filter to ignore when making ROCs.")
-
-    parser.add_argument("--roc-reversed", dest="roc_reversed", default=False,
-                        help="Change the meaning of the ROC feature to count the other way around (higher values=bad).")
+    # add quantification args
+    qfy.updateArgs(parser)
 
     parser.add_argument("--scratch-prefix", dest="scratch_prefix",
                         default=None,
@@ -274,6 +241,9 @@ def main():
     if args.version:
         print "Hap.py %s" % Tools.version
         exit(0)
+
+    if args.write_bed:
+        logging.warn("The -B / --write-bed switches are deprecated in versions 0.2.9+, ")
 
     if args.roc:
         args.write_vcf = True
@@ -431,7 +401,6 @@ def main():
             if happy_ref == v1_ref and v1_ref == v2_ref:
                 ref_check = True
 
-            refids_found = 0
             rids_vh = set()
             rids_v1 = set()
             rids_v2 = set()
@@ -448,9 +417,12 @@ def main():
             rids_vh = sorted(list(rids_vh))
 
             to_cmp = None
-            if rids_v1:  to_cmp = rids_v1
-            if rids_v2:  to_cmp = rids_v2
-            if rids_vh:  to_cmp = rids_vh
+            if rids_v1:
+                to_cmp = rids_v1
+            if rids_v2:
+                to_cmp = rids_v2
+            if rids_vh:
+                to_cmp = rids_vh
             if to_cmp and rids_v1 and rids_v1 != to_cmp:
                 ref_check = False
             if to_cmp and rids_v2 and rids_v2 != to_cmp:
@@ -634,31 +606,8 @@ def main():
         if "samples" not in h1 or not h1["samples"]:
             raise Exception("Cannot read sample names from truth VCF file")
 
-        if args.raw_counts:
-            counts_truth = Haplo.quantify.run_quantify(args.vcf1,
-                                                       None,
-                                                       None,
-                                                       {"CONF": args.fp_bedfile} if args.fp_bedfile else None,
-                                                       args.ref,
-                                                       locations=args.locations,
-                                                       threads=args.threads,
-                                                       output_vtc=args.output_vtc)
-        else:
-            counts_truth = None
-
         if "samples" not in h2 or not h2["samples"]:
             raise Exception("Cannot read sample names from query VCF file")
-        if args.raw_counts:
-            counts_query = Haplo.quantify.run_quantify(args.vcf2,
-                                                       None,
-                                                       None,
-                                                       {"CONF": args.fp_bedfile} if args.fp_bedfile else None,
-                                                       args.ref,
-                                                       locations=args.locations,
-                                                       threads=args.threads,
-                                                       output_vtc=args.output_vtc)
-        else:
-            counts_query = None
 
         tf = tempfile.NamedTemporaryFile(delete=False,
                                          dir=args.scratch_prefix,
@@ -681,15 +630,6 @@ def main():
                 raise Exception("Input files/regions do not contain variants (0 haplotype blocks were processed).")
 
             # concatenate + index
-            bedfiles = [x[1] for x in res if x is not None and x[1] is not None]
-            if args.write_bed and bedfiles:
-                runme = " ".join(["cat"] +
-                                 bedfiles +
-                                 [">", args.reports_prefix.replace(" ", "\\ ") + ".blocks.bed"])
-                logging.info("Concatenating block files: %s..." % runme)
-                subprocess.check_call(runme,
-                                      shell=True)
-
             logging.info("Concatenating variants...")
             runme_list = [x[0] for x in res if x is not None]
             if len(runme_list) == 0:
@@ -707,167 +647,21 @@ def main():
             to_run = "tabix -p vcf %s" % output_name.replace(" ", "\\ ")
             logging.info("Running '%s'" % to_run)
             subprocess.check_call(to_run, shell=True)
+            # passed to quantify
+            args.type = "xcmp"
         elif args.engine == "vcfeval":
             tempfiles += Haplo.vcfeval.runVCFEval(args.vcf1, args.vcf2, output_name, args)
+            # passed to quantify
+            args.type = "ga4gh"
         else:
             raise Exception("Unknown comparison engine: %s" % args.engine)
 
-        if args.write_counts:
-            json_name = args.reports_prefix + ".counts.json"
-        else:
-            tf = tempfile.NamedTemporaryFile(delete=False,
-                                             dir=args.scratch_prefix,
-                                             prefix="counts.",
-                                             suffix=".json")
-            tf.close()
-            json_name = tf.name
-
         logging.info("Counting variants...")
 
-        counts = Haplo.quantify.run_quantify(output_name,
-                                             json_name,
-                                             args.reports_prefix + ".vcf.gz" if args.write_vcf else False,
-                                             {"CONF": args.fp_bedfile} if args.fp_bedfile else None,
-                                             args.ref,
-                                             threads=args.threads,
-                                             output_vtc=args.output_vtc)
+        args.in_vcf = [output_name]
+        args.runner = "hap.py"
+        qfy.quantify(args)
 
-        df = pandas.DataFrame(counts)
-        if args.write_counts:
-            df.to_csv(args.reports_prefix + ".counts.csv")
-
-        metrics_output = makeMetricsObject("hap.py.comparison")
-
-        if args.write_counts:
-            metrics_output["metrics"].append(dataframeToMetricsTable("raw.counts", df))
-
-        # calculate precision / recall
-        count_types = []
-        if args.raw_counts:
-            simplified_truth_counts = Haplo.quantify.simplify_counts(counts_truth, h1["samples"][0:1])
-            simplified_query_counts = Haplo.quantify.simplify_counts(counts_query, h2["samples"][0:1])
-
-            count_types += simplified_truth_counts.keys()
-            count_types += simplified_query_counts.keys()
-        else:
-            simplified_truth_counts = None
-            simplified_query_counts = None
-
-        simplified_numbers = Haplo.quantify.simplify_counts(counts)
-
-        count_types += simplified_numbers.keys()
-        count_types = sorted(list(set(count_types)))
-
-        for vtype in count_types:
-            if vtype not in simplified_numbers:
-                simplified_numbers[vtype] = {}
-
-            simplified_numbers[vtype]["METRIC.Recall"] = 0
-            simplified_numbers[vtype]["METRIC.Recall2"] = 0
-            simplified_numbers[vtype]["METRIC.Precision"] = 0
-            simplified_numbers[vtype]["METRIC.Frac_NA"] = 0
-
-            try:
-                simplified_numbers[vtype]["METRIC.Recall"] = \
-                    float(simplified_numbers[vtype]["TRUTH.TP"]) / \
-                    float(simplified_numbers[vtype]["TRUTH.TP"] + simplified_numbers[vtype]["TRUTH.FN"])
-            except:
-                pass
-
-            try:
-                simplified_numbers[vtype]["METRIC.Recall2"] = \
-                    float(simplified_numbers[vtype]["TRUTH.TP"]) / \
-                    float(simplified_numbers[vtype]["TRUTH.TOTAL"])
-            except:
-                pass
-
-            try:
-                simplified_numbers[vtype]["METRIC.Precision"] = \
-                    float(simplified_numbers[vtype]["QUERY.TP"]) / \
-                    float(simplified_numbers[vtype]["QUERY.TP"] + simplified_numbers[vtype]["QUERY.FP"])
-            except:
-                pass
-
-            try:
-                simplified_numbers[vtype]["METRIC.Frac_NA"] = \
-                    float(simplified_numbers[vtype]["QUERY.UNK"]) / \
-                    float(simplified_numbers[vtype]["QUERY.TOTAL"])
-            except:
-                pass
-
-            try:
-                simplified_numbers[vtype]["TRUTH.TOTAL.RAW"] = simplified_truth_counts[vtype][h1["samples"][0] +
-                                                                                              ".TOTAL"]
-            except:
-                pass
-
-            try:
-                simplified_numbers[vtype]["QUERY.TOTAL.RAW"] = simplified_query_counts[vtype][h2["samples"][0] +
-                                                                                              ".TOTAL"]
-            except:
-                pass
-
-        pandas.set_option("display.width", 120)
-        pandas.set_option("display.max_columns", 1000)
-        df = pandas.DataFrame(simplified_numbers).transpose()
-
-        vstring = "hap.py-%s" % Tools.version
-        vstring += " ".join(sys.argv)
-
-        df.loc[vstring] = 0
-
-        # for x in df:
-        #     # everything not a metric is a count
-        #     if not x.startswith("METRIC"):
-        #         df[x] = df[x].astype("int64")
-
-        summary_columns = ["TRUTH.TOTAL",
-                           "QUERY.TOTAL",
-                           "METRIC.Recall",
-                           "METRIC.Precision",
-                           "METRIC.Frac_NA"]
-
-        for additional_column in ["TRUTH.TOTAL.TiTv_ratio",
-                                  "QUERY.TOTAL.TiTv_ratio",
-                                  "TRUTH.TOTAL.het_hom_ratio",
-                                  "QUERY.TOTAL.het_hom_ratio"]:
-            if additional_column in df.columns:
-                summary_columns.append(additional_column)
-
-        df[summary_columns].to_csv(args.reports_prefix + ".summary.csv")
-
-        metrics_output["metrics"].append(dataframeToMetricsTable("summary.metrics",
-                                                                 df[summary_columns]))
-
-        if args.write_counts:
-            df.to_csv(args.reports_prefix + ".extended.csv")
-            metrics_output["metrics"].append(dataframeToMetricsTable("all.metrics", df))
-
-        essential_numbers = df[summary_columns]
-
-        pandas.set_option('display.max_columns', 500)
-        pandas.set_option('display.width', 1000)
-
-        essential_numbers = essential_numbers[essential_numbers.index.isin(
-            ["Locations.SNP", "Locations.INDEL"])]
-
-        logging.info("\n" + str(essential_numbers))
-
-        # in default mode, print result summary to stdout
-        if not args.quiet and not args.verbose:
-            print "Benchmarking Summary:"
-            print str(essential_numbers)
-
-        if args.roc:
-            vcf = args.reports_prefix + ".vcf.gz"
-            res = Haplo.happyroc.roc(vcf, args.roc, args.roc_filter, args.reports_prefix + ".roc", args.roc_reversed)
-
-            for t in res.iterkeys():
-                rocdf = pandas.read_table(res[t])
-                metrics_output["metrics"].append(dataframeToMetricsTable("roc." + t, rocdf))
-
-        with open(args.reports_prefix + ".metrics.json", "w") as fp:
-            json.dump(metrics_output, fp)
     finally:
         if args.delete_scratch:
             for x in tempfiles:

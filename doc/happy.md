@@ -243,18 +243,11 @@ Each record contains an INFO field with the following values:
     call regions)
 
 ```
-  -B, --write-bed
-```
-
-Write a bed file with the haplotype blocks used during comparison. This file
-will show the location, comparison method, and comparison outcomes for each
-block.
-
-```
   -X, --write-counts
 ```
 
-Write advanced counts and metrics. This writes additional files / numbers:
+Write advanced counts and metrics (default on since 0.2.8).
+This writes additional files / numbers:
 
 *   `output-prefix.counts.json/csv`: raw variant counts. This is produced by
     the quantify tool, which counts and stratifies variants.
@@ -296,7 +289,7 @@ variants with scores higher than the variable threshold will "pass", all others 
 "fail". We can reverse this behaviour using the `--roc-reversed` argument.
 
 ROC curves can also be generated from the output VCF that is written using `-V` without
-running hap.py again using the `roc.py` script.
+running hap.py again using the `roc.py` or the `qfy.py` scripts.
 
 ```
 bin/roc.py hap.py-output.vcf.gz output-roc.tsv \
@@ -419,8 +412,13 @@ RTG-Tools (see [https://github.com/RealTimeGenomics/rtg-tools](https://github.co
 provides a feature called "vcfeval" which performs complex variant comparisons. Hap.py
 can use this tool as a comparison engine instead of its built-in `xcmp` tool.
 
+This feature requires a version of rtg-tools which supports the GA4GH benchmarking intermediate
+file formats (see [https://github.com/ga4gh/benchmarking-tools](https://github.com/ga4gh/benchmarking-tools)).
+Currently, such a version is available in this branch:
+[https://github.com/realtimegenomics/rtg-tools/tree/ga4gh-test](https://github.com/realtimegenomics/rtg-tools/tree/ga4gh-test)
+
 Before using RTG tools, it is necessary to translate the reference Fasta file into
-their SDF format (this only needs to be done once for each reference sequence):
+the SDF format (this only needs to be done once for each reference sequence):
 
 ```
 rtg format -o hg19.sdf hg19.fa
@@ -438,3 +436,4 @@ hap.py truth.vcf.gz query.vcf.gz -f conf.bed.gz -o ./test -V -X --engine=vcfeval
 ```
 
 Most other command line arguments and outputs will work as before.
+
