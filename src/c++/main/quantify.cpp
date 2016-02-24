@@ -463,7 +463,6 @@ int main(int argc, char* argv[]) {
         Json::Value counts;
         for (auto & p : count_map)
         {
-            std::cerr << p.first << "\n";
             counts[p.first] = p.second.write();
         }
 
