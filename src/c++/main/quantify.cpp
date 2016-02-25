@@ -74,6 +74,7 @@ int main(int argc, char* argv[]) {
     std::string ref;
     std::string only_regions;
     std::string qtype = "xcmp";
+    std::string qq = "QUAL";
 
     // limits
     std::string chr;
@@ -86,6 +87,7 @@ int main(int argc, char* argv[]) {
     bool apply_filters = false;
     bool count_homref = false;
     bool output_vtc = true;
+    bool clean_info = true;
 
     int threads = 1;
     int blocksize = 20000;
@@ -109,6 +111,7 @@ int main(int argc, char* argv[]) {
                 ("regions,R", po::value< std::vector<std::string> >(),
                     "Region bed file. You can attach a label by prefixing with a colon, e.g. -R FP2:false-positives-type2.bed")
                 ("type", po::value<std::string>(), "Quantification method to use. Current choices are xcmp or ga4gh.")
+                ("qq", po::value<std::string>(), "Field to use for QQ (ROC quantity). Can be QUAL / GQ / ... / any INFO field name.")
                 ("only,O", po::value< std::string >(), "Bed file of locations (equivalent to -R in bcftools)")
                 ("limit-records", po::value<int64_t>(), "Maximum umber of records to process")
                 ("message-every", po::value<int64_t>(), "Print a message every N records.")
@@ -182,6 +185,11 @@ int main(int argc, char* argv[]) {
             if (vm.count("type"))
             {
                 qtype = vm["type"].as< std::string >();
+            }
+
+            if (vm.count("qq"))
+            {
+                qq = vm["qq"].as< std::string >();
             }
 
             if (vm.count("limit-records"))
@@ -293,6 +301,14 @@ int main(int argc, char* argv[]) {
         if(count_homref)
         {
             qparams += "count_homref;";
+        }
+        if(clean_info)
+        {
+            qparams += "clean_info;";
+        }
+        if(!qq.empty() || qq == ".")
+        {
+            qparams += "QQ:" + qq + ";";
         }
         std::unique_ptr<BlockQuantify> p_bq(std::move(makeQuantifier(hdr, ref_fasta, qtype, qparams)));
 

@@ -43,23 +43,75 @@ namespace variant
                                const std::string & params) :
         BlockQuantify(hdr, ref_fasta, params)
     {
+        auto p1 = params.find("QQ:");
+        if(p1 != std::string::npos)
+        {
+            std::string qqstr = params.substr(p1 + 3);
+            auto p2 = qqstr.find(";");
+            if(p2 != std::string::npos)
+            {
+                qqstr = qqstr.substr(0, p2-1);
+            }
+            roc_field = qqstr;
+        }
+
+        if(!roc_field.empty())
+        {
+            roc_hdr_id = bcf_hdr_id2int(hdr, BCF_DT_ID, roc_field.c_str());
+            if(bcf_hdr_idinfo_exists(hdr, BCF_HL_INFO, roc_hdr_id))
+            {
+                roc_field_is_info = true;
+            }
+            else if(roc_field == "QUAL")
+            {
+                roc_field_is_qual = true;
+            }
+            else
+            {
+                roc_field_is_info = false;
+                roc_field_is_qual = false;
+            }
+        }
+
+        p1 = params.find("clean_info");
+        clean_info = p1 != std::string::npos;
     }
 
     void XCMPQuantify::updateHeader(bcf_hdr_t * hdr)
     {
-        // we need these, otherwise all the update info calls will fail
-        bcf_hdr_append(hdr, "##INFO=<ID=gtt1,Number=1,Type=String,Description=\"GT of truth call\">");
-        bcf_hdr_append(hdr, "##INFO=<ID=gtt2,Number=1,Type=String,Description=\"GT of query call\">");
-        bcf_hdr_append(hdr, "##INFO=<ID=type,Number=1,Type=String,Description=\"Decision for call (TP/FP/FN/N)\">");
-        bcf_hdr_append(hdr, "##INFO=<ID=kind,Number=1,Type=String,Description=\"Sub-type for decision (match/mismatch type)\">");
+        // check if we have all the required fields present
+        if(!bcf_hdr_get_hrec(hdr, BCF_HL_INFO, "ID", "BS", NULL))
+        {
+            bcf_hdr_append(hdr, "##INFO=<ID=BS,Number=.,Type=Integer,Description=\"Benchmarking superlocus ID for these variants.\">");
+        }
+        if(!bcf_hdr_get_hrec(hdr, BCF_HL_INFO, "ID", "GT", NULL))
+        {
+            bcf_hdr_append(hdr, "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">");
+        }
+        if(!bcf_hdr_get_hrec(hdr, BCF_HL_INFO, "ID", "BD", NULL))
+        {
+            bcf_hdr_append(hdr, "##FORMAT=<ID=BD,Number=1,Type=String,Description=\"Decision for call (TP/FP/FN/N)\">");
+        }
+        if(!bcf_hdr_get_hrec(hdr, BCF_HL_INFO, "ID", "BK", NULL))
+        {
+            bcf_hdr_append(hdr,
+                           "##FORMAT=<ID=BK,Number=1,Type=String,Description=\"Sub-type for decision (match/mismatch type)\">");
+        }
+        if(!bcf_hdr_get_hrec(hdr, BCF_HL_INFO, "ID", "BI", NULL))
+        {
+            bcf_hdr_append(hdr, "##FORMAT=<ID=BI,Number=1,Type=String,Description=\"Additional comparison information\">");
+        }
+        if(!bcf_hdr_get_hrec(hdr, BCF_HL_INFO, "ID", "QQ", NULL))
+        {
+            bcf_hdr_append(hdr, "##FORMAT=<ID=QQ,Number=1,Type=Float,Description=\"Variant quality for ROC creation.\">");
+        }
         bcf_hdr_append(hdr, "##INFO=<ID=Regions,Number=.,Type=String,Description=\"Tags for regions.\">");
-        bcf_hdr_append(hdr, "##INFO=<ID=T_VT,Number=1,Type=String,Description=\"High-level variant type in truth (SNP|INDEL).\">");
-        bcf_hdr_append(hdr, "##INFO=<ID=Q_VT,Number=1,Type=String,Description=\"High-level variant type in query (SNP|INDEL).\">");
-        bcf_hdr_append(hdr, "##INFO=<ID=T_LT,Number=1,Type=String,Description=\"High-level location type in truth (het|hom|hetalt).\">");
-        bcf_hdr_append(hdr, "##INFO=<ID=Q_LT,Number=1,Type=String,Description=\"High-level location type in query (het|hom|hetalt).\">");
+        bcf_hdr_append(hdr, "##FORMAT=<ID=BVT,Number=1,Type=String,Description=\"High-level variant type in truth (SNP|INDEL).\">");
+        bcf_hdr_append(hdr, "##FORMAT=<ID=BLT,Number=1,Type=String,Description=\"High-level variant type in query (SNP|INDEL).\">");
         if(_impl->output_vtc)
         {
             bcf_hdr_append(hdr, "##INFO=<ID=VTC,Number=.,Type=String,Description=\"Variant types used for counting.\">");
+            bcf_hdr_append(hdr, "##INFO=<ID=XCMP,Number=.,Type=String,Description=\"XCMP extra information.\">");
         }
         bcf_hdr_sync(hdr);
     }
@@ -67,10 +119,49 @@ namespace variant
     void XCMPQuantify::countVariants(bcf1_t * v)
     {
         bcf_unpack(v, BCF_UN_ALL);
+
         std::string tag_string = bcfhelpers::getInfoString(_impl->hdr, v, "Regions", "");
         std::string type = bcfhelpers::getInfoString(_impl->hdr, v, "type");
         std::string kind = bcfhelpers::getInfoString(_impl->hdr, v, "kind");
+        std::string ctype = bcfhelpers::getInfoString(_impl->hdr, v, "ctype");
+        std::string gtt1 = ".";
+        std::string gtt2 = ".";
+
+        if(_impl->output_vtc)
+        {
+            gtt1 = bcfhelpers::getInfoString(_impl->hdr, v, "gtt1");
+            gtt2 = bcfhelpers::getInfoString(_impl->hdr, v, "gtt2");
+        }
         bool hapmatch = bcfhelpers::getInfoFlag(_impl->hdr, v, "HapMatch");
+        bool fail = bcfhelpers::getInfoFlag(_impl->hdr, v, "IMPORT_FAIL");
+        float QQ = std::numeric_limits<float>::quiet_NaN();
+        if(roc_field_is_info)
+        {
+            QQ = (float)bcfhelpers::getInfoDouble(_impl->hdr, v, roc_field.c_str());
+        }
+        else if(roc_field_is_qual)
+        {
+            QQ = v->qual;
+        }
+
+        /** clear all info fields except for GA4GH fields and END */
+        if(clean_info)
+        {
+            for (int i = 0; i < v->n_info; ++i) {
+                const char * key = bcf_hdr_int2id(_impl->hdr, BCF_DT_ID, v->d.info[i].key);
+                if(    strcmp(key, "END") != 0
+                    && strcmp(key, "VTC") != 0
+                    && strcmp(key, "Regions") != 0
+                    && strcmp(key, "HapMatch") != 0
+                    && strcmp(key, "BS") != 0
+                    && strcmp(key, "XCMP") != 0
+                )
+                {
+                    const int ntype = v->d.info[i].type;
+                    bcf_update_info(_impl->hdr, v, key, NULL, 0, ntype);
+                }
+            }
+        }
 
         if (hapmatch && type != "TP") {
             kind = "hapmatch__" + type + "__" + kind;
@@ -81,75 +172,116 @@ namespace variant
             type = "UNK";
         }
 
-        bcf_update_info_string(_impl->hdr, v, "type", type.c_str());
-        bcf_update_info_string(_impl->hdr, v, "kind", kind.c_str());
+        if(fail)
+        {
+            type = "N";
+            kind = "error";
+        }
+
+        if(_impl->output_vtc)
+        {
+            bcf_update_info_string(_impl->hdr, v, "XCMP",
+                                   (type + ":" + kind + ":" + gtt1 + ":" + gtt2 + ":" + ctype).c_str());
+        }
+
+        if(hapmatch || type == "TP")
+        {
+            kind = "gm";
+        }
+        else if(kind == "gtmismatch")
+        {
+            kind = "am";
+        }
+        else if(kind == "almismatch" || ctype == "hap:mismatch")
+        {
+            kind = "lm";
+        }
+        else
+        {
+            kind = ".";
+        }
 
         std::set<int> vtypes;
-        uint64_t hl_lt_truth = (uint64_t) -1;
-        uint64_t hl_lt_query = (uint64_t) -1;
-        uint64_t hl_vt_truth = (uint64_t) -1;
-        uint64_t hl_vt_query = (uint64_t) -1;
+        std::vector<std::string> bds;
+        std::vector<std::string> bks;
+        std::vector<std::string> vts;
+        std::vector<std::string> lts;
+        std::vector<float> qqs;
 
         // count all and specific type instance in
         // all samples
-        const std::array<std::string, 2> names {"all", type + ":" + kind + ":" + tag_string};
-        for (auto const & name : names)
-        {
-            int i = 0;
-            for (auto const &s : _impl->samples) {
-                std::string key = name + ":" + s;
+        int i = 0;
+        for (auto const &s : _impl->samples) {
+            // count as "all"
+            std::string key = "all:" + s;
 
-                // see if we already have a statistics counter for this kind of variant
-                auto it = _impl->count_map.find(key);
-                if (it == _impl->count_map.end()) {
-                    it = _impl->count_map.emplace(key, VariantStatistics(*(_impl->fasta_to_use),
-                                                                         _impl->count_homref)).first;
-                }
-
-                // determine the types seen in the variant
-                int *types;
-                int ntypes = 0;
-
-                // count this variant
-                it->second.add(_impl->hdr, v, i, &types, &ntypes);
-
-                // aggregate the things we have seen across samples
-                uint64_t vts_seen = 0;
-                uint64_t lt = (uint64_t) -1;
-                for (int j = 0; j < ntypes; ++j) {
-                    vts_seen |= types[j] & 0xf;
-                    vtypes.insert(types[j]);
-                    if ((types[j] & 0xf0) > 0x10) {
-                        lt = (uint64_t) (types[j] >> 4);
-                    }
-                }
-
-                if (s == "TRUTH") {
-                    hl_vt_truth = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP
-                                                                || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0 : 1);
-                    hl_lt_truth = lt;
-                } else if (s == "QUERY") {
-                    hl_vt_query = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP
-                                                                || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0 : 1);
-                    hl_lt_query = lt;
-                }
-                ++i;
+            // see if we already have a statistics counter for this kind of variant
+            auto it = _impl->count_map.find(key);
+            if (it == _impl->count_map.end()) {
+                it = _impl->count_map.emplace(key, VariantStatistics(*(_impl->fasta_to_use),
+                                                                     _impl->count_homref)).first;
             }
+            it->second.add(_impl->hdr, v, i);
+
+            key = type + ":" + kind + ":" + tag_string + ":" + s;
+            it = _impl->count_map.find(key);
+            if (it == _impl->count_map.end()) {
+                it = _impl->count_map.emplace(key, VariantStatistics(*(_impl->fasta_to_use),
+                                                                     _impl->count_homref)).first;
+            }
+            // determine the types seen in the variant
+            int *types;
+            int ntypes = 0;
+
+            // count this variant
+            it->second.add(_impl->hdr, v, i, &types, &ntypes);
+
+            // aggregate the things we have seen across samples
+            uint64_t vts_seen = 0;
+            uint64_t lt = (uint64_t) -1;
+            for (int j = 0; j < ntypes; ++j) {
+                vts_seen |= types[j] & 0xf;
+                vtypes.insert(types[j]);
+                if ((types[j] & 0xf0) > 0x10) {
+                    lt = (uint64_t) (types[j] >> 4);
+                }
+            }
+
+            uint64_t vt = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP
+                                                     || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0 : 1);
+
+            static const char *nvs[] = {"UNK", "SNP", "INDEL", "NOCALL"};
+
+            bds.push_back(type);
+            bks.push_back(kind);
+            vts.push_back(nvs[vt + 1]);
+            if(lt < 0x0f)
+            {
+                lts.push_back(CT_NAMES[lt]);
+            }
+            else
+            {
+                lts.push_back("error");
+            }
+
+            // determine QQ
+            if(roc_field_is_info || roc_field_is_qual)
+            {
+                qqs.push_back(QQ);
+            }
+            else
+            {
+                qqs.push_back((float)bcfhelpers::getFormatDouble(_impl->hdr, v, roc_field.c_str(), i));
+            }
+            ++i;
         }
 
-        static const char *nvs[] = {"UNK", "SNP", "INDEL", "NOCALL"};
-        if (hl_vt_truth < 4) {
-            bcf_update_info_string(_impl->hdr, v, "T_VT", nvs[hl_vt_truth + 1]);
-        }
-        if (hl_vt_query < 4) {
-            bcf_update_info_string(_impl->hdr, v, "Q_VT", nvs[hl_vt_query + 1]);
-        }
-        if (hl_lt_truth < 0x10) {
-            bcf_update_info_string(_impl->hdr, v, "T_LT", CT_NAMES[hl_lt_truth]);
-        }
-        if (hl_lt_query < 0x10) {
-            bcf_update_info_string(_impl->hdr, v, "Q_LT", CT_NAMES[hl_lt_query]);
-        }
+        bcfhelpers::setFormatStrings(_impl->hdr, v, "BD", bds);
+        bcfhelpers::setFormatStrings(_impl->hdr, v, "BK", bks);
+        bcfhelpers::setFormatStrings(_impl->hdr, v, "BVT", vts);
+        bcfhelpers::setFormatStrings(_impl->hdr, v, "BLT", lts);
+        bcfhelpers::setFormatFloats(_impl->hdr, v, "QQ", qqs);
+
         if (_impl->output_vtc && !vtypes.empty()) {
             std::string s = "";
             int j = 0;

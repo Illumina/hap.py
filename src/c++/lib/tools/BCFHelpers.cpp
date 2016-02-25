@@ -291,7 +291,11 @@ namespace bcfhelpers
                     snprintf(num, 256, "%g", field->v1.f);
                     return std::string(num);
                 case BCF_BT_CHAR:
-                    return std::string((const char *)field->vptr, (unsigned long) field->len);
+                    if(field->vptr && field->len > 0)
+                    {
+                        return std::string((const char *)field->vptr, (unsigned long) field->len);
+                    }
+                default:break;
             }
             return std::string();
         }
@@ -639,9 +643,12 @@ namespace bcfhelpers
         else
         {
             const char * src = (const char *)fmt->p + isample*fmt->size;
-            str_result = std::string(src, (unsigned long) fmt->size);
-            // deal with 0 padding
-            str_result.resize(strlen(str_result.c_str()));
+            if(src && fmt->size)
+            {
+                str_result = std::string(src, (unsigned long) fmt->size);
+                // deal with 0 padding
+                str_result.resize(strlen(str_result.c_str()));
+            }
         }
 
         return str_result;
@@ -682,6 +689,44 @@ namespace bcfhelpers
         {
             std::ostringstream os;
             os << "[W] cannot update format " << field << " " << hdr->id[BCF_DT_CTG][line->rid].key << ":" << line->pos;
+            throw importexception(os.str());
+        }
+    }
+
+    /** update format with single float values.  */
+    void setFormatFloats(const bcf_hdr_t * header, bcf1_t * line, const char * field,
+                         const std::vector<float> & value)
+    {
+        if(value.empty())
+        {
+            int res = bcf_update_format(header, line, field, NULL, 0, 0);
+            if(res != 0)
+            {
+                std::ostringstream os;
+                os << "[W] cannot update format " << field << " " << header->id[BCF_DT_CTG][line->rid].key << ":" << line->pos;
+                throw importexception(os.str());
+            }
+            return;
+        }
+        std::unique_ptr<float[]> p_dbl = std::unique_ptr<float[]>(new float[line->n_sample]);
+
+        for(size_t i = 0; i < line->n_sample; ++i)
+        {
+            if(i < value.size())
+            {
+                p_dbl.get()[i] = value[i];
+            }
+            else
+            {
+                p_dbl.get()[i] = std::numeric_limits<float>::quiet_NaN();
+            }
+        }
+
+        int res = bcf_update_format_float(header, line, field, p_dbl.get(), line->n_sample);
+        if(res != 0)
+        {
+            std::ostringstream os;
+            os << "[W] cannot update format " << field << " " << header->id[BCF_DT_CTG][line->rid].key << ":" << line->pos;
             throw importexception(os.str());
         }
     }
