@@ -120,7 +120,7 @@ namespace variant
     {
         bcf_unpack(v, BCF_UN_ALL);
 
-        std::string tag_string = bcfhelpers::getInfoString(_impl->hdr, v, "Regions", "");
+        const std::string tag_string = bcfhelpers::getInfoString(_impl->hdr, v, "Regions", "");
         std::string type = bcfhelpers::getInfoString(_impl->hdr, v, "type");
         std::string kind = bcfhelpers::getInfoString(_impl->hdr, v, "kind");
         std::string ctype = bcfhelpers::getInfoString(_impl->hdr, v, "ctype");
@@ -132,8 +132,8 @@ namespace variant
             gtt1 = bcfhelpers::getInfoString(_impl->hdr, v, "gtt1");
             gtt2 = bcfhelpers::getInfoString(_impl->hdr, v, "gtt2");
         }
-        bool hapmatch = bcfhelpers::getInfoFlag(_impl->hdr, v, "HapMatch");
-        bool fail = bcfhelpers::getInfoFlag(_impl->hdr, v, "IMPORT_FAIL");
+        const bool hapmatch = bcfhelpers::getInfoFlag(_impl->hdr, v, "HapMatch");
+        const bool fail = bcfhelpers::getInfoFlag(_impl->hdr, v, "IMPORT_FAIL");
         float QQ = std::numeric_limits<float>::quiet_NaN();
         if(roc_field_is_info)
         {
@@ -155,6 +155,7 @@ namespace variant
                     && strcmp(key, "HapMatch") != 0
                     && strcmp(key, "BS") != 0
                     && strcmp(key, "XCMP") != 0
+                    && strcmp(key, "IMPORT_FAIL") != 0
                 )
                 {
                     const int ntype = v->d.info[i].type;
@@ -212,6 +213,13 @@ namespace variant
         // all samples
         int i = 0;
         for (auto const &s : _impl->samples) {
+            // figure out if this is a no-call first
+            int gt[MAX_GT];
+            int ngt = 0;
+            bool phased = false;
+            bcfhelpers::getGT(_impl->hdr, v, i, gt, ngt, phased);
+            const bool isNoCall = ngt == 0 || std::all_of(&gt[0], &gt[ngt], [](int x) { return x < 0; });
+
             // count as "all"
             std::string key = "all:" + s;
 
@@ -223,55 +231,101 @@ namespace variant
             }
             it->second.add(_impl->hdr, v, i);
 
-            key = type + ":" + kind + ":" + tag_string + ":" + s;
-            it = _impl->count_map.find(key);
-            if (it == _impl->count_map.end()) {
-                it = _impl->count_map.emplace(key, VariantStatistics(*(_impl->fasta_to_use),
-                                                                     _impl->count_homref)).first;
-            }
             // determine the types seen in the variant
-            int *types;
-            int ntypes = 0;
+            if(fail || isNoCall)
+            {
+                key = ".:.:" + tag_string + ":" + s;
 
-            // count this variant
-            it->second.add(_impl->hdr, v, i, &types, &ntypes);
-
-            // aggregate the things we have seen across samples
-            uint64_t vts_seen = 0;
-            uint64_t lt = (uint64_t) -1;
-            for (int j = 0; j < ntypes; ++j) {
-                vts_seen |= types[j] & 0xf;
-                vtypes.insert(types[j]);
-                if ((types[j] & 0xf0) > 0x10) {
-                    lt = (uint64_t) (types[j] >> 4);
+                it = _impl->count_map.find(key);
+                if (it == _impl->count_map.end()) {
+                    it = _impl->count_map.emplace(key, VariantStatistics(*(_impl->fasta_to_use),
+                                                                         _impl->count_homref)).first;
                 }
-            }
+                // count this variant
+                it->second.add(_impl->hdr, v, i);
 
-            uint64_t vt = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP
-                                                     || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0 : 1);
-
-            static const char *nvs[] = {"UNK", "SNP", "INDEL", "NOCALL"};
-
-            bds.push_back(type);
-            bks.push_back(kind);
-            vts.push_back(nvs[vt + 1]);
-            if(lt < 0x0f)
-            {
-                lts.push_back(CT_NAMES[lt]);
+                if(fail)
+                {
+                    bds.push_back("N");
+                }
+                else
+                {
+                    bds.push_back(".");
+                }
+                bks.push_back(".");
+                vts.push_back("NOCALL");
+                if(fail)
+                {
+                    lts.push_back("fail");
+                }
+                else
+                {
+                    lts.push_back("nocall");
+                }
+                qqs.push_back(0);
             }
             else
             {
-                lts.push_back("error");
-            }
+                key = type + ":" + kind + ":" + tag_string + ":" + s;
 
-            // determine QQ
-            if(roc_field_is_info || roc_field_is_qual)
-            {
-                qqs.push_back(QQ);
-            }
-            else
-            {
-                qqs.push_back((float)bcfhelpers::getFormatDouble(_impl->hdr, v, roc_field.c_str(), i));
+                it = _impl->count_map.find(key);
+                if (it == _impl->count_map.end()) {
+                    it = _impl->count_map.emplace(key, VariantStatistics(*(_impl->fasta_to_use),
+                                                                         _impl->count_homref)).first;
+                }
+                int *types;
+                int ntypes = 0;
+
+                // count this variant
+                it->second.add(_impl->hdr, v, i, &types, &ntypes);
+
+                // aggregate the things we have seen across samples
+                uint64_t vts_seen = 0;
+                uint64_t lt = (uint64_t) -1;
+                for (int j = 0; j < ntypes; ++j) {
+                    vts_seen |= types[j] & 0xf;
+                    vtypes.insert(types[j]);
+                    if ((types[j] & 0xf0) > 0x10) {
+                        lt = (uint64_t) (types[j] >> 4);
+                    }
+                }
+
+                uint64_t vt = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP
+                                                         || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0 : 1);
+
+                static const char *nvs[] = {"UNK", "SNP", "INDEL", "NOCALL"};
+
+                /** don't annotate no-calls */
+                if(vts_seen == VT_NOCALL)
+                {
+                    bds.push_back(".");
+                    bks.push_back(".");
+                }
+                else
+                {
+                    bds.push_back(type);
+                    bks.push_back(kind);
+                }
+
+                vts.push_back(nvs[vt + 1]);
+                if(lt < 0x0f)
+                {
+                    lts.push_back(CT_NAMES[lt]);
+                }
+                else
+                {
+                    lts.push_back("error");
+                }
+
+                // determine QQ
+                if(roc_field_is_info || roc_field_is_qual)
+                {
+                    qqs.push_back(QQ);
+                }
+                else
+                {
+                    qqs.push_back((float)bcfhelpers::getFormatDouble(_impl->hdr, v, roc_field.c_str(), i));
+                }
             }
             ++i;
         }

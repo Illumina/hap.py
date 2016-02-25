@@ -1,4 +1,4 @@
-,FN:missing::QUERY,FN:missing::TRUTH,N:match::QUERY,N:match::TRUTH,all:QUERY,all:TRUTH
-Transitions,0,0,0,0,0,0
-Transversions,0,0,0,0,0,0
-fail__nc,2,2,3,3,5,5
+,.:.::QUERY,.:.::TRUTH,all:QUERY,all:TRUTH
+Transitions,0,0,0,0
+Transversions,0,0,0,0
+fail__nc,5,5,5,5

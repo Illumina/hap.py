@@ -1,108 +1,111 @@
 {
-    "FN:missing::QUERY": {
+    ".:.::QUERY": {
         "Transitions": 0,
         "Transversions": 0,
         "nocall__nc": 68
     },
-    "FN:missing::TRUTH": {
-        "Transitions": 4,
-        "Transversions": 8,
-        "al__d": 27,
-        "al__i": 29,
-        "al__s": 12,
-        "het__rd": 12,
-        "het__ri": 23,
-        "het__rs": 5,
-        "homalt__d": 15,
-        "homalt__i": 6,
-        "homalt__s": 7,
-        "nuc__d": 104,
-        "nuc__i": 246,
-        "nuc__s": 12
+    ".:.::TRUTH": {
+        "Transitions": 0,
+        "Transversions": 0,
+        "nocall__nc": 4809
     },
-    "FN:missing:CONF:QUERY": {
+    ".:.:CONF:QUERY": {
         "Transitions": 0,
         "Transversions": 0,
         "nocall__nc": 103
     },
-    "FN:missing:CONF:TRUTH": {
-        "Transitions": 3,
-        "Transversions": 5,
-        "al__d": 47,
-        "al__i": 49,
-        "al__s": 8,
-        "het__rd": 45,
-        "het__ri": 34,
-        "het__rs": 5,
-        "hetalt__i": 1,
-        "homalt__d": 2,
-        "homalt__i": 13,
-        "homalt__s": 3,
-        "nuc__d": 1770,
-        "nuc__i": 345,
-        "nuc__s": 8
-    },
-    "FP:almismatch::QUERY": {
+    ".:.:CONF:TRUTH": {
         "Transitions": 0,
-        "Transversions": 1,
-        "al__d": 1,
-        "al__i": 2,
-        "al__s": 1,
-        "het__rd": 1,
-        "het__ri": 1,
-        "homalt__i": 1,
-        "homalt__s": 1,
-        "nuc__d": 1,
-        "nuc__i": 10,
-        "nuc__s": 1
-    },
-    "FP:almismatch::TRUTH": {
-        "Transitions": 0,
-        "Transversions": 1,
-        "al__i": 4,
-        "al__s": 1,
-        "het__ri": 1,
-        "hetalt__i": 1,
-        "homalt__i": 1,
-        "homalt__s": 1,
-        "nuc__i": 31,
-        "nuc__s": 1
-    },
-    "FP:almismatch:CONF:QUERY": {
-        "Transitions": 0,
-        "Transversions": 1,
-        "al__s": 1,
-        "het__rs": 1,
-        "nuc__s": 1
-    },
-    "FP:almismatch:CONF:TRUTH": {
-        "Transitions": 1,
         "Transversions": 0,
-        "al__s": 1,
-        "het__rs": 1,
-        "nuc__s": 1
+        "nocall__nc": 657
     },
-    "FP:alpartial:CONF:QUERY": {
-        "Transitions": 3,
-        "Transversions": 3,
-        "al__i": 1,
-        "al__s": 6,
-        "het__ri": 1,
-        "hetalt__s": 3,
-        "nuc__i": 1,
-        "nuc__s": 6
+    "FN:.::TRUTH": {
+        "Transitions": 4,
+        "Transversions": 5,
+        "al__d": 12,
+        "al__i": 5,
+        "al__s": 9,
+        "het__rd": 6,
+        "het__ri": 5,
+        "het__rs": 5,
+        "homalt__d": 6,
+        "homalt__s": 4,
+        "nuc__d": 31,
+        "nuc__i": 93,
+        "nuc__s": 9
     },
-    "FP:alpartial:CONF:TRUTH": {
+    "FN:.:CONF:TRUTH": {
         "Transitions": 2,
-        "Transversions": 1,
-        "al__i": 2,
-        "al__s": 3,
+        "Transversions": 0,
+        "al__d": 17,
+        "al__i": 15,
+        "al__s": 2,
+        "het__rd": 17,
+        "het__ri": 9,
+        "het__rs": 1,
         "hetalt__i": 1,
+        "homalt__i": 4,
+        "homalt__s": 1,
+        "nuc__d": 1184,
+        "nuc__i": 103,
+        "nuc__s": 2
+    },
+    "FN:lm::TRUTH": {
+        "Transitions": 0,
+        "Transversions": 3,
+        "al__d": 15,
+        "al__i": 24,
+        "al__s": 3,
+        "het__rd": 6,
+        "het__ri": 18,
+        "homalt__d": 9,
+        "homalt__i": 6,
         "homalt__s": 3,
-        "nuc__i": 2,
+        "nuc__d": 73,
+        "nuc__i": 153,
         "nuc__s": 3
     },
-    "FP:gtmismatch::QUERY": {
+    "FN:lm:CONF:TRUTH": {
+        "Transitions": 1,
+        "Transversions": 5,
+        "al__d": 30,
+        "al__i": 34,
+        "al__s": 6,
+        "het__rd": 28,
+        "het__ri": 25,
+        "het__rs": 4,
+        "homalt__d": 2,
+        "homalt__i": 9,
+        "homalt__s": 2,
+        "nuc__d": 586,
+        "nuc__i": 242,
+        "nuc__s": 6
+    },
+    "FP:.:CONF:QUERY": {
+        "Transitions": 248,
+        "Transversions": 239,
+        "al__d": 13,
+        "al__i": 8,
+        "al__s": 487,
+        "het__rd": 8,
+        "het__ri": 5,
+        "het__rs": 438,
+        "hetalt__s": 4,
+        "homalt__d": 5,
+        "homalt__i": 3,
+        "homalt__s": 41,
+        "nuc__d": 72,
+        "nuc__i": 23,
+        "nuc__s": 487
+    },
+    "FP:.:CONF:TRUTH": {
+        "Transitions": 2,
+        "Transversions": 1,
+        "al__s": 3,
+        "homalt__s": 3,
+        "nuc__s": 3
+    },
+    "FP:am::QUERY": {
         "Transitions": 9,
         "Transversions": 5,
         "al__d": 4,
@@ -116,7 +119,7 @@
         "nuc__i": 2,
         "nuc__s": 14
     },
-    "FP:gtmismatch::TRUTH": {
+    "FP:am::TRUTH": {
         "Transitions": 9,
         "Transversions": 5,
         "al__d": 4,
@@ -130,44 +133,74 @@
         "nuc__i": 2,
         "nuc__s": 14
     },
-    "FP:gtmismatch:CONF:QUERY": {
+    "FP:am:CONF:QUERY": {
         "Transitions": 8,
         "Transversions": 2,
         "al__s": 10,
         "het__rs": 10,
         "nuc__s": 10
     },
-    "FP:gtmismatch:CONF:TRUTH": {
+    "FP:am:CONF:TRUTH": {
         "Transitions": 8,
         "Transversions": 2,
         "al__s": 10,
         "homalt__s": 10,
         "nuc__s": 10
     },
-    "FP:missing:CONF:QUERY": {
-        "Transitions": 322,
-        "Transversions": 304,
-        "al__d": 17,
-        "al__i": 16,
-        "al__s": 626,
-        "het__rd": 11,
-        "het__ri": 6,
-        "het__rs": 569,
-        "hetalt__s": 1,
-        "homalt__d": 6,
-        "homalt__i": 10,
-        "homalt__s": 55,
-        "nuc__d": 112,
-        "nuc__i": 59,
-        "nuc__s": 626
-    },
-    "FP:missing:CONF:TRUTH": {
+    "FP:lm::QUERY": {
         "Transitions": 0,
+        "Transversions": 1,
+        "al__d": 1,
+        "al__i": 2,
+        "al__s": 1,
+        "het__rd": 1,
+        "het__ri": 1,
+        "homalt__i": 1,
+        "homalt__s": 1,
+        "nuc__d": 1,
+        "nuc__i": 10,
+        "nuc__s": 1
+    },
+    "FP:lm::TRUTH": {
+        "Transitions": 0,
+        "Transversions": 1,
+        "al__i": 4,
+        "al__s": 1,
+        "het__ri": 1,
+        "hetalt__i": 1,
+        "homalt__i": 1,
+        "homalt__s": 1,
+        "nuc__i": 31,
+        "nuc__s": 1
+    },
+    "FP:lm:CONF:QUERY": {
+        "Transitions": 77,
+        "Transversions": 69,
+        "al__d": 4,
+        "al__i": 9,
+        "al__s": 146,
+        "het__rd": 3,
+        "het__ri": 2,
+        "het__rs": 132,
+        "homalt__d": 1,
+        "homalt__i": 7,
+        "homalt__s": 14,
+        "nuc__d": 40,
+        "nuc__i": 37,
+        "nuc__s": 146
+    },
+    "FP:lm:CONF:TRUTH": {
+        "Transitions": 1,
         "Transversions": 0,
+        "al__i": 2,
+        "al__s": 1,
+        "het__rs": 1,
+        "hetalt__i": 1,
         "homref__r": 1,
-        "nocall__nc": 657
+        "nuc__i": 2,
+        "nuc__s": 1
     },
-    "TP:match::QUERY": {
+    "TP:gm::QUERY": {
         "Transitions": 52,
         "Transversions": 42,
         "al__d": 38,
@@ -184,7 +217,7 @@
         "nuc__i": 61,
         "nuc__s": 94
     },
-    "TP:match::TRUTH": {
+    "TP:gm::TRUTH": {
         "Transitions": 52,
         "Transversions": 42,
         "al__d": 38,
@@ -201,7 +234,7 @@
         "nuc__i": 61,
         "nuc__s": 94
     },
-    "TP:match:CONF:QUERY": {
+    "TP:gm:CONF:QUERY": {
         "Transitions": 2524,
         "Transversions": 966,
         "al__d": 199,
@@ -219,7 +252,7 @@
         "nuc__i": 492,
         "nuc__s": 3490
     },
-    "TP:match:CONF:TRUTH": {
+    "TP:gm:CONF:TRUTH": {
         "Transitions": 2524,
         "Transversions": 966,
         "al__d": 199,
@@ -237,29 +270,40 @@
         "nuc__i": 492,
         "nuc__s": 3490
     },
-    "UNK:missing::QUERY": {
-        "Transitions": 2478,
-        "Transversions": 2188,
-        "al__d": 85,
-        "al__i": 76,
-        "al__s": 4666,
-        "het__rd": 71,
-        "het__ri": 49,
-        "het__rs": 4243,
+    "UNK:.::QUERY": {
+        "Transitions": 2321,
+        "Transversions": 2054,
+        "al__d": 69,
+        "al__i": 66,
+        "al__s": 4375,
+        "het__rd": 57,
+        "het__ri": 43,
+        "het__rs": 3969,
         "hetalt__i": 2,
         "hetalt__id": 1,
         "hetalt__s": 15,
-        "homalt__d": 13,
-        "homalt__i": 22,
-        "homalt__s": 393,
-        "nuc__d": 234,
-        "nuc__i": 148,
-        "nuc__s": 4666
+        "homalt__d": 11,
+        "homalt__i": 18,
+        "homalt__s": 376,
+        "nuc__d": 189,
+        "nuc__i": 136,
+        "nuc__s": 4375
     },
-    "UNK:missing::TRUTH": {
-        "Transitions": 0,
-        "Transversions": 0,
-        "nocall__nc": 4809
+    "UNK:lm::QUERY": {
+        "Transitions": 157,
+        "Transversions": 134,
+        "al__d": 16,
+        "al__i": 10,
+        "al__s": 291,
+        "het__rd": 14,
+        "het__ri": 6,
+        "het__rs": 274,
+        "homalt__d": 2,
+        "homalt__i": 4,
+        "homalt__s": 17,
+        "nuc__d": 45,
+        "nuc__i": 12,
+        "nuc__s": 291
     },
     "all:QUERY": {
         "Transitions": 5396,

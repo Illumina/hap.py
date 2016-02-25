@@ -1,7 +1,7 @@
-,FP:missing:CONF:QUERY,FP:missing:CONF:TRUTH,TP:match::QUERY,TP:match::TRUTH,UNK:missing::QUERY,UNK:missing::TRUTH,all:QUERY,all:TRUTH
-Transitions,0.0,0.0,1.0,1.0,0.0,0.0,1.0,1
-Transversions,1.0,0.0,1.0,1.0,1.0,0.0,3.0,1
-al__s,1.0,,2.0,2.0,1.0,,4.0,2
-het__rs,1.0,,2.0,2.0,1.0,,4.0,2
-nocall__nc,,1.0,,,,1.0,,2
-nuc__s,1.0,,2.0,2.0,1.0,,4.0,2
+,.:.::TRUTH,.:.:CONF:TRUTH,FP:.:CONF:QUERY,TP:gm::QUERY,TP:gm::TRUTH,UNK:.::QUERY,all:QUERY,all:TRUTH
+Transitions,0.0,0.0,0.0,1.0,1.0,0.0,1.0,1
+Transversions,0.0,0.0,1.0,1.0,1.0,1.0,3.0,1
+al__s,,,1.0,2.0,2.0,1.0,4.0,2
+het__rs,,,1.0,2.0,2.0,1.0,4.0,2
+nocall__nc,1.0,1.0,,,,,,2
+nuc__s,,,1.0,2.0,2.0,1.0,4.0,2
