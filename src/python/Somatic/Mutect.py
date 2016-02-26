@@ -185,7 +185,7 @@ def extractMutectSNVFeatures(vcfname, tag, avg_depth=None):
                 "DBSNP": rec["I.DB"],
                 "N_DP": n_DP,
                 "T_DP": t_DP,
-                "TLOD": rec["I.TLOD"],
+                "TLOD": rec["TLOD"],
                 "N_DP_RATE" : n_DP_ratio,
                 "T_DP_RATE" : t_DP_ratio,
                 "N_GT": rec[n_sample + "GT"],
@@ -225,10 +225,10 @@ def extractMutectSNVFeatures(vcfname, tag, avg_depth=None):
             "T_FA",
             "N_SS",
             "T_SS",
-            "TLOD",
             "N_ALT_RATE",
             "T_ALT_RATE",
-            "tag"]
+            "tag",
+            "TLOD"]
 
         if records:
             df = pandas.DataFrame(records, columns=cols)

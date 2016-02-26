@@ -1,4 +1,4 @@
--#!/illumina/development/haplocompare/hc-virtualenv/bin/python
+#!/illumina/development/haplocompare/hc-virtualenv/bin/python
 # coding=utf-8
 #
 # Copyright (c) 2010-2015 Illumina, Inc.
@@ -187,7 +187,7 @@ class MutectHCCSNVFeatures(StrelkaAdmixSNVFeatures):
 
 FeatureSet.register("hcc.mutect.snv", MutectHCCSNVFeatures)
 
-class MutectHCCIndelFeatures(StrelkaAdmixSNVFeatures):
+class MutectHCCIndelFeatures(StrelkaAdmixIndelFeatures):
     """ Collect Indel features from Mutect-to-HCC truthset comparison """
     def collect(self, vcfname, tag):
         """ Return a data frame with features collected from the given VCF, tagged by given type """
