@@ -1,4 +1,4 @@
-#!/home/bmoore1/pyenvs/py278/bin/python
+#!/usr/bin/env python
 # coding=utf-8
 #
 # Copyright (c) 2010-2015 Illumina, Inc.
@@ -15,7 +15,6 @@ Date:   2/10/2015
 Author: Peter Krusche <pkrusche@illumina.com>
 """
 
-import sys
 import pandas
 import logging
 import re
@@ -65,7 +64,7 @@ def extractMutectSNVFeatures(vcfname, tag, avg_depth=None):
                                                                                                     tsn, t_sample))
 
         features = ["CHROM", "POS", "REF", "ALT", "FILTER",
-                    "I.DB", "I.TLOD", "I.NL", "I.AC",
+                    "I.DB", "I.TLOD",
                     n_sample + "GT", t_sample + "GT",
                     n_sample + "DP", t_sample + "DP",
                     n_sample + "AD", t_sample + "AD",
@@ -88,7 +87,7 @@ def extractMutectSNVFeatures(vcfname, tag, avg_depth=None):
                         has_warned["feat:" + q] = True
 
             # fix missing features
-            for q in ["I.DB", "I.NL", "I.AC",
+            for q in ["I.DB",
                       n_sample + "DP", t_sample + "DP",
                       n_sample + "AD", t_sample + "AD",
                       n_sample + "BQ", t_sample + "BQ",
@@ -187,8 +186,6 @@ def extractMutectSNVFeatures(vcfname, tag, avg_depth=None):
                 "N_DP": n_DP,
                 "T_DP": t_DP,
                 "TLOD": rec["I.TLOD"],
-                "NL": rec["I.NL"],
-                "AC": rec["I.AC"],
                 "N_DP_RATE" : n_DP_ratio,
                 "T_DP_RATE" : t_DP_ratio,
                 "N_GT": rec[n_sample + "GT"],
@@ -228,7 +225,7 @@ def extractMutectSNVFeatures(vcfname, tag, avg_depth=None):
             "T_FA",
             "N_SS",
             "T_SS",
-            "TLOD", "NL", "AC",
+            "TLOD",
             "N_ALT_RATE",
             "T_ALT_RATE",
             "tag"]
@@ -336,7 +333,7 @@ def extractMutectIndelFeatures(vcfname, tag, avg_depth=None):
                 else:
                     if q.endswith("AD") or q.endswith("MM") or q.endswith("MQS") or \
                        q.endswith("NQSBQ") or q.endswith("NQSMM") or \
-                       q.endswith("REnd") or q.endswith("RStart") or q == "TLOD":
+                       q.endswith("REnd") or q.endswith("RStart"):
                         if type(rec[q]) is not list:
                             if not has_warned[q + "_PARSE_FAIL"]:
                                 logging.warn("Cannot parse %s: %s" % (q, str(rec[q])))

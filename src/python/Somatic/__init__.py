@@ -1,4 +1,4 @@
-#!/home/bmoore1/pyenvs/py278/bin/python
+-#!/illumina/development/haplocompare/hc-virtualenv/bin/python
 # coding=utf-8
 #
 # Copyright (c) 2010-2015 Illumina, Inc.
