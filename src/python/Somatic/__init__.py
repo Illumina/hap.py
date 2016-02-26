@@ -1,4 +1,4 @@
-#!/illumina/development/haplocompare/hc-virtualenv/bin/python
+#!/home/bmoore1/pyenvs/py278/bin/python
 # coding=utf-8
 #
 # Copyright (c) 2010-2015 Illumina, Inc.
@@ -100,6 +100,7 @@ class StrelkaAdmixSNVFeatures(FeatureSet):
             return ",".join(map(str, val))
         return val
 
+
     def collect(self, vcfname, tag):
         """ Return a data frame with features collected from the given VCF, tagged by given type """
         if tag not in ["TP", "FN"]:
@@ -186,15 +187,15 @@ class MutectHCCSNVFeatures(StrelkaAdmixSNVFeatures):
 
 FeatureSet.register("hcc.mutect.snv", MutectHCCSNVFeatures)
 
-
-class MutectHCCIndelFeatures(StrelkaAdmixIndelFeatures):
+class MutectHCCIndelFeatures(StrelkaAdmixSNVFeatures):
     """ Collect Indel features from Mutect-to-HCC truthset comparison """
     def collect(self, vcfname, tag):
         """ Return a data frame with features collected from the given VCF, tagged by given type """
         if tag not in ["TP", "FN"]:
             return extractMutectIndelFeatures(vcfname, tag, self.chr_depth)
         else:
-            features = ["CHROM", "POS", "REF", "ALT", "QUAL", "S.1.VT",
+            features = ["CHROM", "POS", "REF", "ALT", "QUAL",
+                        "I.MapQrange", "I.somatic", "I.filtered", "S.1.VT",
                         "I.T_ALT_RATE", "I.DP_normal", "I.DP_tumor", "I.tag", "I.count"]
         return GenericFeatures.collectFeatures(vcfname, tag, features, processor=StrelkaAdmixIndelFeatures.processValue)
 

@@ -1,9 +1,9 @@
-#!/usr/bin/env python
+#!/home/bmoore1/pyenvs/py278/bin/python
 # coding=utf-8
 #
 # Copyright (c) 2010-2015 Illumina, Inc.
 # All rights reserved.
-# 
+#
 # This file is distributed under the simplified BSD license.
 # The full text can be found here (and in LICENSE.txt in the root folder of
 # this distribution):
@@ -15,6 +15,7 @@ Date:   2/10/2015
 Author: Peter Krusche <pkrusche@illumina.com>
 """
 
+import sys
 import pandas
 import logging
 import re
@@ -64,7 +65,7 @@ def extractMutectSNVFeatures(vcfname, tag, avg_depth=None):
                                                                                                     tsn, t_sample))
 
         features = ["CHROM", "POS", "REF", "ALT", "FILTER",
-                    "I.DB",
+                    "I.DB", "I.TLOD", "I.NL", "I.AC",
                     n_sample + "GT", t_sample + "GT",
                     n_sample + "DP", t_sample + "DP",
                     n_sample + "AD", t_sample + "AD",
@@ -87,7 +88,7 @@ def extractMutectSNVFeatures(vcfname, tag, avg_depth=None):
                         has_warned["feat:" + q] = True
 
             # fix missing features
-            for q in ["I.DB",
+            for q in ["I.DB", "I.NL", "I.AC",
                       n_sample + "DP", t_sample + "DP",
                       n_sample + "AD", t_sample + "AD",
                       n_sample + "BQ", t_sample + "BQ",
@@ -126,6 +127,7 @@ def extractMutectSNVFeatures(vcfname, tag, avg_depth=None):
                             rec[q] = -1
 
             rec["tag"] = tag
+            rec["TLOD"] = float(rec["I.TLOD"])
 
             n_DP        = float(rec[n_sample + "DP"])
             t_DP        = float(rec[t_sample + "DP"])
@@ -184,6 +186,9 @@ def extractMutectSNVFeatures(vcfname, tag, avg_depth=None):
                 "DBSNP": rec["I.DB"],
                 "N_DP": n_DP,
                 "T_DP": t_DP,
+                "TLOD": rec["I.TLOD"],
+                "NL": rec["I.NL"],
+                "AC": rec["I.AC"],
                 "N_DP_RATE" : n_DP_ratio,
                 "T_DP_RATE" : t_DP_ratio,
                 "N_GT": rec[n_sample + "GT"],
@@ -223,6 +228,7 @@ def extractMutectSNVFeatures(vcfname, tag, avg_depth=None):
             "T_FA",
             "N_SS",
             "T_SS",
+            "TLOD", "NL", "AC",
             "N_ALT_RATE",
             "T_ALT_RATE",
             "tag"]
@@ -287,6 +293,7 @@ def extractMutectIndelFeatures(vcfname, tag, avg_depth=None):
         ##FORMAT=<ID=SC,Number=4,Type=Integer,Description="Strandness: counts of forward-/reverse-aligned reference and indel-supporting reads (FwdRef,RevRef,FwdIndel,RevIndel)">
 
         features = ["CHROM", "POS", "REF", "ALT", "FILTER",
+                    "I.TLOD",
                     n_sample + "GT", t_sample + "GT",
                     n_sample + "DP", t_sample + "DP",
                     n_sample + "AD", t_sample + "AD",
@@ -329,7 +336,7 @@ def extractMutectIndelFeatures(vcfname, tag, avg_depth=None):
                 else:
                     if q.endswith("AD") or q.endswith("MM") or q.endswith("MQS") or \
                        q.endswith("NQSBQ") or q.endswith("NQSMM") or \
-                       q.endswith("REnd") or q.endswith("RStart"):
+                       q.endswith("REnd") or q.endswith("RStart") or q == "TLOD":
                         if type(rec[q]) is not list:
                             if not has_warned[q + "_PARSE_FAIL"]:
                                 logging.warn("Cannot parse %s: %s" % (q, str(rec[q])))
@@ -365,6 +372,7 @@ def extractMutectIndelFeatures(vcfname, tag, avg_depth=None):
                             rec[q] = -1
 
             rec["tag"] = tag
+            rec["TLOD"] = float(rec["I.TLOD"])
 
             n_DP        = float(rec[n_sample + "DP"])
             t_DP        = float(rec[t_sample + "DP"])
@@ -444,7 +452,8 @@ def extractMutectIndelFeatures(vcfname, tag, avg_depth=None):
                 "T_REnd": t_sample + "REnd",
                 "N_SC": n_sample + "SC",
                 "T_SC": t_sample + "SC",
-                "tag" : tag
+                "tag" : tag,
+                "TLOD": rec["TLOD"]
             }
             records.append(qrec)
 
@@ -479,7 +488,8 @@ def extractMutectIndelFeatures(vcfname, tag, avg_depth=None):
             "T_REnd",
             "N_SC",
             "T_SC",
-            "tag"]
+            "tag",
+            "TLOD"]
 
         if records:
             df = pandas.DataFrame(records, columns=cols)
