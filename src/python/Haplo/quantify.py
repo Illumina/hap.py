@@ -63,7 +63,10 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
                  reference=Tools.defaultReference(),
                  locations=None, threads=1,
                  output_vtc=False,
-                 qtype=None):
+                 qtype=None,
+                 roc_file=None,
+                 roc_val=None,
+                 clean_info=True):
     """Run quantify and return parsed JSON
 
     :param filename: the VCF file name
@@ -74,6 +77,9 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
     :param reference: reference fasta path
     :param locations: a location to use
     :param output_vtc: enable / disable the VTC field
+    :param roc_file: filename for a TSV file with ROC observations
+    :param roc_val: field to use for ROC QQ
+    :param clean_info: remove unused INFO fields
     :returns: parsed counts JSON
     """
 
@@ -91,6 +97,17 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
 
     if qtype:
         run_str += " --type %s" % qtype
+
+    if roc_file:
+        run_str += " --output-roc-obs %s" % roc_file
+
+    if roc_val:
+        run_str += " --qq %s" % roc_val
+
+    if clean_info:
+        run_str += " --clean-info 1"
+    else:
+        run_str += " --clean-info 0"
 
     if write_vcf:
         if not write_vcf.endswith(".vcf.gz"):

@@ -71,6 +71,7 @@ int main(int argc, char* argv[]) {
     std::string file;
     std::string output;
     std::string output_vcf;
+    std::string output_roc_obs;
     std::string ref;
     std::string only_regions;
     std::string qtype = "xcmp";
@@ -106,6 +107,7 @@ int main(int argc, char* argv[]) {
                 ("input-file", po::value<std::string>(), "The input file")
                 ("output-file,o", po::value<std::string>(), "The output file name (JSON Format).")
                 ("output-vcf,v", po::value<std::string>(), "Annotated VCF file (with bed annotations).")
+                ("output-roc-obs", po::value<std::string>(), "Write a table of observations for making a ROC (see also the --qq argument)")
                 ("reference,r", po::value<std::string>(), "The reference fasta file (needed only for VCF output).")
                 ("location,l", po::value<std::string>(), "Start location.")
                 ("regions,R", po::value< std::vector<std::string> >(),
@@ -118,6 +120,7 @@ int main(int argc, char* argv[]) {
                 ("apply-filters,f", po::value<bool>(), "Apply filtering in VCF.")
                 ("count-homref", po::value<bool>(), "Count homref locations.")
                 ("output-vtc", po::value<bool>(), "Output variant types counted (debugging).")
+                ("clean-info", po::value<bool>(), "Set to zero to preserve INFO fields (default is 1)")
                 ("threads", po::value<int>(), "Number of threads to use.")
                 ("blocksize", po::value<int>(), "Number of variants per block.")
             ;
@@ -161,6 +164,11 @@ int main(int argc, char* argv[]) {
             if (vm.count("output-vcf"))
             {
                 output_vcf = vm["output-vcf"].as< std::string >();
+            }
+
+            if (vm.count("output-roc-obs"))
+            {
+                output_roc_obs = vm["output-roc-obs"].as< std::string >();
             }
 
             if (vm.count("reference"))
@@ -215,6 +223,11 @@ int main(int argc, char* argv[]) {
             if (vm.count("output-vtc"))
             {
                 output_vtc = vm["output-vtc"].as< bool >();
+            }
+
+            if (vm.count("clean-info"))
+            {
+                clean_info = vm["clean-info"].as< bool >();
             }
 
             if (vm.count("threads"))
@@ -356,8 +369,51 @@ int main(int argc, char* argv[]) {
             std::unique_ptr<BlockQuantify>
         >> blocks;
 
+
+        int truth_sample_id = -1;
+        int query_sample_id = -1;
+
+        if(bcf_hdr_nsamples(hdr) < 2)
+        {
+            if(!output_roc_obs.empty())
+            {
+                std::cerr << "[W] not enough samples in input file. Switching off ROC table calculation" << "\n";
+            }
+            output_roc_obs = "";
+        }
+        else
+        {
+            for(int i = 0; i < bcf_hdr_nsamples(hdr); ++i)
+            {
+                if(strcmp(hdr->samples[i], "TRUTH") == 0)
+                {
+                    truth_sample_id = i;
+                }
+                if(strcmp(hdr->samples[i], "QUERY") == 0)
+                {
+                    query_sample_id = i;
+                }
+            }
+            if(truth_sample_id < 0 || query_sample_id < 0)
+            {
+                if(!output_roc_obs.empty())
+                {
+                    std::cerr << "[W] Input VCF does not have TRUTH and QUERY samples. Switching off ROC table calculation" << "\n";
+                }
+                output_roc_obs = "";
+            }
+        }
+
+        std::unique_ptr<std::ofstream> roc_writer;
+        if(!output_roc_obs.empty())
+        {
+            roc_writer.reset(new std::ofstream(output_roc_obs));
+            *roc_writer << "CHROM\tPOS\tVT\tLT\tBD\tQQ\tFILTER" << "\n";
+        }
+
+        /** this is where things actually get written to files */
         std::map<std::string, VariantStatistics> count_map;
-        auto output_counts = [&count_map, &writer, &blocks, hdr](int min_size) {
+        auto output_counts = [&count_map, &writer, &roc_writer, &blocks, hdr, truth_sample_id, query_sample_id](int min_size) {
             while(blocks.size() > (unsigned )min_size)
             {
                 blocks.front().first.get();
@@ -367,6 +423,71 @@ int main(int argc, char* argv[]) {
                     for(auto & v : variants)
                     {
                         bcf_write1(writer, hdr, v);
+                    }
+                }
+
+                if(roc_writer)
+                {
+                    auto const & variants = blocks.front().second->getVariants();
+                    for(auto & v : variants)
+                    {
+                        std::string tt = bcfhelpers::getFormatString(hdr, v, "BD", truth_sample_id, "N");
+                        double qq_score = bcfhelpers::getFormatDouble(hdr, v, "QQ", query_sample_id);
+                        if(tt == "FN" || tt == "TP")
+                        {
+                            std::string tvt = bcfhelpers::getFormatString(hdr, v, "BVT", truth_sample_id, "NOCALL");
+                            std::string tlt = bcfhelpers::getFormatString(hdr, v, "BLT", truth_sample_id, "nocall");
+                            if(tvt == "NOCALL")
+                            {
+                                // skip locations only seen in query
+                                continue;
+                            }
+                            std::string chrom = bcfhelpers::getChrom(hdr, v);
+                            *roc_writer << chrom << "\t"
+                                        << v->pos << "\t"
+                                        << tvt << "\t"
+                                        << tlt << "\t"
+                                        << tt << "\t"
+                                        << qq_score << "\t";
+                            for(int j = 0; j < v->d.n_flt; ++j)
+                            {
+                                const int k = v->d.flt[j];
+                                if(k >= 0)
+                                {
+                                    if(j > 0) *roc_writer << ",";
+                                    *roc_writer << bcf_hdr_int2id(hdr, BCF_DT_ID, k);
+                                }
+                            }
+                            *roc_writer << "\n";
+                        }
+                        std::string qt = bcfhelpers::getFormatString(hdr, v, "BD", query_sample_id, "N");
+                        if(qt == "FP" || qt == "UNK")
+                        {
+                            std::string qvt = bcfhelpers::getFormatString(hdr, v, "BVT", query_sample_id, "NOCALL");
+                            std::string qlt = bcfhelpers::getFormatString(hdr, v, "BLT", query_sample_id, "nocall");
+                            if(qvt == "NOCALL")
+                            {
+                                // skip locations only seen in query
+                                continue;
+                            }
+                            std::string chrom = bcfhelpers::getChrom(hdr, v);
+                            *roc_writer << chrom << "\t"
+                                        << v->pos << "\t"
+                                        << qvt << "\t"
+                                        << qlt << "\t"
+                                        << qt << "\t"
+                                        << qq_score << "\t";
+                            for(int j = 0; j < v->d.n_flt; ++j)
+                            {
+                                const int k = v->d.flt[j];
+                                if(k >= 0)
+                                {
+                                    if(j > 0) *roc_writer << ",";
+                                    *roc_writer << bcf_hdr_int2id(hdr, BCF_DT_ID, v->d.flt[j]);
+                                }
+                            }
+                            *roc_writer << "\n";
+                        }
                     }
                 }
 

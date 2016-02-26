@@ -575,7 +575,7 @@ def main():
 
         args.locations = newlocations
 
-        if args.threads > 1:
+        if args.threads > 1 and args.engine == "xcmp":
             logging.info("Running using %i parallel processes." % args.threads)
             pool = multiprocessing.Pool(int(args.threads))
 

@@ -56,7 +56,7 @@ def _run(cmd):
     return o
 
 
-def roc(vcf, feature, filter_name, output_path, rreversed):
+def roc(roc_table, feature, filter_name, output_path, rreversed):
     """ Calculate SNP and indel ROC.
 
     Return a dictionary of variant types and corresponding files.
@@ -68,16 +68,6 @@ def roc(vcf, feature, filter_name, output_path, rreversed):
     files = {}
     result = {}
     try:
-        cmdline = "bcftools query -i 'INFO/type==\"FP\" && INFO/Q_VT != \"NOCALL\"' -f '%%INFO/Q_VT\t%%INFO/Q_LT\t%%INFO/%s\t%%INFO/type\t%%FILTER\\n' " \
-                  "%s -o %s" % (feature, vcf.replace(" ", "\\ "), tf.name + ".fp")
-        _run(cmdline)
-        cmdline = "bcftools query -i 'INFO/type==\"TP\" && INFO/Q_VT != \"NOCALL\"' -f '%%INFO/Q_VT\t%%INFO/Q_LT\t%%INFO/%s\t%%INFO/type\t%%FILTER\\n' " \
-                  "%s -o %s" % (feature, vcf.replace(" ", "\\ "), tf.name + ".tp")
-        _run(cmdline)
-        cmdline = "bcftools query -i 'INFO/type==\"FN\"' -f '%%INFO/T_VT\t%%INFO/T_LT\t%%INFO/%s\t%%INFO/type\t%%FILTER\\n' " \
-                  "%s -o %s" % (feature, vcf.replace(" ", "\\ "), tf.name + ".fn")
-        _run(cmdline)
-
         def getfile(vtype, ltype):
             fname = output_path.replace(" ", "\\ ") + \
                 "." + vtype.lower() + "." + ltype.lower() + ".data"
@@ -87,24 +77,21 @@ def roc(vcf, feature, filter_name, output_path, rreversed):
                     "ltype": ltype,
                     "file": open(fname, "w")
                 }
-                print >>files[fname]["file"], "type\tltype\t%s\tlabel\tfilter" % feature
+                print >>files[fname]["file"], "CHROM\tPOS\ttype\tltype\tlabel\t%s\tfilter" % feature
             return files[fname]["file"]
 
         def output_line(l):
             ll = l.split("\t")
-            f1 = getfile(ll[0], "all")
-            f2 = getfile(ll[0], ll[1])
+            f1 = getfile(ll[2], "all")
+            f2 = getfile(ll[2], ll[3])
             f1.write(l)
             f2.write(l)
 
-        with open(tf.name + ".tp") as tp:
-            for l in tp:
-                output_line(l)
-        with open(tf.name + ".fp") as fp:
-            for l in fp:
-                output_line(l)
-        with open(tf.name + ".fn") as fn:
-            for l in fn:
+        # split / distribute ROC table recorts
+        with open(roc_table) as rt:
+            # skip header
+            next(rt)
+            for l in rt:
                 output_line(l)
 
         cmdline = "roc -t label -v %s -f filter --verbose -R %i" % (feature, 1 if rreversed else 0)

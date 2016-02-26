@@ -538,7 +538,7 @@ namespace bcfhelpers
         static const bcf_get_numeric_format<double> gf;
 
         get_fmt_outcome res;
-        res = gf(header, line, "DP", isample, &result, 1, 0);
+        res = gf(header, line, field, isample, &result, 1, 0);
         if(res == get_fmt_outcome::too_many)
         {
             std::ostringstream os;

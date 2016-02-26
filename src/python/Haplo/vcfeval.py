@@ -48,7 +48,7 @@ def runVCFEval(vcf1, vcf2, target, args):
             vcf2 = Tools.bcftools.makeIndex(vcf2)
             del_vcf2 = True
 
-        runme = "%s vcfeval -b %s -c %s -t %s -o %s -T %i -m ga4gh" % (
+        runme = "%s vcfeval -b %s -c %s -t %s -o %s -T %i -m ga4gh --ref-overlap" % (
             args.engine_vcfeval,
             vcf1.replace(" ", "\\ "),
             vcf2.replace(" ", "\\ "),

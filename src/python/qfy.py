@@ -55,6 +55,11 @@ def quantify(args):
 
     output_vcf = args.reports_prefix + ".vcf.gz"
 
+    roc_table = None
+
+    if args.roc:
+        roc_table = args.reports_prefix + ".rocdata.tsv"
+
     counts = Haplo.quantify.run_quantify(vcf_name,
                                          json_name,
                                          output_vcf if args.write_vcf else False,
@@ -62,7 +67,10 @@ def quantify(args):
                                          args.ref,
                                          threads=args.threads,
                                          output_vtc=args.output_vtc,
-                                         qtype=args.type)
+                                         qtype=args.type,
+                                         roc_val=args.roc,
+                                         roc_file=roc_table,
+                                         clean_info=not args.preserve_info)
 
     df = pandas.DataFrame(counts)
 
@@ -164,7 +172,11 @@ def quantify(args):
         print str(essential_numbers)
 
     if args.roc:
-        res = Haplo.happyroc.roc(output_vcf, args.roc, args.roc_filter, args.reports_prefix + ".roc", args.roc_reversed)
+        res = Haplo.happyroc.roc(roc_table,
+                                 args.roc,
+                                 args.roc_filter,
+                                 args.reports_prefix + ".roc",
+                                 args.roc_reversed)
 
         for t in res.iterkeys():
             rocdf = pandas.read_table(res[t])
@@ -198,6 +210,9 @@ def updateArgs(parser):
     parser.add_argument("--output-vtc", dest="output_vtc",
                         default=False, action="store_true",
                         help="Write VTC field in the final VCF which gives the counts each position has contributed to.")
+
+    parser.add_argument("--preserve-info", dest="preserve_info", action="store_true", default=False,
+                        help="When using XCMP, preserve and merge the INFO fields in truth and query. Useful for ROC computation.")
 
     parser.add_argument("--roc", dest="roc", default=False,
                         help="Select an INFO feature to produce a ROC on. This works best with "

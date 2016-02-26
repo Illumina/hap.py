@@ -50,7 +50,7 @@ namespace variant
             auto p2 = qqstr.find(";");
             if(p2 != std::string::npos)
             {
-                qqstr = qqstr.substr(0, p2-1);
+                qqstr = qqstr.substr(0, p2);
             }
             roc_field = qqstr;
         }
@@ -60,11 +60,13 @@ namespace variant
             roc_hdr_id = bcf_hdr_id2int(hdr, BCF_DT_ID, roc_field.c_str());
             if(bcf_hdr_idinfo_exists(hdr, BCF_HL_INFO, roc_hdr_id))
             {
+                roc_field_is_qual = false;
                 roc_field_is_info = true;
             }
             else if(roc_field == "QUAL")
             {
                 roc_field_is_qual = true;
+                roc_field_is_info = false;
             }
             else
             {
@@ -86,6 +88,7 @@ namespace variant
         }
         if(!bcf_hdr_get_hrec(hdr, BCF_HL_INFO, "ID", "GT", NULL))
         {
+            bcf_hdr_append(hdr, "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">");
             bcf_hdr_append(hdr, "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">");
         }
         if(!bcf_hdr_get_hrec(hdr, BCF_HL_INFO, "ID", "BD", NULL))

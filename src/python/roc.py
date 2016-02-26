@@ -40,11 +40,12 @@ import pandas
 def main():
     parser = argparse.ArgumentParser("Hap.py ROC Maker")
 
-    parser.add_argument("input", help="VCF output by hap.py -V, or a csv feature table from som.py.", default=[], nargs=1)
+    parser.add_argument("input", help="ROC data table from hap.py (.rocdata.tsv), or a csv feature table from som.py.", default=[], nargs=1)
     parser.add_argument("output", help="Output file prefix", default=[], nargs=1)
 
     parser.add_argument("--roc", dest="roc", required=True,
-                        help="Select an INFO feature to produce a ROC on.")
+                        help="Name of the feature to produce the ROC on "
+                             "(in case of hap.py ROCs, this must have been passed to the hap.py run already).")
 
     parser.add_argument("--roc-filter", dest="roc_filter", default=False,
                         help="Select one or more filters (separated by comma or semicolon) to "
@@ -56,20 +57,19 @@ def main():
     parser.add_argument("--roc-label", dest="roc_label", default="tag",
                         help="Select the tag column for CSV files (needs to have TP/FP values).")
 
-
     parser.add_argument("--roc-filter-column", dest="roc_filtercolumn", default="FILTER",
                         help="Select the filter column for CSV files (default: FILTER).")
 
     args = parser.parse_args()
     print args
 
-    if args.input[0].endswith(".vcf") or args.input[0].endswith(".vcf.gz") or args.input[0].endswith(".bcf"):
+    if args.input[0].endswith(".rocdata.tsv"):
         Haplo.happyroc.roc(args.input[0], args.roc, args.roc_filter, args.output[0], args.roc_reversed)
     elif args.input[0].endswith(".csv"):
         tbl = pandas.read_csv(args.input[0])
-        roctbl = Tools.roc.tableROC(tbl, 
-                                    args.roc_label, 
-                                    args.roc, 
+        roctbl = Tools.roc.tableROC(tbl,
+                                    args.roc_label,
+                                    args.roc,
                                     args.roc_filtercolumn,
                                     args.roc_filter,
                                     args.roc_reversed)
