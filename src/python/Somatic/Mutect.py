@@ -64,15 +64,14 @@ def extractMutectSNVFeatures(vcfname, tag, avg_depth=None):
                                                                                                     tsn, t_sample))
 
         features = ["CHROM", "POS", "REF", "ALT", "FILTER",
-                    "I.DB", "I.TLOD",
+                    "I.DB", "I.TLOD", "I.NLOD", "I.ECNT",
+                    "I.HCNT", "I.MAX_ED", "I.MIN_ED",
                     n_sample + "GT", t_sample + "GT",
                     n_sample + "DP", t_sample + "DP",
-                    n_sample + "AD", t_sample + "AD",
-                    n_sample + "BQ", t_sample + "BQ",
-                    n_sample + "FA", t_sample + "FA",
-                    n_sample + "SS", t_sample + "SS"]
+                    n_sample + "QSS", t_sample + "QSS",
+                    n_sample + "AD", t_sample + "AD"]
 
-        has_warned = {"feat:I.DB": 1}
+        has_warned = {}
 
         for vr in vcfExtract(vcfname, features):
             rec = {}
@@ -87,24 +86,19 @@ def extractMutectSNVFeatures(vcfname, tag, avg_depth=None):
                         has_warned["feat:" + q] = True
 
             # fix missing features
-            for q in ["I.DB",
+            for q in ["I.DB", "I.TLOD", "I.NLOD", "I.ECNT",
+                      "I.HCNT", "I.MAX_ED", "I.MIN_ED",
+                      n_sample + "GT", t_sample + "GT",
                       n_sample + "DP", t_sample + "DP",
-                      n_sample + "AD", t_sample + "AD",
-                      n_sample + "BQ", t_sample + "BQ",
-                      n_sample + "FA", t_sample + "FA",
-                      n_sample + "SS", t_sample + "SS"]:
+                      n_sample + "QSS", t_sample + "QSS",
+                      n_sample + "AD", t_sample + "AD"]:
                 if not q in rec or rec[q] is None:
                     rec[q] = 0
                     if not ("feat:" + q) in has_warned:
                         logging.warn("Missing feature %s" % q)
                         has_warned["feat:" + q] = True
                 else:
-                    if q.endswith("FA"):
-                        try:
-                            rec[q] = float(rec[q])
-                        except ValueError:
-                            rec[q] = float("NaN")
-                    elif q.endswith("AD"):
+                    if q.endswith("AD"):
                         if type(rec[q]) is not list:
                             if not has_warned["AD_PARSE_FAIL"]:
                                 logging.warn("Cannot parse AD: %s" % str(rec[q]))
@@ -126,7 +120,8 @@ def extractMutectSNVFeatures(vcfname, tag, avg_depth=None):
                             rec[q] = -1
 
             rec["tag"] = tag
-            rec["TLOD"] = float(rec["I.TLOD"])
+            TLOD = float(rec["I.TLOD"])
+            NLOD = float(rec["I.NLOD"])
 
             n_DP        = float(rec[n_sample + "DP"])
             t_DP        = float(rec[t_sample + "DP"])
@@ -183,52 +178,34 @@ def extractMutectSNVFeatures(vcfname, tag, avg_depth=None):
                 "ALT": ",".join(rec["ALT"]),
                 "FILTER": ",".join(rec["FILTER"]),
                 "DBSNP": rec["I.DB"],
+                "TLOD": TLOD,
+                "NLOD": NLOD,
                 "N_DP": n_DP,
                 "T_DP": t_DP,
-                "TLOD": rec["TLOD"],
                 "N_DP_RATE" : n_DP_ratio,
                 "T_DP_RATE" : t_DP_ratio,
                 "N_GT": rec[n_sample + "GT"],
                 "T_GT": rec[t_sample + "GT"],
                 "N_AD": rec[n_sample + "AD"],
                 "T_AD": rec[t_sample + "AD"],
-                "N_BQ": rec[n_sample + "BQ"],
-                "T_BQ": rec[t_sample + "BQ"],
-                "N_FA": rec[n_sample + "FA"],
-                "T_FA": rec[t_sample + "FA"],
-                "N_SS": rec[n_sample + "SS"],
-                "T_SS": rec[t_sample + "SS"],
+                "N_QSS": rec[n_sample + "QSS"],
+                "T_QSS": rec[t_sample + "QSS"],
                 "N_ALT_RATE": n_allele_rate,
                 "T_ALT_RATE": t_allele_rate,
+                "ECNT": rec["I.ECNT"],
+                "HCNT": rec["I.HCNT"],
+                "MAX_ED": rec["I.MAX_ED"],
+                "MIN_ED": rec["I.MIN_ED"],
                 "tag" : tag
             }
             records.append(qrec)
 
-        cols = [
-            "CHROM",
-            "POS",
-            "REF",
-            "ALT",
-            "FILTER",
-            "DBSNP",
-            "N_DP",
-            "T_DP",
-            "N_DP_RATE",
-            "T_DP_RATE",
-            "N_GT",
-            "T_GT",
-            "N_AD",
-            "T_AD",
-            "N_BQ",
-            "T_BQ",
-            "N_FA",
-            "T_FA",
-            "N_SS",
-            "T_SS",
-            "N_ALT_RATE",
-            "T_ALT_RATE",
-            "tag",
-            "TLOD"]
+        cols = ["CHROM", "POS", "REF", "ALT",
+                "FILTER", "TLOD", "NLOD", "DBSNP",
+                "N_DP", "T_DP", "N_DP_RATE", "T_DP_RATE", "N_GT", "T_GT",
+                "N_AD", "T_AD", "N_QSS", "T_QSS",
+                "N_ALT_RATE", "T_ALT_RATE",
+                "tag"]
 
         if records:
             df = pandas.DataFrame(records, columns=cols)
@@ -236,7 +213,6 @@ def extractMutectSNVFeatures(vcfname, tag, avg_depth=None):
             df = pandas.DataFrame(columns=cols)
 
         return df
-
 
 def extractMutectIndelFeatures(vcfname, tag, avg_depth=None):
         """ Return a data frame with features collected from the given VCF, tagged by given type """
@@ -279,28 +255,17 @@ def extractMutectIndelFeatures(vcfname, tag, avg_depth=None):
 
         logging.info("Normal sample name : %s (prefix %s) / tumour sample name : %s (prefix %s)" % (nsn, n_sample,
                                                                                                     tsn, t_sample))
-        has_warned = {}
-
-        ##FORMAT=<ID=MM,Number=2,Type=Float,Description="Average # of mismatches per ref-/consensus indel-supporting read">
-        ##FORMAT=<ID=MQS,Number=2,Type=Float,Description="Average mapping qualities of ref-/consensus indel-supporting reads">
-        ##FORMAT=<ID=NQSBQ,Number=2,Type=Float,Description="Within NQS window: average quality of bases in ref-/consensus indel-supporting reads">
-        ##FORMAT=<ID=NQSMM,Number=2,Type=Float,Description="Within NQS window: fraction of mismatching bases in ref/consensus indel-supporting reads">
-        ##FORMAT=<ID=REnd,Number=2,Type=Integer,Description="Median/mad of indel offsets from the ends of the reads">
-        ##FORMAT=<ID=RStart,Number=2,Type=Integer,Description="Median/mad of indel offsets from the starts of the reads">
-        ##FORMAT=<ID=SC,Number=4,Type=Integer,Description="Strandness: counts of forward-/reverse-aligned reference and indel-supporting reads (FwdRef,RevRef,FwdIndel,RevIndel)">
 
         features = ["CHROM", "POS", "REF", "ALT", "FILTER",
-                    "I.TLOD",
+                    "I.DB", "I.TLOD", "I.NLOD", "I.ECNT",
+                    "I.HCNT", "I.MAX_ED", "I.MIN_ED",
+                    "I.RPA", "I.RU", # indel only
                     n_sample + "GT", t_sample + "GT",
                     n_sample + "DP", t_sample + "DP",
-                    n_sample + "AD", t_sample + "AD",
-                    n_sample + "MM", t_sample + "MM",
-                    n_sample + "MQS", t_sample + "MQS",
-                    n_sample + "NQSBQ", t_sample + "NQSBQ",
-                    n_sample + "NQSMM", t_sample + "NQSMM",
-                    n_sample + "RStart", t_sample + "RStart",
-                    n_sample + "REnd", t_sample + "REnd",
-                    n_sample + "SC", t_sample + "SC"]
+                    n_sample + "QSS", t_sample + "QSS",
+                    n_sample + "AD", t_sample + "AD"]
+
+        has_warned = {}
 
         for vr in vcfExtract(vcfname, features):
             rec = {}
@@ -315,53 +280,34 @@ def extractMutectIndelFeatures(vcfname, tag, avg_depth=None):
                         has_warned["feat:" + q] = True
 
             # fix missing features
-            for q in [n_sample + "GT", t_sample + "GT",
+            for q in ["I.DB", "I.TLOD", "I.NLOD", "I.ECNT",
+                      "I.HCNT", "I.MAX_ED", "I.MIN_ED",
+                      "I.RPA", "I.RU",
+                      n_sample + "GT", t_sample + "GT",
                       n_sample + "DP", t_sample + "DP",
-                      n_sample + "AD", t_sample + "AD",
-                      n_sample + "MM", t_sample + "MM",
-                      n_sample + "MQS", t_sample + "MQS",
-                      n_sample + "NQSBQ", t_sample + "NQSBQ",
-                      n_sample + "NQSMM", t_sample + "NQSMM",
-                      n_sample + "RStart", t_sample + "RStart",
-                      n_sample + "REnd", t_sample + "REnd",
-                      n_sample + "SC", t_sample + "SC"]:
+                      n_sample + "QSS", t_sample + "QSS",
+                      n_sample + "AD", t_sample + "AD"]:
                 if not q in rec or rec[q] is None:
                     rec[q] = 0
                     if not ("feat:" + q) in has_warned:
                         logging.warn("Missing feature %s" % q)
                         has_warned["feat:" + q] = True
                 else:
-                    if q.endswith("AD") or q.endswith("MM") or q.endswith("MQS") or \
-                       q.endswith("NQSBQ") or q.endswith("NQSMM") or \
-                       q.endswith("REnd") or q.endswith("RStart"):
+                    if q.endswith("AD"):
                         if type(rec[q]) is not list:
-                            if not has_warned[q + "_PARSE_FAIL"]:
-                                logging.warn("Cannot parse %s: %s" % (q, str(rec[q])))
-                                has_warned[q + "_PARSE_FAIL"] = True
-                                rec[q] = [-1, -1]
-                            for xx in range(2):
+                            if not has_warned["AD_PARSE_FAIL"]:
+                                logging.warn("Cannot parse AD: %s" % str(rec[q]))
+                                has_warned["AD_PARSE_FAIL"] = True
+                                rec[q] = [0] * (1 + len(rec["ALT"]))
+
+                            for xx in range(0, 1 + len(rec["ALT"])):
                                 if len(rec[q]) <= xx:
-                                    rec[q].append(-1)
+                                    rec[q].append(0)
                                 else:
                                     try:
                                         rec[q][xx] = float(rec[q][xx])
                                     except ValueError:
-                                        rec[q][xx] = -1
-                    elif q.endswith("SC"):
-                        if type(rec[q]) is not list:
-                            if not has_warned[q + "_PARSE_FAIL"]:
-                                logging.warn("Cannot parse %s: %s" % (q, str(rec[q])))
-                                has_warned[q + "_PARSE_FAIL"] = True
-                                rec[q] = [-1, -1, -1, -1]
-                        else:
-                            for xx in range(4):
-                                if len(rec[q]) <= xx:
-                                    rec[q].append(-1)
-                                else:
-                                    try:
-                                        rec[q][xx] = float(rec[q][xx])
-                                    except ValueError:
-                                        rec[q][xx] = -1
+                                        rec[q][xx] = 0
                     else:
                         try:
                             rec[q] = int(rec[q])
@@ -369,7 +315,8 @@ def extractMutectIndelFeatures(vcfname, tag, avg_depth=None):
                             rec[q] = -1
 
             rec["tag"] = tag
-            rec["TLOD"] = float(rec["I.TLOD"])
+            TLOD = float(rec["I.TLOD"])
+            NLOD = float(rec["I.NLOD"])
 
             n_DP        = float(rec[n_sample + "DP"])
             t_DP        = float(rec[t_sample + "DP"])
@@ -395,8 +342,8 @@ def extractMutectIndelFeatures(vcfname, tag, avg_depth=None):
                 n_allele_alt_count = 0
             else:
                 n_allele_alt_count = 0
-                for a in xrange(1, len(rec[n_sample + "AD"])):
-                    n_allele_alt_count += float(rec[n_sample + "AD"][a])
+                for a in xrange(0, len(alleles_alt)):
+                    n_allele_alt_count += float(rec[n_sample + "AD"][a + 1])
 
             if n_allele_alt_count + n_allele_ref_count == 0:
                 n_allele_rate = 0
@@ -410,8 +357,8 @@ def extractMutectIndelFeatures(vcfname, tag, avg_depth=None):
                 t_allele_alt_count = 0
             else:
                 t_allele_alt_count = 0
-                for a in xrange(1, len(rec[t_sample + "AD"])):
-                    t_allele_alt_count += float(rec[t_sample + "AD"][a])
+                for a in xrange(0, len(alleles_alt)):
+                    t_allele_alt_count += float(rec[t_sample + "AD"][a + 1])
 
             if t_allele_alt_count + t_allele_ref_count == 0:
                 t_allele_rate = 0
@@ -425,6 +372,9 @@ def extractMutectIndelFeatures(vcfname, tag, avg_depth=None):
                 "REF": rec["REF"],
                 "ALT": ",".join(rec["ALT"]),
                 "FILTER": ",".join(rec["FILTER"]),
+                "DBSNP": rec["I.DB"],
+                "TLOD": TLOD,
+                "NLOD": NLOD,
                 "N_DP": n_DP,
                 "T_DP": t_DP,
                 "N_DP_RATE" : n_DP_ratio,
@@ -433,60 +383,26 @@ def extractMutectIndelFeatures(vcfname, tag, avg_depth=None):
                 "T_GT": rec[t_sample + "GT"],
                 "N_AD": rec[n_sample + "AD"],
                 "T_AD": rec[t_sample + "AD"],
+                "N_QSS": rec[n_sample + "QSS"],
+                "T_QSS": rec[t_sample + "QSS"],
                 "N_ALT_RATE": n_allele_rate,
                 "T_ALT_RATE": t_allele_rate,
-                "N_MM": n_sample + "MM",
-                "T_MM": t_sample + "MM",
-                "N_MQS": n_sample + "MQS",
-                "T_MQS": t_sample + "MQS",
-                "N_NQSBQ": n_sample + "NQSBQ",
-                "T_NQSBQ": t_sample + "NQSBQ",
-                "N_NQSMM": n_sample + "NQSMM",
-                "T_NQSMM": t_sample + "NQSMM",
-                "N_RStart": n_sample + "RStart",
-                "T_RStart": t_sample + "RStart",
-                "N_REnd": n_sample + "REnd",
-                "T_REnd": t_sample + "REnd",
-                "N_SC": n_sample + "SC",
-                "T_SC": t_sample + "SC",
-                "tag" : tag,
-                "TLOD": rec["TLOD"]
+                "ECNT": rec["I.ECNT"],
+                "HCNT": rec["I.HCNT"],
+                "MAX_ED": rec["I.MAX_ED"],
+                "MIN_ED": rec["I.MIN_ED"],
+                "I.RPA": rec["I.RPA"],
+                "I.RU": rec["I.RU"],
+                "tag" : tag
             }
             records.append(qrec)
 
-        cols = [
-            "CHROM",
-            "POS",
-            "REF",
-            "ALT",
-            "FILTER",
-            "DBSNP",
-            "N_DP",
-            "T_DP",
-            "N_DP_RATE",
-            "T_DP_RATE",
-            "N_GT",
-            "T_GT",
-            "N_AD",
-            "T_AD",
-            "N_ALT_RATE",
-            "T_ALT_RATE",
-            "N_MM",
-            "T_MM",
-            "N_MQS",
-            "T_MQS",
-            "N_NQSBQ",
-            "T_NQSBQ",
-            "N_NQSMM",
-            "T_NQSMM",
-            "N_RStart",
-            "T_RStart",
-            "N_REnd",
-            "T_REnd",
-            "N_SC",
-            "T_SC",
-            "tag",
-            "TLOD"]
+        cols = ["CHROM", "POS", "REF", "ALT",
+                "FILTER", "TLOD", "NLOD", "DBSNP",
+                "N_DP", "T_DP", "N_DP_RATE", "T_DP_RATE", "N_GT", "T_GT",
+                "N_AD", "T_AD", "N_QSS", "T_QSS",
+                "N_ALT_RATE", "T_ALT_RATE",
+                "tag"]
 
         if records:
             df = pandas.DataFrame(records, columns=cols)

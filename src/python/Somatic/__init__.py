@@ -133,7 +133,6 @@ class StrelkaAdmixIndelFeatures(StrelkaAdmixSNVFeatures):
                 return ",".join(map(str, val))
         return val
 
-
     def collect(self, vcfname, tag):
         """ Return a data frame with features collected from the given VCF, tagged by given type """
         if tag not in ["TP", "FN"]:
