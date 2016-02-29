@@ -98,11 +98,12 @@ def extractMutectSNVFeatures(vcfname, tag, avg_depth=None):
                         logging.warn("Missing feature %s" % q)
                         has_warned["feat:" + q] = True
                 else:
-                    if q.endswith("AD"):
+                    # list features
+                    if q.endswith("AD") or q.endswith("QSS"):
                         if type(rec[q]) is not list:
-                            if not has_warned["AD_PARSE_FAIL"]:
-                                logging.warn("Cannot parse AD: %s" % str(rec[q]))
-                                has_warned["AD_PARSE_FAIL"] = True
+                            if not has_warned[q + "_PARSE_FAIL"]:
+                                logging.warn("Cannot parse %s: %s" % (q, str(rec[q])))
+                                has_warned[q + "_PARSE_FAIL"] = True
                                 rec[q] = [0] * (1 + len(rec["ALT"]))
 
                             for xx in range(0, 1 + len(rec["ALT"])):
@@ -293,11 +294,12 @@ def extractMutectIndelFeatures(vcfname, tag, avg_depth=None):
                         logging.warn("Missing feature %s" % q)
                         has_warned["feat:" + q] = True
                 else:
-                    if q.endswith("AD"):
+                    # list features
+                    if q.endswith("AD") or q.endswith("QSS") or q.endswith("RPA"):
                         if type(rec[q]) is not list:
-                            if not has_warned["AD_PARSE_FAIL"]:
-                                logging.warn("Cannot parse AD: %s" % str(rec[q]))
-                                has_warned["AD_PARSE_FAIL"] = True
+                            if not has_warned[q + "_PARSE_FAIL"]:
+                                logging.warn("Cannot parse %s: %s" % (q, str(rec[q])))
+                                has_warned[q + "_PARSE_FAIL"] = True
                                 rec[q] = [0] * (1 + len(rec["ALT"]))
 
                             for xx in range(0, 1 + len(rec["ALT"])):
