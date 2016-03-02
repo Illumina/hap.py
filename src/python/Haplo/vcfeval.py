@@ -58,6 +58,9 @@ def runVCFEval(vcf1, vcf2, target, args):
         if args.usefiltered:
             runme += " --all-records"
 
+        if args.roc:
+            runme += " -f %s" % args.roc
+
         logging.info(runme)
         po = subprocess.Popen(runme,
                               shell=True,
