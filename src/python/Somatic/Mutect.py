@@ -191,8 +191,8 @@ def extractMutectSNVFeatures(vcfname, tag, avg_depth=None):
                 "T_AD": rec[t_sample + "AD"],
                 "N_QSS": rec[n_sample + "QSS"],
                 "T_QSS": rec[t_sample + "QSS"],
-                "N_ALT_RATE": n_allele_rate,
-                "T_ALT_RATE": t_allele_rate,
+                "N_AF": n_allele_rate,
+                "T_AF": t_allele_rate,
                 "ECNT": rec["I.ECNT"],
                 "HCNT": rec["I.HCNT"],
                 "MAX_ED": rec["I.MAX_ED"],
@@ -205,7 +205,7 @@ def extractMutectSNVFeatures(vcfname, tag, avg_depth=None):
                 "FILTER", "TLOD", "NLOD", "DBSNP",
                 "N_DP", "T_DP", "N_DP_RATE", "T_DP_RATE", "N_GT", "T_GT",
                 "N_AD", "T_AD", "N_QSS", "T_QSS",
-                "N_ALT_RATE", "T_ALT_RATE",
+                "N_AF", "T_AF",
                 "tag"]
 
         if records:
@@ -387,8 +387,8 @@ def extractMutectIndelFeatures(vcfname, tag, avg_depth=None):
                 "T_AD": rec[t_sample + "AD"],
                 "N_QSS": rec[n_sample + "QSS"],
                 "T_QSS": rec[t_sample + "QSS"],
-                "N_ALT_RATE": n_allele_rate,
-                "T_ALT_RATE": t_allele_rate,
+                "N_AF": n_allele_rate,
+                "T_AF": t_allele_rate,
                 "ECNT": rec["I.ECNT"],
                 "HCNT": rec["I.HCNT"],
                 "MAX_ED": rec["I.MAX_ED"],
@@ -403,7 +403,7 @@ def extractMutectIndelFeatures(vcfname, tag, avg_depth=None):
                 "FILTER", "TLOD", "NLOD", "DBSNP",
                 "N_DP", "T_DP", "N_DP_RATE", "T_DP_RATE", "N_GT", "T_GT",
                 "N_AD", "T_AD", "N_QSS", "T_QSS",
-                "N_ALT_RATE", "T_ALT_RATE",
+                "N_AF", "T_AF",
                 "tag"]
 
         if records:
