@@ -187,3 +187,21 @@ class Varscan2IndelRoc(ROC):
         return tableROC(tbl, "tag", "SSC")
 
 ROC.register("varscan2.indel", "hcc.varscan2.indel", Varscan2IndelRoc)
+
+
+class MutectSNVRoc(ROC):
+    """ROC calculator for MuTect SNVs"""
+
+    def from_table(self, tbl):
+        return tableROC(tbl, "tag", "TLOD", "FILTER","t_lod_fstar")
+
+ROC.register("mutect.snv", "hcc.mutect.snv", MutectSNVRoc)
+
+
+class MutectIndelRoc(ROC):
+    """ROC calculator for MuTect Indels"""
+
+    def from_table(self, tbl):
+        return tableROC(tbl, "tag", "TLOD", "FILTER","t_lod_fstar")
+
+ROC.register("mutect.indel", "hcc.mutect.indel", MutectIndelRoc)

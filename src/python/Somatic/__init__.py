@@ -100,6 +100,7 @@ class StrelkaAdmixSNVFeatures(FeatureSet):
             return ",".join(map(str, val))
         return val
 
+
     def collect(self, vcfname, tag):
         """ Return a data frame with features collected from the given VCF, tagged by given type """
         if tag not in ["TP", "FN"]:
@@ -131,7 +132,6 @@ class StrelkaAdmixIndelFeatures(StrelkaAdmixSNVFeatures):
             if type(val) is list:
                 return ",".join(map(str, val))
         return val
-
 
     def collect(self, vcfname, tag):
         """ Return a data frame with features collected from the given VCF, tagged by given type """
@@ -186,7 +186,6 @@ class MutectHCCSNVFeatures(StrelkaAdmixSNVFeatures):
 
 FeatureSet.register("hcc.mutect.snv", MutectHCCSNVFeatures)
 
-
 class MutectHCCIndelFeatures(StrelkaAdmixIndelFeatures):
     """ Collect Indel features from Mutect-to-HCC truthset comparison """
     def collect(self, vcfname, tag):
@@ -194,7 +193,8 @@ class MutectHCCIndelFeatures(StrelkaAdmixIndelFeatures):
         if tag not in ["TP", "FN"]:
             return extractMutectIndelFeatures(vcfname, tag, self.chr_depth)
         else:
-            features = ["CHROM", "POS", "REF", "ALT", "QUAL", "S.1.VT",
+            features = ["CHROM", "POS", "REF", "ALT", "QUAL",
+                        "I.MapQrange", "I.somatic", "I.filtered", "S.1.VT",
                         "I.T_ALT_RATE", "I.DP_normal", "I.DP_tumor", "I.tag", "I.count"]
         return GenericFeatures.collectFeatures(vcfname, tag, features, processor=StrelkaAdmixIndelFeatures.processValue)
 
