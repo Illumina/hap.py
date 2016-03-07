@@ -55,9 +55,10 @@ namespace haplotypes
 
 /**
  * @brief Compare two variants
- * 
+ *
  */
-DiploidComparisonOutcome compareVariants(variant::Variants & vars, int r1, int r2, int & non_snp_alleles, int & calls_1, int & calls_2)
+DiploidComparisonOutcome compareVariants(variant::Variants & vars, int r1, int r2, int & non_snp_alleles, int & calls_1, int & calls_2,
+                                         bool use_filtered_1, bool use_filtered_2)
 {
     using namespace variant;
 #ifdef DEBUG_SIMPLECMP
@@ -73,12 +74,38 @@ DiploidComparisonOutcome compareVariants(variant::Variants & vars, int r1, int r
     std::cerr << "                Call2:" << call2 << " (" << gtt2 << ")" << "\n";
 #endif
 
-    bool is_match = false;
-    bool is_ambig_1 = int(vars.ambiguous_alleles.size()) > r1 && !vars.ambiguous_alleles[r1].empty();
-    bool is_ambig_2 = int(vars.ambiguous_alleles.size()) > r2 && !vars.ambiguous_alleles[r2].empty();
+    bool is_filtered_1 = false;
+    if(!use_filtered_1)
+    {
+        for(size_t f = 0; f < call1.nfilter; ++f)
+        {
+            if(call1.filter[f] != "." && call1.filter[f] != "PASS")
+            {
+                is_filtered_1 = true;
+                break;
+            }
+        }
+    }
 
-    bool is_call_1 = !(gtt1 == gt_homref || gtt1 == gt_unknown || is_ambig_1);
-    bool is_call_2 = !(gtt2 == gt_homref || gtt2 == gt_unknown || is_ambig_2);
+    bool is_filtered_2 = false;
+    if(!use_filtered_2)
+    {
+        for(size_t f = 0; f < call2.nfilter; ++f)
+        {
+            if(call2.filter[f] != "." && call2.filter[f] != "PASS")
+            {
+                is_filtered_2 = true;
+                break;
+            }
+        }
+    }
+
+    bool is_match = false;
+    const bool is_ambig_1 = int(vars.ambiguous_alleles.size()) > r1 && !vars.ambiguous_alleles[r1].empty();
+    const bool is_ambig_2 = int(vars.ambiguous_alleles.size()) > r2 && !vars.ambiguous_alleles[r2].empty();
+
+    const bool is_call_1 = !(gtt1 == gt_homref || gtt1 == gt_unknown || is_ambig_1 || is_filtered_1);
+    const bool is_call_2 = !(gtt2 == gt_homref || gtt2 == gt_unknown || is_ambig_2 || is_filtered_2);
 
     if (is_call_1)
     {
@@ -133,7 +160,7 @@ DiploidComparisonOutcome compareVariants(variant::Variants & vars, int r1, int r
             {
                 ++non_snp_alleles;
             }
-        }  
+        }
     }
 
     if (is_call_2)
@@ -158,7 +185,7 @@ DiploidComparisonOutcome compareVariants(variant::Variants & vars, int r1, int r
             {
                 ++non_snp_alleles;
             }
-        }  
+        }
     }
 
     // only 1?
@@ -285,7 +312,7 @@ DiploidComparisonOutcome compareVariants(variant::Variants & vars, int r1, int r
     }
     else
     {
-        return dco_mismatch;        
+        return dco_mismatch;
     }
 }
 

@@ -103,7 +103,6 @@ int main(int argc, char* argv[]) {
     bool leftshift = false;
     bool always_hapcmp = false;
     bool no_hapcmp = false;
-    bool compare_raw = false;
     bool output_roc_vals = false;
 
     try
@@ -131,7 +130,6 @@ int main(int argc, char* argv[]) {
             ("preprocess-variants,V", po::value<bool>(), "Apply variant normalisations, trimming, realignment for complex variants (off by default).")
             ("leftshift", po::value<bool>(), "Left-shift indel alleles (off by default).")
             ("always-hapcmp", po::value<bool>(), "Always compare haplotype blocks (even if they match). Testing use only/slow.")
-            ("compare-raw", po::value<bool>(), "Compare raw calls also to maximize chances of matching difficult regions.")
             ("no-hapcmp", po::value<bool>(), "Disable haplotype comparison. This overrides all other haplotype comparison options.")
             ("roc-vals", po::value<bool>(), "Output GQX and qual values for truth and query in INFO (which gets preserved through quantify).")
         ;
@@ -290,11 +288,6 @@ int main(int argc, char* argv[]) {
             no_hapcmp = vm["no-hapcmp"].as< bool >();
         }
 
-        if (vm.count("compare-raw"))
-        {
-            compare_raw = vm["compare-raw"].as< bool >();
-        }
-
         if (vm.count("roc-vals"))
         {
             output_roc_vals = vm["roc-vals"].as< bool >();
@@ -334,7 +327,8 @@ int main(int argc, char* argv[]) {
         int r2 = vr.addSample(file2.c_str(), sample2.c_str());
 
         vr.setApplyFilters(apply_filters_truth, r1);
-        vr.setApplyFilters(apply_filters_query, r2);
+        /* now handled after comparison */
+        /* vr.setApplyFilters(apply_filters_query, r2); */
 
         VariantInput vi(
             ref_fasta.c_str(),
@@ -349,44 +343,10 @@ int main(int argc, char* argv[]) {
             preprocess,          // bool primitives = false
             false,               // bool homref_output
             leftshift ? hb_window-1 : 0,   // int64_t leftshift_limit
-            compare_raw         // collect_raw
+            false
             );
 
         VariantProcessor & vp = vi.getProcessor();
-
-        std::unique_ptr<VariantAlleleRemover> p_raw_allele_remover;
-        std::unique_ptr<VariantAlleleSplitter> p_raw_allele_splitter;
-        std::unique_ptr<VariantAlleleNormalizer> p_raw_allele_normalizer;
-        std::unique_ptr<VariantLocationAggregator> p_raw_aggregator;
-        std::unique_ptr<VariantAlleleUniq> p_raw_allele_uniq;
-        std::unique_ptr<VariantCallsOnly> p_raw_callsonly;
-        if(compare_raw)
-        {
-            p_raw_allele_remover = std::move(std::unique_ptr<VariantAlleleRemover>(new VariantAlleleRemover()));
-            vi.getProcessor(VariantInput::raw).addStep(*p_raw_allele_remover);
-
-            p_raw_allele_splitter = std::move(std::unique_ptr<VariantAlleleSplitter>(new VariantAlleleSplitter()));
-            vi.getProcessor(VariantInput::raw).addStep(*p_raw_allele_splitter);
-
-            if(leftshift)
-            {
-                p_raw_allele_normalizer = std::move(std::unique_ptr<VariantAlleleNormalizer>(new VariantAlleleNormalizer()));
-                p_raw_allele_normalizer->setReference(ref_fasta);
-                p_raw_allele_normalizer->setEnableRefPadding(false);
-                p_raw_allele_normalizer->setLeftshiftLimit(hb_window - 1);
-                p_raw_allele_normalizer->setEnableHomrefVariants(false);
-                vi.getProcessor(VariantInput::raw).addStep(*p_raw_allele_normalizer);
-            }
-
-            p_raw_aggregator = std::move(std::unique_ptr<VariantLocationAggregator>(new VariantLocationAggregator()));
-            vi.getProcessor(VariantInput::raw).addStep(*p_raw_aggregator);
-
-            p_raw_allele_uniq = std::move(std::unique_ptr<VariantAlleleUniq>(new VariantAlleleUniq()));
-            vi.getProcessor(VariantInput::raw).addStep(*p_raw_allele_uniq);
-
-            p_raw_callsonly = std::move(std::unique_ptr<VariantCallsOnly>(new VariantCallsOnly()));
-            vi.getProcessor(VariantInput::raw).addStep(*p_raw_callsonly);
-        }
 
         vp.setReader(vr, VariantBufferMode::buffer_block, 10*hb_window);
 
@@ -416,6 +376,10 @@ int main(int argc, char* argv[]) {
                 pvw->addHeader("##INFO=<ID=Q_DP,Number=1,Type=Float,Description=\"DP field in query VCF.\">");
                 pvw->addHeader("##INFO=<ID=T_QUAL,Number=1,Type=Float,Description=\"Qual column in truth VCF.\">");
                 pvw->addHeader("##INFO=<ID=Q_QUAL,Number=1,Type=Float,Description=\"Qual column in query VCF.\">");
+            }
+            if(apply_filters_query)
+            {
+                pvw->addHeader("##INFO=<ID=Q_FILTERED,Number=0,Type=Flag,Description=\"Filtered call in query\">");
             }
             pvw->addSample("TRUTH");
             pvw->addSample("QUERY");
@@ -456,81 +420,62 @@ int main(int argc, char* argv[]) {
                                    hb_expand,
                                    no_hapcmp,
                                    always_hapcmp,
-                                   compare_raw] ()
+                                   apply_filters_query] ()
         {
-            bool hap_match = false, hap_fail = false, hap_run = false, raw_match = false;
+            bool hap_match = false, hap_fail = false, hap_run = false;
             // try HC if we have mismatches, and if the number of calls is > 0
             if (!no_hapcmp && (always_hapcmp || (has_mismatch && calls_1 > 0 && calls_2 > 0 && n_nonsnp > 0)))
             {
-                if(compare_raw)
+                try
                 {
-                    std::list<Variants> raw_variants;
-                    while(vi.getProcessor(VariantInput::raw).advance())
+                    hap_run = true;
+                    hap_fail = true;
+                    std::list<Variants> vl_filtered = block_variants;
+                    if(apply_filters_query)
                     {
-                        Variants & vars = vi.getProcessor(VariantInput::raw).current();
-                        raw_variants.push_back(vars);
-                    }
-
-                    try
-                    {
-                        hap_run = true;
-                        hap_fail = true;
-                        hc.setRegion(chr.c_str(), std::max(int64_t(0), block_start-hb_expand), block_end + hb_expand,
-                                     raw_variants, r1, r2);
-                        DiploidComparisonResult const & hcr = hc.getResult();
-#ifdef DEBUG_XCMP
-                        std::cerr << chr << ":" << block_start << "-" << block_end << " variants: " << "\n";
-                        for(auto const & x : block_variants)
+                        for(auto & v : vl_filtered)
                         {
-                            std::cerr << x << "\n";
+                            for(auto & c : v.calls)
+                            {
+                                // turn filtered calls into no-calls
+                                for (size_t i = 0; i < c.nfilter; ++i)
+                                {
+                                    if(c.filter[i] != "PASS" && c.filter[i] != ".")
+                                    {
+                                        c.ngt = 0;
+                                        break;
+                                    }
+                                }
+                            }
                         }
-                        std::cerr << "Block result: " << "\n";
-                        std::cerr << hcr << "\n";
+                    }
+                    hc.setRegion(chr.c_str(), std::max(int64_t(0), block_start-hb_expand), block_end + hb_expand,
+                                 vl_filtered, r1, r2);
+                    DiploidComparisonResult const & hcr = hc.getResult();
+#ifdef DEBUG_XCMP
+                    std::cerr << chr << ":" << block_start << "-" << block_end << " variants: " << "\n";
+                    for(auto const & x : block_variants)
+                    {
+                        std::cerr << x << "\n";
+                    }
+                    std::cerr << "Block result: " << "\n";
+                    std::cerr << hcr << "\n";
 #endif
-                        raw_match = hap_match = hcr.outcome == dco_match;
-                        hap_fail = !(hcr.outcome == dco_match || hcr.outcome == dco_mismatch);
-                    }
-                    catch(std::runtime_error &)
+                    hap_match = hcr.outcome == dco_match;
+                    hap_fail = !(hcr.outcome == dco_match || hcr.outcome == dco_mismatch);
+                }
+                catch(std::runtime_error &e)
+                {
+                    if (error_out_stream)
                     {
-                    }
-                    catch(std::logic_error &)
-                    {
+                        *error_out_stream << chr << "\t" << block_start << "\t" << block_end+1 << "\t" << "hap_error\t" << e.what() << "\n";
                     }
                 }
-                if(!hap_match)
+                catch(std::logic_error &e)
                 {
-                    try
+                    if (error_out_stream)
                     {
-                        hap_run = true;
-                        hap_fail = true;
-                        hc.setRegion(chr.c_str(), std::max(int64_t(0), block_start-hb_expand), block_end + hb_expand,
-                                     block_variants, r1, r2);
-                        DiploidComparisonResult const & hcr = hc.getResult();
-#ifdef DEBUG_XCMP
-                        std::cerr << chr << ":" << block_start << "-" << block_end << " variants: " << "\n";
-                        for(auto const & x : block_variants)
-                        {
-                            std::cerr << x << "\n";
-                        }
-                        std::cerr << "Block result: " << "\n";
-                        std::cerr << hcr << "\n";
-#endif
-                        hap_match = hcr.outcome == dco_match;
-                        hap_fail = !(hcr.outcome == dco_match || hcr.outcome == dco_mismatch);
-                    }
-                    catch(std::runtime_error &e)
-                    {
-                        if (error_out_stream)
-                        {
-                            *error_out_stream << chr << "\t" << block_start << "\t" << block_end+1 << "\t" << "hap_error\t" << e.what() << "\n";
-                        }
-                    }
-                    catch(std::logic_error &e)
-                    {
-                        if (error_out_stream)
-                        {
-                            *error_out_stream << chr << "\t" << block_start << "\t" << block_end+1 << "\t" << "hap_error\t" << e.what() << "\n";
-                        }
+                        *error_out_stream << chr << "\t" << block_start << "\t" << block_end+1 << "\t" << "hap_error\t" << e.what() << "\n";
                     }
                 }
             }
@@ -599,11 +544,6 @@ int main(int argc, char* argv[]) {
                 result += "mismatch";
             }
 
-            if(raw_match)
-            {
-                result += "_raw";
-            }
-
             if(error_out_stream)
             {
                 *error_out_stream << chr << "\t" << block_start << "\t" << block_end+1 << "\t" << result << "\t"
@@ -622,6 +562,17 @@ int main(int argc, char* argv[]) {
                     if (hap_match)
                     {
                         v.info += ";HapMatch";
+                    }
+                    if(apply_filters_query)
+                    {
+                        for(size_t f = 0; f < v.calls[r2].nfilter; ++f)
+                        {
+                            if(v.calls[r2].filter[f] != "PASS" && v.calls[r2].filter[f] != ".")
+                            {
+                                v.info += ";Q_FILTERED";
+                                break;
+                            }
+                        }
                     }
                     pvw->put(v);
                 }
@@ -688,7 +639,7 @@ int main(int argc, char* argv[]) {
                 block_end = std::max(v.pos + v.len - 1, block_end);
             }
 
-            if(compareVariants(v, r1, r2, n_nonsnp, calls_1, calls_2) != dco_match)
+            if(compareVariants(v, r1, r2, n_nonsnp, calls_1, calls_2, !apply_filters_truth, !apply_filters_query) != dco_match)
             {
                 has_mismatch = true;
             }

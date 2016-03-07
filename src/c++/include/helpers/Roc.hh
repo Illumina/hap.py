@@ -1,6 +1,5 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -25,30 +24,69 @@
 // OR TORT INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 /**
- * Simple Diploid comparison by variant position and count
+ * Store and process observations for ROCs
  *
- * \file SimpleDiploidCompare.hh
+ * \file Roc.hh
  * \author Peter Krusche
  * \email pkrusche@illumina.com
  *
  */
+#ifndef HAPLOTYPES_ROC_HH
+#define HAPLOTYPES_ROC_HH
 
-#pragma once
+#include <memory>
+#include <vector>
 
-#include "DiploidComparisonResult.hh"
-#include "Variant.hh"
-
-namespace haplotypes
+namespace roc
 {
+    enum class DecisionType : int { FN, TP, FP, UNK, N, SIZE };
 
-    /**
-     * Compare two samples in a variants record and count non-snp alleles
-     *
-     */
-    DiploidComparisonOutcome compareVariants(variant::Variants & vars, int r1, int r2,
-                                             int & non_snp_alleles, int & calls_1, int & calls_2,
-                                             bool use_filtered_1=false, bool use_filtered_2=false);
+    template <typename E>
+    static constexpr typename std::underlying_type<E>::type to_underlying(E e) {
+        return static_cast<typename std::underlying_type<E>::type>(e);
+    }
 
-} // namespace haplotypes
+    struct Observation
+    {
+        double level;
+        DecisionType dt;
+        uint64_t n;
+    };
+
+    struct Level
+    {
+        Level() : level(-1) { for(int x = 0; x < to_underlying(DecisionType::SIZE); ++x) { counts[x] = 0; } }
+        double level;
+        uint64_t counts[to_underlying(DecisionType::SIZE)];
+
+        /** add single observation */
+        void addObs(Observation const & obs)
+        {
+            counts[to_underlying(obs.dt)] += obs.n;
+        }
+    };
+
+    class Roc {
+    public:
+        Roc();
+        ~Roc();
+        Roc(Roc && rhs);
+        Roc & operator=(Roc && rhs);
+
+        Roc(Roc const& rhs) = delete;
+        Roc & operator=(Roc const& rhs) = delete;
+
+        // add observations from second ROC
+        void add(Roc const &rhs);
+        void add(Observation const &rhs);
+
+        void getLevels(std::vector<Level> & target, bool reversed=false) const;
+    private:
+        struct RocImpl;
+        std::unique_ptr<RocImpl> _impl;
+    };
+}
+
+
+#endif //HAPLOTYPES_ROC_HH

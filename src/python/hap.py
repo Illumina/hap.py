@@ -150,10 +150,6 @@ def main():
     parser.add_argument("--no-internal-preprocessing", dest="int_preprocessing", action="store_false", default=None,
                         help="Switch off xcmp's internal VCF leftshift preprocessing.")
 
-    parser.add_argument("--match-raw", dest="int_match_raw", action="store_true", default=False,
-                        help="Add a matching step in xcmp which also matches raw variant calls. This helps"
-                             " when comparing files with very different representations.")
-
     parser.add_argument("--no-haplotype-comparison", dest="no_hc", action="store_true", default=False,
                         help="Disable haplotype comparison (only count direct GT matches as TP).")
 
@@ -534,7 +530,7 @@ def main():
             vtf.close()
             tempfiles.append(vtf.name)
             preprocessVCF(args.vcf2, vtf.name, ",".join(args.locations),
-                          not args.usefiltered,  # pass_only
+                          False,  # query filters are handled further down in matching
                           args.fixchr_query,  # chrprefix
                           args.preprocessing_norm,  # norm,
                           args.regions_bedfile,

@@ -32,14 +32,13 @@ def blocksplitWrapper(location_str, args):
                                      suffix=".chunks.bed")
     tf.close()
 
-    to_run = "blocksplit %s %s -l %s -o %s --window %i --nblocks %i -f %i" % \
+    to_run = "blocksplit %s %s -l %s -o %s --window %i --nblocks %i -f 0" % \
              (args.vcf1.replace(" ", "\\ "),
               args.vcf2.replace(" ", "\\ "),
               location_str,
               tf.name,
               args.window*2,
-              args.pieces,
-              0 if args.usefiltered or args.usefiltered_truth else 1)
+              args.pieces)
 
     tfe = tempfile.NamedTemporaryFile(delete=False,
                                       dir=args.scratch_prefix,

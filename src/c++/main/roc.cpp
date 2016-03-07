@@ -383,6 +383,11 @@ int main(int argc, char* argv[]) {
                     std::set<std::string> filters_to_remove;
                     for (auto f : _filters_to_remove) {
                         filters_to_remove.insert(f);
+                        if(f == "*")
+                        {
+                            filters.clear();
+                            break;
+                        }
                     }
                     while(it != filters.end())
                     {

@@ -96,7 +96,7 @@ def roc(roc_table, feature, filter_name, output_path, rreversed):
 
         cmdline = "roc -t label -v %s -f filter --verbose -R %i" % (feature, 1 if rreversed else 0)
         if filter_name:
-            cmdline += " -n %s" % filter_name
+            cmdline += " -n '%s'" % filter_name
 
         for n, ff in files.iteritems():
             ff["file"].close()

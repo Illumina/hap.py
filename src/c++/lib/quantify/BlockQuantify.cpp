@@ -102,6 +102,8 @@ namespace variant {
                                                     BlockQuantifyImpl::count_map_t(),
                                                     BlockQuantifyImpl::variantlist_t(),
                                                     bcfhelpers::getSampleNames(hdr),
+                                                    BlockQuantifyImpl::rocmap_t(),
+                                                    BlockQuantifyImpl::filterset_t(),
                                                     params.find("count_unk") != std::string::npos,
                                                     params.find("output_vtc") != std::string::npos,
                                                     params.find("count_homref") != std::string::npos
@@ -117,6 +119,68 @@ namespace variant {
     {
         _impl = std::move(rhs._impl);
         return *this;
+    }
+
+    void BlockQuantify::rocFiltering(std::string const &filters)
+    {
+        std::vector<std::string> _fs;
+        stringutil::split(filters, _fs, " ;,");
+        _impl->filters_to_ignore.insert(_fs.cbegin(), _fs.cend());
+    }
+
+    // add ROC decision point
+    void BlockQuantify::addROCValue(std::string const & roc_identifier,
+                                    roc::DecisionType dt,
+                                    double level,
+                                    uint64_t n,
+                                    bcf1_t * v)
+    {
+        // add observation to a roc
+        auto observe = [_impl, level, dt](std::string const & name, bool f) {
+            auto it = _impl->rocs.find(name);
+            if(it == _impl->rocs.end())
+            {
+                it = _impl->rocs.insert(std::make_pair(n, roc::Roc())).first;
+            }
+            roc::DecisionType final_dt = dt;
+            if(f)
+            {
+                if(dt == roc::DecisionType::TP)
+                {
+                    // filter-failed TPs become FNs
+                    final_dt = roc::DecisionType::FN;
+                }
+                else if(dt != roc::DecisionType::FN)
+                {
+                    // filter-failed FPs / UNKs become Ns
+                    final_dt = roc::DecisionType::N;
+                }
+            }
+            it->second.add(roc::Observation{level, final_dt, n});
+        };
+
+        bcf_unpack(v, BCF_UN_FLT);
+        bool fail = false;
+        if(!_impl->filters_to_ignore.count("*"))
+        {
+            for(int j = 0; j < v->d.n_flt; ++j)
+            {
+                std::string filter = "PASS";
+                int k = v->d.flt[j];
+                if(k >= 0)
+                {
+                    filter = bcf_hdr_int2id(_impl->hdr, BCF_DT_ID, v->d.flt[j]);
+                }
+                if(filter != "PASS" && _impl->filters_to_ignore.count(filter))
+                {
+                    fail = true;
+                }
+                observe("filter:" + filter, false);
+                observe("filter:" + roc_identifier + ":" + filter, false);
+            }
+        }
+
+        observe(roc_identifier, fail);
     }
 
     void BlockQuantify::add(bcf1_t * v)
@@ -147,6 +211,11 @@ namespace variant {
     std::map<std::string, VariantStatistics> const & BlockQuantify::getCounts() const
     {
         return _impl->count_map;
+    }
+
+    std::map<std::string, roc::Roc> const & BlockQuantify::getRocs() const
+    {
+        return _impl->rocs;
     }
 
     std::list<bcf1_t*> const & BlockQuantify::getVariants()

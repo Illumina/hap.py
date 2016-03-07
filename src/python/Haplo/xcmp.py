@@ -47,7 +47,7 @@ def xcmpWrapper(location_str, args):
         bname = ""
 
     to_run = "xcmp %s %s -l %s -o %s %s -r %s -f %i --apply-filters-truth %i -n %i -V %i --leftshift %i --expand-hapblocks %i " \
-             "--window %i --compare-raw %i --no-hapcmp %i --roc-vals %i" % \
+             "--window %i --no-hapcmp %i --roc-vals %i" % \
              (args.vcf1.replace(" ", "\\ "),
               args.vcf2.replace(" ", "\\ "),
               location_str,
@@ -61,7 +61,6 @@ def xcmpWrapper(location_str, args):
               1 if args.int_preprocessing_ls else 0,
               args.hb_expand,
               args.window,
-              1 if args.int_match_raw else 0,
               1 if args.no_hc else 0,
               1 if args.roc else 0
               )

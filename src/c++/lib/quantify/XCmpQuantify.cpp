@@ -137,6 +137,7 @@ namespace variant
         }
         const bool hapmatch = bcfhelpers::getInfoFlag(_impl->hdr, v, "HapMatch");
         const bool fail = bcfhelpers::getInfoFlag(_impl->hdr, v, "IMPORT_FAIL");
+        const bool q_filtered = bcfhelpers::getInfoFlag(_impl->hdr, v, "Q_FILTERED");
         float QQ = std::numeric_limits<float>::quiet_NaN();
         if(roc_field_is_info)
         {
@@ -155,7 +156,6 @@ namespace variant
                 if(    strcmp(key, "END") != 0
                     && strcmp(key, "VTC") != 0
                     && strcmp(key, "Regions") != 0
-                    && strcmp(key, "HapMatch") != 0
                     && strcmp(key, "BS") != 0
                     && strcmp(key, "XCMP") != 0
                     && strcmp(key, "IMPORT_FAIL") != 0
@@ -167,7 +167,7 @@ namespace variant
             }
         }
 
-        if (hapmatch && type != "TP") {
+        if (hapmatch && type != "TP" && !q_filtered) {
             kind = "hapmatch__" + type + "__" + kind;
             type = "TP";
         }
@@ -188,7 +188,7 @@ namespace variant
                                    (type + ":" + kind + ":" + gtt1 + ":" + gtt2 + ":" + ctype).c_str());
         }
 
-        if(hapmatch || type == "TP")
+        if(type == "TP")
         {
             kind = "gm";
         }
@@ -235,7 +235,7 @@ namespace variant
             it->second.add(_impl->hdr, v, i);
 
             // determine the types seen in the variant
-            if(fail || isNoCall)
+            if(fail || isNoCall || (i == 1 && q_filtered))
             {
                 key = ".:.:" + tag_string + ":" + s;
 
@@ -261,6 +261,10 @@ namespace variant
                 {
                     lts.push_back("fail");
                 }
+                else if(q_filtered)
+                {
+                    lts.push_back("filtered");
+                }
                 else
                 {
                     lts.push_back("nocall");
@@ -272,7 +276,8 @@ namespace variant
                 key = type + ":" + kind + ":" + tag_string + ":" + s;
 
                 it = _impl->count_map.find(key);
-                if (it == _impl->count_map.end()) {
+                if (it == _impl->count_map.end())
+                {
                     it = _impl->count_map.emplace(key, VariantStatistics(*(_impl->fasta_to_use),
                                                                          _impl->count_homref)).first;
                 }
@@ -285,10 +290,12 @@ namespace variant
                 // aggregate the things we have seen across samples
                 uint64_t vts_seen = 0;
                 uint64_t lt = (uint64_t) -1;
-                for (int j = 0; j < ntypes; ++j) {
+                for (int j = 0; j < ntypes; ++j)
+                {
                     vts_seen |= types[j] & 0xf;
                     vtypes.insert(types[j]);
-                    if ((types[j] & 0xf0) > 0x10) {
+                    if ((types[j] & 0xf0) > 0x10)
+                    {
                         lt = (uint64_t) (types[j] >> 4);
                     }
                 }
@@ -306,7 +313,15 @@ namespace variant
                 }
                 else
                 {
-                    bds.push_back(type);
+                    /* if(i == 0 && type == "FP") */
+                    /* { */
+                    /*     // GT/allele mismatches become FNs */
+                    /*     bds.push_back("FN"); */
+                    /* } */
+                    /* else */
+                    /* { */
+                        bds.push_back(type);
+                    /* } */
                     bks.push_back(kind);
                 }
 

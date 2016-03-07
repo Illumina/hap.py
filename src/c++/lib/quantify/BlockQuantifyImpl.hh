@@ -50,10 +50,12 @@
 #include <thread>
 
 #include "BlockQuantify.hh"
+#include "helpers/Roc.hh"
 
 namespace variant
 {
-    struct BlockQuantify::BlockQuantifyImpl {
+    struct BlockQuantify::BlockQuantifyImpl
+    {
         ~BlockQuantifyImpl();
 
         bcf_hdr_t * hdr;
@@ -63,10 +65,14 @@ namespace variant
         typedef std::list<std::string> samplenames_t;
         typedef std::map<std::string, VariantStatistics> count_map_t;
         typedef std::list<bcf1_t *> variantlist_t;
+        typedef std::map<std::string, roc::Roc> rocmap_t;
+        typedef std::set<std::string> filterset_t;
 
         count_map_t count_map;
         variantlist_t variants;
         samplenames_t samples;
+        rocmap_t rocs;
+        filterset_t filters_to_ignore;
 
         bool count_unk;
         bool output_vtc;
