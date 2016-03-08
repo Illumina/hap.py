@@ -136,11 +136,11 @@ namespace variant {
                                     bcf1_t * v)
     {
         // add observation to a roc
-        auto observe = [_impl, level, dt](std::string const & name, bool f) {
+        auto observe = [this, level, dt, n](std::string const & name, bool f) {
             auto it = _impl->rocs.find(name);
             if(it == _impl->rocs.end())
             {
-                it = _impl->rocs.insert(std::make_pair(n, roc::Roc())).first;
+                it = _impl->rocs.insert(std::make_pair(name, roc::Roc())).first;
             }
             roc::DecisionType final_dt = dt;
             if(f)

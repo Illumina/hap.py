@@ -40,6 +40,8 @@
 
 namespace roc
 {
+    const char * DecisionTypes[NDecisionTypes] { "FN", "TP", "FP", "UNK", "N" };
+
     struct Roc::RocImpl
     {
         std::vector<Observation> obs;
@@ -47,6 +49,7 @@ namespace roc
 
     Roc::Roc() : _impl(new RocImpl()) { }
     Roc::~Roc() { }
+    Roc::Roc(Roc const & rhs) : _impl(new RocImpl()) { add(rhs); }
     Roc::Roc(Roc && rhs) : _impl(std::move(rhs._impl)) { }
 
     Roc & Roc::operator=(Roc && rhs)

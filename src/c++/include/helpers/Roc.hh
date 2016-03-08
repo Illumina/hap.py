@@ -40,12 +40,13 @@
 
 namespace roc
 {
-    enum class DecisionType : int { FN, TP, FP, UNK, N, SIZE };
-
     template <typename E>
     static constexpr typename std::underlying_type<E>::type to_underlying(E e) {
         return static_cast<typename std::underlying_type<E>::type>(e);
     }
+    enum class DecisionType : int { FN, TP, FP, UNK, N, SIZE };
+    const int NDecisionTypes = to_underlying(DecisionType::SIZE);
+    extern const char * DecisionTypes[NDecisionTypes];
 
     struct Observation
     {
@@ -71,10 +72,10 @@ namespace roc
     public:
         Roc();
         ~Roc();
+        Roc(Roc const & rhs);
         Roc(Roc && rhs);
         Roc & operator=(Roc && rhs);
 
-        Roc(Roc const& rhs) = delete;
         Roc & operator=(Roc const& rhs) = delete;
 
         // add observations from second ROC

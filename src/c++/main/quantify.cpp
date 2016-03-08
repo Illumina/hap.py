@@ -71,11 +71,12 @@ int main(int argc, char* argv[]) {
     std::string file;
     std::string output;
     std::string output_vcf;
-    std::string output_roc_obs;
+    std::string output_roc;
     std::string ref;
     std::string only_regions;
     std::string qtype = "xcmp";
     std::string qq = "QUAL";
+    std::string roc_filter = "*";
 
     // limits
     std::string chr;
@@ -107,13 +108,14 @@ int main(int argc, char* argv[]) {
                 ("input-file", po::value<std::string>(), "The input file")
                 ("output-file,o", po::value<std::string>(), "The output file name (JSON Format).")
                 ("output-vcf,v", po::value<std::string>(), "Annotated VCF file (with bed annotations).")
-                ("output-roc-obs", po::value<std::string>(), "Write a table of observations for making a ROC (see also the --qq argument)")
+                ("output-roc", po::value<std::string>(), "Write ROC tables (see also the --qq and --roc-filter arguments)")
+                ("roc-filter", po::value<std::string>(), "Ignore certain filters when creating a ROC.")
+                ("qq", po::value<std::string>(), "Field to use for QQ (ROC quantity). Can be QUAL / GQ / ... / any INFO field name.")
                 ("reference,r", po::value<std::string>(), "The reference fasta file (needed only for VCF output).")
                 ("location,l", po::value<std::string>(), "Start location.")
                 ("regions,R", po::value< std::vector<std::string> >(),
                     "Region bed file. You can attach a label by prefixing with a colon, e.g. -R FP2:false-positives-type2.bed")
                 ("type", po::value<std::string>(), "Quantification method to use. Current choices are xcmp or ga4gh.")
-                ("qq", po::value<std::string>(), "Field to use for QQ (ROC quantity). Can be QUAL / GQ / ... / any INFO field name.")
                 ("only,O", po::value< std::string >(), "Bed file of locations (equivalent to -R in bcftools)")
                 ("limit-records", po::value<int64_t>(), "Maximum umber of records to process")
                 ("message-every", po::value<int64_t>(), "Print a message every N records.")
@@ -166,9 +168,9 @@ int main(int argc, char* argv[]) {
                 output_vcf = vm["output-vcf"].as< std::string >();
             }
 
-            if (vm.count("output-roc-obs"))
+            if (vm.count("output-roc"))
             {
-                output_roc_obs = vm["output-roc-obs"].as< std::string >();
+                output_roc = vm["output-roc"].as< std::string >();
             }
 
             if (vm.count("reference"))
@@ -198,6 +200,11 @@ int main(int argc, char* argv[]) {
             if (vm.count("qq"))
             {
                 qq = vm["qq"].as< std::string >();
+            }
+
+            if (vm.count("roc-filter"))
+            {
+                roc_filter = vm["roc-filter"].as< std::string >();
             }
 
             if (vm.count("limit-records"))
@@ -375,11 +382,11 @@ int main(int argc, char* argv[]) {
 
         if(bcf_hdr_nsamples(hdr) < 2)
         {
-            if(!output_roc_obs.empty())
+            if(!output_roc.empty())
             {
                 std::cerr << "[W] not enough samples in input file. Switching off ROC table calculation" << "\n";
             }
-            output_roc_obs = "";
+            output_roc = "";
         }
         else
         {
@@ -396,27 +403,29 @@ int main(int argc, char* argv[]) {
             }
             if(truth_sample_id < 0 || query_sample_id < 0)
             {
-                if(!output_roc_obs.empty())
+                if(!output_roc.empty())
                 {
                     std::cerr << "[W] Input VCF does not have TRUTH and QUERY samples. Switching off ROC table calculation" << "\n";
                 }
-                output_roc_obs = "";
+                output_roc = "";
             }
         }
 
-        std::unique_ptr<std::ofstream> roc_writer;
-        if(!output_roc_obs.empty())
+        std::unique_ptr<std::map<std::string, roc::Roc> > roc_map;
+        if(!output_roc.empty())
         {
-            roc_writer.reset(new std::ofstream(output_roc_obs));
-            *roc_writer << "CHROM\tPOS\tVT\tLT\tBD\tQQ\tFILTER" << "\n";
+            roc_map.reset(new std::map<std::string, roc::Roc>());
         }
 
         /** this is where things actually get written to files */
         std::map<std::string, VariantStatistics> count_map;
-        auto output_counts = [&count_map, &writer, &roc_writer, &blocks, hdr, truth_sample_id, query_sample_id](int min_size) {
+        auto output_counts = [&count_map, &writer, &roc_map, &blocks, hdr, truth_sample_id, query_sample_id](int min_size) {
             while(blocks.size() > (unsigned )min_size)
             {
+                // make sure we have run this block
                 blocks.front().first.get();
+
+                // output variants
                 if(writer)
                 {
                     auto const & variants = blocks.front().second->getVariants();
@@ -426,71 +435,7 @@ int main(int argc, char* argv[]) {
                     }
                 }
 
-                if(roc_writer)
-                {
-                    auto const & variants = blocks.front().second->getVariants();
-                    for(auto & v : variants)
-                    {
-                        std::string tt = bcfhelpers::getFormatString(hdr, v, "BD", truth_sample_id, "N");
-                        double qq_score = bcfhelpers::getFormatDouble(hdr, v, "QQ", query_sample_id);
-                        if(tt == "FN" || tt == "TP")
-                        {
-                            std::string tvt = bcfhelpers::getFormatString(hdr, v, "BVT", truth_sample_id, "NOCALL");
-                            std::string tlt = bcfhelpers::getFormatString(hdr, v, "BLT", truth_sample_id, "nocall");
-                            if(tvt == "NOCALL")
-                            {
-                                // skip locations only seen in query
-                                continue;
-                            }
-                            std::string chrom = bcfhelpers::getChrom(hdr, v);
-                            *roc_writer << chrom << "\t"
-                                        << v->pos << "\t"
-                                        << tvt << "\t"
-                                        << tlt << "\t"
-                                        << tt << "\t"
-                                        << qq_score << "\t";
-                            for(int j = 0; j < v->d.n_flt; ++j)
-                            {
-                                const int k = v->d.flt[j];
-                                if(k >= 0)
-                                {
-                                    if(j > 0) *roc_writer << ",";
-                                    *roc_writer << bcf_hdr_int2id(hdr, BCF_DT_ID, k);
-                                }
-                            }
-                            *roc_writer << "\n";
-                        }
-                        std::string qt = bcfhelpers::getFormatString(hdr, v, "BD", query_sample_id, "N");
-                        if(qt == "FP" || qt == "UNK")
-                        {
-                            std::string qvt = bcfhelpers::getFormatString(hdr, v, "BVT", query_sample_id, "NOCALL");
-                            std::string qlt = bcfhelpers::getFormatString(hdr, v, "BLT", query_sample_id, "nocall");
-                            if(qvt == "NOCALL")
-                            {
-                                // skip locations only seen in query
-                                continue;
-                            }
-                            std::string chrom = bcfhelpers::getChrom(hdr, v);
-                            *roc_writer << chrom << "\t"
-                                        << v->pos << "\t"
-                                        << qvt << "\t"
-                                        << qlt << "\t"
-                                        << qt << "\t"
-                                        << qq_score << "\t";
-                            for(int j = 0; j < v->d.n_flt; ++j)
-                            {
-                                const int k = v->d.flt[j];
-                                if(k >= 0)
-                                {
-                                    if(j > 0) *roc_writer << ",";
-                                    *roc_writer << bcf_hdr_int2id(hdr, BCF_DT_ID, v->d.flt[j]);
-                                }
-                            }
-                            *roc_writer << "\n";
-                        }
-                    }
-                }
-
+                // update counts
                 auto const & cm = blocks.front().second->getCounts();
                 for(auto const & c : cm)
                 {
@@ -501,6 +446,23 @@ int main(int argc, char* argv[]) {
                     else
                     {
                         it->second.add(c.second);
+                    }
+                }
+
+                // update ROC data
+                if(roc_map)
+                {
+                    auto const & rm = blocks.front().second->getRocs();
+                    for(auto const & r : rm)
+                    {
+                        auto it = roc_map->find(r.first);
+                        if (it == roc_map->end()) {
+                            roc_map->insert(r);
+                        }
+                        else
+                        {
+                            it->second.add(r.second);
+                        }
                     }
                 }
 
@@ -619,6 +581,37 @@ int main(int argc, char* argv[]) {
             hts_close(writer);
         }
         bcf_sr_destroy(reader);
+
+        if(roc_map)
+        {
+            int r = 1;
+            std::string fname = output_roc + "_" + std::to_string(r) + ".tsv";
+            std::ofstream out(fname);
+
+            out << "i" << "\t" << "roc" << "\t";
+            for(int j = 0; j < roc::NDecisionTypes; ++j)
+            {
+                out << "\t" << roc::DecisionTypes[j];
+            }
+
+            out << "\n";
+
+            for(auto & m : *roc_map) {
+                std::vector<roc::Level> levels;
+                m.second.getLevels(levels);
+                for (auto const &l : levels)
+                {
+                    out << r << "\t" << m.first;
+                    for(int j = 0; j < roc::NDecisionTypes; ++j)
+                    {
+                        out << "\t" << l.counts[j];
+                    }
+
+                    out << "\n";
+                }
+                ++r;
+            }
+        }
     }
     catch(std::runtime_error & e)
     {
