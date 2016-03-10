@@ -199,12 +199,67 @@ namespace variant {
 #ifdef DEBUG_BLOCKQUANTIFY
             lastpos = v->pos;
 #endif
+            // update fields, must output GA4GH-compliant fields
             countVariants(v);
+
+            // use BD and BVT to make ROCs
+            rocEvaluate(v);
         }
 #ifdef DEBUG_BLOCKQUANTIFY
         std::cerr << "finished block " << lastpos << " - " << _impl->variants.size() << " records on thread " << std::this_thread::get_id() << "\n";
 #endif
         _impl->fasta_to_use.reset(nullptr);
+    }
+
+    // GA4GH-VCF field-based ROC counting
+    void BlockQuantify::rocEvaluate(bcf1_t * v) {
+        if (_impl->samples.size() != 2)
+        {
+            // number of samples must be two, first one is truth, second is query
+            return;
+        }
+        std::string bd_truth = bcfhelpers::getFormatString(_impl->hdr, v, "BD", 0, ".");
+        std::string bd_query = bcfhelpers::getFormatString(_impl->hdr, v, "BD", 1, ".");
+        std::string vt_truth = bcfhelpers::getFormatString(_impl->hdr, v, "BVT", 0, ".");
+        std::string vt_query = bcfhelpers::getFormatString(_impl->hdr, v, "BVT", 1, ".");
+
+        double qq = bcfhelpers::getFormatDouble(_impl->hdr, v, "QQ", 1);
+        if(std::isnan(qq))
+        {
+            qq = 0;
+        }
+
+        if(vt_truth != "NOCALL")
+        {
+            if(bd_truth == "TP")
+            {
+                addROCValue(vt_truth, roc::DecisionType::TP, qq, 1, v);
+            }
+            else if(bd_truth == "FN")
+            {
+                addROCValue(vt_truth, roc::DecisionType::FN, qq, 1, v);
+            }
+        }
+
+        if(vt_query != "NOCALL")
+        {
+            if(bd_query == "FP")
+            {
+                addROCValue(vt_query, roc::DecisionType::FP, qq, 1, v);
+            }
+            else if(bd_query == "TP")
+            {
+                addROCValue(vt_query, roc::DecisionType::TP2, qq, 1, v);
+            }
+            else if(bd_query == "FN")
+            {
+                addROCValue(vt_query, roc::DecisionType::FN2, qq, 1, v);
+            }
+            else if(bd_query == "UNK")
+            {
+                addROCValue(vt_query, roc::DecisionType::UNK, qq, 1, v);
+            }
+        }
     }
 
     // result output

@@ -87,18 +87,48 @@ namespace roc
         }
 
 
-        Level current;
-        current.level = std::numeric_limits<double>::quiet_NaN();
+        Level last;
+        last.level = std::numeric_limits<double>::quiet_NaN();
         for(auto const & x : _impl->obs)
         {
-            current.addObs(x);
+            last.addObs(x);
             // this is probably not the best way to do this, but it works
             // because we print things to a text file in the end
-            if(!std::isnan(current.level) && std::to_string(current.level) != std::to_string(x.level))
+            if(!std::isnan(last.level) && std::to_string(last.level) != std::to_string(x.level))
             {
-                target.push_back(current);
+                target.push_back(last);
             }
-            current.level = x.level;
+            last.level = x.level;
         }
+
+        for(auto & x : target)
+        {
+            // TPs above level
+            const uint64_t tp = last.tp() - x.tp();
+            // FPs above level
+            const uint64_t fp = last.fp() - x.fp();
+            // UNKs above level
+            const uint64_t unk = last.unk() - x.unk();
+
+            // FN = FN + TPs below level
+            const uint64_t fn = last.fn() + x.tp();
+
+            // TPs above level
+            const uint64_t tp2 = last.tp2() - x.tp2();
+            // FN = FN + TPs below level
+            const uint64_t fn2 = last.fn2() + x.tp2();
+
+            // FN = FN + FPs below level + UNK below level
+            const uint64_t n = last.n() + x.fp() + x.unk();
+
+            x.fn(fn);
+            x.fn2(fn2);
+            x.n(n);
+            x.tp(tp);
+            x.tp2(tp2);
+            x.fp(fp);
+            x.unk(unk);
+        }
+
     }
 }

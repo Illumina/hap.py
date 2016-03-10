@@ -44,7 +44,23 @@ namespace roc
     static constexpr typename std::underlying_type<E>::type to_underlying(E e) {
         return static_cast<typename std::underlying_type<E>::type>(e);
     }
-    enum class DecisionType : int { FN, TP, FP, UNK, N, SIZE };
+    /**
+     * Decision types:
+     *
+     * on a ROC, we change variants depending if their level is above (PASS) or below (FAIL) the current threshold
+     *
+     * reported     PASS    FAIL    comment
+     * -------------------------------------------------------
+     * FN           FN      FN      counted against recall
+     * TP           TP      FN      counted for recall
+     * FN2          FN2     FN2     FNs in query representation
+     * TP2          TP2     FN2     TPs in query representation
+     * FP           FP      N       counted against precision
+     * UNK          UNK     N       counted as NA
+     * N            N       N       ignored / filtered
+     *
+     */
+    enum class DecisionType : int { FN, TP, FN2, TP2, FP, UNK, N, SIZE };
     const int NDecisionTypes = to_underlying(DecisionType::SIZE);
     extern const char * DecisionTypes[NDecisionTypes];
 
@@ -66,6 +82,22 @@ namespace roc
         {
             counts[to_underlying(obs.dt)] += obs.n;
         }
+
+        uint64_t tp() const { return counts[to_underlying(DecisionType::TP)]; }
+        uint64_t tp2() const { return counts[to_underlying(DecisionType::TP2)]; }
+        uint64_t fp() const { return counts[to_underlying(DecisionType::FP)]; }
+        uint64_t fn() const { return counts[to_underlying(DecisionType::FN)]; }
+        uint64_t fn2() const { return counts[to_underlying(DecisionType::FN2)]; }
+        uint64_t unk() const { return counts[to_underlying(DecisionType::UNK)]; }
+        uint64_t n() const { return counts[to_underlying(DecisionType::N)]; }
+
+        uint64_t tp(uint64_t val) { counts[to_underlying(DecisionType::TP)] = val; return val; }
+        uint64_t tp2(uint64_t val) { counts[to_underlying(DecisionType::TP2)] = val; return val; }
+        uint64_t fp(uint64_t val) { counts[to_underlying(DecisionType::FP)] = val; return val; }
+        uint64_t fn(uint64_t val) { counts[to_underlying(DecisionType::FN)] = val; return val; }
+        uint64_t fn2(uint64_t val) { counts[to_underlying(DecisionType::FN2)] = val; return val; }
+        uint64_t unk(uint64_t val) { counts[to_underlying(DecisionType::UNK)] = val; return val; }
+        uint64_t n(uint64_t val) { counts[to_underlying(DecisionType::N)] = val; return val; }
     };
 
     class Roc {

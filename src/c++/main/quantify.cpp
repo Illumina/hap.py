@@ -331,6 +331,7 @@ int main(int argc, char* argv[]) {
             qparams += "QQ:" + qq + ";";
         }
         std::unique_ptr<BlockQuantify> p_bq(std::move(makeQuantifier(hdr, ref_fasta, qtype, qparams)));
+        p_bq->rocFiltering(roc_filter);
 
         // update the header
         p_bq->updateHeader(hdr);
@@ -540,6 +541,7 @@ int main(int argc, char* argv[]) {
                 output_counts(threads);
                 blocks.emplace(std::move(f), std::move(p_bq));
                 p_bq = std::move(makeQuantifier(hdr, ref_fasta, qtype, qparams));
+                p_bq->rocFiltering(roc_filter);
                 vars_in_block = 0;
             }
 
@@ -585,15 +587,21 @@ int main(int argc, char* argv[]) {
         if(roc_map)
         {
             int r = 1;
-            std::string fname = output_roc + "_" + std::to_string(r) + ".tsv";
+            std::string fname = output_roc + ".roc.tsv";
             std::ofstream out(fname);
 
-            out << "i" << "\t" << "roc" << "\t";
+            out << "i" << "\t" << "roc" << "\t" << qq;
             for(int j = 0; j < roc::NDecisionTypes; ++j)
             {
                 out << "\t" << roc::DecisionTypes[j];
             }
 
+            out << "\t" << "recall.truth";
+            out << "\t" << "recall.query";
+            out << "\t" << "precision";
+            out << "\t" << "na";
+            out << "\t" << "total.truth";
+            out << "\t" << "total.query";
             out << "\n";
 
             for(auto & m : *roc_map) {
@@ -602,15 +610,26 @@ int main(int argc, char* argv[]) {
                 for (auto const &l : levels)
                 {
                     out << r << "\t" << m.first;
+                    out << "\t" << l.level;
                     for(int j = 0; j < roc::NDecisionTypes; ++j)
                     {
                         out << "\t" << l.counts[j];
                     }
+                    const uint64_t total_truth = l.tp() + l.fn();
+                    const uint64_t total_query = l.tp2() + l.fn2() + l.n() + l.fp() + l.unk();
+
+                    out << "\t" << static_cast<double>(l.tp()) / (total_truth);
+                    out << "\t" << static_cast<double>(l.tp2()) / (total_query);
+                    out << "\t" << static_cast<double>(l.tp()) / (l.tp2() + l.fp());
+                    out << "\t" << static_cast<double>(l.unk()) / (total_query);
+                    out << "\t" << total_truth;
+                    out << "\t" << total_query;
 
                     out << "\n";
                 }
                 ++r;
             }
+            out.close();
         }
     }
     catch(std::runtime_error & e)

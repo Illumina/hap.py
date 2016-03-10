@@ -62,60 +62,60 @@ def roc(roc_table, feature, filter_name, output_path, rreversed):
     Return a dictionary of variant types and corresponding files.
 
     """
-    tf = tempfile.NamedTemporaryFile(delete=False)
-    tf.close()
+    # tf = tempfile.NamedTemporaryFile(delete=False)
+    # tf.close()
 
-    files = {}
+    # files = {}
     result = {}
-    try:
-        def getfile(vtype, ltype):
-            fname = output_path.replace(" ", "\\ ") + \
-                "." + vtype.lower() + "." + ltype.lower() + ".data"
-            if fname not in files:
-                files[fname] = {
-                    "vtype": vtype,
-                    "ltype": ltype,
-                    "file": open(fname, "w")
-                }
-                print >>files[fname]["file"], "CHROM\tPOS\ttype\tltype\tlabel\t%s\tfilter" % feature
-            return files[fname]["file"]
+    # try:
+    #     def getfile(vtype, ltype):
+    #         fname = output_path.replace(" ", "\\ ") + \
+    #             "." + vtype.lower() + "." + ltype.lower() + ".data"
+    #         if fname not in files:
+    #             files[fname] = {
+    #                 "vtype": vtype,
+    #                 "ltype": ltype,
+    #                 "file": open(fname, "w")
+    #             }
+    #             print >>files[fname]["file"], "CHROM\tPOS\ttype\tltype\tlabel\t%s\tfilter" % feature
+    #         return files[fname]["file"]
 
-        def output_line(l):
-            ll = l.split("\t")
-            f1 = getfile(ll[2], "all")
-            f2 = getfile(ll[2], ll[3])
-            f1.write(l)
-            f2.write(l)
+    #     def output_line(l):
+    #         ll = l.split("\t")
+    #         f1 = getfile(ll[2], "all")
+    #         f2 = getfile(ll[2], ll[3])
+    #         f1.write(l)
+    #         f2.write(l)
 
-        # split / distribute ROC table recorts
-        with open(roc_table) as rt:
-            # skip header
-            next(rt)
-            for l in rt:
-                output_line(l)
+    #     # split / distribute ROC table recorts
+    #     with open(roc_table) as rt:
+    #         # skip header
+    #         next(rt)
+    #         for l in rt:
+    #             output_line(l)
 
-        cmdline = "roc -t label -v %s -f filter --verbose -R %i" % (feature, 1 if rreversed else 0)
-        if filter_name:
-            cmdline += " -n '%s'" % filter_name
+    #     cmdline = "roc -t label -v %s -f filter --verbose -R %i" % (feature, 1 if rreversed else 0)
+    #     if filter_name:
+    #         cmdline += " -n '%s'" % filter_name
 
-        for n, ff in files.iteritems():
-            ff["file"].close()
-            fname = output_path.replace(" ", "\\ ") + \
-                "." + ff["vtype"].lower() + "." + ff["ltype"].lower() + \
-                ".tsv"
-            result["Locations." + ff["vtype"].upper() + ("." + ff["ltype"].lower()
-                                                         if ff["ltype"] not in ["", "all"] else "")] = fname
-            cmdlines = cmdline + " -o %s %s" % (fname, n)
-            _run(cmdlines)
+    #     for n, ff in files.iteritems():
+    #         ff["file"].close()
+    #         fname = output_path.replace(" ", "\\ ") + \
+    #             "." + ff["vtype"].lower() + "." + ff["ltype"].lower() + \
+    #             ".tsv"
+    #         result["Locations." + ff["vtype"].upper() + ("." + ff["ltype"].lower()
+    #                                                      if ff["ltype"] not in ["", "all"] else "")] = fname
+    #         cmdlines = cmdline + " -o %s %s" % (fname, n)
+    #         _run(cmdlines)
 
-    finally:
-        tf.close()
-        _rm(tf.name)
-        _rm(tf.name + ".indel")
-        _rm(tf.name + ".fp")
-        _rm(tf.name + ".tp")
-        _rm(tf.name + ".fn")
-        # remove intermediate data -- might add an option to keep
-        for n in files.iterkeys():
-            _rm(n)
+    # finally:
+    #     tf.close()
+    #     _rm(tf.name)
+    #     _rm(tf.name + ".indel")
+    #     _rm(tf.name + ".fp")
+    #     _rm(tf.name + ".tp")
+    #     _rm(tf.name + ".fn")
+    #     # remove intermediate data -- might add an option to keep
+    #     for n in files.iterkeys():
+    #         _rm(n)
     return result

@@ -99,12 +99,15 @@ namespace variant {
         // overload to implement actual record counting
         virtual void countVariants(bcf1_t * v) = 0;
 
+        // GA4GH-VCF field-based ROC counting
+        virtual void rocEvaluate(bcf1_t * v);
+
         // add ROC decision point
-        virtual void addROCValue(std::string const & roc_identifier,
-                                 roc::DecisionType dt,
-                                 double level,
-                                 uint64_t n,
-                                 bcf1_t * v);
+        void addROCValue(std::string const & roc_identifier,
+                         roc::DecisionType dt,
+                         double level,
+                         uint64_t n,
+                         bcf1_t * v);
 
         struct BlockQuantifyImpl;
         std::unique_ptr<BlockQuantifyImpl> _impl;

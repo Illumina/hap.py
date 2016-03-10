@@ -45,7 +45,6 @@ import Haplo.blocksplit
 import Haplo.xcmp
 import Haplo.vcfeval
 import Haplo.quantify
-import Haplo.happyroc
 
 import qfy
 
