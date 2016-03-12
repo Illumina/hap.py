@@ -587,7 +587,7 @@ int main(int argc, char* argv[]) {
         if(roc_map)
         {
             int r = 1;
-            std::string fname = output_roc + ".roc.tsv";
+            std::string fname = output_roc;
             std::ofstream out(fname);
 
             out << "i" << "\t" << "roc" << "\t" << qq;
@@ -596,8 +596,7 @@ int main(int argc, char* argv[]) {
                 out << "\t" << roc::DecisionTypes[j];
             }
 
-            out << "\t" << "recall.truth";
-            out << "\t" << "recall.query";
+            out << "\t" << "recall";
             out << "\t" << "precision";
             out << "\t" << "na";
             out << "\t" << "total.truth";
@@ -619,8 +618,7 @@ int main(int argc, char* argv[]) {
                     const uint64_t total_query = l.tp2() + l.fn2() + l.n() + l.fp() + l.unk();
 
                     out << "\t" << static_cast<double>(l.tp()) / (total_truth);
-                    out << "\t" << static_cast<double>(l.tp2()) / (total_query);
-                    out << "\t" << static_cast<double>(l.tp()) / (l.tp2() + l.fp());
+                    out << "\t" << static_cast<double>(l.tp2()) / (l.tp2() + l.fp());
                     out << "\t" << static_cast<double>(l.unk()) / (total_query);
                     out << "\t" << total_truth;
                     out << "\t" << total_query;

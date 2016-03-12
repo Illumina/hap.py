@@ -37,10 +37,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 
 namespace roc
 {
-    const char * DecisionTypes[NDecisionTypes] { "FN", "TP", "FP", "UNK", "N" };
+//    enum class DecisionType : int { FN, TP, FN2, TP2, FP, UNK, N, SIZE };
+    const char * DecisionTypes[NDecisionTypes] { "FN", "TP", "FN2", "TP2", "FP", "UNK", "N" };
 
     struct Roc::RocImpl
     {
@@ -69,56 +71,43 @@ namespace roc
         _impl->obs.push_back(rhs);
     }
 
-    void Roc::getLevels(std::vector<Level> & target, bool reversed) const
+    void Roc::getLevels(std::vector<Level> & output) const
     {
-        if(!reversed)
-        {
-            std::sort(_impl->obs.begin(), _impl->obs.end(),
-                      [](Observation const & o1, Observation const & o2) -> bool {
-                          return o1.level < o2.level;
-                      });
-        }
-        else
-        {
-            std::sort(_impl->obs.begin(), _impl->obs.end(),
-                      [](Observation const & o1, Observation const & o2) -> bool {
-                          return o2.level < o1.level;
-                      });
-        }
-
+        std::sort(_impl->obs.begin(), _impl->obs.end(),
+                  [](Observation const & o1, Observation const & o2) -> bool {
+                      return o1.level < o2.level;
+                  });
 
         Level last;
+        std::vector<Level> target;
         last.level = std::numeric_limits<double>::quiet_NaN();
         for(auto const & x : _impl->obs)
         {
             last.addObs(x);
+            last.level = x.level;
             // this is probably not the best way to do this, but it works
             // because we print things to a text file in the end
-            if(!std::isnan(last.level) && std::to_string(last.level) != std::to_string(x.level))
-            {
-                target.push_back(last);
-            }
-            last.level = x.level;
+            target.push_back(last);
         }
 
         for(auto & x : target)
         {
-            // TPs above level
+            // TPs above or on level
             const uint64_t tp = last.tp() - x.tp();
-            // FPs above level
+            // FPs above or on level
             const uint64_t fp = last.fp() - x.fp();
-            // UNKs above level
+            // UNKs above or on level
             const uint64_t unk = last.unk() - x.unk();
 
-            // FN = FN + TPs below level
+            // FN = last level FNs + TPs below level
             const uint64_t fn = last.fn() + x.tp();
 
             // TPs above level
             const uint64_t tp2 = last.tp2() - x.tp2();
-            // FN = FN + TPs below level
+            // FN = FN at or below this level + TPs below level
             const uint64_t fn2 = last.fn2() + x.tp2();
 
-            // FN = FN + FPs below level + UNK below level
+            // N = n + fp below level + unk below level
             const uint64_t n = last.n() + x.fp() + x.unk();
 
             x.fn(fn);
@@ -129,6 +118,15 @@ namespace roc
             x.fp(fp);
             x.unk(unk);
         }
-
+        std::string previous_level;
+        for(auto const & x : target)
+        {
+            const std::string current_level = std::to_string(x.level);
+            if(current_level != previous_level)
+            {
+                output.push_back(x);
+                previous_level = current_level;
+            }
+        }
     }
 }

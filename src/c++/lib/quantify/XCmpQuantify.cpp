@@ -232,7 +232,27 @@ namespace variant
                 it = _impl->count_map.emplace(key, VariantStatistics(*(_impl->fasta_to_use),
                                                                      _impl->count_homref)).first;
             }
-            it->second.add(_impl->hdr, v, i);
+            int *types;
+            int ntypes = 0;
+            it->second.add(_impl->hdr, v, i, &types, &ntypes);
+
+            // aggregate the things we have seen across samples
+            uint64_t vts_seen = 0;
+            uint64_t lt = (uint64_t) -1;
+            for (int j = 0; j < ntypes; ++j)
+            {
+                vts_seen |= types[j] & 0xf;
+                vtypes.insert(types[j]);
+                if ((types[j] & 0xf0) > 0x10)
+                {
+                    lt = (uint64_t) (types[j] >> 4);
+                }
+            }
+
+            uint64_t vt = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP
+                                                     || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0 : 1);
+
+            static const char *nvs[] = {"UNK", "SNP", "INDEL", "NOCALL"};
 
             // determine the types seen in the variant
             if(fail || isNoCall || (i == 1 && q_filtered))
@@ -273,55 +293,26 @@ namespace variant
             }
             else
             {
-                key = type + ":" + kind + ":" + tag_string + ":" + s;
-
-                it = _impl->count_map.find(key);
-                if (it == _impl->count_map.end())
-                {
-                    it = _impl->count_map.emplace(key, VariantStatistics(*(_impl->fasta_to_use),
-                                                                         _impl->count_homref)).first;
-                }
-                int *types;
-                int ntypes = 0;
-
-                // count this variant
-                it->second.add(_impl->hdr, v, i, &types, &ntypes);
-
-                // aggregate the things we have seen across samples
-                uint64_t vts_seen = 0;
-                uint64_t lt = (uint64_t) -1;
-                for (int j = 0; j < ntypes; ++j)
-                {
-                    vts_seen |= types[j] & 0xf;
-                    vtypes.insert(types[j]);
-                    if ((types[j] & 0xf0) > 0x10)
-                    {
-                        lt = (uint64_t) (types[j] >> 4);
-                    }
-                }
-
-                uint64_t vt = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP
-                                                         || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0 : 1);
-
-                static const char *nvs[] = {"UNK", "SNP", "INDEL", "NOCALL"};
-
+                std::string this_type = type;
                 /** don't annotate no-calls */
                 if(vts_seen == VT_NOCALL)
                 {
+                    this_type = "N";
                     bds.push_back(".");
                     bks.push_back(".");
                 }
                 else
                 {
-                    /* if(i == 0 && type == "FP") */
-                    /* { */
-                    /*     // GT/allele mismatches become FNs */
-                    /*     bds.push_back("FN"); */
-                    /* } */
-                    /* else */
-                    /* { */
+                    if(i == 0 && type == "FP")
+                    {
+                        // GT/allele mismatches become FNs
+                        bds.push_back("FN");
+                        this_type = "FN";
+                    }
+                    else
+                    {
                         bds.push_back(type);
-                    /* } */
+                    }
                     bks.push_back(kind);
                 }
 
@@ -344,6 +335,18 @@ namespace variant
                 {
                     qqs.push_back((float)bcfhelpers::getFormatDouble(_impl->hdr, v, roc_field.c_str(), i));
                 }
+
+                key = this_type + ":" + kind + ":" + tag_string + ":" + s;
+
+                it = _impl->count_map.find(key);
+                if (it == _impl->count_map.end())
+                {
+                    it = _impl->count_map.emplace(key, VariantStatistics(*(_impl->fasta_to_use),
+                                                                         _impl->count_homref)).first;
+                }
+
+                // count this variant
+                it->second.add(_impl->hdr, v, i);
             }
             ++i;
         }

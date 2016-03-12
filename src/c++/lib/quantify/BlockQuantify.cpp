@@ -150,13 +150,31 @@ namespace variant {
                     // filter-failed TPs become FNs
                     final_dt = roc::DecisionType::FN;
                 }
+                if(dt == roc::DecisionType::TP2)
+                {
+                    // filter-failed TPs become FNs
+                    final_dt = roc::DecisionType::FN2;
+                }
                 else if(dt != roc::DecisionType::FN)
                 {
                     // filter-failed FPs / UNKs become Ns
                     final_dt = roc::DecisionType::N;
                 }
             }
-            it->second.add(roc::Observation{level, final_dt, n});
+
+            // make sure FN and N always come first
+            if( (   final_dt == roc::DecisionType::FN
+                 || final_dt == roc::DecisionType::FN2
+                 || final_dt == roc::DecisionType::N )
+                && level == 0
+                )
+            {
+                it->second.add(roc::Observation{std::numeric_limits<double>::min(), final_dt, n});
+            }
+            else
+            {
+                it->second.add(roc::Observation{level, final_dt, n});
+            }
         };
 
         bcf_unpack(v, BCF_UN_FLT);
@@ -175,8 +193,7 @@ namespace variant {
                 {
                     fail = true;
                 }
-                observe("filter:" + filter, false);
-                observe("filter:" + roc_identifier + ":" + filter, false);
+                observe("filtered:" + roc_identifier + ":" + filter, false);
             }
         }
 
@@ -250,10 +267,6 @@ namespace variant {
             else if(bd_query == "TP")
             {
                 addROCValue(vt_query, roc::DecisionType::TP2, qq, 1, v);
-            }
-            else if(bd_query == "FN")
-            {
-                addROCValue(vt_query, roc::DecisionType::FN2, qq, 1, v);
             }
             else if(bd_query == "UNK")
             {

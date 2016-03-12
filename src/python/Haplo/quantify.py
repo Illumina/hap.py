@@ -106,6 +106,9 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
     if roc_val:
         run_str += " --qq %s" % roc_val
 
+    if roc_filter:
+        run_str += " --roc-filter '%s'" % roc_filter
+
     if clean_info:
         run_str += " --clean-info 1"
     else:

@@ -114,7 +114,7 @@ namespace roc
         void add(Roc const &rhs);
         void add(Observation const &rhs);
 
-        void getLevels(std::vector<Level> & target, bool reversed=false) const;
+        void getLevels(std::vector<Level> & target) const;
     private:
         struct RocImpl;
         std::unique_ptr<RocImpl> _impl;

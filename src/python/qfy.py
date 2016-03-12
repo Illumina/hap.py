@@ -58,7 +58,7 @@ def quantify(args):
     roc_table = None
 
     if args.roc:
-        roc_table = args.reports_prefix + ".rocdata.tsv"
+        roc_table = args.reports_prefix + ".roc.tsv"
 
     counts = Haplo.quantify.run_quantify(vcf_name,
                                          json_name,
@@ -70,6 +70,7 @@ def quantify(args):
                                          qtype=args.type,
                                          roc_val=args.roc,
                                          roc_file=roc_table,
+                                         roc_filter=args.roc_filter,
                                          clean_info=not args.preserve_info)
 
     df = pandas.DataFrame(counts)
@@ -171,16 +172,16 @@ def quantify(args):
         print "Benchmarking Summary:"
         print str(essential_numbers)
 
-    if args.roc:
-        res = Haplo.happyroc.roc(roc_table,
-                                 args.roc,
-                                 args.roc_filter,
-                                 args.reports_prefix + ".roc",
-                                 args.roc_reversed)
+    # if args.roc:
+    #     res = Haplo.happyroc.roc(roc_table,
+    #                              args.roc,
+    #                              args.roc_filter,
+    #                              args.reports_prefix + ".roc",
+    #                              args.roc_reversed)
 
-        for t in res.iterkeys():
-            rocdf = pandas.read_table(res[t])
-            metrics_output["metrics"].append(dataframeToMetricsTable("roc." + t, rocdf))
+    #     for t in res.iterkeys():
+    #         rocdf = pandas.read_table(res[t])
+    #         metrics_output["metrics"].append(dataframeToMetricsTable("roc." + t, rocdf))
 
     with open(args.reports_prefix + ".metrics.json", "w") as fp:
         json.dump(metrics_output, fp)
