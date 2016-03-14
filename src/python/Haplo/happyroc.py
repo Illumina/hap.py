@@ -19,10 +19,11 @@
 #
 
 import os
-import tempfile
+import re
 import subprocess
 import logging
-
+import pandas
+import itertools
 
 def _rm(f):
     """ Quietly delete """
@@ -56,66 +57,34 @@ def _run(cmd):
     return o
 
 
-def roc(roc_table, feature, filter_name, output_path, rreversed):
+def roc(roc_table, output_path):
     """ Calculate SNP and indel ROC.
 
     Return a dictionary of variant types and corresponding files.
 
     """
-    # tf = tempfile.NamedTemporaryFile(delete=False)
-    # tf.close()
-
-    # files = {}
     result = {}
-    # try:
-    #     def getfile(vtype, ltype):
-    #         fname = output_path.replace(" ", "\\ ") + \
-    #             "." + vtype.lower() + "." + ltype.lower() + ".data"
-    #         if fname not in files:
-    #             files[fname] = {
-    #                 "vtype": vtype,
-    #                 "ltype": ltype,
-    #                 "file": open(fname, "w")
-    #             }
-    #             print >>files[fname]["file"], "CHROM\tPOS\ttype\tltype\tlabel\t%s\tfilter" % feature
-    #         return files[fname]["file"]
+    header = None
+    with open(roc_table) as rt:
+        for l in rt:
+            l = l.strip()
+            if not header:
+                header = l.split("\t")
+            else:
+                rec = {}
+                for k, v in itertools.izip(header, l.split("\t")):
+                    rec[k] = v
+                if "roc" in rec:
+                    roc = rec["roc"]
+                    if roc not in result:
+                        result[roc] = [rec]
+                    else:
+                        result[roc].append(rec)
 
-    #     def output_line(l):
-    #         ll = l.split("\t")
-    #         f1 = getfile(ll[2], "all")
-    #         f2 = getfile(ll[2], ll[3])
-    #         f1.write(l)
-    #         f2.write(l)
-
-    #     # split / distribute ROC table recorts
-    #     with open(roc_table) as rt:
-    #         # skip header
-    #         next(rt)
-    #         for l in rt:
-    #             output_line(l)
-
-    #     cmdline = "roc -t label -v %s -f filter --verbose -R %i" % (feature, 1 if rreversed else 0)
-    #     if filter_name:
-    #         cmdline += " -n '%s'" % filter_name
-
-    #     for n, ff in files.iteritems():
-    #         ff["file"].close()
-    #         fname = output_path.replace(" ", "\\ ") + \
-    #             "." + ff["vtype"].lower() + "." + ff["ltype"].lower() + \
-    #             ".tsv"
-    #         result["Locations." + ff["vtype"].upper() + ("." + ff["ltype"].lower()
-    #                                                      if ff["ltype"] not in ["", "all"] else "")] = fname
-    #         cmdlines = cmdline + " -o %s %s" % (fname, n)
-    #         _run(cmdlines)
-
-    # finally:
-    #     tf.close()
-    #     _rm(tf.name)
-    #     _rm(tf.name + ".indel")
-    #     _rm(tf.name + ".fp")
-    #     _rm(tf.name + ".tp")
-    #     _rm(tf.name + ".fn")
-    #     # remove intermediate data -- might add an option to keep
-    #     for n in files.iterkeys():
-    #         _rm(n)
+    for k, v in result.items():
+        result[k] = pandas.DataFrame(v, columns=header)
+        vt = k.replace("f:", "")
+        vt = re.sub("[^A-Za-z0-9\\.\\-_]", "_", vt, flags=re.IGNORECASE)
+        if output_path:
+            result[k].to_csv(output_path + "." + vt + ".csv")
     return result

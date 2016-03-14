@@ -150,7 +150,7 @@ namespace variant {
                     // filter-failed TPs become FNs
                     final_dt = roc::DecisionType::FN;
                 }
-                if(dt == roc::DecisionType::TP2)
+                else if(dt == roc::DecisionType::TP2)
                 {
                     // filter-failed TPs become FNs
                     final_dt = roc::DecisionType::FN2;
@@ -179,25 +179,26 @@ namespace variant {
 
         bcf_unpack(v, BCF_UN_FLT);
         bool fail = false;
-        if(!_impl->filters_to_ignore.count("*"))
+        for(int j = 0; j < v->d.n_flt; ++j)
         {
-            for(int j = 0; j < v->d.n_flt; ++j)
+            std::string filter = "PASS";
+            int k = v->d.flt[j];
+            if(k >= 0)
             {
-                std::string filter = "PASS";
-                int k = v->d.flt[j];
-                if(k >= 0)
-                {
-                    filter = bcf_hdr_int2id(_impl->hdr, BCF_DT_ID, v->d.flt[j]);
-                }
-                if(filter != "PASS" && _impl->filters_to_ignore.count(filter))
+                filter = bcf_hdr_int2id(_impl->hdr, BCF_DT_ID, v->d.flt[j]);
+            }
+            if(filter != "PASS" && filter != "")
+            {
+                if(!_impl->filters_to_ignore.count("*") && !_impl->filters_to_ignore.count(filter))
                 {
                     fail = true;
                 }
-                observe("filtered:" + roc_identifier + ":" + filter, false);
+                observe("f:" + roc_identifier + ":" + filter, false);
             }
         }
 
-        observe(roc_identifier, fail);
+        observe(roc_identifier + ":PASS", fail);
+        observe(roc_identifier, false);
     }
 
     void BlockQuantify::add(bcf1_t * v)

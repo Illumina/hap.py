@@ -71,7 +71,20 @@ namespace roc
         _impl->obs.push_back(rhs);
     }
 
-    void Roc::getLevels(std::vector<Level> & output) const
+    Level Roc::getTotals() const
+    {
+        Level last;
+        last.level = std::numeric_limits<double>::quiet_NaN();
+        for(auto const & x : _impl->obs)
+        {
+            last.addObs(x);
+            last.level = x.level;
+        }
+
+        return last;
+    }
+
+    void Roc::getLevels(std::vector<Level> & output, double roc_delta) const
     {
         std::sort(_impl->obs.begin(), _impl->obs.end(),
                   [](Observation const & o1, Observation const & o2) -> bool {
@@ -118,15 +131,43 @@ namespace roc
             x.fp(fp);
             x.unk(unk);
         }
-        std::string previous_level;
+
+        if(target.empty())
+        {
+            return;
+        }
+        Level first;
+        Level previous = target.front();
+        double previous_level = previous.level;
+        bool is_first = true;
         for(auto const & x : target)
         {
-            const std::string current_level = std::to_string(x.level);
-            if(current_level != previous_level)
+            bool push_now = false;
+            if(is_first)
             {
-                output.push_back(x);
-                previous_level = current_level;
+                push_now = true;
+                is_first = false;
             }
+            else if(roc_delta < std::numeric_limits<double>::epsilon())
+            {
+                const std::string cur = std::to_string(x.level);
+                const std::string prev = std::to_string(previous_level);
+                push_now = cur != prev;
+            }
+            else
+            {
+                push_now = fabs(x.level - previous_level) > roc_delta;
+            }
+            if(push_now)
+            {
+                output.push_back(first);
+                output.push_back(previous);
+                first = x;
+                previous_level = x.level;
+            }
+            previous = x;
         }
+        // push last
+        output.push_back(previous);
     }
 }

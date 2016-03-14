@@ -98,6 +98,39 @@ namespace roc
         uint64_t fn2(uint64_t val) { counts[to_underlying(DecisionType::FN2)] = val; return val; }
         uint64_t unk(uint64_t val) { counts[to_underlying(DecisionType::UNK)] = val; return val; }
         uint64_t n(uint64_t val) { counts[to_underlying(DecisionType::N)] = val; return val; }
+
+        uint64_t totalTruth() const { return tp() + fn(); }
+        // total variants reported by query at this level.
+        uint64_t totalQuery() const { return tp2() + fp() + unk(); }
+
+        /** recall relative to truth */
+        double recall() const
+        {
+            const uint64_t total_truth = totalTruth();
+            return (total_truth == 0) ? 0 : static_cast<double>(tp()) / (total_truth);
+        }
+
+        /** relative precision of query */
+        double precision() const
+        {
+            const uint64_t total_query = totalQuery();
+            return (total_query == 0) ? 0 : static_cast<double>(tp2()) / (tp2() + fp());
+        }
+
+        /** fraction of query calls that are UNK */
+        double na() const
+        {
+            const uint64_t total_query = totalQuery();
+            return (total_query == 0) ? 0 : static_cast<double>(unk()) / (total_query);
+        }
+
+        /** F1 score: https://en.wikipedia.org/wiki/F1_score */
+        double fScore() const
+        {
+            const double p = precision();
+            const double r = recall();
+            return p*r / (p + r);
+        }
     };
 
     class Roc {
@@ -114,7 +147,8 @@ namespace roc
         void add(Roc const &rhs);
         void add(Observation const &rhs);
 
-        void getLevels(std::vector<Level> & target) const;
+        void getLevels(std::vector<Level> & target, double roc_delta=0) const;
+        Level getTotals() const;
     private:
         struct RocImpl;
         std::unique_ptr<RocImpl> _impl;

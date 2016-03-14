@@ -72,11 +72,13 @@ int main(int argc, char* argv[]) {
     std::string output;
     std::string output_vcf;
     std::string output_roc;
+    std::string output_summary;
     std::string ref;
     std::string only_regions;
     std::string qtype = "xcmp";
     std::string qq = "QUAL";
-    std::string roc_filter = "*";
+    std::string roc_filter = "";
+    double roc_delta = 0.1;
 
     // limits
     std::string chr;
@@ -90,6 +92,7 @@ int main(int argc, char* argv[]) {
     bool count_homref = false;
     bool output_vtc = true;
     bool clean_info = true;
+    bool output_filter_rocs = true;
 
     int threads = 1;
     int blocksize = 20000;
@@ -109,7 +112,10 @@ int main(int argc, char* argv[]) {
                 ("output-file,o", po::value<std::string>(), "The output file name (JSON Format).")
                 ("output-vcf,v", po::value<std::string>(), "Annotated VCF file (with bed annotations).")
                 ("output-roc", po::value<std::string>(), "Write ROC tables (see also the --qq and --roc-filter arguments)")
+                ("output-summary", po::value<std::string>(), "Output a summary table with TP / FP / FN / UNK counts, precision, recall, etc.")
+                ("output-filter-rocs", po::value<bool>(), "Output ROC levels for filters.")
                 ("roc-filter", po::value<std::string>(), "Ignore certain filters when creating a ROC.")
+                ("roc-delta", po::value<double>(), "Minium spacing of levels on ROC QQ trace.")
                 ("qq", po::value<std::string>(), "Field to use for QQ (ROC quantity). Can be QUAL / GQ / ... / any INFO field name.")
                 ("reference,r", po::value<std::string>(), "The reference fasta file (needed only for VCF output).")
                 ("location,l", po::value<std::string>(), "Start location.")
@@ -173,6 +179,11 @@ int main(int argc, char* argv[]) {
                 output_roc = vm["output-roc"].as< std::string >();
             }
 
+            if (vm.count("output-summary"))
+            {
+                output_summary = vm["output-summary"].as< std::string >();
+            }
+
             if (vm.count("reference"))
             {
                 ref = vm["reference"].as< std::string >();
@@ -207,6 +218,11 @@ int main(int argc, char* argv[]) {
                 roc_filter = vm["roc-filter"].as< std::string >();
             }
 
+            if (vm.count("roc-delta"))
+            {
+                roc_delta = vm["roc-delta"].as< double >();
+            }
+
             if (vm.count("limit-records"))
             {
                 rlimit = vm["limit-records"].as< int64_t >();
@@ -235,6 +251,11 @@ int main(int argc, char* argv[]) {
             if (vm.count("clean-info"))
             {
                 clean_info = vm["clean-info"].as< bool >();
+            }
+
+            if (vm.count("output-filter-rocs"))
+            {
+                output_filter_rocs = vm["output-filter-rocs"].as< bool >();
             }
 
             if (vm.count("threads"))
@@ -587,47 +608,157 @@ int main(int argc, char* argv[]) {
         if(roc_map)
         {
             int r = 1;
-            std::string fname = output_roc;
-            std::ofstream out(fname);
-
-            out << "i" << "\t" << "roc" << "\t" << qq;
-            for(int j = 0; j < roc::NDecisionTypes; ++j)
+            auto makeHeader = [qq](std::ostream & out, bool print_qq)
             {
-                out << "\t" << roc::DecisionTypes[j];
+                out << "i" << "\t" << "type";
+                if(print_qq)
+                {
+                    out << "\t" << qq;
+                }
+                for(int j = 0; j < roc::NDecisionTypes; ++j)
+                {
+                    if(!print_qq && j == roc::to_underlying(roc::DecisionType::FN2))
+                    {
+                        continue;
+                    }
+                    out << "\t" << roc::DecisionTypes[j];
+                }
+
+                out << "\t" << "recall";
+                out << "\t" << "precision";
+                out << "\t" << "f1_score";
+                out << "\t" << "na";
+                out << "\t" << "total.truth";
+                out << "\t" << "total.query";
+                out << "\n";
+            };
+
+            std::ofstream out_roc(output_roc);
+            std::unique_ptr<std::ofstream> out_summary;
+
+            makeHeader(out_roc, true);
+            if(!output_summary.empty())
+            {
+                out_summary.reset(new std::ofstream(output_summary));
+                makeHeader(*out_summary, false);
             }
 
-            out << "\t" << "recall";
-            out << "\t" << "precision";
-            out << "\t" << "na";
-            out << "\t" << "total.truth";
-            out << "\t" << "total.query";
-            out << "\n";
-
             for(auto & m : *roc_map) {
-                std::vector<roc::Level> levels;
-                m.second.getLevels(levels);
-                for (auto const &l : levels)
+                // filter ROCs just give numbers of TPs / FPs / UNKs filtered by
+                // each filter at each level
+                if(m.first.substr(0, 2) == "f:")
                 {
-                    out << r << "\t" << m.first;
-                    out << "\t" << l.level;
-                    for(int j = 0; j < roc::NDecisionTypes; ++j)
+                    if(out_summary)
                     {
-                        out << "\t" << l.counts[j];
+                        const roc::Level l = m.second.getTotals();
+                        *out_summary << r << "\t" << m.first;
+                        for(int j = 0; j < roc::NDecisionTypes; ++j)
+                        {
+                            if(j == roc::to_underlying(roc::DecisionType::FN2))
+                            {
+                                continue;
+                            }
+                            if( j == roc::to_underlying(roc::DecisionType::TP)
+                                || j == roc::to_underlying(roc::DecisionType::TP2)
+                                || j == roc::to_underlying(roc::DecisionType::FP)
+                                || j == roc::to_underlying(roc::DecisionType::UNK)
+                                )
+                            {
+                                *out_summary << "\t" << l.counts[j];
+                            }
+                            else
+                            {
+                                *out_summary << "\t" << ".";
+                            }
+                        }
+                        // don't calculate these here
+                        *out_summary << "\t" << ".";
+                        *out_summary << "\t" << ".";
+                        *out_summary << "\t" << ".";
+                        *out_summary << "\t" << ".";
+                        *out_summary << "\t" << ".";
+                        *out_summary << "\n";
                     }
-                    const uint64_t total_truth = l.tp() + l.fn();
-                    const uint64_t total_query = l.tp2() + l.fn2() + l.n() + l.fp() + l.unk();
+                    if(output_filter_rocs)
+                    {
+                        std::vector<roc::Level> levels;
+                        m.second.getLevels(levels, roc_delta);
+                        for (auto const &l : levels)
+                        {
+                            out_roc << r << "\t" << m.first;
+                            out_roc << "\t" << l.level;
+                            for(int j = 0; j < roc::NDecisionTypes; ++j)
+                            {
+                                if( j == roc::to_underlying(roc::DecisionType::TP)
+                                    || j == roc::to_underlying(roc::DecisionType::TP2)
+                                    || j == roc::to_underlying(roc::DecisionType::FP)
+                                    || j == roc::to_underlying(roc::DecisionType::UNK)
+                                    )
+                                {
+                                    out_roc << "\t" << l.counts[j];
+                                }
+                                else
+                                {
+                                    out_roc << "\t" << ".";
+                                }
+                            }
+                            // don't calculate these here
+                            out_roc << "\t" << ".";
+                            out_roc << "\t" << ".";
+                            out_roc << "\t" << ".";
+                            out_roc << "\t" << ".";
+                            out_roc << "\t" << ".";
 
-                    out << "\t" << static_cast<double>(l.tp()) / (total_truth);
-                    out << "\t" << static_cast<double>(l.tp2()) / (l.tp2() + l.fp());
-                    out << "\t" << static_cast<double>(l.unk()) / (total_query);
-                    out << "\t" << total_truth;
-                    out << "\t" << total_query;
+                            out_roc << "\n";
+                        }
+                    }
+                }
+                else
+                {
+                    if(out_summary)
+                    {
+                        const roc::Level l = m.second.getTotals();
+                        *out_summary << r << "\t" << m.first;
+                        for(int j = 0; j < roc::NDecisionTypes; ++j)
+                        {
+                            if(j == roc::to_underlying(roc::DecisionType::FN2))
+                            {
+                                continue;
+                            }
+                            *out_summary << "\t" << l.counts[j];
+                        }
+                        *out_summary << "\t" << l.recall();
+                        *out_summary << "\t" << l.precision();
+                        *out_summary << "\t" << l.fScore();
+                        *out_summary << "\t" << l.na();
+                        *out_summary << "\t" << l.totalTruth();
+                        *out_summary << "\t" << l.totalQuery();
 
-                    out << "\n";
+                        *out_summary << "\n";
+                    }
+                    std::vector<roc::Level> levels;
+                    m.second.getLevels(levels, roc_delta);
+                    for (auto const &l : levels)
+                    {
+                        out_roc << r << "\t" << m.first;
+                        out_roc << "\t" << l.level;
+                        for(int j = 0; j < roc::NDecisionTypes; ++j)
+                        {
+                            out_roc << "\t" << l.counts[j];
+                        }
+                        out_roc << "\t" << l.recall();
+                        out_roc << "\t" << l.precision();
+                        out_roc << "\t" << l.fScore();
+                        out_roc << "\t" << l.na();
+                        out_roc << "\t" << l.totalTruth();
+                        out_roc << "\t" << l.totalQuery();
+
+                        out_roc << "\n";
+                    }
                 }
                 ++r;
             }
-            out.close();
+            out_roc.close();
         }
     }
     catch(std::runtime_error & e)
