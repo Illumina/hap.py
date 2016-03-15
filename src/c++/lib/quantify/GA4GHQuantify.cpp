@@ -95,6 +95,7 @@ namespace variant
         std::string tag_string = bcfhelpers::getInfoString(_impl->hdr, v, "Regions", "");
         std::set<int> vtypes;
         std::vector<std::string> bds;
+        std::vector<std::string> bis;
         std::vector<std::string> vts;
         std::vector<std::string> lts;
 
@@ -134,9 +135,19 @@ namespace variant
             // determine the types seen in the variant
             int *types;
             int ntypes = 0;
+            std::set<std::string> * p_extracounts = NULL;
 
             // count this variant
-            it->second.add(_impl->hdr, v, si, &types, &ntypes);
+            it->second.add(_impl->hdr, v, si, &types, &ntypes, &p_extracounts);
+
+            if(p_extracounts)
+            {
+                bis.push_back(VariantStatistics::extraCountsToBI(*p_extracounts));
+            }
+            else
+            {
+                bis.push_back(".");
+            }
 
             // aggregate the things we have seen across samples
             uint64_t vts_seen = 0;
@@ -166,6 +177,7 @@ namespace variant
         }
 
         bcfhelpers::setFormatStrings(_impl->hdr, v, "BD", bds);
+        bcfhelpers::setFormatStrings(_impl->hdr, v, "BI", bis);
         bcfhelpers::setFormatStrings(_impl->hdr, v, "BVT", vts);
         bcfhelpers::setFormatStrings(_impl->hdr, v, "BLT", lts);
         if (_impl->output_vtc && !vtypes.empty()) {

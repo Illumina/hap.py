@@ -197,6 +197,9 @@ namespace variant {
             }
         }
 
+        const std::string bi_truth = bcfhelpers::getFormatString(_impl->hdr, v, "BI", 0, ".");
+        const std::string bi_query = bcfhelpers::getFormatString(_impl->hdr, v, "BI", 1, ".");
+
         observe(roc_identifier + ":PASS", fail);
         observe(roc_identifier, false);
     }
@@ -236,10 +239,10 @@ namespace variant {
             // number of samples must be two, first one is truth, second is query
             return;
         }
-        std::string bd_truth = bcfhelpers::getFormatString(_impl->hdr, v, "BD", 0, ".");
-        std::string bd_query = bcfhelpers::getFormatString(_impl->hdr, v, "BD", 1, ".");
-        std::string vt_truth = bcfhelpers::getFormatString(_impl->hdr, v, "BVT", 0, ".");
-        std::string vt_query = bcfhelpers::getFormatString(_impl->hdr, v, "BVT", 1, ".");
+        const std::string bd_truth = bcfhelpers::getFormatString(_impl->hdr, v, "BD", 0, ".");
+        const std::string bd_query = bcfhelpers::getFormatString(_impl->hdr, v, "BD", 1, ".");
+        const std::string vt_truth = bcfhelpers::getFormatString(_impl->hdr, v, "BVT", 0, ".");
+        const std::string vt_query = bcfhelpers::getFormatString(_impl->hdr, v, "BVT", 1, ".");
 
         double qq = bcfhelpers::getFormatDouble(_impl->hdr, v, "QQ", 1);
         if(std::isnan(qq))

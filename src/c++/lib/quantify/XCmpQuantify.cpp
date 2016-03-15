@@ -208,6 +208,7 @@ namespace variant
         std::set<int> vtypes;
         std::vector<std::string> bds;
         std::vector<std::string> bks;
+        std::vector<std::string> bis;
         std::vector<std::string> vts;
         std::vector<std::string> lts;
         std::vector<float> qqs;
@@ -234,7 +235,8 @@ namespace variant
             }
             int *types;
             int ntypes = 0;
-            it->second.add(_impl->hdr, v, i, &types, &ntypes);
+            std::set<std::string> * p_extracounts = NULL;
+            it->second.add(_impl->hdr, v, i, &types, &ntypes, &p_extracounts);
 
             // aggregate the things we have seen across samples
             uint64_t vts_seen = 0;
@@ -249,6 +251,20 @@ namespace variant
                 }
             }
 
+            if(p_extracounts)
+            {
+                bis.push_back(VariantStatistics::extraCountsToBI(*p_extracounts));
+            }
+            else
+            {
+                bis.push_back(".");
+            }
+
+            /** vt = 0 -> UNK
+             *  vt = 1 -> SNP
+             *  vt = 2 -> INDEL
+             *  vt = 3 -> NOCALL
+             */
             uint64_t vt = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP
                                                      || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0 : 1);
 
@@ -353,6 +369,7 @@ namespace variant
 
         bcfhelpers::setFormatStrings(_impl->hdr, v, "BD", bds);
         bcfhelpers::setFormatStrings(_impl->hdr, v, "BK", bks);
+        bcfhelpers::setFormatStrings(_impl->hdr, v, "BI", bis);
         bcfhelpers::setFormatStrings(_impl->hdr, v, "BVT", vts);
         bcfhelpers::setFormatStrings(_impl->hdr, v, "BLT", lts);
         bcfhelpers::setFormatFloats(_impl->hdr, v, "QQ", qqs);
