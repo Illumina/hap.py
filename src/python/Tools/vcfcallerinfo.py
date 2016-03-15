@@ -93,7 +93,7 @@ class CallerInfo(object):
                     except:
                         cp[2] = hf["value"]
                     source_found = True
-                elif k == "GATKCommandLine":
+                elif k.startswith("GATKCommandLine"):
                     caller = "GATK"
                     try:
                         caller += "-" + hf["values"]["ID"]
