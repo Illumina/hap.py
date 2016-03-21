@@ -152,6 +152,20 @@ else
 fi
 
 ##############################################################
+# Test GA4GH quantification
+##############################################################
+
+/bin/bash ${DIR}/run_quantify_test.sh
+
+if [[ $? -ne 0 ]]; then
+	echo "Quantify integration test FAILED!"
+	exit 1
+else
+	echo "Quantify integration test SUCCEEDED!"
+fi
+
+
+##############################################################
 # Test Hap.py variant decomposition into primitives
 ##############################################################
 

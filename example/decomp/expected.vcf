@@ -43,6 +43,7 @@
 ##INFO=<ID=CIGAR,Number=A,Type=String,Description="CIGAR alignment for each alternate indel allele">
 ##INFO=<ID=HapMatch,Number=0,Type=Flag,Description="Variant is in matching haplotype block">
 ##INFO=<ID=IDREP,Number=A,Type=Integer,Description="Number of times RU is repeated in indel allele.">
+##INFO=<ID=Q_FILTERED,Number=0,Type=Flag,Description="Filtered call in query">
 ##INFO=<ID=REFREP,Number=A,Type=Integer,Description="Number of times RU is repeated in reference.">
 ##INFO=<ID=RU,Number=A,Type=String,Description="Smallest repeating sequence unit extended or contracted in the indel allele relative to the reference. RUs are not reported if longer than 20 bases.">
 ##INFO=<ID=SNVHPOL,Number=1,Type=Integer,Description="SNV contextual homopolymer length">
@@ -66,12 +67,15 @@
 ##Method=<ID=cgi,Description="Method=CompleteGenomics">
 ##Method=<ID=cortex,Description="Method=cortex-1.0.5.11">
 ##Method=<ID=isaac2,Description="Aligner=isaac_aligner-02.14.10.23;VariantCaller=isaac_variant_caller-2.1.4.1">
+##INFO=<ID=BS,Number=.,Type=Integer,Description="Benchmarking superlocus ID for these variants.">
+##FORMAT=<ID=BD,Number=1,Type=String,Description="Decision for call (TP/FP/FN/N)">
+##FORMAT=<ID=BK,Number=1,Type=String,Description="Sub-type for decision (match/mismatch type)">
+##FORMAT=<ID=BI,Number=1,Type=String,Description="Additional comparison information">
+##FORMAT=<ID=QQ,Number=1,Type=Float,Description="Variant quality for ROC creation.">
 ##INFO=<ID=Regions,Number=.,Type=String,Description="Tags for regions.">
-##INFO=<ID=T_VT,Number=1,Type=String,Description="High-level variant type in truth (SNP|INDEL).">
-##INFO=<ID=Q_VT,Number=1,Type=String,Description="High-level variant type in query (SNP|INDEL).">
-##INFO=<ID=T_LT,Number=1,Type=String,Description="High-level location type in truth (het|hom|hetalt).">
-##INFO=<ID=Q_LT,Number=1,Type=String,Description="High-level location type in query (het|hom|hetalt).">
+##FORMAT=<ID=BVT,Number=1,Type=String,Description="High-level variant type in truth (SNP|INDEL).">
+##FORMAT=<ID=BLT,Number=1,Type=String,Description="High-level variant type in query (SNP|INDEL).">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	TRUTH	QUERY
-chr1	237636278	.	T	<DEL>	0	.	bwa_freebayes=HD:0,LOOHD:0;bwa_gatk3=HD:0,LOOHD:0;bwa_platypus=.;cgi=.;cortex=.;dist2closest=13;isaac2=HD:0,LOOHD:0;metal=platinum;gtt1=gt_homalt;gtt2=gt_homalt;type=TP;kind=match;ctype=simple:match;Regions=CONF;T_VT=INDEL;Q_VT=INDEL;T_LT=homalt;Q_LT=homalt	GT	1/1	1/1
-chr1	237636291	.	G	C	0	.	bwa_freebayes=HD:0,LOOHD:0;bwa_gatk3=HD:0,LOOHD:0;bwa_platypus=HD:0,LOOHD:0;cgi=HD:2,LOOHD:2;cortex=.;dist2closest=13;isaac2=HD:2,LOOHD:2;metal=platinum;gtt1=gt_homalt;gtt2=gt_homalt;type=TP;kind=match;ctype=simple:match;Regions=CONF;T_VT=SNP;Q_VT=SNP;T_LT=homalt;Q_LT=homalt	GT	1/1	1/1
-chr1	237636309	.	A	T	0	.	bwa_freebayes=HD:0,LOOHD:0;bwa_gatk3=HD:0,LOOHD:0;bwa_platypus=.;cgi=HD:0,LOOHD:0;cortex=.;dist2closest=18;isaac2=HD:0,LOOHD:0;metal=platinum;gtt1=gt_homalt;gtt2=gt_homalt;type=TP;kind=match;ctype=simple:match;Regions=CONF;T_VT=SNP;Q_VT=SNP;T_LT=homalt;Q_LT=homalt	GT	1/1	1/1
+chr1	237636278	.	T	<DEL>	0	.	Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:.:INDEL:homalt:0	1/1:TP:gm:.:INDEL:homalt:0
+chr1	237636291	.	G	C	0	.	Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:0	1/1:TP:gm:tv:SNP:homalt:0
+chr1	237636309	.	A	T	0	.	Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:0	1/1:TP:gm:tv:SNP:homalt:0

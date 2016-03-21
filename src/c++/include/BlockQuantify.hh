@@ -43,6 +43,7 @@
 #include <htslib/vcf.h>
 
 #include "Variant.hh"
+#include "helpers/Roc.hh"
 
 namespace variant {
 
@@ -78,6 +79,10 @@ namespace variant {
         BlockQuantify(BlockQuantify const& rhs) = delete;
         BlockQuantify & operator=(BlockQuantify const& rhs) = delete;
 
+        // set up ROC filtering
+        // filters can be a comma-separated list of filters to remove, or "*" to remove all
+        void rocFiltering(std::string const & filters);
+
         // add a bcf record (will take ownership of this record)
         void add(bcf1_t * v);
 
@@ -86,11 +91,24 @@ namespace variant {
 
         // result output
         std::map<std::string, VariantStatistics> const & getCounts() const;
+        std::map<std::string, roc::Roc> const & getRocs() const;
         std::list<bcf1_t*> const & getVariants();
         // update a header with new required fields
         virtual void updateHeader(bcf_hdr_t * hdr) = 0;
     protected:
+        // overload to implement actual record counting
         virtual void countVariants(bcf1_t * v) = 0;
+
+        // GA4GH-VCF field-based ROC counting
+        virtual void rocEvaluate(bcf1_t * v);
+
+        // add ROC decision point
+        void addROCValue(std::string const & roc_identifier,
+                         roc::DecisionType dt,
+                         double level,
+                         uint64_t n,
+                         bcf1_t * v);
+
         struct BlockQuantifyImpl;
         std::unique_ptr<BlockQuantifyImpl> _impl;
     };

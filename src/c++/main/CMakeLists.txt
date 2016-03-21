@@ -15,7 +15,7 @@ add_executable(hapblockfind hapblockfind.cpp)
 target_link_libraries(hapblockfind ${HAPLOTYPES_ALL_LIBS})
 
 # blocksplit takes a set of VCFs and regions which do not break haplotype blocks at the edges
-add_executable(blocksplit blocksplit.cpp)
+add_executable(blocksplit blocksplit.cpp ../include/helpers/Roc.hh)
 target_link_libraries(blocksplit ${HAPLOTYPES_ALL_LIBS})
 
 # hapcmp takes a pair of VCFs and outputs comparison results based on alignments

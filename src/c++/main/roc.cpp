@@ -334,7 +334,7 @@ int main(int argc, char* argv[]) {
             // true if filtered by other filter than the one we're looking at. These go to the beginning.
             bool filtered_other = false;
 
-            if (filter_column >= 0 && !filter_name.empty())
+            if (filter_column >= 0)
             {
                 std::vector<std::string> filters;
                 std::string fcol = v[filter_column];
@@ -374,20 +374,29 @@ int main(int argc, char* argv[]) {
                         }
                     }
                 }
-                auto it = filters.begin();
-                std::vector<std::string> _filters_to_remove;
-                stringutil::split(filter_name, _filters_to_remove, ";,");
-                std::set<std::string> filters_to_remove;
-                for (auto f : _filters_to_remove) {
-                    filters_to_remove.insert(f);
-                }
-                while(it != filters.end())
+
+                if(!filter_name.empty())
                 {
-                    if(filters_to_remove.count(*it) > 0) {
-                        filters.erase(it);
-                        it = filters.begin();
-                    } else {
-                        ++it;
+                    auto it = filters.begin();
+                    std::vector<std::string> _filters_to_remove;
+                    stringutil::split(filter_name, _filters_to_remove, ";,");
+                    std::set<std::string> filters_to_remove;
+                    for (auto f : _filters_to_remove) {
+                        filters_to_remove.insert(f);
+                        if(f == "*")
+                        {
+                            filters.clear();
+                            break;
+                        }
+                    }
+                    while(it != filters.end())
+                    {
+                        if(filters_to_remove.count(*it) > 0) {
+                            filters.erase(it);
+                            it = filters.begin();
+                        } else {
+                            ++it;
+                        }
                     }
                 }
                 if (!filters.empty())

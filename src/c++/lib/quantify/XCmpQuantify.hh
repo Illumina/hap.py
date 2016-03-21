@@ -60,6 +60,14 @@ namespace variant {
         virtual void updateHeader(bcf_hdr_t * hdr);
     protected:
         virtual void countVariants(bcf1_t * v);
+    private:
+        // field to use for ROCs (will be translated into QQ format field)
+        std::string roc_field;
+        int roc_hdr_id;
+        bool roc_field_is_info;
+        bool roc_field_is_qual;
+        // clean the INFO fields (only keep the GA4GH-compliant ones)
+        bool clean_info;
     };
 }
 

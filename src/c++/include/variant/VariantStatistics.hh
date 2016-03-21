@@ -72,7 +72,8 @@ public:
      */
     void add(VariantStatistics const & rhs);
     /** add for variants and alleles can return the types that were added to */
-    void add(bcf_hdr_t * hdr, bcf1_t * rhs, int sample, int ** types = NULL, int * ntypes = NULL);
+    void add(bcf_hdr_t * hdr, bcf1_t * rhs, int sample, int ** types = NULL, int * ntypes = NULL,
+             std::set<std::string> ** extra_counts_seen = NULL);
     void add(Variants const & rhs, int sample, int ** types = NULL, int * ntypes = NULL);
     void add(const char * chr, RefVar const & rhs, int ** types = NULL, int * ntypes = NULL);
 
@@ -84,6 +85,9 @@ public:
 
     void getExtraCountNames(StrVec& extraCountNames);
     size_t extraCount(const std::string& extraCountName);
+
+    /* abbreviate a set of extra counts that were observed for VCF output */
+    static std::string extraCountsToBI(std::set<std::string> const & extra_counts_seen);
 private:
     VariantStatisticsImpl * _impl;
 };

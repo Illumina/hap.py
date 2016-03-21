@@ -181,12 +181,26 @@ struct VariantStatisticsImpl
         size_t total_del = 0;
         size_t total_ins = 0;
         size_t total_hom = 0;
+        size_t ti = 0;
+        size_t tv = 0;
         realignRefVar(ref, chr, rhs, alignment.get(),
                       total_snp,
                       total_ins,
                       total_del,
                       total_hom,
-                      myNumTransitions, myNumTransversions);
+                      ti, tv);
+
+        myNumTransitions += ti;
+        myNumTransversions += tv;
+
+        if(ti)
+        {
+            extra_counts_seen.insert(ourTransitionsName);
+        }
+        if(tv)
+        {
+            extra_counts_seen.insert(ourTransversionsName);
+        }
 
         // count nucleotides
         count( CT_NUCLEOTIDES | VT_SNP, total_snp );
@@ -222,6 +236,7 @@ struct VariantStatisticsImpl
     void reset_rtypes() {
         nrtypes = 0;
         rtype_bs.reset();
+        extra_counts_seen.clear();
     }
 
     void getExtraCountNames(StrVec& extraCountNames) {
@@ -254,6 +269,7 @@ struct VariantStatisticsImpl
 
     int rtypes[256];
     int nrtypes;
+    std::set<std::string> extra_counts_seen;
     std::bitset<256> rtype_bs;
 
     FastaFile const & ref;
@@ -361,7 +377,8 @@ void VariantStatistics::add(VariantStatistics const & rhs)
 }
 
 
-void VariantStatistics::add(bcf_hdr_t * hdr, bcf1_t * rhs, int sample, int ** rtypes, int * nrtypes)
+void VariantStatistics::add(bcf_hdr_t * hdr, bcf1_t * rhs, int sample, int ** rtypes, int * nrtypes,
+                            std::set<std::string> ** extra_counts_seen)
 {
     if(rtypes && nrtypes) { _impl->reset_rtypes(); }
 
@@ -457,6 +474,7 @@ void VariantStatistics::add(bcf_hdr_t * hdr, bcf1_t * rhs, int sample, int ** rt
     _impl->count(location_type | types, 1);
 
     if(rtypes && nrtypes) { *rtypes = _impl->rtypes; *nrtypes = _impl->nrtypes; }
+    if(extra_counts_seen) { *extra_counts_seen = &(_impl->extra_counts_seen); }
 }
 
 void VariantStatistics::add(Variants const & rhs, int sample, int ** rtypes, int * nrtypes)
@@ -555,6 +573,36 @@ void VariantStatistics::getExtraCountNames(StrVec& extraCountNames)
 size_t VariantStatistics::extraCount(const std::string& extraCountName)
 {
     return _impl->extraCount(extraCountName);
+}
+
+std::string VariantStatistics::extraCountsToBI(std::set<std::string> const & extra_counts_seen)
+{
+    std::string result;
+    for(auto const & x : extra_counts_seen)
+    {
+        if(x == VariantStatisticsImpl::ourTransitionsName)
+        {
+            if(!result.empty())
+            {
+                result += ",";
+            }
+            result += "ti";
+
+        }
+        else if(x == VariantStatisticsImpl::ourTransversionsName)
+        {
+            if(!result.empty())
+            {
+                result += ",";
+            }
+            result += "tv";
+        }
+    }
+    if(result.empty())
+    {
+        result = ".";
+    }
+    return result;
 }
 
 }

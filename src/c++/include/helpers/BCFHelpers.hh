@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -135,4 +135,8 @@ namespace bcfhelpers {
     /** update format string for a single sample.  */
     void setFormatStrings(const bcf_hdr_t * header, bcf1_t * line, const char * field,
                           const std::vector<std::string> & value);
+
+    /** update format with single float values.  */
+    void setFormatFloats(const bcf_hdr_t * header, bcf1_t * line, const char * field,
+                         const std::vector<float> & value);
 } // namespace bcfhelpers

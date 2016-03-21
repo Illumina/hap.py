@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -45,9 +45,10 @@ namespace haplotypes
 
     /**
      * Compare two samples in a variants record and count non-snp alleles
-     * 
+     *
      */
-    DiploidComparisonOutcome compareVariants(variant::Variants & vars, int r1, int r2, 
-                                             int & non_snp_alleles, int & calls_1, int & calls_2);
+    DiploidComparisonOutcome compareVariants(variant::Variants & vars, int r1, int r2,
+                                             int & non_snp_alleles, int & calls_1, int & calls_2,
+                                             bool use_filtered_1=false, bool use_filtered_2=false);
 
 } // namespace haplotypes

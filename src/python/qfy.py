@@ -55,6 +55,18 @@ def quantify(args):
 
     output_vcf = args.reports_prefix + ".vcf.gz"
 
+    roc_table = None
+
+    if args.roc:
+        roc_table = args.reports_prefix + ".roc.tsv"
+
+    if args.verbose:
+        # verbose writes internal summary file
+        # this will be what we migrate to in 0.3.0
+        sum_file = args.reports_prefix + ".internal.summary.tsv"
+    else:
+        sum_file = None
+
     counts = Haplo.quantify.run_quantify(vcf_name,
                                          json_name,
                                          output_vcf if args.write_vcf else False,
@@ -62,7 +74,14 @@ def quantify(args):
                                          args.ref,
                                          threads=args.threads,
                                          output_vtc=args.output_vtc,
-                                         qtype=args.type)
+                                         qtype=args.type,
+                                         roc_val=args.roc,
+                                         roc_file=roc_table,
+                                         summary_file=sum_file,
+                                         roc_filter=args.roc_filter,
+                                         roc_delta=args.roc_delta,
+                                         output_filter_rocs=args.output_filter_rocs,
+                                         clean_info=not args.preserve_info)
 
     df = pandas.DataFrame(counts)
 
@@ -145,7 +164,7 @@ def quantify(args):
                                                              df[summary_columns]))
 
     if args.write_counts:
-        df.to_csv(args.reports_prefix + ".qfy.extended.csv")
+        df.to_csv(args.reports_prefix + ".extended.csv")
         metrics_output["metrics"].append(dataframeToMetricsTable("all.metrics", df))
 
     essential_numbers = df[summary_columns]
@@ -164,11 +183,17 @@ def quantify(args):
         print str(essential_numbers)
 
     if args.roc:
-        res = Haplo.happyroc.roc(output_vcf, args.roc, args.roc_filter, args.reports_prefix + ".roc", args.roc_reversed)
+        res = Haplo.happyroc.roc(roc_table, args.reports_prefix + ".roc")
+
+        # keep this for verbose output
+        if not args.verbose:
+            try:
+                os.unlink(roc_table)
+            except:
+                pass
 
         for t in res.iterkeys():
-            rocdf = pandas.read_table(res[t])
-            metrics_output["metrics"].append(dataframeToMetricsTable("roc." + t, rocdf))
+            metrics_output["metrics"].append(dataframeToMetricsTable("roc." + t, res[t]))
 
     with open(args.reports_prefix + ".metrics.json", "w") as fp:
         json.dump(metrics_output, fp)
@@ -199,6 +224,9 @@ def updateArgs(parser):
                         default=False, action="store_true",
                         help="Write VTC field in the final VCF which gives the counts each position has contributed to.")
 
+    parser.add_argument("--preserve-info", dest="preserve_info", action="store_true", default=False,
+                        help="When using XCMP, preserve and merge the INFO fields in truth and query. Useful for ROC computation.")
+
     parser.add_argument("--roc", dest="roc", default=False,
                         help="Select an INFO feature to produce a ROC on. This works best with "
                              "--no-internal-preprocessing and --no-internal-leftshift since these "
@@ -207,8 +235,11 @@ def updateArgs(parser):
     parser.add_argument("--roc-filter", dest="roc_filter", default=False,
                         help="Select a filter to ignore when making ROCs.")
 
-    parser.add_argument("--roc-reversed", dest="roc_reversed", default=False,
-                        help="Change the meaning of the ROC feature to count the other way around (higher values=bad).")
+    parser.add_argument("--roc-delta", dest="roc_delta", default=1, type=float,
+                        help="Minimum spacing between ROC QQ levels.")
+
+    parser.add_argument("--output-filter-rocs", dest="output_filter_rocs", default=False, action="store_true",
+                        help="Write TP / FP / UNK counts per filter and QQ level.")
 
 
 def main():
