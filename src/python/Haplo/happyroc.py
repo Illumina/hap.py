@@ -74,8 +74,8 @@ def roc(roc_table, output_path):
                 rec = {}
                 for k, v in itertools.izip(header, l.split("\t")):
                     rec[k] = v
-                if "roc" in rec:
-                    roc = rec["roc"]
+                if "type" in rec:
+                    roc = rec["type"]
                     if roc not in result:
                         result[roc] = [rec]
                     else:

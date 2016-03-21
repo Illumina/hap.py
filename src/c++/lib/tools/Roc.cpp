@@ -136,19 +136,12 @@ namespace roc
         {
             return;
         }
-        Level first;
-        Level previous = target.front();
-        double previous_level = previous.level;
+        double previous_level = target.front().level;
         bool is_first = true;
+        bool push_now = false;
         for(auto const & x : target)
         {
-            bool push_now = false;
-            if(is_first)
-            {
-                push_now = true;
-                is_first = false;
-            }
-            else if(roc_delta < std::numeric_limits<double>::epsilon())
+            if(roc_delta < std::numeric_limits<double>::epsilon())
             {
                 const std::string cur = std::to_string(x.level);
                 const std::string prev = std::to_string(previous_level);
@@ -156,18 +149,21 @@ namespace roc
             }
             else
             {
-                push_now = fabs(x.level - previous_level) > roc_delta;
+                if(is_first)
+                {
+                    push_now = true;
+                    is_first = false;
+                }
+                else
+                {
+                    push_now = fabs(x.level - previous_level) > roc_delta;
+                }
             }
             if(push_now)
             {
-                output.push_back(first);
-                output.push_back(previous);
-                first = x;
+                output.push_back(x);
                 previous_level = x.level;
             }
-            previous = x;
         }
-        // push last
-        output.push_back(previous);
     }
 }

@@ -87,7 +87,7 @@ public:
     size_t extraCount(const std::string& extraCountName);
 
     /* abbreviate a set of extra counts that were observed for VCF output */
-    static std::string extraCountsToBI(std::set<std::string> const & extra_counts_seen) const;
+    static std::string extraCountsToBI(std::set<std::string> const & extra_counts_seen);
 private:
     VariantStatisticsImpl * _impl;
 };

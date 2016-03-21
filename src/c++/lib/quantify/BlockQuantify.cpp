@@ -135,13 +135,11 @@ namespace variant {
                                     uint64_t n,
                                     bcf1_t * v)
     {
+        const std::string bi_truth = bcfhelpers::getFormatString(_impl->hdr, v, "BI", 0, ".");
+        const std::string bi_query = bcfhelpers::getFormatString(_impl->hdr, v, "BI", 1, ".");
+
         // add observation to a roc
-        auto observe = [this, level, dt, n](std::string const & name, bool f) {
-            auto it = _impl->rocs.find(name);
-            if(it == _impl->rocs.end())
-            {
-                it = _impl->rocs.insert(std::make_pair(name, roc::Roc())).first;
-            }
+        auto observe = [this, level, dt, n, &bi_truth, &bi_query](std::string const & name, bool f) {
             roc::DecisionType final_dt = dt;
             if(f)
             {
@@ -160,6 +158,12 @@ namespace variant {
                     // filter-failed FPs / UNKs become Ns
                     final_dt = roc::DecisionType::N;
                 }
+            }
+
+            auto it = _impl->rocs.find(name);
+            if(it == _impl->rocs.end())
+            {
+                it = _impl->rocs.insert(std::make_pair(name, roc::Roc())).first;
             }
 
             // make sure FN and N always come first
@@ -196,9 +200,6 @@ namespace variant {
                 observe("f:" + roc_identifier + ":" + filter, false);
             }
         }
-
-        const std::string bi_truth = bcfhelpers::getFormatString(_impl->hdr, v, "BI", 0, ".");
-        const std::string bi_query = bcfhelpers::getFormatString(_impl->hdr, v, "BI", 1, ".");
 
         observe(roc_identifier + ":PASS", fail);
         observe(roc_identifier, false);

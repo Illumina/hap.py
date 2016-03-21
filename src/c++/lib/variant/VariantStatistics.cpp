@@ -575,7 +575,7 @@ size_t VariantStatistics::extraCount(const std::string& extraCountName)
     return _impl->extraCount(extraCountName);
 }
 
-static std::string VariantStatistics::extraCountsToBI(std::set<std::string> const & extra_counts_seen) const
+std::string VariantStatistics::extraCountsToBI(std::set<std::string> const & extra_counts_seen)
 {
     std::string result;
     for(auto const & x : extra_counts_seen)
