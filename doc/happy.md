@@ -318,11 +318,11 @@ Hap.py can produce ROCs using vcfeval or xcmp (hap.py's internal comparison engi
 
 We can plot the following ROCs from the *.roc.*.csv files:
 
-![snprocs-gatk-full.png](SNP Rocs)
-![snprocs-gatk.png](SNP Rocs)
+![snprocs-gatk-full.png](snprocs-gatk-full.png)
+![snprocs-gatk.png](snprocs-gatk.png)
 
-![indelrocs-gatk-full.png](indel Rocs)
-![indelrocs-gatk.png](indel Rocs)
+![indelrocs-gatk-full.png](indelrocs-gatk-full.png)
+![indelrocs-gatk.png](indelrocs-gatk.png)
 
 When using Platypus, the ROC behaviour is more complex:
 
