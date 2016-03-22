@@ -1,0 +1,5 @@
+##fileformat=VCFv4.1
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA12878
+chrQ	3	.	A	AA	.	PASS	.	GT	0/1
+chrQ	4	.	A	T	.	PASS	.	GT	0/1
+chrQ	5	.	AA	A	.	PASS	.	GT	0/1

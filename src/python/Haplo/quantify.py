@@ -232,6 +232,7 @@ def simplify_counts(counts, snames=None):
             # k2 is created in quantify.cpp, observation type, then allele types separated by __
             ct, _, vt = k2.partition("__")
 
+            is_location = False
             if ct == "nuc":
                 if vt == "s":
                     altype = "SNP"
@@ -254,6 +255,7 @@ def simplify_counts(counts, snames=None):
                 keys1 = ["Alleles", "Alleles." + altype]
             elif not (vt == "nc" or ct == "homref" or ct == "fail" or vt == "r"):  # ignore non-called locations in a sample
                 # process locations
+                is_location = True
                 if ct in ["Transitions", "Transversions"]:
                     # these are additional counts. Every SNP we see in
                     # here is also seen separately below.
@@ -286,6 +288,14 @@ def simplify_counts(counts, snames=None):
                 keys2 = [tq + ".IGN"]
             else:
                 keys2 = [tq + ".TOTAL", tq + "." + vtype]
+
+            if is_location:
+                # GT mismatch
+                if vtype == "FP" and kind == "am" and tq == "QUERY":
+                    keys2.append("QUERY.FP.GT")
+                # allele mismatch
+                elif vtype == "FP" and kind == "lm" and tq == "QUERY":
+                    keys2.append("QUERY.FP.AL")
 
             for key1 in keys1:
                 if key1 not in simplified_numbers:
