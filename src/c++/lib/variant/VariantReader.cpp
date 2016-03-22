@@ -692,9 +692,10 @@ bool VariantReader::advance(bool get_calls, bool get_info)
             {
                 rv.alt = "";
             }
-
-            if(import_fail)
+            else if(rv.alt == "*" || rv.alt == "<NON_REF>" || import_fail)
             {
+                // these are OK to let through. 
+                // we might want to add some better matching logic later
                 continue;
             }
 
