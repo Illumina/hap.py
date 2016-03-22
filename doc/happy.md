@@ -30,14 +30,14 @@ Hap.py will report counts of
     confident hom-ref regions.
 *   ***false-negatives (FN)*** : variants present in the truth set, but missed
     in the query.
-*   ***non-assessed calls (NA)***: variants outside the truth set regions
+*   ***non-assessed calls (UNK)***: variants outside the truth set regions
 
 From these counts, we are able to calculate
 
 ```
 recall = TP/(TP+FN)
 precision = TP/(TP+FP)
-frac_NA = NA/total(query)
+frac_NA = UNK/total(query)
 ```
 
 These counts and statistics will be calculated for the following subsets of
@@ -50,15 +50,16 @@ variants:
 | Alleles.SNP/INS/DEL | Allele counts. We count occurrences of SNP, insertion |
 |                     | or deletion alleles. For hom-alt SNPs, each allele is |
 |                     | counted exactly once (so the counts aren't biased     |
-|                     | towards hom-alt calls). These counts should be        |
-|                     | comparable between different callers.                 |
+|                     | towards hom-alt calls). The idea between these counts |
+|                     | is that each counted instance belongs to a particular |
+|                     | group of reads / haplotype.                           |
 |---------------------+-------------------------------------------------------|
-| Locations.*         | Location counts are useful to compute recall for het, |
-|                     | hom, or het-alt calls separately. However,  due to    |
-|                     | the way that hap.py performs normalisation, these     |
-|                     | counts are not necessarily comparable between         |
-|                     | different variant callers (you can read read more     |
-|                     | about this in [normalisation.md](normalisation.md))   |
+| Locations.SNP/INDEL | Location counts are useful to compute recall for het, |
+|                     | hom, or het-alt calls separately, and to quantify     |
+|                     | genotyping accuracy. Note that hap.py performs        |
+|                     | variant normalisation by default (see                 |
+|                     | [normalisation.md](normalisation.md)), which will     |
+|                     | change the input records in truth and query.          |
 |---------------------+-------------------------------------------------------|
 ```
 
@@ -75,7 +76,7 @@ $ ${HAPPY}/bin/hap.py  \
       -f example/happy/PG_Conf_chr21.bed.gz \
       -o test
 $ ls test.*
-test.metrics.json  test.summary.csv
+test.metrics.json  test.summary.csv test.extended.csv
 ```
 
 This example compares an example run of GATK 1.6 on NA12878 agains the Platinum
@@ -96,12 +97,12 @@ The summary CSV file contains all computed metrics:
 False-positives
 ---------------
 
-When comparing two VCFs, genotype and allele mismatches are counted as false-
-positives. Truth sets like Platinum Genomes or NIST/Genome in a Bottle also
-include "confident call regions", which show places where the truth dataset does
-not expect variant calls. Hap.py can use these regions to count query variant
-calls that do not match truth calls and which fall into  these regions as false
-positives.
+When comparing two VCFs, genotype and allele mismatches are counted both as
+false-positives and as false-negatives. Truth sets like Platinum Genomes or
+NIST/Genome in a Bottle also include "confident call regions", which show places
+where the truth dataset does not expect variant calls.
+Hap.py can use these regions to count query variant calls that do not match
+truth calls and which fall into  these regions as false positives.
 
 Full List of Command line Options
 ---------------------------------
@@ -225,35 +226,15 @@ before running hap.py.
   -V, --write-vcf
 ```
 
-Write an annotated VCF. This file will show the merged and normalised truth
+Write an annotated VCF. This file follows the GA4GH specifications at
+[https://github.com/ga4gh/benchmarking-tools/blob/master/doc/ref-impl/README.md](https://github.com/ga4gh/benchmarking-tools/blob/master/doc/ref-impl/README.md)
+
+It shows the merged and normalised truth
 and query calls, together with annotation that shows how they were counted.
-Each record contains an INFO field with the following values:
-
-*   `gtt1`/`gtt2` Genotypes in truth and query
-*   `type`: FP/TP/FN indicates the call classification
-*   `kind`: comparison outcome (missing/GT mismatch/allele mismatch/...);
-*   `ctype`: comparison result for the whole block that contains this record
-    E.g. `simple:mismatch` would indicate that the block was compared without
-    haplotype matching, and that the variants within it did not match.
-*   `HapMatch`: tag that indicates that the surrounding haplotype block
-    matches in truth and query. This tag is only added when haplotype matching
-    was run (see [spec.md](spec.md))
-*   `Regions`: This is a list of matching regions (currently, only CONF is
-    supported, indicating that a variant call falls into the confident
-    call regions)
-
-```
-  -X, --write-counts
-```
-
-Write advanced counts and metrics (default on since 0.2.8).
-This writes additional files / numbers:
-
-*   `output-prefix.counts.json/csv`: raw variant counts. This is produced by
-    the quantify tool, which counts and stratifies variants.
-*   `output-prefix.extended.csv`: This file is similar to the summary csv file,
-    but it contains more rows and columns showing detailed counts for more
-    allele/location types, as well as TP/FP/FN/UNK counts.
+There are two sample columns ("TRUTH" and "QUERY"), showing the genotypes
+for each variant in truth and query, along with information on the decision
+for truth and query calls (TP/FP/FN/N/UNK). See the [GA4GH page above](https://github.com/ga4gh/benchmarking-tools/blob/master/doc/ref-impl/README.md)
+for more details.
 
 ### ROC Curves
 
@@ -262,16 +243,16 @@ such curves based on the input variant representations, and not to perform any
 variant splitting or preprocessing.
 
 Here are the options which need to be added to a hap.py command line to create
-a ROC curve based on the query GQ(X) field:
+a ROC curve based on the query GQX field (currently, hap.py will only use GQ
+if GQX is not available):
 
 ```
-...
+  ...
   --no-internal-leftshift \
   --no-internal-preprocessing \
   -P -V \
   --roc Q_GQ \
-  --roc-filter LowGQX \
-...
+  ...
 ```
 
 The `-P` switch is necessary to consider unfiltered variants, `-V` will write an
@@ -279,35 +260,71 @@ annotated output VCF which is used to extract the features and labels. The `--ro
 specifies the feature to filter on. Hap.py translates the truth and query GQ(X) fields into
 the INFO fields T_GQ and Q_GQ, it tries to use GQX first, if this is not present, it
 will use GQ. When run without internal preprocessing any other input INFO field can
-be used (e.g. VQSLOD for GATK). The `--roc-filter` switch specifies the VCF filter which
+be used (e.g. VQSLOD for GATK).
+
+The `--roc-filter` switch may be used to specify the particular VCF filter which
 implements a threshold on the quality score. When calculating filtered TP/FP counts, this
 filter will be removed, and replaced with a threshold filter on the feature specified
-by `--roc`.
+by `--roc`. By default, the ROC will be calculated ignoring all filters.
 
 Normally, we assume that higher quality scores are better during ROC calculation,
 variants with scores higher than the variable threshold will "pass", all others will
-"fail". We can reverse this behaviour using the `--roc-reversed` argument.
+"fail".
 
-ROC curves can also be generated from the output VCF that is written using `-V` without
-running hap.py again using the `roc.py` or the `qfy.py` scripts.
-
-```
-bin/roc.py hap.py-output.vcf.gz output-roc.tsv \
-  --roc Q_GQ \
-  --roc-filter LowGQX
-```
-
-The output file will be tab-delimited and gives tp / fp / fn counts, as well as precision
-and recall for different thresholds of the ROC feature:
+The output file will be comma-separated value files giving tp / fp / fn counts,
+as well as precision and recall for different thresholds of the ROC feature.
+Here is a full example (assuming the folder hap.py contains a clone of the
+hap.py repository, and that hap.py can be run through PATH):
 
 ```
-Q_GQ      tp      fp      fn      precision       recall
-38        567     23970   37      0.02310800      0.93874200
+hap.py hap.py/example/happy/PG_NA12878_hg38-chr21.vcf.gz \
+       hap.py/example/happy/NA12878-GATK3-chr21.vcf.gz \
+       -f hap.py/example/happy/PG_Conf_hg38-chr21.bed.gz \
+       -r hap.py/example/happy/hg38.chr21.fa \
+       -o gatk-all -P -V \
+       --roc QUAL
+```
+
+After running, this will produce a set of outputs as follows.
+
+```
+ls gatk-all.*
+gatk-all.counts.csv
+gatk-all.extended.csv
+gatk-all.summary.csv
+gatk-all.roc.Locations.SNP.csv
+gatk-all.roc.Locations.SNP_PASS.csv
+gatk-all.roc.Locations.INDEL.csv
+gatk-all.roc.Locations.INDEL_PASS.csv
+gatk-all.vcf.gz
+gatk-all.vcf.gz.tbi
+gatk-all.metrics.json
+```
+
+The SNP ROC file starts like this:
+
+```
+type	QUAL	FN	TP	FN2	TP2	FP	UNK	N	recall	precision	f1_score	na	total.truth	total.query
+SNP	0	857	50159	0	50097	101	20260	0	0.983201	0.997988	0.49527	0.287547	51016	70458
+SNP	25.33	923	50093	0	50097	101	20259	1	0.981908	0.997988	0.494941	0.287537	51016	70457
+SNP	26.45	923	50093	0	50097	101	20250	10	0.981908	0.997988	0.494941	0.287446	51016	70448
+SNP	27.77	923	50093	0	50097	101	20242	18	0.981908	0.997988	0.494941	0.287365	51016	70440
+SNP	28.83	923	50093	0	50097	101	20233	27	0.981908	0.997988	0.494941	0.287274	51016	70431
+SNP	29.91	924	50092	1	50096	101	20228	32	0.981888	0.997988	0.494936	0.287228	51016	70425
 ...
 ```
 
-Hap.py will output separate ROC files for different variant types (SNP, INDEL, each for
-het/hom/hetalt variants).
+Hap.py can produce ROCs using vcfeval or xcmp (hap.py's internal comparison engine).
+
+We can plot the following ROCs from the *.roc.*.csv files:
+
+![snprocs-gatk-full.png](SNP Rocs)
+![snprocs-gatk.png](SNP Rocs)
+
+![indelrocs-gatk-full.png](indel Rocs)
+![indelrocs-gatk.png](indel Rocs)
+
+When using Platypus, the ROC behaviour is more complex:
 
 ### Input Preprocessing
 
@@ -436,4 +453,3 @@ hap.py truth.vcf.gz query.vcf.gz -f conf.bed.gz -o ./test -V -X --engine=vcfeval
 ```
 
 Most other command line arguments and outputs will work as before.
-
