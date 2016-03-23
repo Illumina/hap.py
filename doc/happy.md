@@ -323,7 +323,8 @@ for two reasons:
 
 * partial credit matching allows a more fine-grained assessment of precision.
 * when indels have different representations, vcfeval outputs these as separate
-  records, whereas xcmp normalizes them.
+  records, whereas xcmp normalizes them to be in the same VCF row if possible.
+  *NOTE: this is work in progress and based on a development version of vcfeval**
 
 |        | *SNP*                      | *INDEL*                      |
 |:------:|:--------------------------:|:----------------------------:|
