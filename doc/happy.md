@@ -316,15 +316,48 @@ SNP	29.91	924	50092	1	50096	101	20228	32	0.981888	0.997988	0.494936	0.287228	510
 
 Hap.py can produce ROCs using vcfeval or xcmp (hap.py's internal comparison engine).
 
-We can plot the following ROCs from the *.roc.*.csv files:
+We can plot the following ROCs from the *.roc.*.csv files. The plots below also
+show that the results when using xcmp or vcfeval as the comparison engine in
+hap.py are mostly equivalent for SNPs. For indels, xcmp shows higher precision
+for two reasons:
 
-![snprocs-gatk-full.png](snprocs-gatk-full.png)
-![snprocs-gatk.png](snprocs-gatk.png)
+* partial credit matching allows a more fine-grained assessment of precision.
+* when indels have different representations, vcfeval outputs these as separate
+  records, whereas xcmp normalizes them.
 
-![indelrocs-gatk-full.png](indelrocs-gatk-full.png)
-![indelrocs-gatk.png](indelrocs-gatk.png)
+|        | *SNP*                      | *INDEL*                      |
+|:------:|:--------------------------:|:----------------------------:|
+| Full   | ![](snprocs-gatk-full.png) | ![](indelrocs-gatk-full.png) |
+| Zoomed | ![](snprocs-gatk.png)      | ![](indelrocs-gatk.png)      |
 
-When using Platypus, the ROC behaviour is more complex:
+
+When using Platypus, the ROC behaviour is more complex.
+
+```
+hap.py hap.py/example/happy/PG_NA12878_hg38-chr21.vcf.gz \
+       hap.py/example/happy/NA12878-Platypus-chr21.vcf.gz \
+       -f hap.py/example/happy/PG_Conf_hg38-chr21.bed.gz \
+       -r hap.py/example/happy/hg38.chr21.fa \
+       -o platypus-all -P -V \
+       --roc QUAL
+```
+
+* Platypus outputs more complex alleles which need to be compared with partial credit
+  to get a more accurate picture of the comparative precision.
+* Platypus has a larger set of filters which are independent of the QUAL score.
+  This means that the ROC for PASS calls (which only considers calls that pass all filters)
+  will have significantly higher precision and lower recall.
+* Platypus prefers to output SNPs in phased blocks, which is very different from the
+  truthset representation of the variants. Splitting these using partial credit gives
+  more resolution when drawing ROCs. Vcfeval's internal ROC code handles this by
+  weighting, which is similar to our partial credit counting; in hap.py we have chosen
+  to implement variant decomposition instead of weights to be able stratify the ROCs
+  more transparently into SNPs and INDELs.
+
+|           *SNP*           |           *INDEL*           |
+|:-------------------------:|:---------------------------:|
+| ![](snprocs-platypus.png) | ![](indelrocs-platypus.png) |
+
 
 ### Input Preprocessing
 
@@ -449,7 +482,7 @@ in `~/rtg-install`, and that the folder `hg19.sdf` created by the previous comma
 directory):
 
 ```
-hap.py truth.vcf.gz query.vcf.gz -f conf.bed.gz -o ./test -V -X --engine=vcfeval --engine-vcfeval-path ~/rtg-install/rtg --engine-vcfeval-template hg19
+hap.py truth.vcf.gz query.vcf.gz -f conf.bed.gz -o ./test -V --engine=vcfeval --engine-vcfeval-path ~/rtg-install/rtg --engine-vcfeval-template hg19
 ```
 
 Most other command line arguments and outputs will work as before.
