@@ -236,6 +236,37 @@ for each variant in truth and query, along with information on the decision
 for truth and query calls (TP/FP/FN/N/UNK). See the [GA4GH page above](https://github.com/ga4gh/benchmarking-tools/blob/master/doc/ref-impl/README.md)
 for more details.
 
+### Internal Variant Normalisation and Haplotype Comparison
+
+```
+  --partial-credit      give credit for partially matched variants. this is
+                        equivalent to --internal-leftshift and --internal-
+                        preprocessing.
+  --no-partial-credit   Give credit for partially matched variants. This is
+                        equivalent to --no-internal-leftshift and --no-
+                        internal-preprocessing.
+  --internal-leftshift  Switch off xcmp's internal VCF leftshift
+                        preprocessing.
+  --internal-preprocessing
+                        Switch off xcmp's internal VCF leftshift
+                        preprocessing.
+  --no-internal-leftshift
+                        Switch off xcmp's internal VCF leftshift
+                        preprocessing.
+  --no-internal-preprocessing
+                        Switch off xcmp's internal VCF leftshift
+                        preprocessing.
+  --no-haplotype-comparison
+                        Disable haplotype comparison (only count direct GT matches as TP).
+  --unhappy
+                        Disable all clever matching (equivalent to --no-internal-leftshift
+                        --no-internal-preprocessing --no-haplotype-comparison).
+```
+
+These switches control xcmp's internal VCF [leftshifting preprocessing](normalisation.md).
+The partial credit switch jointly enables / disables preprocessing and left shifting. The
+next section gives some more details on the effect that these comparison modes can have.
+
 ### ROC Curves
 
 Hap.py can create data for ROC-style curves. Normally, it is preferable to calculate
@@ -424,36 +455,6 @@ in these two references, only chromosome names are different).
 Generally, *the truth files (BED and VCF) should have consistent chromosome names
 with the reference that is used*, and hap.py can be used to add on a chr prefix
 to the query VCF if necessary.
-
-### Internal Variant Normalisation and Haplotype Comparison
-
-```
-  --partial-credit      give credit for partially matched variants. this is
-                        equivalent to --internal-leftshift and --internal-
-                        preprocessing.
-  --no-partial-credit   Give credit for partially matched variants. This is
-                        equivalent to --no-internal-leftshift and --no-
-                        internal-preprocessing.
-  --internal-leftshift  Switch off xcmp's internal VCF leftshift
-                        preprocessing.
-  --internal-preprocessing
-                        Switch off xcmp's internal VCF leftshift
-                        preprocessing.
-  --no-internal-leftshift
-                        Switch off xcmp's internal VCF leftshift
-                        preprocessing.
-  --no-internal-preprocessing
-                        Switch off xcmp's internal VCF leftshift
-                        preprocessing.
-  --no-haplotype-comparison
-                        Disable haplotype comparison (only count direct GT matches as TP).
-  --unhappy
-                        Disable all clever matching (equivalent to --no-internal-leftshift
-                        --no-internal-preprocessing --no-haplotype-comparison).
-```
-
-These switches control xcmp's internal VCF [leftshifting preprocessing](normalisation.md).
-The partial credit switch jointly enables / disables preprocessing and left shifting.
 
 ### Haplotype Comparison Parameters
 
