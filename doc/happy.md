@@ -314,7 +314,19 @@ SNP	29.91	924	50092	1	50096	101	20228	32	0.981888	0.997988	0.494936	0.287228	510
 ...
 ```
 
-Hap.py can produce ROCs using vcfeval or xcmp (hap.py's internal comparison engine).
+Hap.py can produce ROCs using vcfeval (see below for instructions)
+or xcmp (hap.py's internal comparison engine).
+
+There are a few differences between these comparison modes which are reflected
+in the ROC outputs.
+
+| Comparison mode              | Leftshifting of Indels | Splitting of Variants | FP/FN/TP Granularity               | Comment                                                         |
+|:-----------------------------|:----------------------:|:---------------------:|:-----------------------------------|-----------------------------------------------------------------|
+| hap.py default               |           Yes          |          Yes          | Superlocus haplotype / exact match | Most granular counting                                          |
+| hap.py `--no-partial-credit` |           No           |           No          | Superlocus haplotype / exact match | Similar to vcfeval but slightly lower precision / recall        |
+| hap.py `--unhappy`           |           No           |           No          | exact match only                   | Naive matching                                                  |
+| hap.py `--engine vcfeval`    |           No           |           No          | haplotype match per VCF record     | Preserves original variant representation, no granular counting |
+
 
 We can plot the following ROCs from the *.roc.*.csv files. The plots below also
 show that the results when using xcmp or vcfeval as the comparison engine in
@@ -325,6 +337,13 @@ for two reasons:
 * when indels have different representations, vcfeval outputs these as separate
   records, whereas xcmp normalizes them to be in the same VCF row if possible.
   *NOTE: this is work in progress and based on a development version of vcfeval**
+* When it is necessary to preserve the original variant representation, vcfeval
+  generally matches slightly more records than hap.py when the `--no-partial-credit`
+  is supplied. The reasons for this is that hap.py matches only on a superlocus
+  granularity, whereas vcfeval can assess TP/FP/FN status for each variant also
+  within superloci (blocks of close-by variants). In practice, this results in
+  slightly higher precision estimates when using hap.py with vcfeval vs hap.py
+  without partial credit.
 
 |        | *SNP*                      | *INDEL*                      |
 |:------:|:--------------------------:|:----------------------------:|
@@ -395,7 +414,16 @@ are otherwise identical).
                         to save time.
 ```
 
-Normally this is detected automatically from the VCF headers / tabix indexes.
+Normally this is detected automatically from the VCF headers / tabix indexes /
+the reference FASTA file. The reason for having this set of options is that
+Platinum Genomes truth VCFs for hg19 (which have chr1 ... chr22 chromosome names)
+can be used also on grc37 query VCFs(which have numeric chromosome names) because
+PG only provides truth calls on chr1-chr22, chrX (which have identical sequence
+in these two references, only chromosome names are different).
+
+Generally, *the truth files (BED and VCF) should have consistent chromosome names
+with the reference that is used*, and hap.py can be used to add on a chr prefix
+to the query VCF if necessary.
 
 ### Internal Variant Normalisation and Haplotype Comparison
 
