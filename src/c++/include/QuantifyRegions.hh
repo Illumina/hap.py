@@ -59,7 +59,7 @@ namespace variant
          *  FP:fp.bed
          *
          */
-        void load(std::vector<std::string> const & rnames);
+        void load(std::vector<std::string> const & rnames, bool fixchr=false);
 
         /**
          * Returns true if regions were loaded.

@@ -93,6 +93,7 @@ int main(int argc, char* argv[]) {
     bool output_vtc = true;
     bool clean_info = true;
     bool output_filter_rocs = true;
+    bool fixchr = false;
 
     int threads = 1;
     int blocksize = 20000;
@@ -129,6 +130,7 @@ int main(int argc, char* argv[]) {
                 ("count-homref", po::value<bool>(), "Count homref locations.")
                 ("output-vtc", po::value<bool>(), "Output variant types counted (debugging).")
                 ("clean-info", po::value<bool>(), "Set to zero to preserve INFO fields (default is 1)")
+                ("fix-chr-regions", po::value<bool>(), "Add chr prefix to regions if necessary (default is off).")
                 ("threads", po::value<int>(), "Number of threads to use.")
                 ("blocksize", po::value<int>(), "Number of variants per block.")
             ;
@@ -253,6 +255,11 @@ int main(int argc, char* argv[]) {
                 clean_info = vm["clean-info"].as< bool >();
             }
 
+            if (vm.count("fix-chr-regions"))
+            {
+                fixchr = vm["fix-chr-regions"].as< bool >();
+            }
+
             if (vm.count("output-filter-rocs"))
             {
                 output_filter_rocs = vm["output-filter-rocs"].as< bool >();
@@ -283,7 +290,7 @@ int main(int argc, char* argv[]) {
             if (vm.count("regions"))
             {
                 std::vector<std::string> rnames = vm["regions"].as< std::vector<std::string> >();
-                regions.load(rnames);
+                regions.load(rnames, fixchr);
             }
 
         }

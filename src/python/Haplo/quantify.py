@@ -70,7 +70,8 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
                  roc_filter=None,
                  output_filter_rocs=None,
                  roc_delta=None,
-                 clean_info=True):
+                 clean_info=True,
+                 strat_fixchr=False):
     """Run quantify and return parsed JSON
 
     :param filename: the VCF file name
@@ -88,6 +89,7 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
     :param roc_delta: ROC minimum spacing between levels
     :param output_filter_rocs: write pseudo-ROCs (TPs / FPs / UNKs per level) for filters
     :param clean_info: remove unused INFO fields
+    :param strat_fixchr: fix chr naming in stratification regions
     :returns: parsed counts JSON
     """
 
@@ -125,6 +127,11 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
         run_str += " --clean-info 1"
     else:
         run_str += " --clean-info 0"
+
+    if strat_fixchr:
+        run_str += " --fix-chr-regions 1"
+    else:
+        run_str += " --fix-chr-regions 0"
 
     if output_filter_rocs:
         run_str += " --output-filter-rocs 1"

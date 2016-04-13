@@ -77,7 +77,7 @@ namespace variant
         return !_impl->names.empty();
     }
 
-    void QuantifyRegions::load(std::vector<std::string> const &rnames)
+    void QuantifyRegions::load(std::vector<std::string> const &rnames, bool fixchr)
     {
         std::map<std::string, size_t> label_map;
         for (std::string const &f : rnames)
@@ -139,6 +139,25 @@ namespace variant
                 // we want >= 3 columns
                 if (v.size() >= 3)
                 {
+                    if (fixchr)
+                    {
+                        if(v[0].size() > 0 && (
+                            v[0].at(0) == '1' ||
+                            v[0].at(0) == '2' ||
+                            v[0].at(0) == '3' ||
+                            v[0].at(0) == '4' ||
+                            v[0].at(0) == '5' ||
+                            v[0].at(0) == '6' ||
+                            v[0].at(0) == '7' ||
+                            v[0].at(0) == '8' ||
+                            v[0].at(0) == '9' ||
+                            v[0].at(0) == 'X' ||
+                            v[0].at(0) == 'Y' ||
+                            v[0].at(0) == 'M' ))
+                        {
+                            v[0] = std::string("chr") + v[0];
+                        }
+                    }
                     auto chr_it = _impl->ib.find(v[0]);
                     if (chr_it == _impl->ib.end())
                     {
@@ -148,13 +167,26 @@ namespace variant
                                 std::unique_ptr<intervals::IntervalBuffer>(new intervals::IntervalBuffer()))).first;
                     }
                     // intervals are both zero-based
-                    int64_t start = (int64_t) std::stoll(v[1]), stop = (int64_t) (std::stoll(v[2]) - 1);
-                    if (start > stop)
+                    try
+                    {
+
+                        int64_t start = (int64_t) std::stoll(v[1]), stop = (int64_t) (std::stoll(v[2]) - 1);
+                        if (start > stop)
+                        {
+                            std::cerr << "[W] ignoring invalid interval in " << filename << " : " << line << "\n";
+                            continue;
+                        }
+                        chr_it->second->addInterval(start, stop, label_id);
+                        ++icount;
+                    }
+                    catch (std::invalid_argument const &)
                     {
                         std::cerr << "[W] ignoring invalid interval in " << filename << " : " << line << "\n";
                     }
-                    chr_it->second->addInterval(start, stop, label_id);
-                    ++icount;
+                    catch (std::out_of_range const &)
+                    {
+                        std::cerr << "[W] ignoring invalid interval in " << filename << " : " << line << "\n";
+                    }
                 }
                 else if (line != "" && line != "\n")
                 {
@@ -180,6 +212,7 @@ namespace variant
         bcfhelpers::getLocation(hdr, record, refstart, refend);
 
         std::string tag_string = "";
+        std::set<std::string> regions;
 
         auto p_chr = _impl->current_chr;
         if(p_chr == _impl->ib.end() || p_chr->first != chr)
@@ -198,11 +231,7 @@ namespace variant
             {
                 if(p_chr->second->hasOverlap(refstart, refend, i))
                 {
-                    if(!tag_string.empty())
-                    {
-                        tag_string += ",";
-                    }
-                    tag_string += _impl->names[i];
+                    regions.insert(_impl->names[i]);
                 }
             }
             if(refstart > 1)
@@ -210,6 +239,15 @@ namespace variant
                 _impl->current_pos = refstart - 1;
                 p_chr->second->advance(refstart-1);
             }
+        }
+        // regions set is sorted, make sure Regions is sorted also
+        for(auto const & r : regions)
+        {
+            if(!tag_string.empty())
+            {
+                tag_string += ",";
+            }
+            tag_string += r;
         }
         if(!tag_string.empty())
         {

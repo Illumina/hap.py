@@ -67,10 +67,29 @@ def quantify(args):
     else:
         sum_file = None
 
+    qfyregions = {}
+
+    if args.fp_bedfile:
+        if not os.path.exists(args.fp_bedfile):
+            raise Exception("FP / Confident region file not found at %s" % args.fp_bedfile)
+        qfyregions["CONF"] = args.fp_bedfile
+
+    if args.strat_tsv:
+        with open(args.strat_tsv) as sf:
+            for l in sf:
+                n, _, f = l.strip().partition("\t")
+                if n in qfyregions:
+                    raise Exception("Duplicate stratification region ID: %s" % n)
+                if not os.path.exists(f):
+                    f = os.path.join(os.path.abspath(os.path.dirname(args.strat_tsv)), f)
+                if not os.path.exists(f):
+                    raise Exception("Quantification region file %s not found" % f)
+                qfyregions[n] = f
+
     counts = Haplo.quantify.run_quantify(vcf_name,
                                          json_name,
                                          output_vcf if args.write_vcf else False,
-                                         {"CONF": args.fp_bedfile} if args.fp_bedfile else None,
+                                         qfyregions,
                                          args.ref,
                                          threads=args.threads,
                                          output_vtc=args.output_vtc,
@@ -81,7 +100,8 @@ def quantify(args):
                                          roc_filter=args.roc_filter,
                                          roc_delta=args.roc_delta,
                                          output_filter_rocs=args.output_filter_rocs,
-                                         clean_info=not args.preserve_info)
+                                         clean_info=not args.preserve_info,
+                                         strat_fixchr=args.strat_fixchr)
 
     df = pandas.DataFrame(counts)
 
@@ -207,6 +227,14 @@ def updateArgs(parser):
     parser.add_argument("-f", "--false-positives", dest="fp_bedfile",
                         default=None, type=str,
                         help="False positive / confident call regions (.bed or .bed.gz).")
+
+    parser.add_argument("--stratification", dest="strat_tsv",
+                        default=None, type=str,
+                        help="Stratification file list (TSV format -- first column is region name, second column is file name).")
+
+    parser.add_argument("--stratification-fixchr", dest="strat_fixchr",
+                        default=None, action="store_true",
+                        help="Add chr prefix to stratification files if necessary")
 
     parser.add_argument("-V", "--write-vcf", dest="write_vcf",
                         default=False, action="store_true",
