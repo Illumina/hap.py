@@ -69,10 +69,8 @@ int main(int argc, char* argv[]) {
     namespace bf = boost::filesystem;
 
     std::string file;
-    std::string output;
-    std::string output_vcf;
     std::string output_roc;
-    std::string output_summary;
+    std::string output_vcf;
     std::string ref;
     std::string only_regions;
     std::string qtype = "xcmp";
@@ -92,7 +90,6 @@ int main(int argc, char* argv[]) {
     bool count_homref = false;
     bool output_vtc = true;
     bool clean_info = true;
-    bool output_filter_rocs = true;
     bool fixchr = false;
 
     int threads = 1;
@@ -110,9 +107,8 @@ int main(int argc, char* argv[]) {
                 ("help,h", "produce help message")
                 ("version", "Show version")
                 ("input-file", po::value<std::string>(), "The input file")
-                ("output-file,o", po::value<std::string>(), "The output file name (JSON Format).")
+                ("output-file,o", po::value<std::string>(), "The output file name (TSV Format).")
                 ("output-vcf,v", po::value<std::string>(), "Annotated VCF file (with bed annotations).")
-                ("output-roc", po::value<std::string>(), "Write ROC tables (see also the --qq and --roc-filter arguments)")
                 ("output-summary", po::value<std::string>(), "Output a summary table with TP / FP / FN / UNK counts, precision, recall, etc.")
                 ("output-filter-rocs", po::value<bool>(), "Output ROC levels for filters.")
                 ("roc-filter", po::value<std::string>(), "Ignore certain filters when creating a ROC.")
@@ -168,22 +164,12 @@ int main(int argc, char* argv[]) {
 
             if (vm.count("output-file"))
             {
-                output = vm["output-file"].as< std::string >();
+                output_roc = vm["output-file"].as< std::string >();
             }
 
             if (vm.count("output-vcf"))
             {
                 output_vcf = vm["output-vcf"].as< std::string >();
-            }
-
-            if (vm.count("output-roc"))
-            {
-                output_roc = vm["output-roc"].as< std::string >();
-            }
-
-            if (vm.count("output-summary"))
-            {
-                output_summary = vm["output-summary"].as< std::string >();
             }
 
             if (vm.count("reference"))
@@ -258,11 +244,6 @@ int main(int argc, char* argv[]) {
             if (vm.count("fix-chr-regions"))
             {
                 fixchr = vm["fix-chr-regions"].as< bool >();
-            }
-
-            if (vm.count("output-filter-rocs"))
-            {
-                output_filter_rocs = vm["output-filter-rocs"].as< bool >();
             }
 
             if (vm.count("threads"))
@@ -358,6 +339,8 @@ int main(int argc, char* argv[]) {
         {
             qparams += "QQ:" + qq + ";";
         }
+        qparams += "extended_counts;";
+
         std::unique_ptr<BlockQuantify> p_bq(std::move(makeQuantifier(hdr, ref_fasta, qtype, qparams)));
         p_bq->rocFiltering(roc_filter);
 
@@ -447,8 +430,7 @@ int main(int argc, char* argv[]) {
         }
 
         /** this is where things actually get written to files */
-        std::map<std::string, VariantStatistics> count_map;
-        auto output_counts = [&count_map, &writer, &roc_map, &blocks, hdr, truth_sample_id, query_sample_id](int min_size) {
+        auto output_counts = [&writer, &roc_map, &blocks, hdr, truth_sample_id, query_sample_id](int min_size) {
             while(blocks.size() > (unsigned )min_size)
             {
                 // make sure we have run this block
@@ -461,20 +443,6 @@ int main(int argc, char* argv[]) {
                     for(auto & v : variants)
                     {
                         bcf_write1(writer, hdr, v);
-                    }
-                }
-
-                // update counts
-                auto const & cm = blocks.front().second->getCounts();
-                for(auto const & c : cm)
-                {
-                    auto it = count_map.find(c.first);
-                    if (it == count_map.end()) {
-                        count_map.insert(c);
-                    }
-                    else
-                    {
-                        it->second.add(c.second);
                     }
                 }
 
@@ -589,23 +557,6 @@ int main(int argc, char* argv[]) {
         // clear remaining
         output_counts(0);
 
-        Json::Value counts;
-        for (auto & p : count_map)
-        {
-            counts[p.first] = p.second.write();
-        }
-
-        Json::FastWriter fastWriter;
-        if (output == "" || output == "-")
-        {
-            std::cout << fastWriter.write(counts);
-        }
-        else
-        {
-            std::ofstream o(output);
-            o << fastWriter.write(counts);
-        }
-
         if(writer)
         {
             hts_close(writer);
@@ -615,16 +566,16 @@ int main(int argc, char* argv[]) {
         if(roc_map)
         {
             int r = 1;
-            auto makeHeader = [qq](std::ostream & out, bool print_qq)
+            auto makeHeader = [qq](std::ostream & out)
             {
-                out << "i" << "\t" << "type";
-                if(print_qq)
-                {
-                    out << "\t" << qq;
-                }
+                out << "i";
+                out << "\t" << "subset";
+                out << "\t" << "type";
+                out << "\t" << "filter";
+                out << "\t" << qq;
                 for(int j = 0; j < roc::NDecisionTypes; ++j)
                 {
-                    if(!print_qq && j == roc::to_underlying(roc::DecisionType::FN2))
+                    if(j == roc::to_underlying(roc::DecisionType::FN2))
                     {
                         continue;
                     }
@@ -641,128 +592,77 @@ int main(int argc, char* argv[]) {
             };
 
             std::ofstream out_roc(output_roc);
-            std::unique_ptr<std::ofstream> out_summary;
-
-            makeHeader(out_roc, true);
-            if(!output_summary.empty())
+            makeHeader(out_roc);
+            for(auto & m : *roc_map)
             {
-                out_summary.reset(new std::ofstream(output_summary));
-                makeHeader(*out_summary, false);
-            }
-
-            for(auto & m : *roc_map) {
                 // filter ROCs just give numbers of TPs / FPs / UNKs filtered by
                 // each filter at each level
-                if(m.first.substr(0, 2) == "f:")
-                {
-                    if(out_summary)
-                    {
-                        const roc::Level l = m.second.getTotals();
-                        *out_summary << r << "\t" << m.first;
-                        for(int j = 0; j < roc::NDecisionTypes; ++j)
-                        {
-                            if(j == roc::to_underlying(roc::DecisionType::FN2))
-                            {
-                                continue;
-                            }
-                            if( j == roc::to_underlying(roc::DecisionType::TP)
-                                || j == roc::to_underlying(roc::DecisionType::TP2)
-                                || j == roc::to_underlying(roc::DecisionType::FP)
-                                || j == roc::to_underlying(roc::DecisionType::UNK)
-                                )
-                            {
-                                *out_summary << "\t" << l.counts[j];
-                            }
-                            else
-                            {
-                                *out_summary << "\t" << ".";
-                            }
-                        }
-                        // don't calculate these here
-                        *out_summary << "\t" << ".";
-                        *out_summary << "\t" << ".";
-                        *out_summary << "\t" << ".";
-                        *out_summary << "\t" << ".";
-                        *out_summary << "\t" << ".";
-                        *out_summary << "\n";
-                    }
-                    if(output_filter_rocs)
-                    {
-                        std::vector<roc::Level> levels;
-                        m.second.getLevels(levels, roc_delta);
-                        for (auto const &l : levels)
-                        {
-                            out_roc << r << "\t" << m.first;
-                            out_roc << "\t" << l.level;
-                            for(int j = 0; j < roc::NDecisionTypes; ++j)
-                            {
-                                if( j == roc::to_underlying(roc::DecisionType::TP)
-                                    || j == roc::to_underlying(roc::DecisionType::TP2)
-                                    || j == roc::to_underlying(roc::DecisionType::FP)
-                                    || j == roc::to_underlying(roc::DecisionType::UNK)
-                                    )
-                                {
-                                    out_roc << "\t" << l.counts[j];
-                                }
-                                else
-                                {
-                                    out_roc << "\t" << ".";
-                                }
-                            }
-                            // don't calculate these here
-                            out_roc << "\t" << ".";
-                            out_roc << "\t" << ".";
-                            out_roc << "\t" << ".";
-                            out_roc << "\t" << ".";
-                            out_roc << "\t" << ".";
 
-                            out_roc << "\n";
-                        }
-                    }
+                std::vector<std::string> subs;
+                stringutil::split(m.first, subs, ":");
+                if(subs.empty())
+                {
+                    // only happens when an empty string is passed
+                    continue;
+                }
+                std::string type = "unknown";
+                std::string subset = "unknown";
+                std::string filter = "unknown";
+
+                const roc::Level l = m.second.getTotals();
+                bool counts_only = false;
+                if (subs.size() != 3)
+                {
+                    type = m.first;
                 }
                 else
                 {
-                    if(out_summary)
+                    type = subs[1];
+                    filter = subs[2];
+                    if(subs[0] == "f")
                     {
-                        const roc::Level l = m.second.getTotals();
-                        *out_summary << r << "\t" << m.first;
-                        for(int j = 0; j < roc::NDecisionTypes; ++j)
-                        {
-                            if(j == roc::to_underlying(roc::DecisionType::FN2))
-                            {
-                                continue;
-                            }
-                            *out_summary << "\t" << l.counts[j];
-                        }
-                        *out_summary << "\t" << l.recall();
-                        *out_summary << "\t" << l.precision();
-                        *out_summary << "\t" << l.fScore();
-                        *out_summary << "\t" << l.na();
-                        *out_summary << "\t" << l.totalTruth();
-                        *out_summary << "\t" << l.totalQuery();
-
-                        *out_summary << "\n";
+                        counts_only = true;
+                        subset = "*";
                     }
+                    else if(subs[0].substr(0, 2) == "s|")
+                    {
+                        subset = subs[0].substr(2);
+                    }
+                    else if(subs[0].substr(0, 2) == "x|")
+                    {
+                        // TODO possibly better to have separate column for this
+                        subset = subs[0].substr(2);
+                    }
+                    else if(subs[0] == "a")
+                    {
+                        subset = "*";
+                    }
+                    else
+                    {
+                        // unknown count, should not happen
+                        continue;
+                    }
+
+                }
+
+                out_roc << r << "\t" << subset << "\t" << type << "\t" << filter << "\t";
+                l.dumpTSV(out_roc, counts_only);
+                out_roc << "\n";
+
+                // don't write ROCs for filters
+                // we could make this optional, but not sure it is really necessary
+                if(!counts_only)
+                {
                     std::vector<roc::Level> levels;
                     m.second.getLevels(levels, roc_delta);
-                    for (auto const &l : levels)
+                    for (auto const &l2 : levels)
                     {
-                        out_roc << r << "\t" << m.first;
-                        out_roc << "\t" << l.level;
-                        for(int j = 0; j < roc::NDecisionTypes; ++j)
-                        {
-                            out_roc << "\t" << l.counts[j];
-                        }
-                        out_roc << "\t" << l.recall();
-                        out_roc << "\t" << l.precision();
-                        out_roc << "\t" << l.fScore();
-                        out_roc << "\t" << l.na();
-                        out_roc << "\t" << l.totalTruth();
-                        out_roc << "\t" << l.totalQuery();
-
+                        out_roc << r << "\t" << subset << "\t" << type << "\t" << filter << "\t";
+                        l2.dumpTSV(out_roc, counts_only);
                         out_roc << "\n";
                     }
                 }
+
                 ++r;
             }
             out_roc.close();

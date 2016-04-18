@@ -37,7 +37,6 @@ sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'lib', 'python27')
 
 import Tools
 from Tools.metric import makeMetricsObject, dataframeToMetricsTable
-from Tools.fastasize import fastaContigLengths
 import Haplo.quantify
 import Haplo.happyroc
 
@@ -49,23 +48,10 @@ def quantify(args):
     if not vcf_name or not os.path.exists(vcf_name):
         raise Exception("Cannot read input VCF.")
 
-    json_name = args.reports_prefix + ".counts.json"
-
     logging.info("Counting variants...")
 
     output_vcf = args.reports_prefix + ".vcf.gz"
-
-    roc_table = None
-
-    if args.roc:
-        roc_table = args.reports_prefix + ".roc.tsv"
-
-    if args.verbose:
-        # verbose writes internal summary file
-        # this will be what we migrate to in 0.3.0
-        sum_file = args.reports_prefix + ".internal.summary.tsv"
-    else:
-        sum_file = None
+    roc_table = args.reports_prefix + ".roc.tsv"
 
     qfyregions = {}
 
@@ -86,134 +72,128 @@ def quantify(args):
                     raise Exception("Quantification region file %s not found" % f)
                 qfyregions[n] = f
 
-    counts = Haplo.quantify.run_quantify(vcf_name,
-                                         json_name,
-                                         output_vcf if args.write_vcf else False,
-                                         qfyregions,
-                                         args.ref,
-                                         threads=args.threads,
-                                         output_vtc=args.output_vtc,
-                                         qtype=args.type,
-                                         roc_val=args.roc,
-                                         roc_file=roc_table,
-                                         summary_file=sum_file,
-                                         roc_filter=args.roc_filter,
-                                         roc_delta=args.roc_delta,
-                                         output_filter_rocs=args.output_filter_rocs,
-                                         clean_info=not args.preserve_info,
-                                         strat_fixchr=args.strat_fixchr)
-
-    df = pandas.DataFrame(counts)
+    Haplo.quantify.run_quantify(vcf_name,
+                                roc_table,
+                                output_vcf if args.write_vcf else False,
+                                qfyregions,
+                                args.ref,
+                                threads=args.threads,
+                                output_vtc=args.output_vtc,
+                                qtype=args.type,
+                                roc_val=args.roc,
+                                roc_filter=args.roc_filter,
+                                roc_delta=args.roc_delta,
+                                clean_info=not args.preserve_info,
+                                strat_fixchr=args.strat_fixchr)
 
     metrics_output = makeMetricsObject("%s.comparison" % args.runner)
 
-    if args.write_counts:
-        df.to_csv(args.reports_prefix + ".counts.csv")
-        metrics_output["metrics"].append(dataframeToMetricsTable("raw.counts", df))
+    # if args.write_counts:
+    #     df.to_csv(args.reports_prefix + ".counts.csv")
+    #     metrics_output["metrics"].append(dataframeToMetricsTable("raw.counts", df))
 
     # calculate precision / recall
-    count_types = []
+    # count_types = []
 
-    simplified_numbers = Haplo.quantify.simplify_counts(counts)
+    # simplified_numbers = Haplo.quantify.simplify_counts(counts)
 
-    count_types += simplified_numbers.keys()
-    count_types = sorted(list(set(count_types)))
+    # count_types += simplified_numbers.keys()
+    # count_types = sorted(list(set(count_types)))
 
-    for vtype in count_types:
-        if vtype not in simplified_numbers:
-            simplified_numbers[vtype] = {}
+    # for vtype in count_types:
+    #     if vtype not in simplified_numbers:
+    #         simplified_numbers[vtype] = {}
 
-        simplified_numbers[vtype]["METRIC.Recall"] = 0
-        simplified_numbers[vtype]["METRIC.Recall2"] = 0
-        simplified_numbers[vtype]["METRIC.Precision"] = 0
-        simplified_numbers[vtype]["METRIC.Frac_NA"] = 0
+    #     simplified_numbers[vtype]["METRIC.Recall"] = 0
+    #     simplified_numbers[vtype]["METRIC.Recall2"] = 0
+    #     simplified_numbers[vtype]["METRIC.Precision"] = 0
+    #     simplified_numbers[vtype]["METRIC.Frac_NA"] = 0
 
+    #     try:
+    #         simplified_numbers[vtype]["METRIC.Recall"] = \
+    #             float(simplified_numbers[vtype]["TRUTH.TP"]) / \
+    #             float(simplified_numbers[vtype]["TRUTH.TP"] + simplified_numbers[vtype]["TRUTH.FN"])
+    #     except:
+    #         pass
+
+    #     try:
+    #         simplified_numbers[vtype]["METRIC.Recall2"] = \
+    #             float(simplified_numbers[vtype]["TRUTH.TP"]) / \
+    #             float(simplified_numbers[vtype]["TRUTH.TOTAL"])
+    #     except:
+    #         pass
+
+    #     try:
+    #         simplified_numbers[vtype]["METRIC.Precision"] = \
+    #             float(simplified_numbers[vtype]["QUERY.TP"]) / \
+    #             float(simplified_numbers[vtype]["QUERY.TP"] + simplified_numbers[vtype]["QUERY.FP"])
+    #     except:
+    #         pass
+
+    #     try:
+    #         simplified_numbers[vtype]["METRIC.Frac_NA"] = \
+    #             float(simplified_numbers[vtype]["QUERY.UNK"]) / \
+    #             float(simplified_numbers[vtype]["QUERY.TOTAL"])
+    #     except:
+    #         pass
+
+    # pandas.set_option("display.width", 120)
+    # pandas.set_option("display.max_columns", 1000)
+    # df = pandas.DataFrame(simplified_numbers).transpose()
+
+    # vstring = "%s-%s" % (args.runner, Tools.version)
+    # vstring += " ".join(sys.argv)
+
+    # df.loc[vstring] = 0
+
+    # summary_columns = ["TRUTH.TOTAL",
+    #                    "QUERY.TOTAL",
+    #                    "METRIC.Recall",
+    #                    "METRIC.Precision",
+    #                    "METRIC.Frac_NA"]
+
+    # for additional_column in ["TRUTH.TOTAL.TiTv_ratio",
+    #                           "QUERY.TOTAL.TiTv_ratio",
+    #                           "TRUTH.TOTAL.het_hom_ratio",
+    #                           "QUERY.TOTAL.het_hom_ratio"]:
+    #     if additional_column in df.columns:
+    #         summary_columns.append(additional_column)
+
+    # df[summary_columns].to_csv(args.reports_prefix + ".summary.csv")
+
+    # metrics_output["metrics"].append(dataframeToMetricsTable("summary.metrics",
+    #                                                          df[summary_columns]))
+
+    # if args.write_counts:
+    #     df.to_csv(args.reports_prefix + ".extended.csv")
+    #     metrics_output["metrics"].append(dataframeToMetricsTable("all.metrics", df))
+
+    # essential_numbers = df[summary_columns]
+
+    # pandas.set_option('display.max_columns', 500)
+    # pandas.set_option('display.width', 1000)
+
+    # essential_numbers = essential_numbers[essential_numbers.index.isin(
+    #     ["Locations.SNP", "Locations.INDEL"])]
+
+    # logging.info("\n" + str(essential_numbers))
+
+    # # in default mode, print result summary to stdout
+    # if not args.quiet and not args.verbose:
+    #     print "Benchmarking Summary:"
+    #     print str(essential_numbers)
+
+    res = Haplo.happyroc.roc(roc_table, args.reports_prefix + ".roc")
+
+    # keep this for verbose output
+    if not args.verbose:
         try:
-            simplified_numbers[vtype]["METRIC.Recall"] = \
-                float(simplified_numbers[vtype]["TRUTH.TP"]) / \
-                float(simplified_numbers[vtype]["TRUTH.TP"] + simplified_numbers[vtype]["TRUTH.FN"])
+            os.unlink(roc_table)
         except:
             pass
 
-        try:
-            simplified_numbers[vtype]["METRIC.Recall2"] = \
-                float(simplified_numbers[vtype]["TRUTH.TP"]) / \
-                float(simplified_numbers[vtype]["TRUTH.TOTAL"])
-        except:
-            pass
-
-        try:
-            simplified_numbers[vtype]["METRIC.Precision"] = \
-                float(simplified_numbers[vtype]["QUERY.TP"]) / \
-                float(simplified_numbers[vtype]["QUERY.TP"] + simplified_numbers[vtype]["QUERY.FP"])
-        except:
-            pass
-
-        try:
-            simplified_numbers[vtype]["METRIC.Frac_NA"] = \
-                float(simplified_numbers[vtype]["QUERY.UNK"]) / \
-                float(simplified_numbers[vtype]["QUERY.TOTAL"])
-        except:
-            pass
-
-    pandas.set_option("display.width", 120)
-    pandas.set_option("display.max_columns", 1000)
-    df = pandas.DataFrame(simplified_numbers).transpose()
-
-    vstring = "%s-%s" % (args.runner, Tools.version)
-    vstring += " ".join(sys.argv)
-
-    df.loc[vstring] = 0
-
-    summary_columns = ["TRUTH.TOTAL",
-                       "QUERY.TOTAL",
-                       "METRIC.Recall",
-                       "METRIC.Precision",
-                       "METRIC.Frac_NA"]
-
-    for additional_column in ["TRUTH.TOTAL.TiTv_ratio",
-                              "QUERY.TOTAL.TiTv_ratio",
-                              "TRUTH.TOTAL.het_hom_ratio",
-                              "QUERY.TOTAL.het_hom_ratio"]:
-        if additional_column in df.columns:
-            summary_columns.append(additional_column)
-
-    df[summary_columns].to_csv(args.reports_prefix + ".summary.csv")
-
-    metrics_output["metrics"].append(dataframeToMetricsTable("summary.metrics",
-                                                             df[summary_columns]))
-
-    if args.write_counts:
-        df.to_csv(args.reports_prefix + ".extended.csv")
-        metrics_output["metrics"].append(dataframeToMetricsTable("all.metrics", df))
-
-    essential_numbers = df[summary_columns]
-
-    pandas.set_option('display.max_columns', 500)
-    pandas.set_option('display.width', 1000)
-
-    essential_numbers = essential_numbers[essential_numbers.index.isin(
-        ["Locations.SNP", "Locations.INDEL"])]
-
-    logging.info("\n" + str(essential_numbers))
-
-    # in default mode, print result summary to stdout
-    if not args.quiet and not args.verbose:
-        print "Benchmarking Summary:"
-        print str(essential_numbers)
-
-    if args.roc:
-        res = Haplo.happyroc.roc(roc_table, args.reports_prefix + ".roc")
-
-        # keep this for verbose output
-        if not args.verbose:
-            try:
-                os.unlink(roc_table)
-            except:
-                pass
-
-        for t in res.iterkeys():
-            metrics_output["metrics"].append(dataframeToMetricsTable("roc." + t, res[t]))
+    for t in res.iterkeys():
+        metrics_output["metrics"].append(dataframeToMetricsTable("roc." + t, res[t]))
 
     with open(args.reports_prefix + ".metrics.json", "w") as fp:
         json.dump(metrics_output, fp)
@@ -255,19 +235,14 @@ def updateArgs(parser):
     parser.add_argument("--preserve-info", dest="preserve_info", action="store_true", default=False,
                         help="When using XCMP, preserve and merge the INFO fields in truth and query. Useful for ROC computation.")
 
-    parser.add_argument("--roc", dest="roc", default=False,
-                        help="Select an INFO feature to produce a ROC on. This works best with "
-                             "--no-internal-preprocessing and --no-internal-leftshift since these "
-                             "flags preserve the most INFO flags from the input files.")
+    parser.add_argument("--roc", dest="roc", default="QUAL",
+                        help="Select an INFO feature to produce a ROC on.")
 
     parser.add_argument("--roc-filter", dest="roc_filter", default=False,
                         help="Select a filter to ignore when making ROCs.")
 
     parser.add_argument("--roc-delta", dest="roc_delta", default=1, type=float,
                         help="Minimum spacing between ROC QQ levels.")
-
-    parser.add_argument("--output-filter-rocs", dest="output_filter_rocs", default=False, action="store_true",
-                        help="Write TP / FP / UNK counts per filter and QQ level.")
 
 
 def main():

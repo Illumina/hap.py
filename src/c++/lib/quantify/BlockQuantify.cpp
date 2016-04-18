@@ -106,7 +106,8 @@ namespace variant {
                                                     BlockQuantifyImpl::filterset_t(),
                                                     params.find("count_unk") != std::string::npos,
                                                     params.find("output_vtc") != std::string::npos,
-                                                    params.find("count_homref") != std::string::npos
+                                                    params.find("count_homref") != std::string::npos,
+                                                    params.find("extended_counts") != std::string::npos
         }))
     {
     }
@@ -135,11 +136,8 @@ namespace variant {
                                     uint64_t n,
                                     bcf1_t * v)
     {
-        const std::string bi_truth = bcfhelpers::getFormatString(_impl->hdr, v, "BI", 0, ".");
-        const std::string bi_query = bcfhelpers::getFormatString(_impl->hdr, v, "BI", 1, ".");
-
         // add observation to a roc
-        auto observe = [this, level, dt, n, &bi_truth, &bi_query](std::string const & name, bool f) {
+        auto observe = [this, level, dt, n](std::string const & name, bool f) {
             roc::DecisionType final_dt = dt;
             if(f)
             {
@@ -201,8 +199,44 @@ namespace variant {
             }
         }
 
-        observe(roc_identifier + ":PASS", fail);
-        observe(roc_identifier, false);
+        observe("a:" + roc_identifier + ":PASS", fail);
+        observe("a:" + roc_identifier + ":ALL", false);
+
+        const std::string regions = bcfhelpers::getInfoString(_impl->hdr, v, "Regions", "");
+        if(!regions.empty() && regions != "CONF")
+        {
+            std::vector<std::string> rs;
+            stringutil::split(regions, rs, ",");
+            for(auto const & r : rs)
+            {
+                if(r == "CONF")
+                {
+                    continue;
+                }
+                observe("s|" + r + ":" + roc_identifier + ":PASS", fail);
+                observe("s|" + r + ":" + roc_identifier + ":ALL", false);
+            }
+        }
+
+        if(_impl->extended_counts)
+        {
+            const std::string bi_truth = bcfhelpers::getFormatString(_impl->hdr, v, "BI", 0, ".");
+            const std::string bi_query = bcfhelpers::getFormatString(_impl->hdr, v, "BI", 1, ".");
+
+            const std::string blt_truth = bcfhelpers::getFormatString(_impl->hdr, v, "BLT", 0, ".");
+            const std::string blt_query = bcfhelpers::getFormatString(_impl->hdr, v, "BLT", 1, ".");
+
+            const std::string x_id1 = "x|t|" + bi_truth + "|" + blt_truth + ":" + roc_identifier;
+            const std::string x_id2 = "x|q|" + bi_query + "|" + blt_query + ":" + roc_identifier;
+
+            // TODO we could also compute these separately for all quantification regions here
+            observe(x_id1 + ":PASS", fail);
+            observe(x_id1 + ":ALL", false);
+
+            observe(x_id2 + ":PASS", fail);
+            observe(x_id2 + ":ALL", false);
+        }
+
     }
 
     void BlockQuantify::add(bcf1_t * v)

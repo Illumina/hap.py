@@ -74,12 +74,24 @@ def roc(roc_table, output_path):
                 rec = {}
                 for k, v in itertools.izip(header, l.split("\t")):
                     rec[k] = v
-                if "type" in rec:
-                    roc = "Locations." + rec["type"]
-                    if roc not in result:
-                        result[roc] = [rec]
-                    else:
-                        result[roc].append(rec)
+                try:
+                    if rec["type"] in ["SNP", "INDEL"] \
+                       and rec["filter"] == "ALL" \
+                       and rec["subset"] == "*" \
+                       and rec[header[4]] != "*":  # this is the ROC score field
+                        roc = "Locations." + rec["type"]
+                        if roc not in result:
+                            result[roc] = [rec]
+                        else:
+                            result[roc].append(rec)
+                except:
+                    pass
+
+                roc = "all"
+                if roc not in result:
+                    result[roc] = [rec]
+                else:
+                    result[roc].append(rec)
 
     for k, v in result.items():
         result[k] = pandas.DataFrame(v, columns=header)

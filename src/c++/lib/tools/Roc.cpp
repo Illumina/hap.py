@@ -44,6 +44,63 @@ namespace roc
 //    enum class DecisionType : int { FN, TP, FN2, TP2, FP, UNK, N, SIZE };
     const char * DecisionTypes[NDecisionTypes] { "FN", "TP", "FN2", "TP2", "FP", "UNK", "N" };
 
+    void Level::dumpTSV(std::ostream & o, bool counts_only) const
+    {
+        if(std::isnan(level))
+        {
+            o << "*";
+        }
+        else
+        {
+            o << level;
+        }
+        if(counts_only)
+        {
+            for(int j = 0; j < roc::NDecisionTypes; ++j)
+            {
+                if(j == roc::to_underlying(roc::DecisionType::FN2))
+                {
+                    continue;
+                }
+                if( j == roc::to_underlying(roc::DecisionType::TP)
+                 || j == roc::to_underlying(roc::DecisionType::TP2)
+                 || j == roc::to_underlying(roc::DecisionType::FP)
+                 || j == roc::to_underlying(roc::DecisionType::UNK)
+                    )
+                {
+                    o << "\t" << counts[j];
+                }
+                else
+                {
+                    o << "\t" << ".";
+                }
+            }
+            // don't write these
+            o << "\t" << ".";
+            o << "\t" << ".";
+            o << "\t" << ".";
+            o << "\t" << ".";
+            o << "\t" << ".";
+        }
+        else
+        {
+            for(int j = 0; j < roc::NDecisionTypes; ++j)
+            {
+                if(j == roc::to_underlying(roc::DecisionType::FN2))
+                {
+                    continue;
+                }
+                o << "\t" << counts[j];
+            }
+            o << "\t" << recall();
+            o << "\t" << precision();
+            o << "\t" << fScore();
+            o << "\t" << na();
+            o << "\t" << totalTruth();
+            o << "\t" << totalQuery();
+        }
+    }
+
     struct Roc::RocImpl
     {
         std::vector<Observation> obs;
@@ -74,13 +131,11 @@ namespace roc
     Level Roc::getTotals() const
     {
         Level last;
-        last.level = std::numeric_limits<double>::quiet_NaN();
         for(auto const & x : _impl->obs)
         {
             last.addObs(x);
-            last.level = x.level;
         }
-
+        last.level = std::numeric_limits<double>::quiet_NaN();
         return last;
     }
 

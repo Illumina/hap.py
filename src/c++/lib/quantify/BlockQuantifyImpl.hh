@@ -77,6 +77,7 @@ namespace variant
         bool count_unk;
         bool output_vtc;
         bool count_homref;
+        bool extended_counts;
     };
 }
 

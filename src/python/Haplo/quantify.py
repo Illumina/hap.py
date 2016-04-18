@@ -65,10 +65,8 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
                  output_vtc=False,
                  qtype=None,
                  roc_file=None,
-                 summary_file=None,
                  roc_val=None,
                  roc_filter=None,
-                 output_filter_rocs=None,
                  roc_delta=None,
                  clean_info=True,
                  strat_fixchr=False):
@@ -83,11 +81,9 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
     :param locations: a location to use
     :param output_vtc: enable / disable the VTC field
     :param roc_file: filename for a TSV file with ROC observations
-    :param summary_file: filename for a TSV file with summary information
     :param roc_val: field to use for ROC QQ
     :param roc_filter: ROC filtering settings
     :param roc_delta: ROC minimum spacing between levels
-    :param output_filter_rocs: write pseudo-ROCs (TPs / FPs / UNKs per level) for filters
     :param clean_info: remove unused INFO fields
     :param strat_fixchr: fix chr naming in stratification regions
     :returns: parsed counts JSON
@@ -111,9 +107,6 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
     if roc_file:
         run_str += " --output-roc %s" % roc_file
 
-    if summary_file:
-        run_str += " --output-summary %s" % summary_file
-
     if roc_val:
         run_str += " --qq %s" % roc_val
 
@@ -132,11 +125,6 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
         run_str += " --fix-chr-regions 1"
     else:
         run_str += " --fix-chr-regions 0"
-
-    if output_filter_rocs:
-        run_str += " --output-filter-rocs 1"
-    else:
-        run_str += " --output-filter-rocs 0"
 
     if write_vcf:
         if not write_vcf.endswith(".vcf.gz"):
@@ -195,7 +183,10 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
         to_run = "tabix -p vcf '%s'" % write_vcf
         logging.info("Running '%s'" % to_run)
         subprocess.check_call(to_run, shell=True)
-    return json.load(open(json_name))
+    if json_name:
+        return json.load(open(json_name))
+    else:
+        return None
 
 
 def simplify_counts(counts, snames=None):
@@ -263,7 +254,7 @@ def simplify_counts(counts, snames=None):
             elif not (vt == "nc" or ct == "homref" or ct == "fail" or vt == "r"):  # ignore non-called locations in a sample
                 # process locations
                 is_location = True
-                if ct in ["Transitions", "Transversions"]:
+                if ct in ["ti", "tv"]:
                     # these are additional counts. Every SNP we see in
                     # here is also seen separately below.
                     keys1 = ["Locations.SNP." + ct]
@@ -342,13 +333,13 @@ def simplify_counts(counts, snames=None):
                 if vt == "Locations.SNP":
                     ti_count = 0
                     try:
-                        ti_count = simplified_numbers[vt + ".Transitions"][sample + "." + ct]
+                        ti_count = simplified_numbers[vt + ".ti"][sample + "." + ct]
                     except:
                         pass
 
                     tv_count = 0
                     try:
-                        tv_count = simplified_numbers[vt + ".Transversions"][sample + "." + ct]
+                        tv_count = simplified_numbers[vt + ".tv"][sample + "." + ct]
                     except:
                         pass
 

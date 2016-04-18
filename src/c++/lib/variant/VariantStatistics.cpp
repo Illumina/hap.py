@@ -112,15 +112,48 @@ const char * CT_NAMES [] = {
 /** we count 256 distinct things */
 static const int VS_COUNTS = 256;
 
+const int XC_TI = 0;
+const int XC_TV = 1;
+const int XC_I1_5 = 2;
+const int XC_I6_15 = 3;
+const int XC_I16_PLUS = 4;
+const int XC_D1_5 = 5;
+const int XC_D6_15 = 6;
+const int XC_D16_PLUS = 7;
+const int XC_C1_5 = 8;
+const int XC_C6_15 = 9;
+const int XC_C16_PLUS = 10;
+
+const char * XC_NAMES [] = {
+    "ti",
+    "tv",
+    "i1_5",
+    "i6_15",
+    "i16_plus",
+    "d1_5",
+    "d6_15",
+    "d16_plus",
+    "c1_5",
+    "c6_15",
+    "c16_plus",
+    "unknown",
+    "unknown",
+    "unknown",
+    "unknown",
+    "unknown",
+};
+
+static const int XC_COUNTS = 16;
+
 struct VariantStatisticsImpl
 {
     VariantStatisticsImpl(FastaFile const & ref_fasta, bool _count_homref) :
         ref(ref_fasta), count_homref(_count_homref),
-        alignment(makeAlignment("klibg")),
-        myNumTransitions(0), myNumTransversions(0)
+        alignment(makeAlignment("klibg"))
     {
         memset(counts, 0, sizeof(size_t)*VS_COUNTS);
         memset(rtypes, 0, sizeof(int)*VS_COUNTS);
+        memset(extraCounts, 0, sizeof(size_t)*XC_COUNTS);
         nrtypes = 0;
         rtype_bs.reset();
     }
@@ -131,13 +164,11 @@ struct VariantStatisticsImpl
         alignment(makeAlignment("klibg"))
     {
         memcpy(counts, rhs.counts, sizeof(size_t)*VS_COUNTS);
+        memcpy(extraCounts, rhs.extraCounts, sizeof(size_t)*XC_COUNTS);
         count_homref = rhs.count_homref;
         nrtypes = rhs.nrtypes;
         memcpy(rtypes, rhs.rtypes, sizeof(int)*256);
         rtype_bs = rhs.rtype_bs;
-
-        myNumTransitions = rhs.myNumTransitions;
-        myNumTransversions = rhs.myNumTransversions;
     }
 
     /** translate count key to name */
@@ -170,8 +201,10 @@ struct VariantStatisticsImpl
     }
 
     void addExtras(const VariantStatisticsImpl& rhs) {
-        myNumTransitions += rhs.myNumTransitions;
-        myNumTransversions += rhs.myNumTransversions;
+        for(size_t i = 0; i < XC_COUNTS; ++i)
+        {
+            extraCounts[i] += rhs.extraCounts[i];
+        }
     }
 
     /** add single allele */
@@ -190,16 +223,61 @@ struct VariantStatisticsImpl
                       total_hom,
                       ti, tv);
 
-        myNumTransitions += ti;
-        myNumTransversions += tv;
+        extraCounts[XC_TI] += ti;
+        extraCounts[XC_TV] += tv;
 
         if(ti)
         {
-            extra_counts_seen.insert(ourTransitionsName);
+            extra_counts_seen.insert(XC_NAMES[XC_TI]);
         }
         if(tv)
         {
-            extra_counts_seen.insert(ourTransversionsName);
+            extra_counts_seen.insert(XC_NAMES[XC_TV]);
+        }
+
+        if(total_snp == 0)
+        {
+            if(total_ins > 0 && total_ins <= 5)
+            {
+                extra_counts_seen.insert(XC_NAMES[XC_I1_5]);
+            }
+            else if(total_ins >= 6 && total_ins <= 15)
+            {
+                extra_counts_seen.insert(XC_NAMES[XC_I6_15]);
+            }
+            else if(total_ins >= 16)
+            {
+                extra_counts_seen.insert(XC_NAMES[XC_I16_PLUS]);
+            }
+
+            if(total_del > 0 && total_del <= 5)
+            {
+                extra_counts_seen.insert(XC_NAMES[XC_D1_5]);
+            }
+            else if(total_del >= 6 && total_del <= 15)
+            {
+                extra_counts_seen.insert(XC_NAMES[XC_D6_15]);
+            }
+            else if(total_del >= 16)
+            {
+                extra_counts_seen.insert(XC_NAMES[XC_D16_PLUS]);
+            }
+        }
+        else
+        {
+            const size_t total_indel = total_ins + total_del;
+            if(total_indel > 0 && total_indel <= 5)
+            {
+                extra_counts_seen.insert(XC_NAMES[XC_C1_5]);
+            }
+            else if(total_indel >= 6 && total_indel <= 15)
+            {
+                extra_counts_seen.insert(XC_NAMES[XC_C6_15]);
+            }
+            else if(total_indel >= 16)
+            {
+                extra_counts_seen.insert(XC_NAMES[XC_C16_PLUS]);
+            }
         }
 
         // count nucleotides
@@ -240,15 +318,21 @@ struct VariantStatisticsImpl
     }
 
     void getExtraCountNames(StrVec& extraCountNames) {
-        extraCountNames = { ourTransitionsName, ourTransversionsName };
+        extraCountNames.clear();
+        for(size_t j = 0; j < XC_COUNTS; ++j)
+        {
+            extraCountNames.push_back(XC_NAMES[j]);
+        }
     }
 
     size_t extraCount(const std::string& extraCountName)
     {
-        if (extraCountName == ourTransitionsName) {
-            return myNumTransitions;
-        } else if (extraCountName == ourTransversionsName) {
-            return myNumTransversions;
+        for(size_t j = 0; j < XC_COUNTS; ++j)
+        {
+            if (extraCountName == XC_NAMES[j])
+            {
+                return extraCounts[j];
+            }
         }
 
         error((std::string("Trying to read unknown extra statistic: ")
@@ -257,10 +341,13 @@ struct VariantStatisticsImpl
     }
 
     void setExtraCount(const std::string& extraCountName, size_t count) {
-        if (extraCountName == ourTransitionsName) {
-            myNumTransitions = count;
-        } else if (extraCountName == ourTransversionsName) {
-            myNumTransversions = count;
+        for(size_t j = 0; j < XC_COUNTS; ++j)
+        {
+            if (extraCountName == XC_NAMES[j])
+            {
+                extraCounts[j] = count;
+                return;
+            }
         }
 
         error((std::string("Try to set unknown extra statistic: ")
@@ -276,15 +363,9 @@ struct VariantStatisticsImpl
     bool count_homref;
     std::unique_ptr<Alignment> alignment;
 
-    static const std::string ourTransitionsName;
-    static const std::string ourTransversionsName;
-
-    size_t myNumTransitions;
-    size_t myNumTransversions;
+    size_t extraCounts[XC_COUNTS];
 };
 
-const std::string VariantStatisticsImpl::ourTransitionsName("Transitions");
-const std::string VariantStatisticsImpl::ourTransversionsName("Transversions");
 
 
 VariantStatistics::VariantStatistics(FastaFile const & ref_fasta, bool count_homref)
@@ -316,7 +397,7 @@ void VariantStatistics::read(Json::Value const & root)
 {
     for (int i = 0; i < VS_COUNTS; ++i)
     {
-        std::string k = VariantStatisticsImpl::c2n(i);
+        std::string k = VariantStatisticsImpl::c2n((uint64_t) i);
         if (root.isMember(k))
         {
             _impl->counts[i] = root[k].asUInt64();
@@ -344,7 +425,7 @@ Json::Value VariantStatistics::write() const
     {
         if (_impl->counts[i])
         {
-            root[VariantStatisticsImpl::c2n(i)] = Json::Value::UInt64(_impl->counts[i]);
+            root[VariantStatisticsImpl::c2n((uint64_t) i)] = Json::Value::UInt64(_impl->counts[i]);
         }
     }
 
@@ -556,7 +637,7 @@ void VariantStatistics::add(const char * chr, RefVar const & rhs, int ** rtypes,
 /** resolve types to strings */
 std::string VariantStatistics::type2string(int type)
 {
-    return VariantStatisticsImpl::c2n(type);
+    return VariantStatisticsImpl::c2n((uint64_t) type);
 }
 
 /** resolve types to strings */
@@ -580,23 +661,11 @@ std::string VariantStatistics::extraCountsToBI(std::set<std::string> const & ext
     std::string result;
     for(auto const & x : extra_counts_seen)
     {
-        if(x == VariantStatisticsImpl::ourTransitionsName)
+        if(!result.empty())
         {
-            if(!result.empty())
-            {
-                result += ",";
-            }
-            result += "ti";
-
+            result += ",";
         }
-        else if(x == VariantStatisticsImpl::ourTransversionsName)
-        {
-            if(!result.empty())
-            {
-                result += ",";
-            }
-            result += "tv";
-        }
+        result += x;
     }
     if(result.empty())
     {
