@@ -59,10 +59,12 @@ def _locations_tmp_bed_file(locations):
     return tf.name
 
 
-def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
+def run_quantify(filename,
+                 output_file=None, write_vcf=False, regions=None,
                  reference=Tools.defaultReference(),
                  locations=None, threads=1,
                  output_vtc=False,
+                 output_rocs=False,
                  qtype=None,
                  roc_file=None,
                  roc_val=None,
@@ -73,13 +75,14 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
     """Run quantify and return parsed JSON
 
     :param filename: the VCF file name
-    :param json_name: output file name (if None, will use a temp file)
+    :param output_file: output file name (if None, will use a temp file)
     :param write_vcf: write annotated VCF (give filename)
     :type write_vcf: str
     :param regions: dictionary of stratification region names and file names
     :param reference: reference fasta path
     :param locations: a location to use
     :param output_vtc: enable / disable the VTC field
+    :param output_rocs: enable / disable output of ROCs by QQ level
     :param roc_file: filename for a TSV file with ROC observations
     :param roc_val: field to use for ROC QQ
     :param roc_filter: ROC filtering settings
@@ -89,10 +92,10 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
     :returns: parsed counts JSON
     """
 
-    if not json_name:
-        json_name = tempfile.NamedTemporaryFile().name
+    if not output_file:
+        output_file = tempfile.NamedTemporaryFile().name
 
-    run_str = "quantify '%s' -o '%s'" % (filename.replace(" ", "\\ "), json_name)
+    run_str = "quantify '%s' -o '%s'" % (filename.replace(" ", "\\ "), output_file)
     run_str += " -r '%s'" % reference.replace(" ", "\\ ")
     run_str += " --threads %i" % threads
 
@@ -100,6 +103,11 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
         run_str += " --output-vtc 1"
     else:
         run_str += " --output-vtc 0"
+
+    if output_rocs:
+        run_str += " --output-rocs 1"
+    else:
+        run_str += " --output-rocs 0"
 
     if qtype:
         run_str += " --type %s" % qtype
@@ -183,167 +191,4 @@ def run_quantify(filename, json_name=None, write_vcf=False, regions=None,
         to_run = "tabix -p vcf '%s'" % write_vcf
         logging.info("Running '%s'" % to_run)
         subprocess.check_call(to_run, shell=True)
-    if json_name:
-        return json.load(open(json_name))
-    else:
-        return None
 
-
-def simplify_counts(counts, snames=None):
-    """ Return simplified counts from quantify
-    :param counts: counts from running quantify
-    :param snames: sample names
-    """
-
-    if not snames:
-        snames = ["TRUTH", "QUERY"]
-
-    counter_dict = {}
-    if type(snames) is list:
-        for sn in snames:
-            counter_dict[sn + ".TOTAL"] = 0
-            counter_dict[sn + ".TP"] = 0
-            counter_dict[sn + ".FP"] = 0
-            counter_dict[sn + ".FN"] = 0
-            counter_dict[sn + ".UNK"] = 0
-
-    simplified_numbers = {}
-    for k1, v in counts.iteritems():
-        if k1.startswith("all") or v is None:
-            continue
-        # k1 is made in quantify.cpp
-        # type + ":" + kind + ":" + tag_string + ":" + sample
-        try:
-            vtype, kind, tags, tq = k1.split(":", 3)
-        except:
-            logging.warn("Invalid k1 : %s" % k1)
-            vtype = "N"
-            # kind = "qerr"
-            # tags = ""
-            tq = ""
-
-        if type(snames) is list and tq not in snames:
-            logging.warn("Ignoring invalid key %s" % k1)
-            continue
-
-        for k2, v2 in v.iteritems():
-            # k2 is created in quantify.cpp, observation type, then allele types separated by __
-            ct, _, vt = k2.partition("__")
-
-            is_location = False
-            if ct == "nuc":
-                if vt == "s":
-                    altype = "SNP"
-                elif vt == "i":
-                    altype = "INS"
-                elif vt == "d":
-                    altype = "DEL"
-                else:
-                    raise Exception("Invalid nucleotide type: %s" % vt)
-                keys1 = ["Nucleotides", "Nucleotides." + altype]
-            elif ct == "al":
-                if vt == "s":
-                    altype = "SNP"
-                elif vt == "i":
-                    altype = "INS"
-                elif vt == "d":
-                    altype = "DEL"
-                else:
-                    altype = "COMPLEX"
-                keys1 = ["Alleles", "Alleles." + altype]
-            elif not (vt == "nc" or ct == "homref" or ct == "fail" or vt == "r"):  # ignore non-called locations in a sample
-                # process locations
-                is_location = True
-                if ct in ["ti", "tv"]:
-                    # these are additional counts. Every SNP we see in
-                    # here is also seen separately below.
-                    keys1 = ["Locations.SNP." + ct]
-                else:
-                    if vt == "s" or vt == "rs":
-                        altype = "SNP"
-                    else:
-                        altype = "INDEL"
-                    xkeys1 = ["Locations", "Locations." + altype]
-                    if vt != "s":
-                        xkeys1.append("Locations.detailed." + vt)
-
-                    keys1 = copy.copy(xkeys1)
-                    for k in xkeys1:
-                        if k != "Locations":
-                            keys1.append(k + "." + ct)
-            elif ct == "fail":
-                keys1 = ["Records.fail"]
-            elif vt == "nc" or ct == "homref" or vt == "r":
-                if vt == "nc":
-                    keys1 = ["Records.nocall"]
-                else:
-                    keys1 = ["Records.homref"]
-            else:
-                keys1 = ["Records.unknown"]
-
-            # don't count "." records and N records towards total
-            if vtype == "N" or vtype == ".":
-                keys2 = [tq + ".IGN"]
-            else:
-                keys2 = [tq + ".TOTAL", tq + "." + vtype]
-
-            if is_location:
-                # GT mismatch
-                if vtype == "FP" and kind == "am" and tq == "QUERY":
-                    keys2.append("QUERY.FP.GT")
-                # allele mismatch
-                elif vtype == "FP" and kind == "lm" and tq == "QUERY":
-                    keys2.append("QUERY.FP.AL")
-
-            for key1 in keys1:
-                if key1 not in simplified_numbers:
-                    simplified_numbers[key1] = copy.copy(counter_dict)
-
-                for key2 in keys2:
-                    try:
-                        simplified_numbers[key1][key2] += v2
-                    except:
-                        simplified_numbers[key1][key2] = v2
-
-    for vt in ["Locations.SNP", "Locations.INDEL"]:
-        if vt not in simplified_numbers:
-            continue
-        for sample in snames:
-            for ct in ["TP", "FP", "FN", "UNK", "TOTAL"]:
-                homalt_count = 0
-                try:
-                    homalt_count = simplified_numbers[vt + ".homalt"][sample + "." + ct]
-                except:
-                    pass
-                het_count = 0
-                try:
-                    het_count = simplified_numbers[vt + ".het"][sample + "." + ct]
-                except:
-                    pass
-                hetalt_count = 0
-                try:
-                    hetalt_count = simplified_numbers[vt + ".hetalt"][sample + "." + ct]
-                except:
-                    pass
-
-                if homalt_count != 0:
-                    simplified_numbers[vt][sample + "." + ct + ".het_hom_ratio"] = float(het_count) / float(homalt_count)
-                    simplified_numbers[vt][sample + "." + ct + ".hethetalt_hom_ratio"] = float(het_count + hetalt_count) / float(homalt_count)
-
-                if vt == "Locations.SNP":
-                    ti_count = 0
-                    try:
-                        ti_count = simplified_numbers[vt + ".ti"][sample + "." + ct]
-                    except:
-                        pass
-
-                    tv_count = 0
-                    try:
-                        tv_count = simplified_numbers[vt + ".tv"][sample + "." + ct]
-                    except:
-                        pass
-
-                    if tv_count > 0:
-                        simplified_numbers[vt][sample + "." + ct + ".TiTv_ratio"] = float(ti_count) / float(tv_count)
-
-    return simplified_numbers

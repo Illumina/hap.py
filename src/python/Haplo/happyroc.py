@@ -78,7 +78,9 @@ def roc(roc_table, output_path):
                     if rec["type"] in ["SNP", "INDEL"] \
                        and rec["filter"] == "ALL" \
                        and rec["subset"] == "*" \
-                       and rec[header[4]] != "*":  # this is the ROC score field
+                       and rec["genotype"] == "*" \
+                       and rec["subtype"] == "*" \
+                       and rec[header[5]] != "*":  # this is the ROC score field
                         roc = "Locations." + rec["type"]
                         if roc not in result:
                             result[roc] = [rec]

@@ -91,6 +91,7 @@ int main(int argc, char* argv[]) {
     bool output_vtc = true;
     bool clean_info = true;
     bool fixchr = false;
+    bool output_rocs = true;
 
     int threads = 1;
     int blocksize = 20000;
@@ -126,6 +127,7 @@ int main(int argc, char* argv[]) {
                 ("count-homref", po::value<bool>(), "Count homref locations.")
                 ("output-vtc", po::value<bool>(), "Output variant types counted (debugging).")
                 ("clean-info", po::value<bool>(), "Set to zero to preserve INFO fields (default is 1)")
+                ("output-rocs", po::value<bool>(), "Output ROCs with full set of levels ofver QQ values (default is 1, disable for more concise output)")
                 ("fix-chr-regions", po::value<bool>(), "Add chr prefix to regions if necessary (default is off).")
                 ("threads", po::value<int>(), "Number of threads to use.")
                 ("blocksize", po::value<int>(), "Number of variants per block.")
@@ -241,6 +243,11 @@ int main(int argc, char* argv[]) {
                 clean_info = vm["clean-info"].as< bool >();
             }
 
+            if (vm.count("output-rocs"))
+            {
+                output_rocs = vm["output-rocs"].as< bool >();
+            }
+
             if (vm.count("fix-chr-regions"))
             {
                 fixchr = vm["fix-chr-regions"].as< bool >();
@@ -262,7 +269,7 @@ int main(int argc, char* argv[]) {
                 return 1;
             }
 
-            if (output == "")
+            if (output_roc == "")
             {
                 std::cerr << "Please specify an output file.\n";
                 return 1;
@@ -565,13 +572,13 @@ int main(int argc, char* argv[]) {
 
         if(roc_map)
         {
-            int r = 1;
             auto makeHeader = [qq](std::ostream & out)
             {
-                out << "i";
-                out << "\t" << "subset";
-                out << "\t" << "type";
-                out << "\t" << "filter";
+                out << "Type";
+                out << "\t" << "Subtype";
+                out << "\t" << "Genotype";
+                out << "\t" << "Filter";
+                out << "\t" << "Subset";
                 out << "\t" << qq;
                 for(int j = 0; j < roc::NDecisionTypes; ++j)
                 {
@@ -582,12 +589,15 @@ int main(int argc, char* argv[]) {
                     out << "\t" << roc::DecisionTypes[j];
                 }
 
-                out << "\t" << "recall";
-                out << "\t" << "precision";
-                out << "\t" << "f1_score";
-                out << "\t" << "na";
-                out << "\t" << "total.truth";
-                out << "\t" << "total.query";
+                out << "\t" << "FP.gt";
+                out << "\t" << "FP.al";
+
+                out << "\t" << "METRIC.Recall";
+                out << "\t" << "METRIC.Precision";
+                out << "\t" << "METRIC.F1_Score";
+                out << "\t" << "METRIC.Frac_NA";
+                out << "\t" << "TRUTH.TOTAL";
+                out << "\t" << "QUERY.TOTAL";
                 out << "\n";
             };
 
@@ -609,7 +619,6 @@ int main(int argc, char* argv[]) {
                 std::string subset = "unknown";
                 std::string filter = "unknown";
 
-                const roc::Level l = m.second.getTotals();
                 bool counts_only = false;
                 if (subs.size() != 3)
                 {
@@ -628,11 +637,6 @@ int main(int argc, char* argv[]) {
                     {
                         subset = subs[0].substr(2);
                     }
-                    else if(subs[0].substr(0, 2) == "x|")
-                    {
-                        // TODO possibly better to have separate column for this
-                        subset = subs[0].substr(2);
-                    }
                     else if(subs[0] == "a")
                     {
                         subset = "*";
@@ -642,28 +646,70 @@ int main(int argc, char* argv[]) {
                         // unknown count, should not happen
                         continue;
                     }
-
                 }
 
-                out_roc << r << "\t" << subset << "\t" << type << "\t" << filter << "\t";
-                l.dumpTSV(out_roc, counts_only);
-                out_roc << "\n";
+                std::list< std::pair<std::string, uint64_t> > subtypes;
 
-                // don't write ROCs for filters
-                // we could make this optional, but not sure it is really necessary
-                if(!counts_only)
+                std::list <std::pair<std::string, uint64_t> > gts = {
+                    {"*", 0},
+                    {"het", roc::OBS_FLAG_HET},
+                    {"hetalt", roc::OBS_FLAG_HETALT},
+                    {"homalt", roc::OBS_FLAG_HOMALT},
+                };
+
+                std::list <std::pair<std::string, uint64_t> > sts = {
+                    {"*", 0},
+                };
+                // all types, all genotypes
+
+                // SNP: TI / TV
+                if(type == "SNP")
                 {
-                    std::vector<roc::Level> levels;
-                    m.second.getLevels(levels, roc_delta);
-                    for (auto const &l2 : levels)
+                    sts.emplace_back("ti", roc::OBS_FLAG_TI);
+                    sts.emplace_back("tv", roc::OBS_FLAG_TV);
+                }
+                else if(type == "INDEL")
+                {
+                    sts.emplace_back("I1_5", roc::OBS_FLAG_I1_5);
+                    sts.emplace_back("I6_15", roc::OBS_FLAG_I6_15);
+                    sts.emplace_back("I16_PLUS", roc::OBS_FLAG_I16_PLUS);
+                    sts.emplace_back("D1_5", roc::OBS_FLAG_D1_5);
+                    sts.emplace_back("D6_15", roc::OBS_FLAG_D6_15);
+                    sts.emplace_back("D16_PLUS", roc::OBS_FLAG_D16_PLUS);
+                    sts.emplace_back("C1_5", roc::OBS_FLAG_C1_5);
+                    sts.emplace_back("C6_15", roc::OBS_FLAG_C6_15);
+                    sts.emplace_back("C16_PLUS", roc::OBS_FLAG_C16_PLUS);
+                }
+
+                for(auto const & st : sts)
+                {
+                    for(auto const & gt : gts)
                     {
-                        out_roc << r << "\t" << subset << "\t" << type << "\t" << filter << "\t";
-                        l2.dumpTSV(out_roc, counts_only);
-                        out_roc << "\n";
+                        subtypes.emplace_back(st.first + "\t" + gt.first, st.second | gt.second);
                     }
                 }
 
-                ++r;
+                for(auto const & st : subtypes)
+                {
+                    const roc::Level l = m.second.getTotals(st.second);
+                    out_roc << type << "\t" << st.first << "\t" << filter << "\t" << subset << "\t";
+                    l.dumpTSV(out_roc, counts_only);
+                    out_roc << "\n";
+
+                    // don't write ROCs for filters
+                    // we could make this optional, but not sure it is really necessary
+                    if((!counts_only) && output_rocs)
+                    {
+                        std::vector<roc::Level> levels;
+                        m.second.getLevels(levels, roc_delta, st.second);
+                        for (auto const &l2 : levels)
+                        {
+                            out_roc << type << "\t" << st.first << "\t" << filter << "\t" << subset << "\t";
+                            l2.dumpTSV(out_roc, counts_only);
+                            out_roc << "\n";
+                        }
+                    }
+                }
             }
             out_roc.close();
         }

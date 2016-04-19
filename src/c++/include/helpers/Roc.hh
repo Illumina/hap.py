@@ -64,28 +64,84 @@ namespace roc
     const int NDecisionTypes = to_underlying(DecisionType::SIZE);
     extern const char * DecisionTypes[NDecisionTypes];
 
+    /**
+     * Flags for observations.
+     */
+
+    /** match / mismatch types */
+    static const uint64_t OBS_FLAG_LM = 0x0001;
+    static const uint64_t OBS_FLAG_AM = 0x0002;
+    static const uint64_t OBS_FLAG_GM = 0x0004;
+
+    /** het / hom / hetalt */
+    static const uint64_t OBS_FLAG_HET = 0x0020;
+    static const uint64_t OBS_FLAG_HOMALT = 0x0040;
+    static const uint64_t OBS_FLAG_HETALT = 0x0080;
+
+    /** various BI flags */
+
+    /** SNP TI / TV */
+    static const uint64_t OBS_FLAG_TI = 0x0008;
+    static const uint64_t OBS_FLAG_TV = 0x0010;
+
+    /** indel lengths */
+    static const uint64_t OBS_FLAG_I1_5    = 0x0100;
+    static const uint64_t OBS_FLAG_I6_15   = 0x0200;
+    static const uint64_t OBS_FLAG_I16_PLUS = 0x0400;
+    static const uint64_t OBS_FLAG_D1_5    = 0x0800;
+    static const uint64_t OBS_FLAG_D6_15   = 0x1000;
+    static const uint64_t OBS_FLAG_D16_PLUS = 0x2000;
+    static const uint64_t OBS_FLAG_C1_5    = 0x4000;
+    static const uint64_t OBS_FLAG_C6_15   = 0x8000;
+    static const uint64_t OBS_FLAG_C16_PLUS = 0x10000;
+
+    uint64_t makeObservationFlags(const std::string & bk, const std::string & bi, const std::string & lt);
+
     struct Observation
     {
         double level;
         DecisionType dt;
         uint64_t n;
+        uint64_t flags;
     };
 
     struct Level
     {
-        Level() : level(-1) { for(int x = 0; x < to_underlying(DecisionType::SIZE); ++x) { counts[x] = 0; } }
+        Level() : level(-1), _fp_gt(0), _fp_al(0)
+        {
+            for(int x = 0; x < to_underlying(DecisionType::SIZE); ++x) { counts[x] = 0; }
+        }
+
         double level;
         uint64_t counts[to_underlying(DecisionType::SIZE)];
+
+        /** these counts are added from observations via flags */
+        uint64_t _fp_gt;
+        uint64_t _fp_al;
 
         /** add single observation */
         void addObs(Observation const & obs)
         {
             counts[to_underlying(obs.dt)] += obs.n;
+            if(obs.dt == DecisionType::FP)
+            {
+                // count "special" mismatches
+                if(obs.flags & OBS_FLAG_AM)
+                {
+                    _fp_gt += obs.n;
+                }
+                if(obs.flags & OBS_FLAG_LM)
+                {
+                    _fp_al += obs.n;
+                }
+            }
         }
 
         uint64_t tp() const { return counts[to_underlying(DecisionType::TP)]; }
         uint64_t tp2() const { return counts[to_underlying(DecisionType::TP2)]; }
         uint64_t fp() const { return counts[to_underlying(DecisionType::FP)]; }
+        uint64_t fp_gt() const { return _fp_gt; }
+        uint64_t fp_al() const { return _fp_al; }
         uint64_t fn() const { return counts[to_underlying(DecisionType::FN)]; }
         uint64_t fn2() const { return counts[to_underlying(DecisionType::FN2)]; }
         uint64_t unk() const { return counts[to_underlying(DecisionType::UNK)]; }
@@ -94,6 +150,8 @@ namespace roc
         uint64_t tp(uint64_t val) { counts[to_underlying(DecisionType::TP)] = val; return val; }
         uint64_t tp2(uint64_t val) { counts[to_underlying(DecisionType::TP2)] = val; return val; }
         uint64_t fp(uint64_t val) { counts[to_underlying(DecisionType::FP)] = val; return val; }
+        uint64_t fp_gt(uint64_t val) { _fp_gt = val; return val; }
+        uint64_t fp_al(uint64_t val) { _fp_al = val; return val; }
         uint64_t fn(uint64_t val) { counts[to_underlying(DecisionType::FN)] = val; return val; }
         uint64_t fn2(uint64_t val) { counts[to_underlying(DecisionType::FN2)] = val; return val; }
         uint64_t unk(uint64_t val) { counts[to_underlying(DecisionType::UNK)] = val; return val; }
@@ -156,8 +214,8 @@ namespace roc
         void add(Roc const &rhs);
         void add(Observation const &rhs);
 
-        void getLevels(std::vector<Level> & target, double roc_delta=0) const;
-        Level getTotals() const;
+        void getLevels(std::vector<Level> & target, double roc_delta=0, uint64_t flag_mask=0) const;
+        Level getTotals(uint64_t flag_mask=0) const;
     private:
         struct RocImpl;
         std::unique_ptr<RocImpl> _impl;

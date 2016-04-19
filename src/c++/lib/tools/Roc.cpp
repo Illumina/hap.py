@@ -38,11 +38,12 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <helpers/StringUtil.hh>
 
 namespace roc
 {
 //    enum class DecisionType : int { FN, TP, FN2, TP2, FP, UNK, N, SIZE };
-    const char * DecisionTypes[NDecisionTypes] { "FN", "TP", "FN2", "TP2", "FP", "UNK", "N" };
+    const char * DecisionTypes[NDecisionTypes] { "FN", "TP", "FN.QUERY", "TP.QUERY", "FP", "UNK", "N" };
 
     void Level::dumpTSV(std::ostream & o, bool counts_only) const
     {
@@ -75,6 +76,8 @@ namespace roc
                     o << "\t" << ".";
                 }
             }
+            o << "\t" << _fp_gt;
+            o << "\t" << _fp_al;
             // don't write these
             o << "\t" << ".";
             o << "\t" << ".";
@@ -92,6 +95,8 @@ namespace roc
                 }
                 o << "\t" << counts[j];
             }
+            o << "\t" << _fp_gt;
+            o << "\t" << _fp_al;
             o << "\t" << recall();
             o << "\t" << precision();
             o << "\t" << fScore();
@@ -100,6 +105,95 @@ namespace roc
             o << "\t" << totalQuery();
         }
     }
+
+    uint64_t makeObservationFlags(const std::string & bk, const std::string & bi, const std::string & blt)
+    {
+        uint64_t result = 0;
+
+        if(bk == "lm")
+        {
+            result |= OBS_FLAG_LM;
+        }
+        else if(bk == "am")
+        {
+            result |= OBS_FLAG_AM;
+        }
+        else if(bk == "gm")
+        {
+            result |= OBS_FLAG_GM;
+        }
+
+        if(blt == "het")
+        {
+            result |= OBS_FLAG_HET;
+        }
+        else if(blt == "hetalt")
+        {
+            result |= OBS_FLAG_HETALT;
+        }
+        else if(blt == "homalt")
+        {
+            result |= OBS_FLAG_HOMALT;
+        }
+
+        std::vector<std::string> bis;
+        stringutil::split(bi, bis, ",");
+
+        for(auto const & b : bis)
+        {
+            if(b == "ti")
+            {
+                result |= OBS_FLAG_TI;
+            }
+            else if(b == "tv")
+            {
+                result |= OBS_FLAG_TV;
+            }
+            else if(b == "tv")
+            {
+                result |= OBS_FLAG_TV;
+            }
+            else if(b == "i1_5")
+            {
+                result |= OBS_FLAG_I1_5;
+            }
+            else if(b == "i6_15")
+            {
+                result |= OBS_FLAG_I6_15;
+            }
+            else if(b == "i16_plus")
+            {
+                result |= OBS_FLAG_I16_PLUS;
+            }
+            else if(b == "d1_5")
+            {
+                result |= OBS_FLAG_D1_5;
+            }
+            else if(b == "d6_15")
+            {
+                result |= OBS_FLAG_D6_15;
+            }
+            else if(b == "d16_plus")
+            {
+                result |= OBS_FLAG_D16_PLUS;
+            }
+            else if(b == "c1_5")
+            {
+                result |= OBS_FLAG_C1_5;
+            }
+            else if(b == "c6_15")
+            {
+                result |= OBS_FLAG_C6_15;
+            }
+            else if(b == "c16_plus")
+            {
+                result |= OBS_FLAG_C16_PLUS;
+            }
+        }
+
+        return result;
+    }
+
 
     struct Roc::RocImpl
     {
@@ -128,18 +222,24 @@ namespace roc
         _impl->obs.push_back(rhs);
     }
 
-    Level Roc::getTotals() const
+    Level Roc::getTotals(uint64_t flag_mask) const
     {
         Level last;
         for(auto const & x : _impl->obs)
         {
+
+            if(flag_mask > 0 && ((x.flags & flag_mask) != flag_mask))
+            {
+                // skip if required flags are not set
+                continue;
+            }
             last.addObs(x);
         }
         last.level = std::numeric_limits<double>::quiet_NaN();
         return last;
     }
 
-    void Roc::getLevels(std::vector<Level> & output, double roc_delta) const
+    void Roc::getLevels(std::vector<Level> & output, double roc_delta, uint64_t flag_mask) const
     {
         std::sort(_impl->obs.begin(), _impl->obs.end(),
                   [](Observation const & o1, Observation const & o2) -> bool {
@@ -151,6 +251,11 @@ namespace roc
         last.level = std::numeric_limits<double>::quiet_NaN();
         for(auto const & x : _impl->obs)
         {
+            if(flag_mask > 0 && ((x.flags & flag_mask) != flag_mask))
+            {
+                // skip if required flags are not set
+                continue;
+            }
             last.addObs(x);
             last.level = x.level;
             // this is probably not the best way to do this, but it works
@@ -164,6 +269,8 @@ namespace roc
             const uint64_t tp = last.tp() - x.tp();
             // FPs above or on level
             const uint64_t fp = last.fp() - x.fp();
+            const uint64_t fp_gt = last.fp_gt() - x.fp_gt();
+            const uint64_t fp_al = last.fp_al() - x.fp_al();
             // UNKs above or on level
             const uint64_t unk = last.unk() - x.unk();
 
@@ -184,6 +291,8 @@ namespace roc
             x.tp(tp);
             x.tp2(tp2);
             x.fp(fp);
+            x.fp_gt(fp_gt);
+            x.fp_al(fp_al);
             x.unk(unk);
         }
 

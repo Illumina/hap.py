@@ -137,7 +137,7 @@ namespace variant {
                                     bcf1_t * v)
     {
         // add observation to a roc
-        auto observe = [this, level, dt, n](std::string const & name, bool f) {
+        auto observe = [this, level, dt, n, v](std::string const & name, bool f) {
             roc::DecisionType final_dt = dt;
             if(f)
             {
@@ -158,6 +158,33 @@ namespace variant {
                 }
             }
 
+            uint64_t flags = 0;
+
+            switch(final_dt)
+            {
+                case roc::DecisionType::FN:
+                case roc::DecisionType::TP:
+                {
+                    const std::string bk_truth = bcfhelpers::getFormatString(_impl->hdr, v, "BK", 0, ".");
+                    const std::string bi_truth = bcfhelpers::getFormatString(_impl->hdr, v, "BI", 0, ".");
+                    const std::string blt_truth = bcfhelpers::getFormatString(_impl->hdr, v, "BLT", 0, ".");
+                    flags = roc::makeObservationFlags(bk_truth, bi_truth, blt_truth);
+                    break;
+                }
+                case roc::DecisionType::FP:
+                case roc::DecisionType::UNK:
+                case roc::DecisionType::TP2:
+                case roc::DecisionType::FN2:
+                {
+                    const std::string bk_query = bcfhelpers::getFormatString(_impl->hdr, v, "BK", 1, ".");
+                    const std::string bi_query = bcfhelpers::getFormatString(_impl->hdr, v, "BI", 1, ".");
+                    const std::string blt_query = bcfhelpers::getFormatString(_impl->hdr, v, "BLT", 1, ".");
+                    flags = roc::makeObservationFlags(bk_query, bi_query, blt_query);
+                    break;
+                }
+                default: break;
+            }
+
             auto it = _impl->rocs.find(name);
             if(it == _impl->rocs.end())
             {
@@ -171,11 +198,11 @@ namespace variant {
                 && level == 0
                 )
             {
-                it->second.add(roc::Observation{std::numeric_limits<double>::min(), final_dt, n});
+                it->second.add(roc::Observation{std::numeric_limits<double>::min(), final_dt, n, flags});
             }
             else
             {
-                it->second.add(roc::Observation{level, final_dt, n});
+                it->second.add(roc::Observation{level, final_dt, n, flags});
             }
         };
 
@@ -217,26 +244,6 @@ namespace variant {
                 observe("s|" + r + ":" + roc_identifier + ":ALL", false);
             }
         }
-
-        if(_impl->extended_counts)
-        {
-            const std::string bi_truth = bcfhelpers::getFormatString(_impl->hdr, v, "BI", 0, ".");
-            const std::string bi_query = bcfhelpers::getFormatString(_impl->hdr, v, "BI", 1, ".");
-
-            const std::string blt_truth = bcfhelpers::getFormatString(_impl->hdr, v, "BLT", 0, ".");
-            const std::string blt_query = bcfhelpers::getFormatString(_impl->hdr, v, "BLT", 1, ".");
-
-            const std::string x_id1 = "x|t|" + bi_truth + "|" + blt_truth + ":" + roc_identifier;
-            const std::string x_id2 = "x|q|" + bi_query + "|" + blt_query + ":" + roc_identifier;
-
-            // TODO we could also compute these separately for all quantification regions here
-            observe(x_id1 + ":PASS", fail);
-            observe(x_id1 + ":ALL", false);
-
-            observe(x_id2 + ":PASS", fail);
-            observe(x_id2 + ":ALL", false);
-        }
-
     }
 
     void BlockQuantify::add(bcf1_t * v)
