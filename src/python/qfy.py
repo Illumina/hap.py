@@ -31,6 +31,9 @@ import traceback
 import multiprocessing
 import pandas
 import json
+import pyximport
+
+pyximport.install()
 
 scriptDir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'lib', 'python27')))
@@ -72,6 +75,9 @@ def quantify(args):
                     raise Exception("Quantification region file %s not found" % f)
                 qfyregions[n] = f
 
+    if vcf_name == output_vcf or vcf_name == output_vcf + ".vcf.gz":
+        raise Exception("Cannot overwrite input VCF: %s would overwritten with output name %s." % (vcf_name, output_vcf))
+
     Haplo.quantify.run_quantify(vcf_name,
                                 roc_table,
                                 output_vcf if args.write_vcf else False,
@@ -90,39 +96,48 @@ def quantify(args):
     metrics_output = makeMetricsObject("%s.comparison" % args.runner)
 
     res = Haplo.happyroc.roc(roc_table, args.reports_prefix + ".roc")
-
-    df = pandas.DataFrame(res["all"])
+    df = res["all"]
+    df = Haplo.happyroc.postprocessRocData(df, args.roc)
 
     # only use summary numbers
-    df = df[df["QUAL"] == "*"]
+    df = df[(df["QUAL"] == "*") & (df["Subset"] == "*") & (df["Filter"].isin(["ALL", "PASS"]))]
 
-    summary_columns = ["TRUTH.TOTAL",
+    summary_columns = ["Type",
+                       "Filter",
+                       "TRUTH.TOTAL",
+                       "TRUTH.TP",
+                       "TRUTH.FN",
                        "QUERY.TOTAL",
+                       "QUERY.FP",
+                       "QUERY.UNK",
                        "METRIC.Recall",
                        "METRIC.Precision",
                        "METRIC.Frac_NA"]
 
-    # for additional_column in ["TRUTH.TOTAL.TiTv_ratio",
-    #                           "QUERY.TOTAL.TiTv_ratio",
-    #                           "TRUTH.TOTAL.het_hom_ratio",
-    #                           "QUERY.TOTAL.het_hom_ratio"]:
-    #     summary_columns.append(additional_column)
+    for additional_column in ["TRUTH.TOTAL.TiTv_ratio",
+                              "QUERY.TOTAL.TiTv_ratio",
+                              "TRUTH.TOTAL.het_hom_ratio",
+                              "QUERY.TOTAL.het_hom_ratio"]:
+        summary_columns.append(additional_column)
 
-    df[summary_columns].to_csv(args.reports_prefix + ".summary.csv")
+    # Remove subtype
+    summary_df = df[(df["Subtype"] == "*") & (df["Genotype"] == "*")]
+
+    summary_df[summary_columns].to_csv(args.reports_prefix + ".summary.csv")
 
     metrics_output["metrics"].append(dataframeToMetricsTable("summary.metrics",
-                                                             df[summary_columns]))
+                                                             summary_df[summary_columns]))
 
     if args.write_counts:
         df.to_csv(args.reports_prefix + ".extended.csv")
         metrics_output["metrics"].append(dataframeToMetricsTable("all.metrics", df))
 
-    essential_numbers = df[summary_columns]
+    essential_numbers = summary_df[summary_columns]
 
     pandas.set_option('display.max_columns', 500)
     pandas.set_option('display.width', 1000)
 
-    essential_numbers = essential_numbers[essential_numbers["type"].isin(
+    essential_numbers = essential_numbers[essential_numbers["Type"].isin(
         ["SNP", "INDEL"])]
 
     logging.info("\n" + str(essential_numbers))

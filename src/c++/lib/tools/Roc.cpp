@@ -43,7 +43,7 @@
 namespace roc
 {
 //    enum class DecisionType : int { FN, TP, FN2, TP2, FP, UNK, N, SIZE };
-    const char * DecisionTypes[NDecisionTypes] { "FN", "TP", "FN.QUERY", "TP.QUERY", "FP", "UNK", "N" };
+    const char * DecisionTypes[NDecisionTypes] { "TRUTH.FN", "TRUTH.TP", "QUERY.FN", "QUERY.TP", "QUERY.FP", "QUERY.UNK", "N" };
 
     void Level::dumpTSV(std::ostream & o, bool counts_only) const
     {

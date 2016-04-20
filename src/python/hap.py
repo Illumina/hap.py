@@ -59,8 +59,14 @@ def main():
     parser.add_argument("-v", "--version", dest="version", action="store_true",
                         help="Show version number and exit.")
 
-    parser.add_argument("-P", "--include-nonpass", dest="usefiltered", action="store_true", default=False,
-                        help="Use to include failing query variants in comparison.")
+    parser.add_argument("--pass-only", dest="usefiltered", action="store_false", default=True,
+                        help="Use only PASS variants. By default, hap.py will output PASS and ALL counts, but removing failing"
+                             " variants first can improve matching accuracy in complex regions.")
+
+    # DEPRECATED -- we output PASS and ALL counts in one go from hap.py 0.3.0
+    parser.add_argument("-P", "--include-nonpass", dest="usefiltered", action="store_true",
+                        help="This option is deprecated. "
+                             "The default behaviour is now to output PASS and ALL counts.")
 
     parser.add_argument("--include-nonpass-truth", dest="usefiltered_truth", action="store_true", default=False,
                         help="Include failing variants from the truth dataset.")
