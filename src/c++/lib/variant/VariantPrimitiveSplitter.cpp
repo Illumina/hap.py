@@ -297,6 +297,7 @@ bool VariantPrimitiveSplitter::advance()
                         altCall.filter[ff] = c.filter[ff];
                     }
                     altCall.nfilter = c.nfilter;
+                    altCall.qual = c.qual;
 
                     // for het calls, add reference haplotype
                     if(c.isHet())
