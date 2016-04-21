@@ -54,6 +54,7 @@
 #include <future>
 #include <htslib/synced_bcf_reader.h>
 #include <helpers/BCFHelpers.hh>
+#include <helpers/RocOutput.hh>
 #include <htslib/vcf.h>
 
 #include "Error.hh"
@@ -572,145 +573,9 @@ int main(int argc, char* argv[]) {
 
         if(roc_map)
         {
-            auto makeHeader = [qq](std::ostream & out)
-            {
-                out << "Type";
-                out << "\t" << "Subtype";
-                out << "\t" << "Genotype";
-                out << "\t" << "Filter";
-                out << "\t" << "Subset";
-                out << "\t" << qq;
-                for(int j = 0; j < roc::NDecisionTypes; ++j)
-                {
-                    if(j == roc::to_underlying(roc::DecisionType::FN2))
-                    {
-                        continue;
-                    }
-                    out << "\t" << roc::DecisionTypes[j];
-                }
-
-                out << "\t" << "FP.gt";
-                out << "\t" << "FP.al";
-
-                out << "\t" << "METRIC.Recall";
-                out << "\t" << "METRIC.Precision";
-                out << "\t" << "METRIC.F1_Score";
-                out << "\t" << "METRIC.Frac_NA";
-                out << "\t" << "TRUTH.TOTAL";
-                out << "\t" << "QUERY.TOTAL";
-                out << "\n";
-            };
-
             std::ofstream out_roc(output_roc);
-            makeHeader(out_roc);
-            for(auto & m : *roc_map)
-            {
-                // filter ROCs just give numbers of TPs / FPs / UNKs filtered by
-                // each filter at each level
-
-                std::vector<std::string> subs;
-                stringutil::split(m.first, subs, ":");
-                if(subs.empty())
-                {
-                    // only happens when an empty string is passed
-                    continue;
-                }
-                std::string type = "unknown";
-                std::string subset = "unknown";
-                std::string filter = "unknown";
-
-                bool counts_only = false;
-                if (subs.size() != 3)
-                {
-                    type = m.first;
-                }
-                else
-                {
-                    type = subs[1];
-                    filter = subs[2];
-                    if(subs[0] == "f")
-                    {
-                        counts_only = true;
-                        subset = "*";
-                    }
-                    else if(subs[0].substr(0, 2) == "s|")
-                    {
-                        subset = subs[0].substr(2);
-                    }
-                    else if(subs[0] == "a")
-                    {
-                        subset = "*";
-                    }
-                    else
-                    {
-                        // unknown count, should not happen
-                        continue;
-                    }
-                }
-
-                std::list< std::pair<std::string, uint64_t> > subtypes;
-
-                std::list <std::pair<std::string, uint64_t> > gts = {
-                    {"*", 0},
-                    {"het", roc::OBS_FLAG_HET},
-                    {"hetalt", roc::OBS_FLAG_HETALT},
-                    {"homalt", roc::OBS_FLAG_HOMALT},
-                };
-
-                std::list <std::pair<std::string, uint64_t> > sts = {
-                    {"*", 0},
-                };
-                // all types, all genotypes
-
-                // SNP: TI / TV
-                if(type == "SNP")
-                {
-                    sts.emplace_back("ti", roc::OBS_FLAG_TI);
-                    sts.emplace_back("tv", roc::OBS_FLAG_TV);
-                }
-                else if(type == "INDEL")
-                {
-                    sts.emplace_back("I1_5", roc::OBS_FLAG_I1_5);
-                    sts.emplace_back("I6_15", roc::OBS_FLAG_I6_15);
-                    sts.emplace_back("I16_PLUS", roc::OBS_FLAG_I16_PLUS);
-                    sts.emplace_back("D1_5", roc::OBS_FLAG_D1_5);
-                    sts.emplace_back("D6_15", roc::OBS_FLAG_D6_15);
-                    sts.emplace_back("D16_PLUS", roc::OBS_FLAG_D16_PLUS);
-                    sts.emplace_back("C1_5", roc::OBS_FLAG_C1_5);
-                    sts.emplace_back("C6_15", roc::OBS_FLAG_C6_15);
-                    sts.emplace_back("C16_PLUS", roc::OBS_FLAG_C16_PLUS);
-                }
-
-                for(auto const & st : sts)
-                {
-                    for(auto const & gt : gts)
-                    {
-                        subtypes.emplace_back(st.first + "\t" + gt.first, st.second | gt.second);
-                    }
-                }
-
-                for(auto const & st : subtypes)
-                {
-                    const roc::Level l = m.second.getTotals(st.second);
-                    out_roc << type << "\t" << st.first << "\t" << filter << "\t" << subset << "\t";
-                    l.dumpTSV(out_roc, counts_only);
-                    out_roc << "\n";
-
-                    // don't write ROCs for filters
-                    // we could make this optional, but not sure it is really necessary
-                    if((!counts_only) && output_rocs)
-                    {
-                        std::vector<roc::Level> levels;
-                        m.second.getLevels(levels, roc_delta, st.second);
-                        for (auto const &l2 : levels)
-                        {
-                            out_roc << type << "\t" << st.first << "\t" << filter << "\t" << subset << "\t";
-                            l2.dumpTSV(out_roc, counts_only);
-                            out_roc << "\n";
-                        }
-                    }
-                }
-            }
+            roc::ROCOutput ro(*roc_map, qq, output_rocs, roc_delta);
+            ro.write(out_roc);
             out_roc.close();
         }
     }

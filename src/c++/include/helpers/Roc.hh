@@ -189,15 +189,6 @@ namespace roc
             const double r = recall();
             return p*r / (p + r);
         }
-
-        /**
-         * Dump counts as TSV.
-         *
-         * prints
-         *
-         * level FN TP TP2 FP UNK N recall precision fscore na total.truth total.query
-         */
-        void dumpTSV(std::ostream & o, bool counts_only=false) const;
     };
 
     class Roc {

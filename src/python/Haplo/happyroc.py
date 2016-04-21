@@ -96,7 +96,7 @@ def roc(roc_table, output_path):
                     result[roc].append(rec)
 
     for k, v in result.items():
-        result[k] = pandas.DataFrame(v, columns=header)
+        result[k] = _postprocessRocData(pandas.DataFrame(v, columns=header))
         vt = k.replace("f:", "")
         vt = re.sub("[^A-Za-z0-9\\.\\-_]", "_", vt, flags=re.IGNORECASE)
         if output_path:
@@ -105,57 +105,43 @@ def roc(roc_table, output_path):
     return result
 
 
-def postprocessRocData(roctable, qq):
-    """ post-process ROC data by adding on Ti/Tv ratios, het-hom ratios,
+def _postprocessRocData(roctable):
+    """ post-process ROC data by correcting the types
     """
-
-    for vt in ["TRUTH.TP", "TRUTH.FN", "QUERY.FP", "QUERY.UNK", "TRUTH.TOTAL", "QUERY.TOTAL"]:
-        for var in ["TiTv_ratio", "het_hom_ratio"]:
-            roctable[vt + "." + var] = "."
-
-    unique_types = roctable["Type"].unique()
-    # unique_subsets = roctable["Subset"].unique()
-    unique_subsets = "*"
-    unique_filters = roctable["Filter"].unique()
-
-    # try:
-    #     unique_quals = roctable[qq].unique()
-    # except:
-    unique_quals = "*"
-
-    for t in unique_types:
-        for s in unique_subsets:
-            for f in unique_filters:
-                for q in unique_quals:
-                    logging.info(str((t, s, f, q)))
-                    for vt in ["TRUTH.TP", "TRUTH.FN", "QUERY.FP", "QUERY.UNK", "TRUTH.TOTAL", "QUERY.TOTAL"]:
-                        selection = (roctable["Type"] == t) & (roctable["Subset"] == s) & (roctable["Filter"] == f) & (roctable[qq] == q)
-                        unique_gts = roctable[selection]["Genotype"].unique()
-                        unique_sts = roctable[selection]["Subtype"].unique()
-
-                        for st in unique_sts:
-                            try:
-                                hets = roctable.ix[selection & (roctable["Genotype"] == "het") & (roctable["Subtype"] == st), vt]
-                                homs = roctable.ix[selection & (roctable["Genotype"] == "homalt") & (roctable["Subtype"] == st), vt]
-                                assert hets.size == 1
-                                assert homs.size == 1
-                                hets = float(hets.values[0])
-                                homs = float(homs.values[0])
-                                roctable.ix[selection & (roctable["Genotype"] == "*") & (roctable["Subtype"] == st), vt + ".het_hom_ratio"] = hets / homs
-                            except:
-                                pass
-
-                        if t == "SNP":
-                            for gt in unique_gts:
-                                try:
-                                    tis = roctable.ix[selection & (roctable["Genotype"] == gt) & (roctable["Subtype"] == "ti"), vt]
-                                    tvs = roctable.ix[selection & (roctable["Genotype"] == gt) & (roctable["Subtype"] == "tv"), vt]
-                                    assert tis.size == 1
-                                    assert tvs.size == 1
-                                    tis = float(tis.values[0])
-                                    tvs = float(tvs.values[0])
-                                    roctable.ix[selection & (roctable["Genotype"] == gt) & (roctable["Subtype"] == "*"), vt + ".TiTv_ratio"] = tis / tvs
-                                except:
-                                    pass
-
+    def safe_int(f):
+        try:
+            return int(f)
+        except:
+            return 0
+    typeconv = [("METRIC.Recall", None),
+                ("METRIC.Precision", None),
+                ("METRIC.Frac_NA", None),
+                ("TRUTH.TP", safe_int),
+                ("TRUTH.FN", safe_int),
+                ("QUERY.TP", safe_int),
+                ("QUERY.FP", safe_int),
+                ("QUERY.UNK", safe_int),
+                ("QUERY.TOTAL", safe_int),
+                ("TRUTH.TOTAL", safe_int),
+                ("FP.al", safe_int),
+                ("FP.gt", safe_int),
+                ("TRUTH.TOTAL.TiTv_ratio", None),
+                ("TRUTH.TOTAL.het_hom_ratio", None),
+                ("TRUTH.FN.TiTv_ratio", None),
+                ("TRUTH.FN.het_hom_ratio", None),
+                ("TRUTH.TP.TiTv_ratio", None),
+                ("TRUTH.TP.het_hom_ratio", None),
+                ("METRIC.F1_Score", None),
+                ("QUERY.FP.TiTv_ratio", None),
+                ("QUERY.FP.het_hom_ratio", None),
+                ("QUERY.TP.TiTv_ratio", None),
+                ("QUERY.TOTAL.TiTv_ratio", None),
+                ("QUERY.TOTAL.het_hom_ratio", None),
+                ("QUERY.TP.het_hom_ratio", None),
+                ("QUERY.UNK.TiTv_ratio", None),
+                ("QUERY.UNK.het_hom_ratio", None)]
+    for col, c in typeconv:
+        roctable[col] = roctable[col].convert_objects(convert_numeric=True)
+        if c:
+            roctable[col] = roctable[col].apply(c)
     return roctable

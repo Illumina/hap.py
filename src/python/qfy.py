@@ -97,10 +97,9 @@ def quantify(args):
 
     res = Haplo.happyroc.roc(roc_table, args.reports_prefix + ".roc")
     df = res["all"]
-    df = Haplo.happyroc.postprocessRocData(df, args.roc)
 
     # only use summary numbers
-    df = df[(df["QUAL"] == "*") & (df["Subset"] == "*") & (df["Filter"].isin(["ALL", "PASS"]))]
+    df = df[(df["QQ"] == "*") & (df["Subset"] == "*") & (df["Filter"].isin(["ALL", "PASS"]))]
 
     summary_columns = ["Type",
                        "Filter",

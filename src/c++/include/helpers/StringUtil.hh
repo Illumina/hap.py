@@ -79,6 +79,30 @@ namespace stringutil
     }
 
     /**
+     * @brief Join a list of strings / values with a separator
+     *
+     */
+    template <class _strcontainer>
+    static inline std::string join(_strcontainer const & c, const std::string & sep)
+    {
+        std::string result;
+        bool first = true;
+        for(auto const & x : c)
+        {
+            if(!first)
+            {
+                result += sep;
+            }
+            else
+            {
+                first = false;
+            }
+            result += x;
+        }
+        return result;
+    }
+
+    /**
      * @brief Test if string has given suffix
      *
      * @return true if str ends with suffix

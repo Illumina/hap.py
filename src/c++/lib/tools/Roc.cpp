@@ -45,66 +45,6 @@ namespace roc
 //    enum class DecisionType : int { FN, TP, FN2, TP2, FP, UNK, N, SIZE };
     const char * DecisionTypes[NDecisionTypes] { "TRUTH.FN", "TRUTH.TP", "QUERY.FN", "QUERY.TP", "QUERY.FP", "QUERY.UNK", "N" };
 
-    void Level::dumpTSV(std::ostream & o, bool counts_only) const
-    {
-        if(std::isnan(level))
-        {
-            o << "*";
-        }
-        else
-        {
-            o << level;
-        }
-        if(counts_only)
-        {
-            for(int j = 0; j < roc::NDecisionTypes; ++j)
-            {
-                if(j == roc::to_underlying(roc::DecisionType::FN2))
-                {
-                    continue;
-                }
-                if( j == roc::to_underlying(roc::DecisionType::TP)
-                 || j == roc::to_underlying(roc::DecisionType::TP2)
-                 || j == roc::to_underlying(roc::DecisionType::FP)
-                 || j == roc::to_underlying(roc::DecisionType::UNK)
-                    )
-                {
-                    o << "\t" << counts[j];
-                }
-                else
-                {
-                    o << "\t" << ".";
-                }
-            }
-            o << "\t" << _fp_gt;
-            o << "\t" << _fp_al;
-            // don't write these
-            o << "\t" << ".";
-            o << "\t" << ".";
-            o << "\t" << ".";
-            o << "\t" << ".";
-            o << "\t" << ".";
-        }
-        else
-        {
-            for(int j = 0; j < roc::NDecisionTypes; ++j)
-            {
-                if(j == roc::to_underlying(roc::DecisionType::FN2))
-                {
-                    continue;
-                }
-                o << "\t" << counts[j];
-            }
-            o << "\t" << _fp_gt;
-            o << "\t" << _fp_al;
-            o << "\t" << recall();
-            o << "\t" << precision();
-            o << "\t" << fScore();
-            o << "\t" << na();
-            o << "\t" << totalTruth();
-            o << "\t" << totalQuery();
-        }
-    }
 
     uint64_t makeObservationFlags(const std::string & bk, const std::string & bi, const std::string & blt)
     {
