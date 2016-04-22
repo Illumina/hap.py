@@ -50,7 +50,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	-l chr21 \
 			 	${DIR}/../../example/integration/integrationtest_empty.vcf \
 			 	${DIR}/../../example/integration/integrationtest_rhs.vcf.gz \
-			 	-o ${TMP_OUT}.e0 -P \
+			 	-o ${TMP_OUT}.e0 \
 			 	-V -X --output-vtc \
 			 	--force-interactive
 
@@ -63,7 +63,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	-l chr21 \
 			 	${DIR}/../../example/integration/integrationtest_lhs.vcf.gz \
 			 	${DIR}/../../example/integration/integrationtest_empty.vcf \
-			 	-o ${TMP_OUT}.e1 -P \
+			 	-o ${TMP_OUT}.e1 \
 			 	-V -X --output-vtc \
 			 	--force-interactive
 
@@ -77,7 +77,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	-l chr21 \
 			 	${DIR}/../../example/integration/integrationtest_lhs.vcf.gz \
 			 	${DIR}/../../example/integration/integrationtest_rhs.vcf.gz \
-			 	-o ${TMP_OUT} -P \
+			 	-o ${TMP_OUT} \
 			 	-V -X --output-vtc \
 			 	--force-interactive
 
@@ -93,7 +93,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	-l chr21 \
 			 	${DIR}/../../example/integration/integrationtest_lhs.vcf.gz \
 			 	${DIR}/../../example/integration/integrationtest_rhs.vcf.gz \
-			 	-o ${TMP_OUT}.unhappy -P \
+			 	-o ${TMP_OUT}.unhappy \
 			 	-V -X --output-vtc \
 			 	--force-interactive --unhappy
 
@@ -110,7 +110,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	${DIR}/../../example/integration/integrationtest_lhs.vcf.gz \
 			 	${DIR}/../../example/integration/integrationtest_rhs.vcf.gz \
 			 	-o ${TMP_OUT}.pass \
-			 	-V -X \
+			 	-V -X --pass-only \
 			 	--force-interactive
 
 if [[ $? != 0 ]]; then
@@ -138,21 +138,9 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-diff -I fileDate -I source_version ${TMP_OUT}.counts.json ${DIR}/../../example/integration/integrationtest.counts.json
-if [[ $? != 0 ]]; then
-	echo "Counts differ! ${TMP_OUT}.counts.json ${DIR}/../../example/integration/integrationtest.counts.json "
-	exit 1
-fi
-
 ${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.summary.csv ${DIR}/../../example/integration/integrationtest.summary.csv
 if [[ $? != 0 ]]; then
 	echo "Summary differs! ${TMP_OUT}.summary.csv ${DIR}/../../example/integration/integrationtest.summary.csv"
-	exit 1
-fi
-
-diff -I fileDate -I source_version ${TMP_OUT}.pass.counts.json ${DIR}/../../example/integration/integrationtest.counts.pass.json
-if [[ $? != 0 ]]; then
-	echo "Pass counts differ! ${TMP_OUT}.pass.counts.json ${DIR}/../../example/integration/integrationtest.counts.pass.json"
 	exit 1
 fi
 
@@ -167,7 +155,7 @@ ${PYTHON} ${HCDIR}/hap.py $@ \
 			 	-l chr1 \
 			 	${DIR}/../../example/PG_performance.vcf.gz \
 			 	${DIR}/../../example/performance.vcf.gz \
-			 	-o ${TMP_OUT}.performance -P \
+			 	-o ${TMP_OUT}.performance \
 			 	-V -X --output-vtc \
 			 	-f ${DIR}/../../example/performance.confident.bed.gz \
 			 	--force-interactive --threads 4
@@ -185,18 +173,6 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-${PYTHON} -mjson.tool ${TMP_OUT}.performance.counts.json > ${TMP_OUT}.performance.counts.pretty.json
-if [[ $? != 0 ]]; then
-    echo "Failed to prettify counts file -- was this file written?"
-    exit 1
-fi
-
-diff ${TMP_OUT}.performance.counts.pretty.json ${DIR}/../../example/integration/integrationtest.performance.counts.json
-if [[ $? != 0 ]]; then
-	echo "Performance counts differ! vimdiff ${TMP_OUT}.performance.counts.pretty.json ${DIR}/../../example/integration/integrationtest.performance.counts.json "
-	exit 1
-fi
-
 ${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.performance.summary.csv ${DIR}/../../example/integration/integrationtest.performance.summary.csv
 if [[ $? != 0 ]]; then
 	echo "Pass summary differs! vimdiff ${TMP_OUT}.performance.summary.csv ${DIR}/../../example/integration/integrationtest.performance.summary.csv"
@@ -209,7 +185,7 @@ ${PYTHON} ${HCDIR}/hap.py $@ \
 			 	-l chr1 \
 			 	${DIR}/../../example/PG_performance.vcf.gz \
 			 	${DIR}/../../example/performance.vcf.gz \
-			 	-o ${TMP_OUT}.performance.t1 -P \
+			 	-o ${TMP_OUT}.performance.t1 \
 			 	-V -X --output-vtc \
 			 	-f ${DIR}/../../example/performance.confident.bed.gz \
 			 	--force-interactive --threads 1
@@ -225,18 +201,6 @@ echo "Comparing vcfs"
 diff -I ^# ${TMP_OUT}.performance.t1.vcf ${DIR}/../../example/integration/integrationtest.performance.vcf
 if [[ $? != 0 ]]; then
     echo "Performance output variants differ (t1)! vimdiff ${TMP_OUT}.performance.t1.vcf ${DIR}/../../example/integration/integrationtest.performance.vcf "
-	exit 1
-fi
-
-${PYTHON} -mjson.tool ${TMP_OUT}.performance.t1.counts.json > ${TMP_OUT}.performance.t1.counts.pretty.json
-if [[ $? != 0 ]]; then
-    echo "Failed to prettify counts file -- was this file written?"
-    exit 1
-fi
-
-diff ${TMP_OUT}.performance.t1.counts.pretty.json ${DIR}/../../example/integration/integrationtest.performance.counts.json
-if [[ $? != 0 ]]; then
-    echo "Performance counts differ (t1)! vimdiff ${TMP_OUT}.performance.t1.counts.pretty.json ${DIR}/../../example/integration/integrationtest.performance.counts.json "
 	exit 1
 fi
 

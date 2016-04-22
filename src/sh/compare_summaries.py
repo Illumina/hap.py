@@ -17,11 +17,15 @@ def csvread(filename):
             rows.append(l.split(","))
 
     data = {}
+    labels = set()
     for r in rows:
         label = r[0]
         if "hap.py" in label:
             # ignore version line
             continue
+        if label in labels:
+            continue
+        labels.add(label)
         for i in xrange(1, len(r)):
             if header[i] not in data:
                 data[header[i]] = {}
@@ -43,23 +47,27 @@ def main():
                    "TRUTH.TOTAL.TiTv_ratio", "QUERY.TOTAL.TiTv_ratio",
                    "TRUTH.TOTAL.het_hom_ratio", "QUERY.TOTAL.het_hom_ratio",
                    "METRIC.Recall", "METRIC.Precision", "METRIC.Frac_NA"]:
-        for field in ["Locations.SNP", "Locations.SNP.het",
-                      "Locations.INDEL", "Locations.INDEL.het",
-                      "Alleles.SNP", "Alleles.INS", "Alleles.DEL",
-                      "Nucleotides.SNP", "Nucleotides.INS", "Nucleotides.DEL",
+        for field in ["Locations.SNP",
+                      "Locations.INDEL"
                       ]:
+            field1 = field
+            if field1 not in data1[metric]:
+                field1 = field1.replace("Locations.", "")
+            field2 = field
+            if field2 not in data2[metric]:
+                field2 = field2.replace("Locations.", "")
             print metric + " / " + field
-            print data1[metric][field]
-            print data2[metric][field]
-            if metric.endswith("_ratio") and data1[metric][field] == "" and data2[metric][field] == "":
+            print data1[metric][field1]
+            print data2[metric][field2]
+            if metric.endswith("_ratio") and data1[metric][field1] == "" and data2[metric][field2] == "":
                 # allow empty ratio match
                 continue
-            if ("%.3g" % data1[metric][field]) != ("%.3g" % data2[metric][field]):
+            if ("%.3g" % data1[metric][field1]) != ("%.3g" % data2[metric][field2]):
                 different_metrics.append((field,
                                           metric,
-                                          ("%.3g" % data1[metric][field]),
-                                          ("%.3g" % data2[metric][field]),
-                                          data2[metric][field] - data1[metric][field]))
+                                          ("%.3g" % data1[metric][field1]),
+                                          ("%.3g" % data2[metric][field2]),
+                                          data2[metric][field2] - data1[metric][field1]))
 
     if different_metrics:
         print >> sys.stderr, "ERROR -- Metric differences detected:"
