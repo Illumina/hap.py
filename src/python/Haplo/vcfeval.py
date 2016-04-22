@@ -75,7 +75,7 @@ def runVCFEval(vcf1, vcf2, target, args):
 
         if rc != 0:
             raise Exception("Error running rtg tools / vcfeval. Return code was %i, output: %s / %s \n" % (rc, o, e))
-        else:
+        elif o.strip() or e.strip():
             logging.info("vcfeval output: \n%s\n / \n%s\n" % (o, e))
 
         # in GA4GH mode, this is what vcfeval should output

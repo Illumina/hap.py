@@ -95,7 +95,11 @@ def quantify(args):
 
     metrics_output = makeMetricsObject("%s.comparison" % args.runner)
 
-    res = Haplo.happyroc.roc(roc_table, args.reports_prefix + ".roc")
+    filter_handling = None
+    if args.engine == "vcfeval" or not args.usefiltered:
+        filter_handling = "ALL" if args.usefiltered else "PASS"
+
+    res = Haplo.happyroc.roc(roc_table, args.reports_prefix + ".roc", filter_handling)
     df = res["all"]
 
     # only use summary numbers
@@ -109,6 +113,7 @@ def quantify(args):
                        "QUERY.TOTAL",
                        "QUERY.FP",
                        "QUERY.UNK",
+                       "FP.gt",
                        "METRIC.Recall",
                        "METRIC.Precision",
                        "METRIC.Frac_NA"]
@@ -122,13 +127,13 @@ def quantify(args):
     # Remove subtype
     summary_df = df[(df["Subtype"] == "*") & (df["Genotype"] == "*")]
 
-    summary_df[summary_columns].to_csv(args.reports_prefix + ".summary.csv")
+    summary_df[summary_columns].to_csv(args.reports_prefix + ".summary.csv", index=False)
 
     metrics_output["metrics"].append(dataframeToMetricsTable("summary.metrics",
                                                              summary_df[summary_columns]))
 
     if args.write_counts:
-        df.to_csv(args.reports_prefix + ".extended.csv")
+        df.to_csv(args.reports_prefix + ".extended.csv", index=False)
         metrics_output["metrics"].append(dataframeToMetricsTable("all.metrics", df))
 
     essential_numbers = summary_df[summary_columns]
@@ -139,12 +144,12 @@ def quantify(args):
     essential_numbers = essential_numbers[essential_numbers["Type"].isin(
         ["SNP", "INDEL"])]
 
-    logging.info("\n" + str(essential_numbers))
+    logging.info("\n" + essential_numbers.to_string(index=False))
 
     # in default mode, print result summary to stdout
     if not args.quiet and not args.verbose:
         print "Benchmarking Summary:"
-        print str(essential_numbers)
+        print essential_numbers.to_string(index=False)
 
     # keep this for verbose output
     if not args.verbose:

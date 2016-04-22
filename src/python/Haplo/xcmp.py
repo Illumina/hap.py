@@ -36,23 +36,12 @@ def xcmpWrapper(location_str, args):
                                      suffix=".vcf.gz")
     tf.close()
 
-    if args.write_bed:
-        tf2 = tempfile.NamedTemporaryFile(delete=False,
-                                          dir=args.scratch_prefix,
-                                          prefix="result.blocks.%s" % location_str,
-                                          suffix=".bed")
-        tf2.close()
-        bname = "-e %s" % tf2.name
-    else:
-        bname = ""
-
-    to_run = "xcmp %s %s -l %s -o %s %s -r %s -f %i --apply-filters-truth %i -n %i -V %i --leftshift %i --expand-hapblocks %i " \
+    to_run = "xcmp %s %s -l %s -o %s -r %s -f %i --apply-filters-truth %i -n %i -V %i --leftshift %i --expand-hapblocks %i " \
              "--window %i --no-hapcmp %i --roc-vals %i" % \
              (args.vcf1.replace(" ", "\\ "),
               args.vcf2.replace(" ", "\\ "),
               location_str,
               tf.name,
-              bname,
               args.ref,
               0 if args.usefiltered else 1,
               0 if args.usefiltered_truth else 1,
@@ -94,9 +83,4 @@ def xcmpWrapper(location_str, args):
     elapsed = time.time() - starttime
     logging.info("xcmp for chunk %s -- time taken %.2f" % (location_str, elapsed))
 
-    if bname == "":
-        bname = None
-    else:
-        bname = bname[3:]
-
-    return tf.name, bname
+    return tf.name

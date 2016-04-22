@@ -63,11 +63,6 @@ def main():
                         help="Use only PASS variants. By default, hap.py will output PASS and ALL counts, but removing failing"
                              " variants first can improve matching accuracy in complex regions.")
 
-    # DEPRECATED -- we output PASS and ALL counts in one go from hap.py 0.3.0
-    parser.add_argument("-P", "--include-nonpass", dest="usefiltered", action="store_true",
-                        help="This option is deprecated. "
-                             "The default behaviour is now to output PASS and ALL counts.")
-
     parser.add_argument("--include-nonpass-truth", dest="usefiltered_truth", action="store_true", default=False,
                         help="Include failing variants from the truth dataset.")
 
@@ -85,11 +80,6 @@ def main():
     parser.add_argument("-o", "--report-prefix", dest="reports_prefix",
                         default=None,
                         help="Filename prefix for report output.")
-
-    # DEPRECATED: we don't write bed files after 0.2.9
-    parser.add_argument("-B", "--write-bed", dest="write_bed",
-                        default=False, action="store_true",
-                        help="This option is deprecated. BED files will not be written anymore.")
 
     # add quantification args
     qfy.updateArgs(parser)
@@ -135,24 +125,16 @@ def main():
     parser.add_argument("--no-fixchr-query", dest="fixchr_query", action="store_false",
                         help="Add chr prefix to query file (default: auto).")
 
-    parser.add_argument("--partial-credit", dest="partial_credit", action="store_true", default=None,
-                        help="give credit for partially matched variants. "
-                             "this is equivalent to --internal-leftshift and --internal-preprocessing.")
+    parser.add_argument("--internal-leftshift", dest="int_preprocessing_ls", action="store_true", default=True,
+                        help="Enable xcmp's internal VCF leftshift preprocessing.")
 
-    parser.add_argument("--no-partial-credit", dest="partial_credit", action="store_false", default=None,
-                        help="Give credit for partially matched variants. "
-                             "This is equivalent to --internal-leftshift and --no-internal-preprocessing.")
+    parser.add_argument("--internal-preprocessing", dest="int_preprocessing", action="store_true", default=True,
+                        help="Enable xcmp's internal VCF leftshift preprocessing.")
 
-    parser.add_argument("--internal-leftshift", dest="int_preprocessing_ls", action="store_true", default=None,
+    parser.add_argument("--no-internal-leftshift", dest="int_preprocessing_ls", action="store_false",
                         help="Switch off xcmp's internal VCF leftshift preprocessing.")
 
-    parser.add_argument("--internal-preprocessing", dest="int_preprocessing", action="store_true", default=None,
-                        help="Switch off xcmp's internal VCF leftshift preprocessing.")
-
-    parser.add_argument("--no-internal-leftshift", dest="int_preprocessing_ls", action="store_false", default=None,
-                        help="Switch off xcmp's internal VCF leftshift preprocessing.")
-
-    parser.add_argument("--no-internal-preprocessing", dest="int_preprocessing", action="store_false", default=None,
+    parser.add_argument("--no-internal-preprocessing", dest="int_preprocessing", action="store_false",
                         help="Switch off xcmp's internal VCF leftshift preprocessing.")
 
     parser.add_argument("--no-haplotype-comparison", dest="no_hc", action="store_true", default=False,
@@ -243,9 +225,6 @@ def main():
         print "Hap.py %s" % Tools.version
         exit(0)
 
-    if args.write_bed:
-        logging.warn("The -B / --write-bed switches are deprecated in versions 0.2.9+, ")
-
     if args.roc:
         args.write_vcf = True
 
@@ -254,24 +233,7 @@ def main():
         args.int_preprocessing = False
         args.int_preprocessing_ls = False
         args.no_hc = True
-
-    # Counting with partial credit
-    elif args.partial_credit:
-        # partial_credit switch is overridden by --no-* switches
-        args.int_preprocessing = True
-        args.int_preprocessing_ls = True
-    elif args.partial_credit is None:
-        # in the default setting, we enable partial credit but only override the
-        # preprocessing settings if they haven't been specified
-        if args.int_preprocessing is None:
-            args.int_preprocessing = True
-        if args.int_preprocessing_ls is None:
-            args.int_preprocessing_ls = True
-    elif args.partial_credit is not None:  # explicitly set to false
-        args.int_preprocessing = False
-        args.int_preprocessing_ls = True
-
-    if args.int_preprocessing is None:
+    elif args.int_preprocessing is None:
         args.int_preprocessing = False
     if args.int_preprocessing_ls is None:
         args.int_preprocessing_ls = False
@@ -621,8 +583,7 @@ def main():
             # do xcmp
             logging.info("Using xcmp for comparison")
             res = runParallel(pool, Haplo.xcmp.xcmpWrapper, args.locations, args)
-            tempfiles += [x[0] for x in res if x is not None]  # VCFs
-            tempfiles += [x[1] for x in res if x is not None and x[1] is not None]  # beds (if any)
+            tempfiles += [x for x in res if x is not None]  # VCFs
 
             if None in res:
                 raise Exception("One of the xcmp jobs failed.")
@@ -632,7 +593,7 @@ def main():
 
             # concatenate + index
             logging.info("Concatenating variants...")
-            runme_list = [x[0] for x in res if x is not None]
+            runme_list = [x for x in res if x is not None]
             if len(runme_list) == 0:
                 raise Exception("No outputs to concatenate!")
 
@@ -656,8 +617,6 @@ def main():
             args.type = "ga4gh"
         else:
             raise Exception("Unknown comparison engine: %s" % args.engine)
-
-        logging.info("Counting variants...")
 
         args.in_vcf = [output_name]
         args.runner = "hap.py"
