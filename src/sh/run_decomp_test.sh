@@ -26,9 +26,9 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-diff ${TMP_OUT}.counts.csv ${DIR}/../../example/decomp/expected.counts.csv
+${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.summary.csv ${DIR}/../../example/decomp/expected.summary.csv
 if [[ $? != 0 ]]; then
-	echo "Counts differ! diff ${TMP_OUT}.counts.csv ${DIR}/../../example/decomp/expected.counts.csv"
+	echo "Summary differs! ${TMP_OUT}.summary.csv ${DIR}/../../example/decomp/expected.summary.csv"
 	exit 1
 fi
 

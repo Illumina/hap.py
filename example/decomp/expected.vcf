@@ -43,11 +43,16 @@
 ##INFO=<ID=CIGAR,Number=A,Type=String,Description="CIGAR alignment for each alternate indel allele">
 ##INFO=<ID=HapMatch,Number=0,Type=Flag,Description="Variant is in matching haplotype block">
 ##INFO=<ID=IDREP,Number=A,Type=Integer,Description="Number of times RU is repeated in indel allele.">
-##INFO=<ID=Q_FILTERED,Number=0,Type=Flag,Description="Filtered call in query">
+##INFO=<ID=Q_DP,Number=1,Type=Float,Description="DP field in query VCF.">
+##INFO=<ID=Q_GQ,Number=1,Type=Float,Description="GQ field in query VCF.">
+##INFO=<ID=Q_QUAL,Number=1,Type=Float,Description="Qual column in query VCF.">
 ##INFO=<ID=REFREP,Number=A,Type=Integer,Description="Number of times RU is repeated in reference.">
 ##INFO=<ID=RU,Number=A,Type=String,Description="Smallest repeating sequence unit extended or contracted in the indel allele relative to the reference. RUs are not reported if longer than 20 bases.">
 ##INFO=<ID=SNVHPOL,Number=1,Type=Integer,Description="SNV contextual homopolymer length">
 ##INFO=<ID=SNVSB,Number=1,Type=Float,Description="SNV site strand bias">
+##INFO=<ID=T_DP,Number=1,Type=Float,Description="DP field in truth VCF.">
+##INFO=<ID=T_GQ,Number=1,Type=Float,Description="GQ field in truth VCF.">
+##INFO=<ID=T_QUAL,Number=1,Type=Float,Description="Qual column in truth VCF.">
 ##INFO=<ID=bwa_freebayes,Number=2,Type=String,Description="Variant calling method.">
 ##INFO=<ID=bwa_gatk3,Number=2,Type=String,Description="Variant calling method.">
 ##INFO=<ID=bwa_platypus,Number=2,Type=String,Description="Variant calling method.">
@@ -76,6 +81,6 @@
 ##FORMAT=<ID=BVT,Number=1,Type=String,Description="High-level variant type in truth (SNP|INDEL).">
 ##FORMAT=<ID=BLT,Number=1,Type=String,Description="High-level variant type in query (SNP|INDEL).">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	TRUTH	QUERY
-chr1	237636278	.	T	<DEL>	0	.	Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:.:INDEL:homalt:0	1/1:TP:gm:.:INDEL:homalt:0
-chr1	237636291	.	G	C	0	.	Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:0	1/1:TP:gm:tv:SNP:homalt:0
-chr1	237636309	.	A	T	0	.	Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:0	1/1:TP:gm:tv:SNP:homalt:0
+chr1	237636278	.	T	<DEL>	100	.	Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:d1_5:INDEL:homalt:100	1/1:TP:gm:d1_5:INDEL:homalt:100
+chr1	237636291	.	G	C	100	.	Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:100	1/1:TP:gm:tv:SNP:homalt:100
+chr1	237636309	.	A	T	100	.	Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:100	1/1:TP:gm:tv:SNP:homalt:100

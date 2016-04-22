@@ -16,7 +16,7 @@ TMP_OUT=`mktemp -t happy.XXXXXXXXXX`
 ${PYTHON} ${HCDIR}/hap.py \
 				${DIR}/../data/pathtraversal/test.vcf \
 				${DIR}/../data/pathtraversal/test2.vcf \
-				-o ${TMP_OUT} -P \
+				-o ${TMP_OUT} \
 				-X --reference ${DIR}/../data/pathtraversal/test.fa -l chrQ \
 				--force-interactive
 
@@ -25,9 +25,9 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-diff ${TMP_OUT}.counts.csv ${DIR}/../data/pathtraversal/expected.counts.csv
+${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.summary.csv  ${DIR}/../data/pathtraversal/expected.summary.csv
 if [[ $? != 0 ]]; then
-	echo "Counts differ! diff ${TMP_OUT}.counts.csv ${DIR}/../data/pathtraversal/expected.counts.csv"
+	echo "Summary differs! ${TMP_OUT}.summary.csv ${DIR}/../data/pathtraversal/expected.summary.csv"
 	exit 1
 else
     echo "Path traversal test successful"

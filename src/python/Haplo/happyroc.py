@@ -25,6 +25,76 @@ import logging
 import pandas
 import itertools
 
+RESULT_ALLCOLUMNS = ["Type",
+                     "Subtype",
+                     "Subset",
+                     "Filter",
+                     "Genotype",
+                     "QQ.Field",
+                     "QQ",
+                     "METRIC.Recall",
+                     "METRIC.Precision",
+                     "METRIC.Frac_NA",
+                     "METRIC.F1_Score",
+                     "TRUTH.TOTAL",
+                     "TRUTH.TP",
+                     "TRUTH.FN",
+                     "QUERY.TOTAL",
+                     "QUERY.TP",
+                     "QUERY.FP",
+                     "QUERY.UNK",
+                     "FP.gt",
+                     "FP.al",
+                     "TRUTH.TOTAL.TiTv_ratio",
+                     "TRUTH.TOTAL.het_hom_ratio",
+                     "TRUTH.FN.TiTv_ratio",
+                     "TRUTH.FN.het_hom_ratio",
+                     "TRUTH.TP.TiTv_ratio",
+                     "TRUTH.TP.het_hom_ratio",
+                     "QUERY.FP.TiTv_ratio",
+                     "QUERY.FP.het_hom_ratio",
+                     "QUERY.TP.TiTv_ratio",
+                     "QUERY.TOTAL.TiTv_ratio",
+                     "QUERY.TOTAL.het_hom_ratio",
+                     "QUERY.TP.het_hom_ratio",
+                     "QUERY.UNK.TiTv_ratio",
+                     "QUERY.UNK.het_hom_ratio"]
+
+RESULT_ALLDTYPES = [str,
+                    str,
+                    str,
+                    str,
+                    str,
+                    str,
+                    str,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float,
+                    float]
+
 def _rm(f):
     """ Quietly delete """
     try:
@@ -122,8 +192,16 @@ def roc(roc_table, output_path, filter_handling=None):
                 else:
                     result[roc].append(rec)
 
+    if "all" not in result:
+        # minimal empty DF
+        minidata = [{"Type": "SNP", "Subtype": "*", "Filter": "ALL", "Genotype": "*", "Subset": "*", "QQ": "*"} for _ in xrange(2)]
+        minidata[1]["Type"] = "INDEL"
+        result["all"] = pandas.DataFrame(minidata, columns=RESULT_ALLCOLUMNS)
+        for i, c in enumerate(RESULT_ALLCOLUMNS):
+            result["all"][c] = result["all"][c].astype(RESULT_ALLDTYPES[i])
+
     for k, v in result.items():
-        result[k] = _postprocessRocData(pandas.DataFrame(v, columns=header))
+        result[k] = _postprocessRocData(pandas.DataFrame(v, columns=RESULT_ALLCOLUMNS))
         vt = re.sub("[^A-Za-z0-9\\.\\-_]", "_", k, flags=re.IGNORECASE)
         if output_path:
             result[k].to_csv(output_path + "." + vt + ".csv", index=False)
@@ -179,39 +257,4 @@ def _postprocessRocData(roctable):
 
     roctable.sort(["Type", "Subtype", "Subset", "Filter", "Genotype", "QQ.Field", "QQ"], inplace=True)
 
-    permuted_columns = ["Type",
-                        "Subtype",
-                        "Subset",
-                        "Filter",
-                        "Genotype",
-                        "QQ.Field",
-                        "QQ",
-                        "METRIC.Recall",
-                        "METRIC.Precision",
-                        "METRIC.Frac_NA",
-                        "METRIC.F1_Score",
-                        "TRUTH.TOTAL",
-                        "TRUTH.TP",
-                        "TRUTH.FN",
-                        "QUERY.TOTAL",
-                        "QUERY.TP",
-                        "QUERY.FP",
-                        "QUERY.UNK",
-                        "FP.gt",
-                        "FP.al",
-                        "TRUTH.TOTAL.TiTv_ratio",
-                        "TRUTH.TOTAL.het_hom_ratio",
-                        "TRUTH.FN.TiTv_ratio",
-                        "TRUTH.FN.het_hom_ratio",
-                        "TRUTH.TP.TiTv_ratio",
-                        "TRUTH.TP.het_hom_ratio",
-                        "QUERY.FP.TiTv_ratio",
-                        "QUERY.FP.het_hom_ratio",
-                        "QUERY.TP.TiTv_ratio",
-                        "QUERY.TOTAL.TiTv_ratio",
-                        "QUERY.TOTAL.het_hom_ratio",
-                        "QUERY.TP.het_hom_ratio",
-                        "QUERY.UNK.TiTv_ratio",
-                        "QUERY.UNK.het_hom_ratio"]
-
-    return roctable[permuted_columns]
+    return roctable[RESULT_ALLCOLUMNS]

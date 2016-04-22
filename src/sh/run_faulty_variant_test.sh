@@ -16,19 +16,13 @@ TMP_OUT=`mktemp -t happy.XXXXXXXXXX`
 ${PYTHON} ${HCDIR}/hap.py \
 			 	${DIR}/../data/open_indel/test.vcf \
 			 	${DIR}/../data/open_indel/test_q.vcf \
-			 	-o ${TMP_OUT} -P \
+			 	-o ${TMP_OUT} \
 			 	-X --reference ${DIR}/../data/open_indel/test.fa -l chrQ \
                 -V \
 			 	--force-interactive
 
 if [[ $? != 0 ]]; then
 	echo "hap.py failed!"
-	exit 1
-fi
-
-diff ${TMP_OUT}.counts.csv ${DIR}/../data/open_indel/expected.counts.csv
-if [[ $? != 0 ]]; then
-	echo "Counts differ! diff ${TMP_OUT}.counts.csv ${DIR}/../data/open_indel/expected.counts.csv"
 	exit 1
 fi
 

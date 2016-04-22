@@ -22,7 +22,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	-f ${DIR}/../../example/happy/PG_Conf_chr21.bed.gz \
 			 	-r ${DIR}/../../example/chr21.fa \
 			 	-o ${TMP_OUT} \
-			 	-X -P \
+			 	-X \
 			 	--force-interactive
 
 if [[ $? != 0 ]]; then
@@ -45,7 +45,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	-f ${DIR}/../../example/happy/PG_Conf_chr21.bed.gz \
 			 	-r ${DIR}/../../example/chr21.fa \
 			 	-o ${TMP_OUT}.pass \
-			 	-X \
+			 	-X --pass-only \
 			 	--force-interactive
 
 if [[ $? != 0 ]]; then
@@ -69,8 +69,6 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	-o ${TMP_OUT}.unhappy \
 			 	-X --unhappy \
 			 	--roc VQSLOD \
-			 	-P \
-			 	--roc-filter TruthSensitivityTranche99.00to99.90,TruthSensitivityTranche99.90to100.00,TruthSensitivityTranche99.90to100.00+ \
 			 	--force-interactive
 
 if [[ $? != 0 ]]; then

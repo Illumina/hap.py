@@ -44,6 +44,8 @@ def main():
     different_metrics = []
 
     for metric in ["TRUTH.TOTAL", "QUERY.TOTAL",
+                   "TRUTH.TP", "TRUTH.FN",
+                   "QUERY.FP", "QUERY.UNK",
                    "TRUTH.TOTAL.TiTv_ratio", "QUERY.TOTAL.TiTv_ratio",
                    "TRUTH.TOTAL.het_hom_ratio", "QUERY.TOTAL.het_hom_ratio",
                    "METRIC.Recall", "METRIC.Precision", "METRIC.Frac_NA"]:
@@ -56,10 +58,16 @@ def main():
             field2 = field
             if field2 not in data2[metric]:
                 field2 = field2.replace("Locations.", "")
+            if field1 not in data1[metric] and field2 not in data2[metric]:
+                print >>sys.stderr, "Skipping %s -- not present on both sides" % field
+                continue
             print metric + " / " + field
             print data1[metric][field1]
             print data2[metric][field2]
             if metric.endswith("_ratio") and data1[metric][field1] == "" and data2[metric][field2] == "":
+                # allow empty ratio match
+                continue
+            if metric.endswith("_ratio") and data1[metric][field1] == "." and data2[metric][field2] == ".":
                 # allow empty ratio match
                 continue
             if ("%.3g" % data1[metric][field1]) != ("%.3g" % data2[metric][field2]):

@@ -17,7 +17,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	${DIR}/../data/numeric_chrs/truth.vcf \
 			 	${DIR}/../data/numeric_chrs/query.vcf \
                 -f ${DIR}/../data/numeric_chrs/fp.bed \
-			 	-o ${TMP_OUT} -P \
+			 	-o ${TMP_OUT} \
 			 	-X --reference ${DIR}/../data/numeric_chrs/test.fa \
                 -V \
 			 	--force-interactive
@@ -27,9 +27,9 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-diff ${TMP_OUT}.counts.csv ${DIR}/../data/numeric_chrs/expected.counts.csv
+${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.summary.csv ${DIR}/../data/numeric_chrs/expected.summary.csv
 if [[ $? != 0 ]]; then
-	echo "Counts differ! diff ${TMP_OUT}.counts.csv ${DIR}/../data/numeric_chrs/expected.counts.csv"
+	echo "Counts differ! diff ${TMP_OUT}.summary.csv ${DIR}/../data/numeric_chrs/expected.summary.csv"
 	exit 1
 fi
 
@@ -48,7 +48,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	${DIR}/../data/numeric_chrs/chrtruth.vcf \
 			 	${DIR}/../data/numeric_chrs/chrquery.vcf \
                 -f ${DIR}/../data/numeric_chrs/chrfp.bed \
-			 	-o ${TMP_OUT} -P \
+			 	-o ${TMP_OUT} \
 			 	-X --reference ${DIR}/../data/numeric_chrs/chrtest.fa \
                 -V \
 			 	--force-interactive
@@ -58,9 +58,9 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-diff ${TMP_OUT}.counts.csv ${DIR}/../data/numeric_chrs/expected.counts.csv
+${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.summary.csv ${DIR}/../data/numeric_chrs/expected.summary.csv
 if [[ $? != 0 ]]; then
-	echo "Counts differ! diff ${TMP_OUT}.counts.csv ${DIR}/../data/numeric_chrs/expected.counts.csv"
+	echo "Counts differ! diff ${TMP_OUT}.summary.csv ${DIR}/../data/numeric_chrs/expected.summary.csv"
 	exit 1
 fi
 
@@ -79,7 +79,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	${DIR}/../data/numeric_chrs/chrtruth.vcf \
 			 	${DIR}/../data/numeric_chrs/query.vcf \
                 -f ${DIR}/../data/numeric_chrs/chrfp.bed \
-			 	-o ${TMP_OUT} -P \
+			 	-o ${TMP_OUT} \
 			 	-X --reference ${DIR}/../data/numeric_chrs/chrtest.fa \
                 -V \
 			 	--force-interactive
@@ -89,9 +89,9 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-diff ${TMP_OUT}.counts.csv ${DIR}/../data/numeric_chrs/expected.counts.csv
+${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.summary.csv ${DIR}/../data/numeric_chrs/expected.summary.csv
 if [[ $? != 0 ]]; then
-	echo "Counts differ! diff ${TMP_OUT}.counts.csv ${DIR}/../data/numeric_chrs/expected.counts.csv"
+	echo "Counts differ! diff ${TMP_OUT}.summary.csv ${DIR}/../data/numeric_chrs/expected.summary.csv"
 	exit 1
 fi
 
