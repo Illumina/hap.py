@@ -96,8 +96,12 @@ def quantify(args):
     metrics_output = makeMetricsObject("%s.comparison" % args.runner)
 
     filter_handling = None
-    if args.engine == "vcfeval" or not args.usefiltered:
-        filter_handling = "ALL" if args.usefiltered else "PASS"
+    try:
+        if args.engine == "vcfeval" or not args.usefiltered:
+            filter_handling = "ALL" if args.usefiltered else "PASS"
+    except AttributeError:
+        # if we run this through qfy, these arguments are not present
+        pass
 
     res = Haplo.happyroc.roc(roc_table, args.reports_prefix + ".roc", filter_handling)
     df = res["all"]

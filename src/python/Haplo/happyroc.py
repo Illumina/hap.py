@@ -93,7 +93,7 @@ def roc(roc_table, output_path, filter_handling=None):
                        and rec["Genotype"] == "*" \
                        and rec["Subtype"] == "*" \
                        and rec["QQ"] != "*":  # this is the ROC score field
-                        roc = "Locations." + rec["type"]
+                        roc = "Locations." + rec["Type"]
                         if roc not in result:
                             result[roc] = [rec]
                         else:
@@ -108,7 +108,7 @@ def roc(roc_table, output_path, filter_handling=None):
                        and rec["Genotype"] == "*" \
                        and rec["Subtype"] == "*" \
                        and rec["QQ"] != "*":  # this is the ROC score field
-                        roc = "Locations." + rec["type"] + ".PASS"
+                        roc = "Locations." + rec["Type"] + ".PASS"
                         if roc not in result:
                             result[roc] = [rec]
                         else:
