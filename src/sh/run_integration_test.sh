@@ -185,7 +185,7 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-${PYTHON} -mjson.tool ${TMP_OUT}.performance.counts.json > ${TMP_OUT}.performance.counts.pretty.json
+${PYTHON} -mjson.tool ${TMP_OUT}.performance.counts.json | sed "s/[[:blank:]]*$//" > ${TMP_OUT}.performance.counts.pretty.json
 if [[ $? != 0 ]]; then
     echo "Failed to prettify counts file -- was this file written?"
     exit 1
@@ -228,7 +228,7 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-${PYTHON} -mjson.tool ${TMP_OUT}.performance.t1.counts.json > ${TMP_OUT}.performance.t1.counts.pretty.json
+${PYTHON} -mjson.tool ${TMP_OUT}.performance.t1.counts.json | sed "s/[[:blank:]]*$//" > ${TMP_OUT}.performance.t1.counts.pretty.json
 if [[ $? != 0 ]]; then
     echo "Failed to prettify counts file -- was this file written?"
     exit 1
