@@ -24,6 +24,7 @@
 #
 
 import os
+import logging
 
 
 def fastaContigLengths(fastafile):
@@ -51,8 +52,10 @@ def calculateLength(fastacontiglengths, locations):
     for l in locations.split(" "):
         contig, _, pos = l.partition(":")
         if contig not in fastacontiglengths:
-            raise Exception("Contig %s is not present in input set %s" %
+            logging.warn("Contig %s is not present in input set %s; setting length to 0" %
                             (contig, str(fastacontiglengths)))
+            length = 0
+            continue
 
         if pos:
             start, _, end = pos.partition("-")
@@ -63,7 +66,7 @@ def calculateLength(fastacontiglengths, locations):
                 length = max(0, fastacontiglengths[contig] - start)
         else:
             length = fastacontiglengths[contig]
-
+ 
         total_length += length
 
     return total_length
