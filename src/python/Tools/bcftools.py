@@ -122,7 +122,7 @@ def preprocessVCF(input, output, location="",
         vargs += ["-f", "PASS,."]
 
     if chrprefix:
-        vargs += ["|", "perl", "-pe", "'s/^([0-9XYM])/chr$1/'", "|", "bcftools", "view"]
+        vargs += ["|", "perl", "-pe", "'s/^([0-9XYM])/chr$1/'", "|", "perl", "-pe", "'s/chrMT/chrM/'", "|", "bcftools", "view"]
 
     if targets:
         vargs += ["-T", targets, "|", "bcftools", "view"]
