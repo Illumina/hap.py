@@ -6,14 +6,14 @@ Introduction
 
 Hap.py is a tool to compare diploid genotypes at haplotype level. Rather than
 comparing VCF records row by row, hap.py will generate and match alternate
-sequences in *haplotype blocks*. A haplotype block is a small region of the
+sequences in a _superlocus_. A _superlocus_ is a small region of the
 genome (sized between 1 and around 1000 bp) that contains one or more variants.
 
 Matching haplotype sequences rather than VCF records is more accurate. It allows
  us to the following things:
 
 *  We can match up variant records that represent the same alt sequences in a
-   different form (see [example/GiaB](example/GiaB)).
+   different form (see [../example/GiaB](example/GiaB)).
 *  We can also more accurately merge variant call sets
    (see [ls_example.md](ls_example.md)).
 
@@ -121,7 +121,7 @@ The extended table gives metrics in a more stratified format:
 
 * it contains counts stratified over the different genotypes and variant subtypes
 * it also contains Ti/Tv and het/hom ratios for each variant classification (TP/FN/...)
-* if stratification regions were specified, it will contained a breakdown into
+* if stratification regions were specified, it will contain a breakdown into
   these regions.
 
 ![](extended.table.png)

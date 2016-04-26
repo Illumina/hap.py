@@ -85,6 +85,8 @@ advice for their interpretation.
 
 ### som.py
 
+Som.py is a simple comparison tool based on bcftools. It does not perform genotype or haplotype matching.
+
 See [doc/sompy.md](doc/sompy.md) for more documentation.
 
 ```
@@ -219,23 +221,23 @@ There are two fast ways to get a running installation of hap.py:
 
 2. Use [Docker](https://www.docker.com/). Clone this repository and build a
    Docker image as follows.
-   ```
-   $ sudo docker build .
-   $ sudo docker images
-   REPOSITORY     TAG            IMAGE ID            CREATED             VIRTUAL SIZE
-   <...>          latest         3d03a99b3d81        1 second ago        <...>
-   $ sudo docker run -ti --rm 3d03a99b3d81 bin/bash
-   $/ /opt/hap.py/bin/hap.py
-   ```
+```
+$ sudo docker build .
+$ sudo docker images
+REPOSITORY     TAG            IMAGE ID            CREATED             VIRTUAL SIZE
+<...>          latest         3d03a99b3d81        1 second ago        <...>
+$ sudo docker run -ti --rm 3d03a99b3d81 bin/bash
+$/ /opt/hap.py/bin/hap.py
+```
    A pre-built docker image can be found here: [https://hub.docker.com/r/pkrusche/hap.py](https://hub.docker.com/r/pkrusche/hap.py). It can
    be obtained by running:
-   ```bash
-   docker pull pkrusche/hap.py
-   ```
+```bash
+docker pull pkrusche/hap.py
+```
    If the current directory contains a clone of the hap.py repository, hap.py can be run in Docker as follows:
-   ```bash
-   sudo docker run -it -v `pwd`:/data pkrusche/hap.py /opt/hap.py/bin/hap.py /data/example/PG_performance.vcf.gz /data/example/performance.vcf.gz -o /data/test
-   ```
+```bash
+sudo docker run -it -v `pwd`:/data pkrusche/hap.py /opt/hap.py/bin/hap.py /data/example/PG_performance.vcf.gz /data/example/performance.vcf.gz -o /data/test
+```
    The `-v` argument mounts the current directory as `/data` in the Docker image. The output should also
    appear in the current directory.
 
@@ -296,12 +298,12 @@ Here is a list of additional flags for CMake to change compile options help it f
 *  `-DCMAKE_C_COMPILER=/usr/bin/gcc` and `-DCMAKE_CXX_COMPILER=/usr/bin/g++` -- change the compiler path
 *  `-DCMAKE_INSTALL_PREFIX=/usr/local` -- set an installation directory that will be used by make install.
 *  `-DBOOST_ROOT=$HOME/boost_1_55_0_install` -- set the path to Boost. Run the following commands to compile and install boost:
-   ```bash
-   cd ~
-   wget http://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.bz2
-   tar xjf boost_1_55_0.tar.bz2
-   cd boost_1_55_0
-   ./bootstrap.sh --with-libraries=filesystem,chrono,thread,iostreams,system,regex,test,program_options
-   ./b2 --prefix=$HOME/boost_1_55_0_install install
-   ```
+```bash
+cd ~
+wget http://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.bz2
+tar xjf boost_1_55_0.tar.bz2
+cd boost_1_55_0
+./bootstrap.sh --with-libraries=filesystem,chrono,thread,iostreams,system,regex,test,program_options
+./b2 --prefix=$HOME/boost_1_55_0_install install
+```
 *  `-DUSE_SGE` -- enable the `--force-interactive` switch in hap.py.
