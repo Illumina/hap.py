@@ -1,5 +1,14 @@
 # Hap.py Release Notes / Change Log
 
+## v0.3.0
+
+| Ticket   | Description                                                                    |
+|----------|--------------------------------------------------------------------------------|
+| HAP-181  | Need documentation with detailed description of hap.py output                  |
+| HAP-188  | Support GA4GH stratification regions                                           |
+| HAP-190  | Implement final output format for 0.3.0                                        |
+| HAP-193  | Implement indel length binning                                                 |
+
 ## v0.2.9
 
 | Ticket  | Description                                                                  |
