@@ -266,6 +266,32 @@ for each variant in truth and query, along with information on the decision
 for truth and query calls (TP/FP/FN/N/UNK). See the [GA4GH page above](https://github.com/ga4gh/benchmarking-tools/blob/master/doc/ref-impl/README.md)
 for more details.
 
+### Stratification via Bed Regions
+
+Hap.py can compute stratified counts using bed regions of interest. One set of such regions can
+be found here:
+
+[https://github.com/ga4gh/benchmarking-tools/tree/master/resources/stratification-bed-files](https://github.com/ga4gh/benchmarking-tools/tree/master/resources/stratification-bed-files)
+
+
+```
+hap.py example/happy/PG_NA12878_hg38-chr21.vcf.gz example/happy/NA12878-GATK3-chr21.vcf.gz \
+    -f example/happy/PG_Conf_hg38-chr21.bed.gz -o gatk-stratified --force-interactive
+    --stratification example/happy/stratification.tsv
+```
+
+The file [../example/happy/stratification.tsv](stratification.tsv) contains a tab-separated list
+of region names and files (the paths can be relative to the location of the TSV file).
+
+The extended csv file will then contain additional rows like this which give counts, precision and recall
+only for variants that match a particular region:
+
+```
+...
+INDEL,*,exons,ALL,*,QUAL,*,0.96729,0.962791,0.12601600000000002,0.48251700000000003,214,207,7,246,207,8,31,0,5,,3.5106379999999997,,5.0,,3.4782610000000003,,0.75,,,3.172414,3.4782610000000003,,2.625
+...
+```
+
 ### Internal Variant Normalisation and Haplotype Comparison
 
 ```
@@ -391,6 +417,10 @@ for two reasons:
   variant callers.
 * when indels have different representations, vcfeval outputs these as separate
   records, whereas xcmp normalizes them to be in the same VCF row if possible.
+  For creating ROCs, we need to associate ROC values in the query with variants
+  in the truth file, which is currently implemented by using the QQ value from
+  the query sample when present. If records end up in different rows, this is
+  not possible.
   *NOTE: this is work in progress and based on a development version of vcfeval**
 * When it is necessary to preserve the original variant representation, vcfeval
   generally matches slightly more records than hap.py when the `--no-partial-credit`
@@ -399,6 +429,14 @@ for two reasons:
   within superloci (blocks of close-by variants). In practice, this results in
   slightly higher precision estimates when using hap.py with vcfeval vs hap.py
   without partial credit.
+
+In future versions of hap.py we will implement the following things to address
+the differences between vcfeval and hap.py comparison:
+
+* separate out the pre-processing step such that "partial-credit" preprocessing
+  can also be used with vcfeval
+* Associate the median QQ value from the superlocus with truth variants to make
+  ROCs more robust when variants are represented differently.
 
 |        | *SNP*                      | *INDEL*                      |
 |:------:|:--------------------------:|:----------------------------:|
@@ -434,7 +472,7 @@ hap.py hap.py/example/happy/PG_NA12878_hg38-chr21.vcf.gz \
 | ![](snprocs-platypus.png) | ![](indelrocs-platypus.png) |
 
 
-### Input Preprocessing
+### Input Preprocessing using bcftools
 
 Hap.py has a range of options to control pre-processing separately for truth
 and query. Most of these require the `--external-preprocessing`  switch to work.

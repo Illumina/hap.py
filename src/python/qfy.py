@@ -107,7 +107,7 @@ def quantify(args):
     df = res["all"]
 
     # only use summary numbers
-    df = df[(df["QQ"] == "*") & (df["Subset"] == "*") & (df["Filter"].isin(["ALL", "PASS"]))]
+    df = df[(df["QQ"] == "*") & (df["Filter"].isin(["ALL", "PASS"]))]
 
     summary_columns = ["Type",
                        "Filter",
@@ -129,7 +129,7 @@ def quantify(args):
         summary_columns.append(additional_column)
 
     # Remove subtype
-    summary_df = df[(df["Subtype"] == "*") & (df["Genotype"] == "*")]
+    summary_df = df[(df["Subtype"] == "*") & (df["Genotype"] == "*") & (df["Subset"] == "*")]
 
     summary_df[summary_columns].to_csv(args.reports_prefix + ".summary.csv", index=False)
 
