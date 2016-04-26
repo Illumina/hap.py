@@ -29,3 +29,4 @@ tags_sorted_by_file
 .tags_sorted_by_file
 *.sublime-project
 *.sublime-workspace
+Thumbs.db

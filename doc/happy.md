@@ -35,33 +35,54 @@ Hap.py will report counts of
 From these counts, we are able to calculate
 
 ```
-recall = TP/(TP+FN)
-precision = TP/(TP+FP)
-frac_NA = UNK/total(query)
+Recall = TP/(TP+FN)
+Precision = TP/(TP+FP)
+Frac_NA = UNK/total(query)
+F1_Score = 2 * Precision * Recall / (Precision + Recall)
 ```
 
 These counts and statistics will be calculated for the following subsets of
 variants:
 
-```
-|---------------------+-------------------------------------------------------|
-|         Type        |                      Description                      |
-|---------------------+-------------------------------------------------------|
-| Alleles.SNP/INS/DEL | Allele counts. We count occurrences of SNP, insertion |
-|                     | or deletion alleles. For hom-alt SNPs, each allele is |
-|                     | counted exactly once (so the counts aren't biased     |
-|                     | towards hom-alt calls). The idea between these counts |
-|                     | is that each counted instance belongs to a particular |
-|                     | group of reads / haplotype.                           |
-|---------------------+-------------------------------------------------------|
-| Locations.SNP/INDEL | Location counts are useful to compute recall for het, |
-|                     | hom, or het-alt calls separately, and to quantify     |
-|                     | genotyping accuracy. Note that hap.py performs        |
-|                     | variant normalisation by default (see                 |
-|                     | [normalisation.md](normalisation.md)), which will     |
-|                     | change the input records in truth and query.          |
-|---------------------+-------------------------------------------------------|
-```
+| **Type** | **Description**                                                    |
+|:--------:|:-------------------------------------------------------------------|
+| `SNP`    | SNP or MNP variants. We count single nucleotides that have changed |
+| `INDEL`  | Indels and complex variants                                        |
+
+Hap.py (and qfy.py, which is the part of the hap.py that counts variants) also
+computes counts for subtypes and observed genotypes in the above two categories.
+
+| **Subtype**  | **Description**                        |
+|:------------:|:---------------------------------------|
+| `*`          | Aggregate numbers for all subtypes     |
+| `ti` or `tv` | Transitions and transversions for SNPs |
+| `I1_5`       | Insertions of length 1-5               |
+| `I6_15`      | Insertions of length 6-15              |
+| `I16_PLUS`   | Insertions of length 16 or more        |
+| `D1_5`       | Deletions of length 1-5                |
+| `D6_15`      | Deletions of length 6-15               |
+| `D16_PLUS`   | Deletions of length 16 or more         |
+| `C1_5`       | Complex variants of length 1-5         |
+| `C6_15`      | Complex variants of length 6-15        |
+| `C16_PLUS`   | Complex variants of length 16 or more  |
+
+| **Genotype** | **Description**                                                        |
+|:------------:|:-----------------------------------------------------------------------|
+| `*`          | Aggregate numbers for all genotypes                                    |
+| `het`        | only heterozygous variant calls (0/1 or similar genotypes)             |
+| `homalt`     | only homozygous alternative variant calls (1/1 or similar genotypes)   |
+| `hetalt`     | only heterozygous alternative variant calls (1/2 or similar genotypes) |
+
+Note that currently the granularity of counting is on a per-VCF-record level. In
+complex/high-variability regions, the classifications above might become inaccurate
+due to nearby variants (e.g. an insertion with a close-by SNP would be more accurately
+classified as "complex" if the SNP and the insertion occur on the same haplotype).
+Future versions will address this by counting superloci rather than VCF records.
+
+Hap.py also supports stratification regions for more detailed output stratification (one
+example use case is computing precision / recall on exoms as well as on the whole genome,
+or using the stratification regions from the GA4GH benchmarking repository at
+[https://github.com/ga4gh/benchmarking-tools](https://github.com/ga4gh/benchmarking-tools).
 
 
 Simple Usage
@@ -76,7 +97,8 @@ $ ${HAPPY}/bin/hap.py  \
       -f example/happy/PG_Conf_chr21.bed.gz \
       -o test
 $ ls test.*
-test.metrics.json  test.summary.csv test.extended.csv
+test.extended.csv  test.roc.all.csv              test.roc.Locations.INDEL.PASS.csv  test.roc.Locations.SNP.PASS.csv  test.vcf.gz
+test.metrics.json  test.roc.Locations.INDEL.csv  test.roc.Locations.SNP.csv         test.summary.csv                 test.vcf.gz.tbi
 ```
 
 This example compares an example run of GATK 1.6 on NA12878 agains the Platinum
@@ -85,14 +107,24 @@ don't rely on these particular numbers for competitive comparisons!***).
 
 The summary CSV file contains all computed metrics:
 
-|         Type         | TRUTH.TOTAL | QUERY.TOTAL | METRIC.Recall.HC | METRIC.Precision.HC | METRIC.Frac_NA.HC |
-|----------------------|-------------|-------------|------------------|---------------------|-------------------|
-| Alleles.DEL          |        6069 |        7020 |         0.907460 |            0.973996 |          0.205698 |
-| Alleles.INS          |        6654 |        7179 |         0.880879 |            0.975355 |          0.186098 |
-| Alleles.SNP          |       72752 |       67481 |         0.904442 |            0.998361 |          0.023547 |
-| Locations.SNP.het    |       32254 |       28665 |         0.873368 |            0.997875 |          0.015175 |
-| Locations.SNP.homalt |       20231 |       19270 |         0.929317 |            0.999097 |          0.023560 |
+| Type  | Filter | TRUTH.TOTAL | TRUTH.TP | TRUTH.FN | QUERY.TOTAL | QUERY.FP | QUERY.UNK | FP.gt | METRIC.Recall | METRIC.Precision | METRIC.Frac_NA | TRUTH.TOTAL.TiTv_ratio | QUERY.TOTAL.TiTv_ratio | TRUTH.TOTAL.het_hom_ratio | QUERY.TOTAL.het_hom_ratio |
+|-------|--------|-------------|----------|----------|-------------|----------|-----------|-------|---------------|------------------|----------------|------------------------|------------------------|---------------------------|---------------------------|
+| INDEL | ALL    | 9124        | 8100     | 1024     | 11731       | 228      | 3460      | 71    | 0.887769      | 0.972434         | 0.294945       | NaN                    | NaN                    | 1.463852                  | 1.423305
+| INDEL | PASS   | 9124        | 7869     | 1255     | 9910        | 176      | 1922      | 48    | 0.862451      | 0.977967         | 0.193946       | NaN                    | NaN                    | 1.463852                  | 1.209239                  |
+| SNP   | ALL    | 52520       | 52202    | 318      | 90092       | 476      | 37377     | 109   | 0.993945      | 0.990970         | 0.414876       | 2.081246               | 1.745874               | 1.595621                  | 3.132586                  |
+| SNP   | PASS   | 52520       | 46965    | 5555     | 48083       | 83       | 1013      | 8     | 0.894231      | 0.998237         | 0.021068       | 2.081246               | 2.089405               | 1.595621                  | 1.487858                  |
 
+Note that the e.g. Ti/Tv and het/hom ratios for different subsets of the genome
+can differ (e.g. the expected Ti/Tv ratio for WGS and exome is normally different).
+
+The extended table gives metrics in a more stratified format:
+
+* it contains counts stratified over the different genotypes and variant subtypes
+* it also contains Ti/Tv and het/hom ratios for each variant classification (TP/FN/...)
+* if stratification regions were specified, it will contained a breakdown into
+  these regions.
+
+![](extended.table.png)
 
 False-positives
 ---------------
@@ -170,12 +202,10 @@ Add a location to the compare list (when not given, hap.py will use chr1-22,
 chrX, chrY).
 
 ```
-  -P, --include-nonpass
+  --pass-only
 ```
 
-Use to include failing variants in comparison. Failing variants are actually
-considered _optional_ rather than mandatory during haplotype comparison (
-therefore, )
+Use to include only variants in the comparison that pass all filters.
 
 ```
   -R REGIONS_BEDFILE, --restrict-regions REGIONS_BEDFILE
@@ -239,12 +269,6 @@ for more details.
 ### Internal Variant Normalisation and Haplotype Comparison
 
 ```
-  --partial-credit      give credit for partially matched variants. this is
-                        equivalent to --internal-leftshift and --internal-
-                        preprocessing.
-  --no-partial-credit   Give credit for partially matched variants. This is
-                        equivalent to --no-internal-leftshift and --no-
-                        internal-preprocessing.
   --internal-leftshift  Switch off xcmp's internal VCF leftshift
                         preprocessing.
   --internal-preprocessing
@@ -264,8 +288,18 @@ for more details.
 ```
 
 These switches control xcmp's internal VCF [leftshifting preprocessing](normalisation.md).
-The partial credit switch jointly enables / disables preprocessing and left shifting. The
-next section gives some more details on the effect that these comparison modes can have.
+
+Left-shifting attempts to safely left-align indel and complex variant calls
+without shifting variant records past each other.
+
+Internal preprocessing decomposes complex variants into its primitive variants,
+leaving only SNPs, insertions and deletions. This type of preprocessing is useful
+when comparing different variant calling methods, for example where one method
+might output an MNP block, and another method multiple SNPs. If these calls are
+FPs, we should count the same number for each method, and this can be achieved in
+many cases by this type of decomposition.
+
+The next section gives some more details on the effect that these comparison modes can have.
 
 ### ROC Curves
 
@@ -279,28 +313,25 @@ if GQX is not available):
 
 ```
   ...
-  --no-internal-leftshift \
-  --no-internal-preprocessing \
-  -P -V \
   --roc Q_GQ \
   ...
 ```
 
-The `-P` switch is necessary to consider unfiltered variants, `-V` will write an
-annotated output VCF which is used to extract the features and labels. The `--roc` switch
-specifies the feature to filter on. Hap.py translates the truth and query GQ(X) fields into
-the INFO fields T_GQ and Q_GQ, it tries to use GQX first, if this is not present, it
-will use GQ. When run without internal preprocessing any other input INFO field can
-be used (e.g. VQSLOD for GATK).
+The `--roc` switch specifies the feature to filter on. Hap.py translates the
+truth and query GQ(X) fields into the INFO fields T_GQ and Q_GQ, it tries to
+use GQX first, if this is not present, it will use GQ. When run without
+internal preprocessing any other input INFO field can be used (e.g. VQSLOD for
+GATK).
 
-The `--roc-filter` switch may be used to specify the particular VCF filter which
-implements a threshold on the quality score. When calculating filtered TP/FP counts, this
-filter will be removed, and replaced with a threshold filter on the feature specified
-by `--roc`. By default, the ROC will be calculated ignoring all filters.
+The `--roc-filter` switch may be used to specify the particular VCF filter
+which implements a threshold on the quality score. When calculating filtered
+TP/FP counts, this filter will be removed, and replaced with a threshold filter
+on the feature specified by `--roc`. By default, the ROC will be calculated
+ignoring all filters.
 
-Normally, we assume that higher quality scores are better during ROC calculation,
-variants with scores higher than the variable threshold will "pass", all others will
-"fail".
+Normally, we assume that higher quality scores are better during ROC
+calculation, variants with scores higher than the variable threshold will
+"pass", all others will "fail".
 
 The output file will be comma-separated value files giving tp / fp / fn counts,
 as well as precision and recall for different thresholds of the ROC feature.
@@ -312,38 +343,29 @@ hap.py hap.py/example/happy/PG_NA12878_hg38-chr21.vcf.gz \
        hap.py/example/happy/NA12878-GATK3-chr21.vcf.gz \
        -f hap.py/example/happy/PG_Conf_hg38-chr21.bed.gz \
        -r hap.py/example/happy/hg38.chr21.fa \
-       -o gatk-all -P -V \
+       -o gatk-all -V \
        --roc QUAL
 ```
 
 After running, this will produce a set of outputs as follows.
 
-```
-ls gatk-all.*
-gatk-all.counts.csv
-gatk-all.extended.csv
-gatk-all.summary.csv
-gatk-all.roc.Locations.SNP.csv
-gatk-all.roc.Locations.SNP_PASS.csv
-gatk-all.roc.Locations.INDEL.csv
-gatk-all.roc.Locations.INDEL_PASS.csv
-gatk-all.vcf.gz
-gatk-all.vcf.gz.tbi
-gatk-all.metrics.json
-```
+| Output File                            | Contents                                                                                                                                                                  |
+|----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| gatk-all.summary.csv                   | Summary statistics                                                                                                                                                        |
+| gatk-all.extended.csv                  | Extended statistics                                                                                                                                                       |
+| gatk-all.roc.all.csv                   | All precision / recall data points that were calculated                                                                                                                   |
+| gatk-all.vcf.gz                        | Annotated VCF according to [https://github.com/ga4gh/benchmarking-tools/tree/master/doc/ref-impl](https://github.com/ga4gh/benchmarking-tools/tree/master/doc/ref-impl)   |
+| gatk-all.vcf.gz.tbi                    | VCF Tabix Index                                                                                                                                                           |
+| gatk-all.metrics.json                  | JSON file containing all computed metrics and tables.                                                                                                                     |
+| gatk-all.roc.Locations.INDEL.csv       | ROC for ALL indels only.                                                                                                                                                  |
+| gatk-all.roc.Locations.SNP.csv         | ROC for ALL SNPs only.                                                                                                                                                    |
+| gatk-all.roc.Locations.INDEL.PASS.csv  | ROC for PASSing indels only.                                                                                                                                              |
+| gatk-all.roc.Locations.SNP.PASS.csv    | ROC for PASSing SNPs only.                                                                                                                                                |
 
-The SNP ROC file starts like this:
+The ROC files give the same columns as the summary and extended statistics output files
+for a range of thresholds on QUAL (or the feature that was passed to --roc).
 
-```
-type	QUAL	FN	TP	FN2	TP2	FP	UNK	N	recall	precision	f1_score	na	total.truth	total.query
-SNP	0	857	50159	0	50097	101	20260	0	0.983201	0.997988	0.49527	0.287547	51016	70458
-SNP	25.33	923	50093	0	50097	101	20259	1	0.981908	0.997988	0.494941	0.287537	51016	70457
-SNP	26.45	923	50093	0	50097	101	20250	10	0.981908	0.997988	0.494941	0.287446	51016	70448
-SNP	27.77	923	50093	0	50097	101	20242	18	0.981908	0.997988	0.494941	0.287365	51016	70440
-SNP	28.83	923	50093	0	50097	101	20233	27	0.981908	0.997988	0.494941	0.287274	51016	70431
-SNP	29.91	924	50092	1	50096	101	20228	32	0.981888	0.997988	0.494936	0.287228	51016	70425
-...
-```
+![](roc_table.png)
 
 Hap.py can produce ROCs using vcfeval (see below for instructions)
 or xcmp (hap.py's internal comparison engine).
@@ -364,7 +386,9 @@ show that the results when using xcmp or vcfeval as the comparison engine in
 hap.py are mostly equivalent for SNPs. For indels, xcmp shows higher precision
 for two reasons:
 
-* partial credit matching allows a more fine-grained assessment of precision.
+* partial credit matching allows a more fine-grained assessment of precision and
+  accounts better for representational differences observed between different
+  variant callers.
 * when indels have different representations, vcfeval outputs these as separate
   records, whereas xcmp normalizes them to be in the same VCF row if possible.
   *NOTE: this is work in progress and based on a development version of vcfeval**
@@ -389,7 +413,7 @@ hap.py hap.py/example/happy/PG_NA12878_hg38-chr21.vcf.gz \
        hap.py/example/happy/NA12878-Platypus-chr21.vcf.gz \
        -f hap.py/example/happy/PG_Conf_hg38-chr21.bed.gz \
        -r hap.py/example/happy/hg38.chr21.fa \
-       -o platypus-all -P -V \
+       -o platypus-all -V \
        --roc QUAL
 ```
 
