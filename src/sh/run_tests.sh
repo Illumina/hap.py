@@ -218,3 +218,15 @@ else
 	echo "Performance / Consistency test SUCCEEDED!"
 fi
 
+
+##############################################################
+# Test contig length calculation
+##############################################################
+
+${PYTHON} ${DIR}/run_fastasize_test.py
+if [[ $? -ne 0 ]]; then
+    echo "Contig length calculation test FAILED!"
+    exit 1
+else
+    echo "Contig length calculation test SUCCEEDED!"
+fi
