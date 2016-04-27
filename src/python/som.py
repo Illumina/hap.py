@@ -126,12 +126,24 @@ def main():
     parser.add_argument("-N", "--normalize-all", dest="normalize_all", default=False, action="store_true",
                         help="Enable running of bcftools norm on both truth and query file.")
 
-    parser.add_argument("--fix-chr-query", dest="fixchr_query", default=False, action="store_true",
-                        help="Replace numeric chromosome names in the query by chr*-type names")
+    parser.add_argument("--fixchr-truth", dest="fixchr_truth", action="store_true", default=True,
+                        help="Add chr prefix to truth file (default: true).")
 
-    parser.add_argument("--fix-chr-truth", dest="fixchr_truth", default=False, action="store_true",
-                        help="Replace numeric chromosome names in the truth by chr*-type names")
+    parser.add_argument("--fixchr-query", dest="fixchr_query", action="store_true", default=True,
+                        help="Add chr prefix to query file (default: true).")
 
+    parser.add_argument("--fix-chr-truth", dest="fixchr_truth", action="store_true", default=None,
+                        help="Same as --fixchr-truth.")
+
+    parser.add_argument("--fix-chr-query", dest="fixchr_query", action="store_true", default=None,
+                        help="Same as --fixchr-query.")
+
+    parser.add_argument("--no-fixchr-truth", dest="fixchr_truth", action="store_false", default=False,
+                        help="Disable chr replacement for truth (default: false).")
+
+    parser.add_argument("--no-fixchr-query", dest="fixchr_query", action="store_false", default=False,
+                        help="Add chr prefix to query file (default: false).")
+    
     parser.add_argument("--no-order-check", dest="disable_order_check", default=False, action="store_true",
                         help="Disable checking the order of TP features (dev feature).")
 
