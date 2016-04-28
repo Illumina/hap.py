@@ -688,15 +688,15 @@ def main():
                     # use all locations we saw calls on
                     h1 = Tools.vcfextract.extractHeadersJSON(ntpath)
                     h1_chrs = h1["tabix"]["chromosomes"]
-                    if h1_chrs is None or len(h1_chrs) == 0:
+                    if not h1_chrs:
                         logging.warn("ntpath is empty")
-                        h1_chrs = list()
+                        h1_chrs = []
 
                     h2 = Tools.vcfextract.extractHeadersJSON(nqpath)
                     h2_chrs = h2["tabix"]["chromosomes"]
-                    if h2_chrs is None or len(h2_chrs) == 0:
+                    if not h2_chrs:
                         logging.warn("nqpath is empty")
-                        h2_chrs = list()
+                        h2_chrs = []
                     
                     combined_chrs = list(set(h1_chrs + h2_chrs))
                     if len(combined_chrs) > 0:
