@@ -607,7 +607,7 @@ def main():
                 if args.af_strat:
                     start = 0.0
                     current_binsize = args.af_strat_binsize[0]
-                    next_binsize = 1
+                    next_binsize = 0
                     while start < 1.0:
                         # include 1 in last interval
                         end = min(1.000000001, start + current_binsize)
