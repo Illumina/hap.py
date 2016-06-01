@@ -22,8 +22,8 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
     :param avg_depth: average chromosome depths from BAM file
     """
     features = ["CHROM", "POS", "REF", "ALT", "FILTER",
-                "I.NT", "I.SOMATIC", "I.QSS_NT", "I.VQSR", "I.EVS",
-                "I.SGT", "I.MQ", "I.MQ0", "I.PNOISE", "I.PNOISE2",
+                "I.NT", "I.SOMATIC", "I.QSS_NT", "I.VQSR", "I.EVS", "I.EVSF",
+                "I.SGT", "I.MQ", "I.MQ0",
                 "I.SNVSB", "I.ReadPosRankSum",
                 "S.1.SDP", "S.2.SDP",
                 "S.1.FDP", "S.2.FDP",
@@ -33,12 +33,36 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
                 "S.1.GU", "S.2.GU",
                 "S.1.TU", "S.2.TU"]
 
+    cols = ["CHROM", "POS", "REF", "ALT",
+            "NT", "NT_REF", "QSS_NT", "FILTER", "EVS", "VQSR",
+            "N_FDP_RATE", "T_FDP_RATE", "N_SDP_RATE", "T_SDP_RATE",
+            "N_DP", "T_DP", "N_DP_RATE", "T_DP_RATE",
+            "N_AF", "T_AF",
+            "MQ", "MQ0",
+            "SNVSB",
+            "ReadPosRankSum", "tag"]
+
+    vcfheaders = list(extractHeaders(vcfname))
+
+    evs_featurenames = {}
+    for l in vcfheaders:
+        if '##snv_scoring_features' in l:
+            try:
+                xl = str(l).split('=', 1)
+                xl = xl[1].split(",")
+                for i, n in enumerate(xl):
+                    evs_featurenames[i] = n
+                    cols.append("E." + n)
+                    logging.info("Scoring feature %i : %s" % (i, n))
+            except:
+                logging.warn("Could not parse scoring feature names from Strelka output")
+
     records = []
 
     if not avg_depth:
         avg_depth = {}
 
-        for l in list(extractHeaders(vcfname)):
+        for l in vcfheaders:
             x = str(l).lower()
             x = x.replace("##meandepth_", "##maxdepth_")
             x = x.replace("##depth_", "##maxdepth_")
@@ -69,7 +93,7 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
             rec["I.EVS"] = -1.0
 
         # fix missing features
-        for q in ["I.QSS_NT", "I.MQ", "I.MQ0", "I.PNOISE", "I.PNOISE2",
+        for q in ["I.QSS_NT", "I.MQ", "I.MQ0",
                   "I.SNVSB", "I.ReadPosRankSum", "S.1.SDP", "S.2.SDP",
                   "S.1.FDP", "S.2.FDP",
                   "S.1.DP", "S.2.DP",
@@ -172,16 +196,6 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
             n_tier1_allele_rate = n_allele_alt_counts[0] / float(n_allele_alt_counts[0] + n_allele_ref_counts[0])
 
         try:
-            pnoise = rec["I.PNOISE"]
-        except:
-            pnoise = 0
-
-        try:
-            pnoise2 = rec["I.PNOISE2"]
-        except:
-            pnoise2 = 0
-
-        try:
             snvsb = rec["I.SNVSB"]
         except:
             snvsb = 0
@@ -215,22 +229,26 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
             "T_AF": t_tier1_allele_rate,
             "MQ": MQ,
             "MQ0": MQ_ZERO,
-            "PNOISE": pnoise,
-            "PNOISE2": pnoise2,
             "SNVSB": snvsb,
             "ReadPosRankSum": rprs,
             "tag": tag
         }
-        records.append(qrec)
+        # ESF features
+        try:
+            for i, v in enumerate(rec["I.EVSF"]):
+                if i in evs_featurenames:
+                    try:
+                        qrec["E." + evs_featurenames[i]] = float(v)
+                    except:
+                        # failure to parse
+                        pass
+        except:
+            pass
+        for k, v in evs_featurenames.iteritems():
+            if not "E." + v in qrec:
+                qrec["E." + v] = 0
 
-    cols = ["CHROM", "POS", "REF", "ALT",
-            "NT", "NT_REF", "QSS_NT", "FILTER", "EVS", "VQSR",
-            "N_FDP_RATE", "T_FDP_RATE", "N_SDP_RATE", "T_SDP_RATE",
-            "N_DP", "T_DP", "N_DP_RATE", "T_DP_RATE",
-            "N_AF", "T_AF",
-            "MQ", "MQ0",
-            "PNOISE", "PNOISE2", "SNVSB",
-            "ReadPosRankSum", "tag"]
+        records.append(qrec)
 
     if records:
         df = pandas.DataFrame(records, columns=cols)
@@ -247,7 +265,7 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
     :param avg_depth: average chromosome depths from BAM file
     """
     features = ["CHROM", "POS", "REF", "ALT", "FILTER",
-                "I.NT", "I.SOMATIC", "I.QSI_NT", "I.EVS", "I.ESF",
+                "I.NT", "I.SOMATIC", "I.QSI_NT", "I.EVS", "I.EVSF",
                 "I.SGT", "I.RC", "I.RU",
                 "I.IC", "I.IHP",
                 "I.MQ", "I.MQ0",
@@ -291,21 +309,19 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
 
     vcfheaders = list(extractHeaders(vcfname))
 
-    vqsr_featurenames = {}
+    evs_featurenames = {}
 
     for l in vcfheaders:
-        if '##vqsr_features' in l:
+        if '##indel_scoring_features' in l:
             try:
                 xl = str(l).split('=', 1)
                 xl = xl[1].split(",")
-                for x in xl:
-                    i, n = x.split(":", 1)
-                    i = int(i)
-                    vqsr_featurenames[i] = n
-                    cols.append("VQSR." + n)
-                    logging.info("VQSR feature %i : %s" % (i, n))
+                for i, n in enumerate(xl):
+                    evs_featurenames[i] = n
+                    cols.append("E." + n)
+                    logging.info("Scoring feature %i : %s" % (i, n))
             except:
-                logging.warn("Could not parse VQSR feature names from Strelka output")
+                logging.warn("Could not parse scoring feature names from Strelka output")
 
     if not avg_depth:
         avg_depth = {}
@@ -445,18 +461,19 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
 
         # ESF features
         try:
-            for i, v in enumerate(rec["I.ESF"]):
-                if i in vqsr_featurenames:
+            for i, v in enumerate(rec["I.EVSF"]):
+                if i in evs_featurenames:
                     try:
-                        qrec["ESF." + vqsr_featurenames[i]] = float(v)
+                        qrec["E." + evs_featurenames[i]] = float(v)
                     except:
                         # failure to parse
                         pass
         except:
             pass
-        for k, v in vqsr_featurenames.iteritems():
-            if not "ESF." + v in qrec:
-                qrec["ESF." + v] = 0
+
+        for k, v in evs_featurenames.iteritems():
+            if not "E." + v in qrec:
+                qrec["E." + v] = 0
 
         records.append(qrec)
 
