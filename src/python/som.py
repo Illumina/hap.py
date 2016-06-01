@@ -154,8 +154,9 @@ def main():
     parser.add_argument("--bin-afs", dest="af_strat", default=None, action="store_true",
                         help="Stratify into different AF buckets. This needs to have features available"
                              "for getting the AF both in truth and query variants.")
-    parser.add_argument("--af-binsize", dest="af_strat_binsize", default=0.2, type=float,
-                        help="Bin size for AF binning (should be < 1)")
+    parser.add_argument("--af-binsize", dest="af_strat_binsize", default=0.2,
+                        help="Bin size for AF binning (should be < 1). Multiple bin sizes can be specified using a comma, "
+                             "e.g. 0.1,0.2,0.5,0.2 will split at 0.1, 0.3, 0.8 and 1.0.")
     parser.add_argument("--af-truth", dest="af_strat_truth", default="I.T_ALT_RATE",
                         help="Feature name to use for retrieving AF for truth variants (TP and FN)")
     parser.add_argument("--af-query", dest="af_strat_query", default="T_AF",
@@ -190,6 +191,18 @@ def main():
         loglevel = logging.ERROR
     else:
         loglevel = logging.WARNING
+
+    try:
+        if type(args.af_strat_binsize) is str:
+            args.af_strat_binsize = map(float, args.af_strat_binsize.split(","))
+        else:
+            args.af_strat_binsize = map(float, [args.af_strat_binsize])
+
+        if not args.af_strat_binsize:
+            raise Exception("Bin size list is empty")
+    except:
+        logging.error("Failed to parse stratification bin size: %s" % str(args.af_strat_binsize))
+        exit(1)
 
     # reinitialize logging
     for handler in logging.root.handlers[:]:
@@ -605,9 +618,11 @@ def main():
 
                 if args.af_strat:
                     start = 0.0
+                    current_binsize = args.af_strat_binsize[0]
+                    next_binsize = 0
                     while start < 1.0:
                         # include 1 in last interval
-                        end = min(1.000000001, start + args.af_strat_binsize)
+                        end = min(1.000000001, start + current_binsize)
                         n_tp = featuretable_this_type[(featuretable_this_type["tag"] == "TP") &
                                                       (featuretable_this_type[af_t_feature] >= start) &
                                                       (featuretable_this_type[af_t_feature] < end)]
@@ -645,7 +660,11 @@ def main():
                             roc_table_strat = args.roc.from_table(pandas.concat([n_tp, n_fp, n_fn]))
                             rtname = "%s.%s.%f-%f.roc.csv" % (args.output, vtype, start, end)
                             roc_table_strat.to_csv(rtname, float_format='%.8f')
-                        start += args.af_strat_binsize
+                        start += current_binsize
+                        next_binsize += 1
+                        if next_binsize >= len(args.af_strat_binsize):
+                            next_binsize = 0
+                        current_binsize = args.af_strat_binsize[next_binsize]
 
         # remove things where we haven't seen any variants in truth and query
         res = res[(res["total.truth"] > 0) & (res["total.query"] > 0)]
