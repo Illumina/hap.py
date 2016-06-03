@@ -45,3 +45,7 @@ target_link_libraries(roc ${HAPLOTYPES_ALL_LIBS})
 # validatevcf checks ref alleles and tests if haplotypes can be enumerated
 add_executable(validatevcf validatevcf.cpp)
 target_link_libraries(validatevcf ${HAPLOTYPES_ALL_LIBS})
+
+# validatevcf checks ref alleles and tests if haplotypes can be enumerated
+add_executable(preprocess preprocess.cpp)
+target_link_libraries(preprocess ${HAPLOTYPES_ALL_LIBS})
