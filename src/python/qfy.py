@@ -38,7 +38,6 @@ sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'lib', 'python27')
 
 import Tools
 from Tools.metric import makeMetricsObject, dataframeToMetricsTable
-from Tools.bcftools import runBcftools
 import Haplo.quantify
 import Haplo.happyroc
 import Haplo.partialcredit
@@ -49,10 +48,9 @@ def quantify(args):
     vcf_name = args.in_vcf[0]
 
     if args.int_preprocessing or args.int_preprocessing_ls:
-        pctf = tempfile.NamedTemporaryFile(
-                delete=False,
-                prefix="partialcredit",
-                suffix=".vcf.gz")
+        pctf = tempfile.NamedTemporaryFile(delete=False,
+                                           prefix="partialcredit",
+                                           suffix=".vcf.gz")
         pctf.close()
         Haplo.partialcredit.partialCredit(vcf_name, pctf.name, args)
         vcf_name = pctf.name

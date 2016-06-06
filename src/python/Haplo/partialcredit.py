@@ -38,7 +38,7 @@ def preprocessWrapper(file_and_location, args):
                                      suffix=".prep.vcf.gz")
     tf.close()
 
-    to_run = "preprocess %s -l %s -o %s -V %i -L %i -r %s" % \
+    to_run = "preprocess %s:* -l %s -o %s -V %i -L %i -r %s" % \
              (filename.replace(" ", "\\ "),
               location_str,
               tf.name,
@@ -95,8 +95,8 @@ def partialCredit(vcfname, outputname, args):
             if not res:
                 raise Exception("One of the preprocess jobs failed")
 
-        res = ["concat", "-a", "-o", outputname] + res
-        runBcftools(*res)
+        cmd = ["concat", "-a", "-o", outputname, "-O", "z"] + res
+        runBcftools(*cmd)
         runBcftools("index", "-t", outputname)
     finally:
         for r in res:

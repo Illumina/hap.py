@@ -46,10 +46,10 @@ set (GNU_COMPAT_COMPILER ( (CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR (CMAKE_CXX_
 
 # start with warning flags:
 if (GNU_COMPAT_COMPILER)
-    set (CXX_WARN_FLAGS "-Wall -Wextra -Wunused -Wpointer-arith -Winit-self -Wredundant-decls -pedantic -Wunused-parameter -Wdisabled-optimization -Wno-unused-local-typedefs -Wno-deprecated-declarations")
+    set (CXX_WARN_FLAGS "-Wall -Wextra -Wunused -Wpointer-arith -Winit-self -Wredundant-decls -pedantic -Wunused-parameter -Wdisabled-optimization -Wno-unused-local-typedefs -Wno-deprecated-declarations -Wuninitialized")
 
     if (NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-        set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wuninitialized")
+        set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -DBOOST_SYSTEM_NO_DEPRECATED")
     endif ()
 endif ()
 
