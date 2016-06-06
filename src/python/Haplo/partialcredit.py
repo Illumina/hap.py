@@ -12,8 +12,6 @@
 #
 # 3/9/2015
 #
-# Diploid VCF File Comparison
-#
 # Author:
 #
 # Peter Krusche <pkrusche@illumina.com>
@@ -21,40 +19,32 @@
 
 import os
 import logging
+import subprocess
 import tempfile
 import time
-import subprocess
+import itertools
+import multiprocessing
+
+from Tools.parallel import runParallel
+from Tools.bcftools import runBcftools
 
 
-def xcmpWrapper(location_str, args):
-    """ Haplotype block comparison wrapper function
-    """
+def preprocessWrapper(file_and_location, args):
     starttime = time.time()
+    filename, location_str = file_and_location
     tf = tempfile.NamedTemporaryFile(delete=False,
                                      dir=args.scratch_prefix,
-                                     prefix="result.%s" % location_str,
-                                     suffix=".vcf.gz")
+                                     prefix="input.%s" % location_str,
+                                     suffix=".prep.vcf.gz")
     tf.close()
 
-    to_run = "xcmp %s %s -l %s -o %s -r %s -f %i --apply-filters-truth %i -n %i -V %i --leftshift %i --expand-hapblocks %i " \
-             "--window %i --no-hapcmp %i --roc-vals %i" % \
-             (args.vcf1.replace(" ", "\\ "),
-              args.vcf2.replace(" ", "\\ "),
+    to_run = "preprocess %s -l %s -o %s -V %i -L %i -r %s" % \
+             (filename.replace(" ", "\\ "),
               location_str,
               tf.name,
-              args.ref,
-              0 if args.usefiltered else 1,
-              0 if args.usefiltered_truth else 1,
-              args.max_enum,
-              0, # 1 if args.int_preprocessing else 0, # now handled by qfy / partialCredit
-              0, # 1 if args.int_preprocessing_ls else 0,
-              args.hb_expand,
-              args.window,
-              1 if args.no_hc else 0,
-              1 if args.roc else 0
-              )
-
-    # regions / targets already have been taken care of in blocksplit / preprocessing
+              1 if args.int_preprocessing else 0,
+              1 if args.int_preprocessing_ls else 0,
+              args.ref)
 
     tfe = tempfile.NamedTemporaryFile(delete=False,
                                       dir=args.scratch_prefix,
@@ -64,7 +54,6 @@ def xcmpWrapper(location_str, args):
                                       dir=args.scratch_prefix,
                                       prefix="stdout",
                                       suffix=".log")
-
     try:
         logging.info("Running '%s'" % to_run)
         subprocess.check_call(to_run, shell=True, stdout=tfo, stderr=tfe)
@@ -81,6 +70,38 @@ def xcmpWrapper(location_str, args):
         os.unlink(tfe.name)
 
     elapsed = time.time() - starttime
-    logging.info("xcmp for chunk %s -- time taken %.2f" % (location_str, elapsed))
-
+    logging.info("preprocess for %s -- time taken %.2f" % (location_str, elapsed))
+    runBcftools("index", "-t", tf.name)
     return tf.name
+
+
+def partialCredit(vcfname, outputname, args):
+    """ Partial-credit-process a VCF file according to our args """
+
+    if args.threads > 1:
+        logging.info("Partial credit processing uses %i parallel processes." % args.threads)
+        pool = multiprocessing.Pool(int(args.threads))
+    else:
+        pool = None
+
+    res = []
+    try:
+        res = runParallel(pool,
+                          preprocessWrapper,
+                          itertools.izip(itertools.repeat(vcfname), args.locations),
+                          args)
+
+        for r in res:
+            if not res:
+                raise Exception("One of the preprocess jobs failed")
+
+        res = ["concat", "-a", "-o", outputname] + res
+        runBcftools(*res)
+        runBcftools("index", "-t", outputname)
+    finally:
+        for r in res:
+            try:
+                os.unlink(r)
+                os.unlink(r + ".tbi")
+            except:
+                pass

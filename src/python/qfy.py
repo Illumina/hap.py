@@ -31,22 +31,31 @@ import traceback
 import multiprocessing
 import pandas
 import json
-import pyximport
-
-pyximport.install()
+import tempfile
 
 scriptDir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'lib', 'python27')))
 
 import Tools
 from Tools.metric import makeMetricsObject, dataframeToMetricsTable
+from Tools.bcftools import runBcftools
 import Haplo.quantify
 import Haplo.happyroc
+import Haplo.partialcredit
 
 
 def quantify(args):
     """ Run quantify and write tables """
     vcf_name = args.in_vcf[0]
+
+    if args.int_preprocessing or args.int_preprocessing_ls:
+        pctf = tempfile.NamedTemporaryFile(
+                delete=False,
+                prefix="partialcredit",
+                suffix=".vcf.gz")
+        pctf.close()
+        Haplo.partialcredit.partialCredit(vcf_name, pctf.name, args)
+        vcf_name = pctf.name
 
     if not vcf_name or not os.path.exists(vcf_name):
         raise Exception("Cannot read input VCF.")
@@ -171,6 +180,18 @@ def quantify(args):
 
 def updateArgs(parser):
     """ add common quantification args """
+    parser.add_argument("--internal-leftshift", dest="int_preprocessing_ls", action="store_true", default=True,
+                        help="Enable xcmp's internal VCF leftshift preprocessing.")
+
+    parser.add_argument("--internal-preprocessing", dest="int_preprocessing", action="store_true", default=True,
+                        help="Enable xcmp's internal VCF leftshift preprocessing.")
+
+    parser.add_argument("--no-internal-leftshift", dest="int_preprocessing_ls", action="store_false",
+                        help="Switch off xcmp's internal VCF leftshift preprocessing.")
+
+    parser.add_argument("--no-internal-preprocessing", dest="int_preprocessing", action="store_false",
+                        help="Switch off xcmp's internal VCF leftshift preprocessing.")
+
     parser.add_argument("-t", "--type", dest="type", choices=["xcmp", "ga4gh"],
                         help="Annotation format in input VCF file.")
 

@@ -125,18 +125,6 @@ def main():
     parser.add_argument("--no-fixchr-query", dest="fixchr_query", action="store_false",
                         help="Add chr prefix to query file (default: auto).")
 
-    parser.add_argument("--internal-leftshift", dest="int_preprocessing_ls", action="store_true", default=True,
-                        help="Enable xcmp's internal VCF leftshift preprocessing.")
-
-    parser.add_argument("--internal-preprocessing", dest="int_preprocessing", action="store_true", default=True,
-                        help="Enable xcmp's internal VCF leftshift preprocessing.")
-
-    parser.add_argument("--no-internal-leftshift", dest="int_preprocessing_ls", action="store_false",
-                        help="Switch off xcmp's internal VCF leftshift preprocessing.")
-
-    parser.add_argument("--no-internal-preprocessing", dest="int_preprocessing", action="store_false",
-                        help="Switch off xcmp's internal VCF leftshift preprocessing.")
-
     parser.add_argument("--no-haplotype-comparison", dest="no_hc", action="store_true", default=False,
                         help="Disable haplotype comparison (only count direct GT matches as TP).")
 
