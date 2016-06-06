@@ -30,10 +30,6 @@ target_link_libraries(xcmp ${HAPLOTYPES_ALL_LIBS})
 add_executable(quantify quantify.cpp)
 target_link_libraries(quantify ${HAPLOTYPES_ALL_LIBS})
 
-# denovo counts variants in only one sample
-add_executable(denovo denovo.cpp)
-target_link_libraries(denovo ${HAPLOTYPES_ALL_LIBS})
-
 # vcfhdr2json turns a VCF header into JSON
 add_executable(vcfhdr2json vcfhdr2json.cpp)
 target_link_libraries(vcfhdr2json ${HAPLOTYPES_ALL_LIBS})

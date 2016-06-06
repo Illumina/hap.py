@@ -41,6 +41,7 @@
 #include <sstream>
 #include <htslib/vcf.h>
 #include <memory>
+#include <limits>
 
 /**
  * @brief Helper to get out GT fields
@@ -270,6 +271,7 @@ namespace bcfhelpers
                     return (double)field->v1.f;
                 case BCF_BT_CHAR:
                     return atof((const char *)field->vptr);
+                default:break;
             }
             return std::numeric_limits<double>::quiet_NaN();
         }

@@ -134,17 +134,21 @@ bool VariantAlleleSplitter::advance()
 
         struct CallInfo
         {
-            CallInfo() : qual(0), gq(0), ad_ref(-1), ad_other(-1), dp(-1), nfilter(0) {}
+            CallInfo() : ad_ref(-1), ad_other(-1), dp(-1), nfilter(0) {}
 
-            CallInfo(Call const & c) : qual(c.qual), gq(c.gq), ad_ref(c.ad_ref), ad_other(c.ad_other), dp(c.dp), nfilter(c.nfilter)
+            CallInfo(Call const & c) : bcf_hdr(c.bcf_hdr), bcf_rec(c.bcf_rec), bcf_sample(c.bcf_sample),
+                                       ad_ref(c.ad_ref), ad_other(c.ad_other), dp(c.dp), nfilter(c.nfilter)
             {
                 for (size_t i = 0; i < nfilter; ++i)
                 {
                     filter[i] = c.filter[i];
                 }
             }
-            float qual;
-            float gq;
+
+            /** retain source records */
+            typename ::bcfhelpers::p_bcf_hdr bcf_hdr;
+            typename ::bcfhelpers::p_bcf1 bcf_rec;
+            int bcf_sample;
             int ad_ref, ad_other;
             int dp;
             size_t nfilter;
@@ -318,14 +322,15 @@ bool VariantAlleleSplitter::advance()
                 cur.len = p.rv.end - p.rv.start + 1;
             }
             cur.calls[p.sample].ngt = 2;
-            cur.calls[p.sample].qual = p.ci.qual;
             cur.calls[p.sample].nfilter = p.ci.nfilter;
             cur.calls[p.sample].ad[0] = 0;
             cur.calls[p.sample].ad[1] = 0;
             cur.calls[p.sample].ad_ref = p.ci.ad_ref;
             cur.calls[p.sample].ad_other = p.ci.ad_other;
-            cur.calls[p.sample].gq = p.ci.gq;
             cur.calls[p.sample].dp = p.ci.dp;
+            cur.calls[p.sample].bcf_hdr = p.ci.bcf_hdr;
+            cur.calls[p.sample].bcf_rec = p.ci.bcf_rec;
+            cur.calls[p.sample].bcf_sample = p.ci.bcf_sample;
             for (size_t i = 0; i < p.ci.nfilter; ++i) cur.calls[p.sample].filter[i] = p.ci.filter[i];
             if(p.is_homref)
             {

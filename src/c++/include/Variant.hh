@@ -45,14 +45,11 @@
 #include <set>
 
 #include "helpers/StringUtil.hh"
+#include "helpers/BCFHelpers.hh"
 
 #include "RefVar.hh"
 
 namespace variant {
-
-#ifndef MAX_GT
-#define MAX_GT 2
-#endif
 
 #ifndef MAX_FILTER
 #define MAX_FILTER 20
@@ -73,7 +70,7 @@ enum gttype
  * @brief Variant call for a given location
  */
 struct Call {
-    Call() : ad_ref(-1), ad_other(-1), ngt(0), phased(false), nfilter(0), gq(0), dp(-1), qual(0)
+    Call() : ad_ref(-1), ad_other(-1), ngt(0), phased(false), nfilter(0), dp(-1)
     {
         for(int i = 0; i < MAX_GT; ++i)
         {
@@ -143,9 +140,12 @@ struct Call {
     std::string filter[MAX_FILTER];
     size_t nfilter;
 
-    float gq;
     int dp;
-    float qual;
+
+    /** retain source records */
+    typename ::bcfhelpers::p_bcf_hdr bcf_hdr;
+    typename ::bcfhelpers::p_bcf1 bcf_rec;
+    int bcf_sample;
 };
 
 /**

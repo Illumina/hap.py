@@ -34,6 +34,7 @@
  *
  */
 
+#include <htslib/synced_bcf_reader.h>
 #include "VariantImpl.hh"
 
 // #define DEBUG_VARIANT_GTS
@@ -128,11 +129,6 @@ std::ostream & operator<<(std::ostream &o, Call const & v)
             o << (v.phased ? "|" : "/");
         }
         o << v.gt[i];
-    }
-
-    if(v.qual > 0)
-    {
-        o << " " << v.qual;
     }
 
     if(v.nfilter > 0)
@@ -308,7 +304,7 @@ void VariantReader::setApplyFilters(bool filters, int sample)
     {
         if(int(_impl->applyFiltersPerSample.size()) <= sample)
         {
-            _impl->applyFiltersPerSample.resize(sample+1, false);
+            _impl->applyFiltersPerSample.resize((unsigned long) (sample + 1), false);
             _impl->applyFiltersPerSample[sample] = filters;
         }
     }
@@ -491,7 +487,7 @@ void VariantReader::rewind(const char * chr, int64_t startpos)
     }
     else
     {
-        returned = bcf_sr_seek(_impl->files, chr, startpos);
+        returned = bcf_sr_seek(_impl->files, chr, (int) startpos);
     }
     if (returned == -_impl->files->nreaders)
     {
@@ -678,7 +674,7 @@ bool VariantReader::advance(bool get_calls, bool get_info)
             vars.len = std::max(vars.len, refend - refstart + 1);
         }
 
-        si.end_in_vcf = refend;
+        si.end_in_vcf = (int) refend;
         si.allele_map.resize(line->n_allele-1);
         for (int j = 1; j < line->n_allele; ++j)
         {
@@ -766,8 +762,8 @@ bool VariantReader::advance(bool get_calls, bool get_info)
             if(al == vl.end())
             {
                 vars.variation.push_back(rv);
-                si.allele_map[j-1] = vars.variation.size();
-                vl[rvr] = vars.variation.size();
+                si.allele_map[j-1] = (int) vars.variation.size();
+                vl[rvr] = (int) vars.variation.size();
             }
             else
             {
@@ -782,6 +778,7 @@ bool VariantReader::advance(bool get_calls, bool get_info)
 
     if(get_calls)
     {
+        bcfhelpers::p_bcf_hdr p_header = bcfhelpers::ph(bcf_hdr_dup(_impl->files->readers[0].header));
         vars.calls.resize(_impl->samples.size());
         vars.ambiguous_alleles.resize(_impl->samples.size());
         for (auto & li : vars.ambiguous_alleles)
@@ -801,17 +798,18 @@ bool VariantReader::advance(bool get_calls, bool get_info)
                 vars.calls[sid].ngt = 0;
                 vars.calls[sid].phased = false;
                 vars.calls[sid].nfilter = 0;
-                vars.calls[sid].qual = -1;
                 continue;
             }
 
             bcf_sr_t & reader(_impl->files->readers[si.ireader]);
-            int isample = si.isample;
+            const int isample = si.isample;
             bcf1_t *line = reader.buffer[0];
 
             bcf_unpack(line, BCF_UN_FLT);
 
-            vars.calls[sid].nfilter = line->d.n_flt;
+            bcfhelpers::p_bcf1 p_line = bcfhelpers::pb(bcf_dup(line));
+
+            vars.calls[sid].nfilter = (size_t) line->d.n_flt;
             if(vars.calls[sid].nfilter > MAX_FILTER)
             {
                 error("Too many filters at %s:%i in sample %i", vars.chr.c_str(), vars.pos, sid);
@@ -834,12 +832,11 @@ bool VariantReader::advance(bool get_calls, bool get_info)
                 vars.calls[sid].filter[j] = filter;
             }
 
-            if(getApplyFilters(sid) && fail)
+            if(getApplyFilters((int) sid) && fail)
             {
                 vars.calls[sid].ngt = 0;
                 vars.calls[sid].phased = false;
                 vars.calls[sid].nfilter = 0;
-                vars.calls[sid].qual = -1;
                 continue;
             }
 
@@ -862,7 +859,7 @@ bool VariantReader::advance(bool get_calls, bool get_info)
                 ngt = MAX_GT;
             }
 
-            vars.calls[sid].ngt = ngt;
+            vars.calls[sid].ngt = (size_t) ngt;
 
             int adcount = int(vars.variation.size() + 1);
             int * ad = new int[adcount];
@@ -943,10 +940,9 @@ bool VariantReader::advance(bool get_calls, bool get_info)
             {
                 vars.calls[sid].ngt = 0;
             }
-            vars.calls[sid].qual = line->qual;
-
-            bcfhelpers::getGQ(reader.header, line, isample,
-                              vars.calls[sid].gq);
+            vars.calls[sid].bcf_hdr = p_header;
+            vars.calls[sid].bcf_rec = p_line;
+            vars.calls[sid].bcf_sample = isample;
 
             bcfhelpers::getDP(reader.header, line, isample,
                               vars.calls[sid].dp);

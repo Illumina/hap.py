@@ -39,6 +39,7 @@
 
 #include <sstream>
 #include <cstring>
+#include <htslib/vcf.h>
 
 // #define DEBUG_VARIANT_GTS
 
@@ -236,7 +237,7 @@ namespace variant
         {
             std::string refnt = _impl->reference.query(var.chr.c_str(), rec->pos, rec->pos);
             bcf_update_alleles_str(hdr, rec, refnt.c_str());
-            int varend = (int)var.pos + var.len;
+            int varend = (int) (var.pos + var.len);
             bcf_update_info_int32(hdr, rec, "END", &varend, 1);
         }
 
@@ -244,9 +245,14 @@ namespace variant
         rec->qual = 0;
         for(Call const & c : var.calls)
         {
-            if(!std::isnan(c.qual))
+            if(!c.bcf_rec)
             {
-                rec->qual = std::max(c.qual, rec->qual);
+                continue;
+            }
+            const float cqual = c.bcf_rec->qual;
+            if(!std::isnan(cqual))
+            {
+                rec->qual = std::max(cqual, rec->qual);
             }
         }
 
@@ -315,14 +321,12 @@ namespace variant
 
         if (_impl->write_formats)
         {
-            float * tmp_gq = (float*)malloc(bcf_hdr_nsamples(hdr)*sizeof(float));
             int32_t * tmp_dp = (int32_t*)malloc(bcf_hdr_nsamples(hdr)*sizeof(int32_t));
             int32_t * tmp_ad = (int32_t*)malloc(bcf_hdr_nsamples(hdr)*(var.variation.size() + 1)*sizeof(int32_t));
             int32_t * tmp_ado = (int32_t*)malloc(bcf_hdr_nsamples(hdr)*sizeof(int32_t));
 
             memset(tmp_ad, 0, sizeof(int32_t)*bcf_hdr_nsamples(hdr)*(var.variation.size() + 1));
             memset(tmp_ado, 0, sizeof(int32_t)*bcf_hdr_nsamples(hdr));
-            memset(tmp_gq, 0, sizeof(float)*bcf_hdr_nsamples(hdr));
             memset(tmp_dp, 0, sizeof(int32_t)*bcf_hdr_nsamples(hdr));
 
             for(size_t g = 0; g < var.calls.size(); ++g)
@@ -334,7 +338,6 @@ namespace variant
                 }
                 Call const & c = var.calls[g];
 
-                tmp_gq[g] = c.gq < 0 ? bcf_float_missing : c.gq;
                 tmp_dp[g] = c.dp < 0 ? bcf_int32_missing : c.dp;
                 tmp_ado[g] = c.ad_other < 0 ? bcf_int32_missing : c.ad_other;
                 // ref allele depth goes first
@@ -366,16 +369,35 @@ namespace variant
                         tmp_ad[(var.variation.size() + 1)*g + qq] = bcf_int32_missing;
                     }
                 }
+
+                /** transfer all other formats */
+                if(var.calls[g].bcf_hdr && var.calls[g].bcf_rec)
+                {
+                    const std::set<int> skip = {
+                        bcf_hdr_id2int(var.calls[g].bcf_hdr.get(), BCF_DT_ID, "GT"),
+                        bcf_hdr_id2int(var.calls[g].bcf_hdr.get(), BCF_DT_ID, "DP"),
+                        bcf_hdr_id2int(var.calls[g].bcf_hdr.get(), BCF_DT_ID, "AD"),
+                        bcf_hdr_id2int(var.calls[g].bcf_hdr.get(), BCF_DT_ID, "ADO"),
+                    };
+                    for(int f = 0;  f < var.calls[g].bcf_rec->n_fmt; ++f)
+                    {
+                        const bcf_fmt_t * fmt = &(var.calls[g].bcf_rec->d.fmt[f]);
+                        if(skip.count(fmt->id))
+                        {
+                            continue;
+                        }
+                        const char * id = bcf_hdr_int2id(var.calls[g].bcf_hdr.get(), BCF_DT_ID, fmt->id);
+                        bcf_update_format(hdr, rec, id, fmt->p, fmt->n, fmt->type);
+                    }
+                }
             }
 
-            bcf_update_format_float(hdr, rec, "GQ", tmp_gq, bcf_hdr_nsamples(hdr));
-            bcf_update_format_int32(hdr, rec, "AD", tmp_ad, bcf_hdr_nsamples(hdr)*(var.variation.size() + 1));
+            bcf_update_format_int32(hdr, rec, "AD", tmp_ad, bcf_hdr_nsamples(hdr)*((int)var.variation.size() + 1));
             bcf_update_format_int32(hdr, rec, "ADO", tmp_ado, bcf_hdr_nsamples(hdr));
             bcf_update_format_int32(hdr, rec, "DP", tmp_dp, bcf_hdr_nsamples(hdr));
 
             free(tmp_ado);
             free(tmp_ad);
-            free(tmp_gq);
             free(tmp_dp);
         }
 

@@ -299,8 +299,9 @@ void VariantLocationAggregator::add(Variants const & vs)
         back.calls[c].ad_ref = std::max(vs.calls[c].ad_ref, back.calls[c].ad_ref);
         back.calls[c].ad_other = std::max(vs.calls[c].ad_other, back.calls[c].ad_other);
         back.calls[c].dp = std::max(vs.calls[c].dp, back.calls[c].dp);
-        back.calls[c].qual = std::max(vs.calls[c].qual, back.calls[c].qual);
-        back.calls[c].gq = std::max(vs.calls[c].gq, back.calls[c].gq);
+        back.calls[c].bcf_hdr = vs.calls[c].bcf_hdr;
+        back.calls[c].bcf_rec = vs.calls[c].bcf_rec;
+        back.calls[c].bcf_sample = vs.calls[c].bcf_sample;
 
         // have merged this one -> remove
         remaining_calls.calls[c].ngt = 0;

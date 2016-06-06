@@ -39,7 +39,10 @@
 
 #pragma once
 
-#include "../Variant.hh"
+#include <iostream>
+#include <list>
+#include <vector>
+#include <memory>
 
 extern "C" {
 
@@ -53,6 +56,10 @@ extern "C" {
 
 #pragma GCC diagnostic pop
 }
+
+#ifndef MAX_GT
+#define MAX_GT 2
+#endif
 
 namespace bcfhelpers {
 
@@ -139,4 +146,13 @@ namespace bcfhelpers {
     /** update format with single float values.  */
     void setFormatFloats(const bcf_hdr_t * header, bcf1_t * line, const char * field,
                          const std::vector<float> & value);
+
+    /** shared pointer support for keeping bcf types around */
+    typedef std::shared_ptr<bcf_hdr_t> p_bcf_hdr;
+    typedef std::shared_ptr<bcf1_t> p_bcf1;
+
+    /** shared-pointerize */
+    static inline p_bcf_hdr ph(bcf_hdr_t * h) { return std::shared_ptr<bcf_hdr_t>(h, bcf_hdr_destroy); }
+    static inline p_bcf1 pb(bcf1_t * b) { return std::shared_ptr<bcf1_t>(b, bcf_destroy); }
+
 } // namespace bcfhelpers

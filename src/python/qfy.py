@@ -37,6 +37,7 @@ scriptDir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'lib', 'python27')))
 
 import Tools
+import Tools.vcfextract
 from Tools.metric import makeMetricsObject, dataframeToMetricsTable
 import Haplo.quantify
 import Haplo.happyroc
@@ -48,7 +49,15 @@ def quantify(args):
     vcf_name = args.in_vcf[0]
 
     if args.int_preprocessing or args.int_preprocessing_ls:
+        try:
+            l = args.locations
+        except:
+            try:
+                args.locations = Tools.vcfextract.extractHeadersJSON(vcf_name)["tabix"]["chromosomes"]
+            except:
+                raise Exception("Cannot identify list of locations, please index the input file")
         pctf = tempfile.NamedTemporaryFile(delete=False,
+                                           dir=args.scratch_prefix,
                                            prefix="partialcredit",
                                            suffix=".vcf.gz")
         pctf.close()
@@ -275,6 +284,8 @@ def main():
 
     if not args.ref:
         args.ref = Tools.defaultReference()
+
+    args.scratch_prefix = tempfile.gettempdir()
 
     if args.verbose:
         loglevel = logging.INFO
