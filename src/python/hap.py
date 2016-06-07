@@ -528,6 +528,17 @@ def main():
         args.locations = newlocations
 
         if args.int_preprocessing or args.int_preprocessing_ls:
+            # preprocess truth
+            pctf = tempfile.NamedTemporaryFile(delete=False,
+                                               dir=args.scratch_prefix,
+                                               prefix="partialcredit",
+                                               suffix=".vcf.gz")
+            pctf.close()
+            tempfiles.append(pctf.name)
+            Haplo.partialcredit.partialCredit(args.vcf1, pctf.name, args)
+            args.vcf1 = pctf.name
+            h1 = vcfextract.extractHeadersJSON(args.vcf1)
+
             # preprocess query
             pctf = tempfile.NamedTemporaryFile(delete=False,
                                                dir=args.scratch_prefix,
