@@ -249,7 +249,7 @@ int main(int argc, char* argv[]) {
         VariantInput vi(
             ref_fasta.c_str(),
             preprocess || leftshift,          // bool leftshift
-            false,          // bool refpadding
+            true,          // bool refpadding
             true,                // bool trimalleles = false, (remove unused alleles)
             preprocess || leftshift,      // bool splitalleles = false,
             ( preprocess || leftshift ) ? 2 : 0,  // int mergebylocation = false,
