@@ -41,28 +41,11 @@ import Tools.vcfextract
 from Tools.metric import makeMetricsObject, dataframeToMetricsTable
 import Haplo.quantify
 import Haplo.happyroc
-import Haplo.partialcredit
 
 
 def quantify(args):
     """ Run quantify and write tables """
     vcf_name = args.in_vcf[0]
-
-    if args.int_preprocessing or args.int_preprocessing_ls:
-        try:
-            l = args.locations
-        except:
-            try:
-                args.locations = Tools.vcfextract.extractHeadersJSON(vcf_name)["tabix"]["chromosomes"]
-            except:
-                raise Exception("Cannot identify list of locations, please index the input file")
-        pctf = tempfile.NamedTemporaryFile(delete=False,
-                                           dir=args.scratch_prefix,
-                                           prefix="partialcredit",
-                                           suffix=".vcf.gz")
-        pctf.close()
-        Haplo.partialcredit.partialCredit(vcf_name, pctf.name, args)
-        vcf_name = pctf.name
 
     if not vcf_name or not os.path.exists(vcf_name):
         raise Exception("Cannot read input VCF.")

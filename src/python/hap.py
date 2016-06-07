@@ -45,6 +45,7 @@ import Haplo.blocksplit
 import Haplo.xcmp
 import Haplo.vcfeval
 import Haplo.quantify
+import Haplo.partialcredit
 
 import qfy
 
@@ -525,6 +526,18 @@ def main():
                             str(args.locations))
 
         args.locations = newlocations
+
+        if args.int_preprocessing or args.int_preprocessing_ls:
+            # preprocess query
+            pctf = tempfile.NamedTemporaryFile(delete=False,
+                                               dir=args.scratch_prefix,
+                                               prefix="partialcredit",
+                                               suffix=".vcf.gz")
+            pctf.close()
+            tempfiles.append(pctf.name)
+            Haplo.partialcredit.partialCredit(args.vcf2, pctf.name, args)
+            args.vcf2 = pctf.name
+            h2 = vcfextract.extractHeadersJSON(args.vcf2)
 
         if args.threads > 1 and args.engine == "xcmp":
             logging.info("Running using %i parallel processes." % args.threads)
