@@ -258,7 +258,7 @@ def main():
 
     # generic, keep in sync with hap.py!
     parser.add_argument("-o", "--report-prefix", dest="reports_prefix",
-                        default=None,
+                        default=None, required=True,
                         help="Filename prefix for report output.")
 
     parser.add_argument("-r", "--reference", dest="ref", default=None, help="Specify a reference file.")

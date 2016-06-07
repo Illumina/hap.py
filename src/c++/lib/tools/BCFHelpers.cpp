@@ -733,6 +733,43 @@ namespace bcfhelpers
         }
     }
 
+    void setFormatInts(const bcf_hdr_t * header, bcf1_t * line, const char * field,
+                       const std::vector<int> & value)
+    {
+        if(value.empty())
+        {
+            int res = bcf_update_format(header, line, field, NULL, 0, 0);
+            if(res != 0)
+            {
+                std::ostringstream os;
+                os << "[W] cannot update format " << field << " " << header->id[BCF_DT_CTG][line->rid].key << ":" << line->pos;
+                throw importexception(os.str());
+            }
+            return;
+        }
+        std::unique_ptr<int[]> p_dbl = std::unique_ptr<int[]>(new int[line->n_sample]);
+
+        for(size_t i = 0; i < line->n_sample; ++i)
+        {
+            if(i < value.size())
+            {
+                p_dbl.get()[i] = value[i];
+            }
+            else
+            {
+                p_dbl.get()[i] = bcf_int32_missing;
+            }
+        }
+
+        int res = bcf_update_format_int32(header, line, field, p_dbl.get(), line->n_sample);
+        if(res != 0)
+        {
+            std::ostringstream os;
+            os << "[W] cannot update format " << field << " " << header->id[BCF_DT_CTG][line->rid].key << ":" << line->pos;
+            throw importexception(os.str());
+        }
+    }
+
     /** return sample names from header */
     std::list<std::string> getSampleNames(const bcf_hdr_t * hdr)
     {

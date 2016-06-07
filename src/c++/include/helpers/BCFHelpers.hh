@@ -147,6 +147,10 @@ namespace bcfhelpers {
     void setFormatFloats(const bcf_hdr_t * header, bcf1_t * line, const char * field,
                          const std::vector<float> & value);
 
+    /** update format with single int values.  */
+    void setFormatInts(const bcf_hdr_t * header, bcf1_t * line, const char * field,
+                       const std::vector<int> & value);
+
     /** shared pointer support for keeping bcf types around */
     typedef std::shared_ptr<bcf_hdr_t> p_bcf_hdr;
     typedef std::shared_ptr<bcf1_t> p_bcf1;
