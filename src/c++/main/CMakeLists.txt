@@ -10,10 +10,6 @@ target_link_libraries(hapenum ${HAPLOTYPES_ALL_LIBS})
 add_executable(dipenum dipenum.cpp)
 target_link_libraries(dipenum ${HAPLOTYPES_ALL_LIBS})
 
-# hapblockfind takes a set of VCFs and outputs potential haplotype block regions
-add_executable(hapblockfind hapblockfind.cpp)
-target_link_libraries(hapblockfind ${HAPLOTYPES_ALL_LIBS})
-
 # blocksplit takes a set of VCFs and regions which do not break haplotype blocks at the edges
 add_executable(blocksplit blocksplit.cpp ../include/helpers/Roc.hh)
 target_link_libraries(blocksplit ${HAPLOTYPES_ALL_LIBS})

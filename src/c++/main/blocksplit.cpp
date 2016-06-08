@@ -42,6 +42,8 @@
 
 #include <fstream>
 #include <limits>
+#include <htslib/synced_bcf_reader.h>
+#include <htslib/vcf.h>
 
 // error needs to come after program_options. 
 #include "Error.hh"
@@ -87,8 +89,8 @@ int main(int argc, char* argv[]) {
             ("limit-records,L", po::value<int64_t>(), "Maximum number of records to process")
             ("message-every,m", po::value<int64_t>(), "Print a message every N records.")
             ("window,w", po::value<int64_t>(), "Overlap window length.")
-            ("nblocks", po::value<int>(), "Maximum number of blocks to break into (32).")
-            ("nvars", po::value<int>(), "Minimum number of variants per block (100).")
+            ("nblocks,b", po::value<int>(), "Maximum number of blocks to break into (32).")
+            ("nvars,v", po::value<int>(), "Minimum number of variants per block (100).")
             ("apply-filters,f", po::value<bool>(), "Apply filtering in VCF.")
             ("verbose", po::value<bool>(), "Verbose output.")
         ;
@@ -227,29 +229,51 @@ int main(int argc, char* argv[]) {
 
     try
     {
-        VariantReader r;
-
-        if(regions_bed != "")
+        bcf_srs_t * reader = bcf_sr_init();
+        reader->require_index = 1;
+        reader->collapse = COLLAPSE_NONE;
+        reader->streaming = 0;
+        if(!regions_bed.empty())
         {
-            r.setRegions(regions_bed.c_str(), true);
+            int result = bcf_sr_set_regions(reader, regions_bed.c_str(), 1);
+            if(result < 0)
+            {
+                error("Failed to set regions string %s.", regions_bed.c_str());
+            }
         }
-        if(targets_bed != "")
+        if(!targets_bed.empty())
         {
-            r.setTargets(targets_bed.c_str(), true);
+            int result = bcf_sr_set_targets(reader, targets_bed.c_str(), 1, 1);
+            if(result < 0)
+            {
+                error("Failed to set targets string %s.", targets_bed.c_str());
+            }
         }
-
-        std::list<int> sids;
-        for(size_t i = 0; i < files.size(); ++i)
+        for(auto const & file : files)
         {
-            sids.push_back(r.addSample(files[i].c_str(), samples[i].c_str()));
+            if (!bcf_sr_add_reader(reader, file.c_str()))
+            {
+                error("Failed to open or file not indexed: %s\n", file.c_str());
+            }
         }
-
-        r.setApplyFilters(apply_filters);
 
         bool stop_after_chr_change = false;
-        if(chr != "")
+        if(!chr.empty())
         {
-            r.rewind(chr.c_str(), start);
+            int success = 0;
+            if(start < 0)
+            {
+                success = bcf_sr_seek(reader, chr.c_str(), 0);
+            }
+            else
+            {
+                success = bcf_sr_seek(reader, chr.c_str(), start);
+                std::cerr << "starting at " << chr << ":" << start << "\n";
+            }
+            if(success < 0)
+            {
+                error("Cannot seek to %s:%i", chr.c_str(), start);
+            }
             stop_after_chr_change = true;
         }
 
@@ -268,7 +292,7 @@ int main(int argc, char* argv[]) {
 
         const auto add_bp = [&breakpoints, nvars, nblocks, &chr, &vars, verbose](int64_t bp)
         {
-            if (vars > int64_t(nvars))
+            if (vars > nvars)
             {
                 if(verbose)
                 {
@@ -281,8 +305,15 @@ int main(int argc, char* argv[]) {
 
         std::string firstchr;
 
-        while(r.advance(true, false))
+        int nl = 1;
+        while(nl)
         {
+            nl = bcf_sr_next_line(reader);
+            if (nl <= 0)
+            {
+                break;
+            }
+
             if(rlimit != -1)
             {
                 if(rcount >= rlimit)
@@ -291,64 +322,124 @@ int main(int argc, char* argv[]) {
                 }
             }
 
-            Variants & v = r.current();
-            if(end != -1 && ( (v.pos > end) || (chr != "" && v.chr != chr)) )
+            std::string v_chr;
+            int64_t v_pos = -1, v_end = -1;
+            for(int isample = 0; isample < reader->nreaders; ++isample)
             {
-                break;
-            }
-            if(stop_after_chr_change && chr != "" && v.chr != chr)
-            {
-                break;
-            }
-            chr = v.chr;
-            if (firstchr.size() == 0)
-            {
-                firstchr = chr;
+                if(!bcf_sr_has_line(reader, isample))
+                {
+                    continue;
+                }
+                bcf_hdr_t * hdr = reader->readers[isample].header;
+                bcf1_t * line = reader->readers[isample].buffer[0];
+                bcf_unpack(line, BCF_UN_FLT);
+
+                if(apply_filters)
+                {
+                    bool fail = false;
+                    for(int j = 0; j < line->d.n_flt; ++j)
+                    {
+                        std::string filter = "PASS";
+                        int k = line->d.flt[j];
+
+                        if(k >= 0)
+                        {
+                            filter = bcf_hdr_int2id(hdr, BCF_DT_ID, line->d.flt[j]);
+                        }
+                        if(filter != "PASS")
+                        {
+                            fail = true;
+                            break;
+                        }
+                    }
+                    // skip failing
+                    if(fail)
+                    {
+                        continue;
+                    }
+                }
+                bcf_unpack(line, BCF_UN_ALL);
+
+                bool call_this_pos = false;
+                for(int rsample = 0; rsample < line->n_sample; ++rsample)
+                {
+                    int gts[MAX_GT];
+                    int ngt = 0;
+                    bool phased = false;
+                    bcfhelpers::getGT(hdr, line, rsample, gts, ngt, phased);
+                    for(int j = 0; j < ngt; ++j)
+                    {
+                        if(gts[j] > 0)
+                        {
+                            call_this_pos = true;
+                            break;
+                        }
+                    }
+                    if(call_this_pos)
+                    {
+                        break;
+                    }
+                }
+
+                if(!call_this_pos)
+                {
+                    continue;
+                }
+
+                v_chr = bcfhelpers::getChrom(hdr, line);
+                // rely on synced_reader to give us records on the same chr
+                int64_t this_v_pos = -1;
+                int64_t this_v_end = -1;
+                bcfhelpers::getLocation(hdr, line, this_v_pos, this_v_end);
+                if(v_pos < 0)
+                {
+                    v_pos = this_v_pos;
+                }
+                else
+                {
+                    v_pos = std::min(this_v_pos, v_pos);
+                }
+                v_end = std::max(this_v_end, v_end);
             }
 
-            // 
-            if(chr != "" && v.chr != chr)
+            if(v_chr.empty() || v_pos < 0 || v_end < 0)
+            {
+                continue;
+            }
+
+            if(end != -1 && ( (v_pos > end) || (chr != "" && v_chr != chr)) )
+            {
+                break;
+            }
+            if(stop_after_chr_change && chr != "" && v_chr != chr)
+            {
+                break;
+            }
+            if (firstchr.size() == 0)
+            {
+                firstchr = v_chr;
+            }
+            if(chr != "" && v_chr != chr)
             {
                 last_end = -1;
             }
+            chr = v_chr;
 
             if(message > 0 && (rcount % message) == 0)
             {
                 std::cerr << "From " << chr << ":" << last_end << " (" 
                           << breakpoints.size() << " bps, " << vars << " vars)" 
-                          << " -- " << v << "\n";
+                          << " -- " << v_chr << ":" << v_pos << "-" << v_end << "\n";
             }
 
-            bool call_this_pos = false;
-
-            for(int s : sids)
-            {
-                Call & c = v.calls[s];
-                gttype gtt = getGTType(c);
-                if(!(gtt == gt_homref || gtt == gt_unknown))
-                {
-                    call_this_pos = true;
-                    break;
-                }
-                if (int(v.ambiguous_alleles.size()) > s && !v.ambiguous_alleles[s].empty())
-                {
-                    call_this_pos = true;
-                    break;                    
-                }
-            }
-
-            if(!call_this_pos)
-            {
-                continue;
-            }
             vars++;
             total_vars++;
 
-            if(last_end >= 0 && v.pos > last_end + window) // can split here
+            if(last_end >= 0 && v_pos > last_end + window) // can split here
             {
                 add_bp(last_end);
             }
-            last_end = std::max(last_end, v.pos + v.len - 1);
+            last_end = std::max(last_end, v_end);
 
             ++rcount;
         }
@@ -375,9 +466,9 @@ int main(int argc, char* argv[]) {
         // We should fix this in htslib, and then change it here (currently,
         // this will miss variants starting at the first coordinate of the 
         // chromosome)
-        int64_t start = 1;
+        start = 1;
         int64_t vpb = 0;
-        int64_t target_vpb = std::max(int64_t(nvars), total_vars / (2*nblocks));
+        int64_t target_vpb = std::max(nvars, ((int)total_vars) / nblocks);
 
         if(end <= 0)
         {
@@ -410,6 +501,7 @@ int main(int argc, char* argv[]) {
         {
             delete outputfile;
         }
+        bcf_sr_destroy(reader);
     }
     catch(std::runtime_error & e)
     {

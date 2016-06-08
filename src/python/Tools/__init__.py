@@ -79,7 +79,7 @@ def init():
         os.environ["PATH"] = pp + os.pathsep + os.environ["PATH"]
 
     executables = [
-        "hapblockfind",
+        "blocksplit",
         "hapenum",
         "dipenum",
         "hapcmp",

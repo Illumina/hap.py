@@ -54,11 +54,11 @@ We know from above that `SAMPLE1` has two possible haplotype pairs:
 In `SAMPLE2`, we have exactly one pair: `ACCACCACC | ACCTTCACC`, which matches
 pair 1. from above.
 
-This type of comparison can be applied in small windows across the genome to 
-identify exactly matching haplotypes that are represented differently in VCF 
-records. 
+This type of comparison can be applied in small windows across the genome to
+identify exactly matching haplotypes that are represented differently in VCF
+records.
 
-Enumeration of all possible sequences is implemented using 
+Enumeration of all possible sequences is implemented using
 [reference graphs](refgraph.md).
 
 Tools / Python wrappers
@@ -69,7 +69,7 @@ Each tool will show its command line options when run with the `-h` switch.
 
 ### hap.py
 
-This tool performs multi-threaded haplotype comparison. See 
+This tool performs multi-threaded haplotype comparison. See
 [happy.md](happy.md).
 
 ### som.py
@@ -84,19 +84,19 @@ and BAM headers. The output is a JSON file.
 
 ### ftx.py
 
-This is a VCF feature extraction script that can extract feature tables from 
+This is a VCF feature extraction script that can extract feature tables from
 VCF files.
 
 Building blocks
 ---------------
 
-This section outlines all the tools that come with this package. All tools 
+This section outlines all the tools that come with this package. All tools
 typically require access to the reference sequence in indexed fasta format.
 
-To create an index for your reference file, run 
+To create an index for your reference file, run
 `samtools faidx reference.fasta`.
 
-Also, all the tools below require input VCFs to be bgzipped and indexed, 
+Also, all the tools below require input VCFs to be bgzipped and indexed,
 otherwise they will fail.
 
 ### Enumerate haplotypes: `hapenum`
@@ -105,7 +105,7 @@ Input: a VCF file, a (small) region in the genome.
 
 Outputs:
 
-*  all possible Haplotype sequences described by the VCF (e.g. exactly two 
+*  all possible Haplotype sequences described by the VCF (e.g. exactly two
    for phased diploid VCF files).
 *  a dot file showing the [reference graph](refgraph.md)
 
@@ -126,15 +126,6 @@ Output:
 
 A multi-sample VCF file that has been [preprocessed](normalisation.md).
 
-### Find consecutive variant blocks: `hapblockfind`
-
-Input: one or more VCF files, optionally regions in the genome.
-
-Output:
-
-A bed file with all blocks where consecutive variants are less than a window 
-length *w* apart.
-
 ### Split a VCF but don't break haplotype block boundaries: `blocksplit`
 
 Input: one or more VCF files, optionally regions in the genome.
@@ -154,7 +145,7 @@ The VCF header and tabix contigs in JSON format.
 
 ### Compare two VCFs: `xcmp`
 
-This is the core comparison engine in hap.py. 
+This is the core comparison engine in hap.py.
 
 Input: two VCF files, optionally regions of the genome
 
@@ -178,7 +169,7 @@ Outputs:
 
 This is a helper to debug haplotype comparison in fixed blocks.
 
-Input: a multi-sample VCF file, optionally bed annotation regions for 
+Input: a multi-sample VCF file, optionally bed annotation regions for
        stratification
 
 Outputs:
