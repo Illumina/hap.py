@@ -143,7 +143,7 @@ def partialCredit(vcfname, outputname, args):
         res = runParallel(pool,
                           blocksplitWrapper,
                           args.locations,
-                          {"vcf": vcfname, "dist": 20000, "pieces": args.threads*4})
+                          {"vcf": vcfname, "dist": 20000, "pieces": min(40, args.threads*4)})
 
         if None in res:
             raise Exception("One of the blocksplit processes failed.")

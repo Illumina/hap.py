@@ -393,7 +393,7 @@ int VariantReader::addSample(const char * filename, const char * sname)
                     std::cerr << "Skipping sample named '*'" << "\n";
                     continue;
                 }
-                std::cerr << "Adding sample: " << _impl->files->readers[si.ireader].header->samples[i] << "\n";
+                /* std::cerr << "Adding sample: " << _impl->files->readers[si.ireader].header->samples[i] << "\n"; */
                 addSample(filename, _impl->files->readers[si.ireader].header->samples[i]);
             }
 
@@ -690,7 +690,7 @@ bool VariantReader::advance(bool get_calls, bool get_info)
             }
             else if(rv.alt == "*" || rv.alt == "<NON_REF>" || import_fail)
             {
-                // these are OK to let through. 
+                // these are OK to let through.
                 // we might want to add some better matching logic later
                 continue;
             }
