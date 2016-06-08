@@ -38,9 +38,9 @@ def preprocessWrapper(file_and_location, args):
                                      suffix=".prep.vcf.gz")
     tf.close()
 
-    to_run = "preprocess %s:* -l %s -o %s -V %i -L %i -r %s" % \
+    to_run = "preprocess %s:* %s-o %s -V %i -L %i -r %s" % \
              (filename.replace(" ", "\\ "),
-              location_str,
+              ("-l %s " % location_str) if location_str else "",
               tf.name,
               1 if args.int_preprocessing else 0,
               1 if args.int_preprocessing_ls else 0,
@@ -75,12 +75,80 @@ def preprocessWrapper(file_and_location, args):
     return tf.name
 
 
+def blocksplitWrapper(location_str, bargs):
+    """ Blocksplit for partial credit preprocessing """
+    starttime = time.time()
+    tf = tempfile.NamedTemporaryFile(delete=False,
+                                     prefix="result.%s" % location_str,
+                                     suffix=".chunks.bed")
+    result = None
+    try:
+        tf.close()
+
+        to_run = "blocksplit %s -l %s -o %s --window %i --nblocks %i -f 0" % \
+                 (bargs["vcf"],
+                  location_str,
+                  tf.name,
+                  bargs["dist"],
+                  bargs["pieces"])
+
+        tfe = tempfile.NamedTemporaryFile(delete=False,
+                                          prefix="stderr",
+                                          suffix=".log")
+        tfo = tempfile.NamedTemporaryFile(delete=False,
+                                          prefix="stdout",
+                                          suffix=".log")
+        try:
+            logging.info("Running '%s'" % to_run)
+            subprocess.check_call(to_run, shell=True, stdout=tfo, stderr=tfe)
+        finally:
+            tfo.close()
+            tfe.close()
+            with open(tfo.name) as f:
+                for l in f:
+                    logging.info(l.replace("\n", ""))
+            os.unlink(tfo.name)
+            with open(tfe.name) as f:
+                for l in f:
+                    logging.warn(l.replace("\n", ""))
+            os.unlink(tfe.name)
+
+        r = []
+        with open(tf.name) as f:
+            for l in f:
+                ll = l.strip().split("\t", 3)
+                if len(ll) < 3:
+                    continue
+                xchr = ll[0]
+                start = int(ll[1]) + 1
+                end = int(ll[2])
+                r.append("%s:%i-%i" % (xchr, start, end))
+        result = r
+
+        elapsed = time.time() - starttime
+    finally:
+        logging.info("blocksplit for %s -- time taken %.2f" % (location_str, elapsed))
+        os.unlink(tf.name)
+    return result
+
 def partialCredit(vcfname, outputname, args):
     """ Partial-credit-process a VCF file according to our args """
 
+    locations = [""]
     if args.threads > 1:
         logging.info("Partial credit processing uses %i parallel processes." % args.threads)
         pool = multiprocessing.Pool(int(args.threads))
+
+        # use blocksplit to subdivide input
+        res = runParallel(pool,
+                          blocksplitWrapper,
+                          args.locations,
+                          {"vcf": vcfname, "dist": 20000, "pieces": args.threads*4})
+
+        if None in res:
+            raise Exception("One of the blocksplit processes failed.")
+
+        locations = itertools.chain.from_iterable(res)
     else:
         pool = None
 
@@ -88,12 +156,11 @@ def partialCredit(vcfname, outputname, args):
     try:
         res = runParallel(pool,
                           preprocessWrapper,
-                          itertools.izip(itertools.repeat(vcfname), args.locations),
+                          itertools.izip(itertools.repeat(vcfname), locations),
                           args)
 
-        for r in res:
-            if not res:
-                raise Exception("One of the preprocess jobs failed")
+        if None in res:
+            raise Exception("One of the preprocess jobs failed")
 
         cmd = ["concat", "-a", "-o", outputname, "-O", "z"] + res
         runBcftools(*cmd)
