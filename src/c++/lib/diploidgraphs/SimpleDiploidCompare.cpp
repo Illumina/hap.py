@@ -119,13 +119,8 @@ DiploidComparisonOutcome compareVariants(variant::Variants & vars, int r1, int r
 
     if(is_ambig_1 || is_ambig_2)
     {
-        if(vars.info != "")
-        {
-            vars.info += ";";
-        }
-        vars.info += std::string("A1=") + std::to_string(is_ambig_1) + ";";
-        vars.info += std::string("A2=") + std::to_string(is_ambig_2) + ";";
-        vars.info += std::string("kind=ambigous");
+        vars.setInfo("type", "N");
+        vars.setInfo("kind", "ambiguous");
         return dco_mismatch;
     }
 
@@ -191,25 +186,18 @@ DiploidComparisonOutcome compareVariants(variant::Variants & vars, int r1, int r
     // only 1?
     if (is_call_1 && !is_call_2)
     {
-        if(vars.info != "")
-        {
-            vars.info += ";";
-        }
-        vars.info += std::string("gtt1=") + gttype_string[gtt1] + ";";
         // missing from "1" = FN
-        vars.info += std::string("type=FN;kind=missing");
+        vars.setInfo("type", "FN");
+        vars.setInfo("kind", "missing");
+        vars.setInfo("gtt1", gttype_string[gtt1]);
         is_match = false;
     }
     // only 2?
     else if (!is_call_1 && is_call_2)
     {
-        if(vars.info != "")
-        {
-            vars.info += ";";
-        }
-        vars.info += std::string("gtt2=") + gttype_string[gtt2] + ";";
-        // missing from "2" = FP
-        vars.info += std::string("type=FP;kind=missing");
+        vars.setInfo("type", "FP");
+        vars.setInfo("kind", "missing");
+        vars.setInfo("gtt2", gttype_string[gtt2]);
         is_match = false;
     }
     else if(is_call_1 && is_call_2)
@@ -247,12 +235,12 @@ DiploidComparisonOutcome compareVariants(variant::Variants & vars, int r1, int r
             if (gtt1 == gtt2)
             {
                 // same alleles, same gt
-                kind = "kind=match";
+                kind = "match";
                 is_match = true;
             }
             else
             {
-                kind = "kind=gtmismatch";
+                kind = "gtmismatch";
                 is_match = false;
             }
         }
@@ -264,43 +252,35 @@ DiploidComparisonOutcome compareVariants(variant::Variants & vars, int r1, int r
             if (nonref_als_1 == nonref_als_2)
             {
                 // different alleles, same gt
-                kind = "kind=gtmismatch";
+                kind = "gtmismatch";
                 is_match = false;
             }
             else if ((nonref_als_1 & nonref_als_2) != 0)
             {
-                kind = "kind=alpartial";
+                kind = "alpartial";
                 is_match = false;
             }
             else
             {
-                kind = "kind=almismatch";
+                kind = "almismatch";
                 is_match = false;
             }
         }
 
-        if(vars.info != "")
-        {
-            vars.info += ";";
-        }
-        vars.info += std::string("gtt1=") + gttype_string[gtt1] + ";";
-        vars.info += std::string("gtt2=") + gttype_string[gtt2] + ";";
-        vars.info += std::string("type=") + ( ( is_match ? "TP" : "FP" ) ) + ";";
-        vars.info += kind;
+        vars.setInfo("type", ( is_match ? "TP" : "FP" ));
+        vars.setInfo("kind", kind.c_str());
+        vars.setInfo("gtt1", gttype_string[gtt1]);
+        vars.setInfo("gtt2", gttype_string[gtt2]);
     }
     else
     {
         // !is_call_1 && !is_call_2
         is_match = true;
 
-        if(vars.info != "")
-        {
-            vars.info += ";";
-        }
-        vars.info += std::string("gtt1=no_call;");
-        vars.info += std::string("gtt2=no_call;");
-        vars.info += std::string("type=N;");
-        vars.info += "kind=match";
+        vars.setInfo("type", "N");
+        vars.setInfo("kind", "match");
+        vars.setInfo("gtt1", "no_call");
+        vars.setInfo("gtt2", "no_call");
     }
 #ifdef DEBUG_SIMPLECMP
     std::cerr << "                Calls match: " << is_match << "\n";

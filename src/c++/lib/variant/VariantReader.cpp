@@ -42,197 +42,6 @@
 namespace variant
 {
 
-/**
- * @brief Classify a variant's GT type
- *
- */
-gttype getGTType(Call const& var)
-{
-    if(var.ngt > 0)
-    {
-        if (var.ngt == 1)
-        {
-            if(var.gt[0] > 0)
-            {
-                return gt_haploid;
-            }
-            else if(var.gt[0] == 0)
-            {
-                return gt_homref;
-            }
-        }
-        else if (var.ngt == 2)
-        {
-            if(var.gt[0] == 0 && var.gt[1] == 0)
-            {
-                return gt_homref;
-            }
-            else if(    (var.gt[0] == 0 && var.gt[1] > 0)
-                     || (var.gt[1] == 0 && var.gt[0] > 0)  )
-            {
-                return gt_het;
-            }
-            else if(    var.gt[0] > 0 && var.gt[1] > 0
-                     && var.gt[0] == var.gt[1] )
-            {
-                return gt_homalt;
-            }
-            else if(    var.gt[0] > 0 && var.gt[1] > 0
-                     && var.gt[0] != var.gt[1] )
-            {
-                return gt_hetalt;
-            }
-        }
-    }
-
-    return gt_unknown;
-}
-
-std::ostream & operator<<(std::ostream &o, gttype const & v)
-{
-    switch(v)
-    {
-        case gt_haploid:
-            o << "gt_haploid";
-            break;
-        case gt_homref:
-            o << "gt_homref";
-            break;
-        case gt_homalt:
-            o << "gt_homalt";
-            break;
-        case gt_het:
-            o << "gt_het";
-            break;
-        case gt_hetalt:
-            o << "gt_hetalt";
-            break;
-        case gt_unknown:
-        default:
-            o << "gt_unknown";
-            break;
-    }
-
-    return o;
-}
-
-std::ostream & operator<<(std::ostream &o, Call const & v)
-{
-    if(v.ngt == 0)
-    {
-        o << ".";
-    }
-    for (size_t i = 0; i < v.ngt; ++i)
-    {
-        if(i > 0)
-        {
-            o << (v.phased ? "|" : "/");
-        }
-        o << v.gt[i];
-    }
-
-    if(v.nfilter > 0)
-    {
-        o << " ";
-        for (size_t i = 0; i < v.nfilter; ++i)
-        {
-            if(i > 0)
-            {
-                o << ",";
-            }
-            o << v.filter[i];
-        }
-    }
-
-    return o;
-}
-
-std::ostream & operator<<(std::ostream &o, Variants const & v)
-{
-    o << v.chr << ":" << v.pos << "-" << (v.pos + v.len - 1);
-
-    for (RefVar const & rv : v.variation)
-    {
-        o << " " << rv;
-    }
-
-    for (Call const& c : v.calls)
-    {
-        o << " " << c;
-    }
-
-    bool any_ambiguous = false;
-    for (auto & x : v.ambiguous_alleles)
-    {
-        if(!x.empty())
-        {
-            any_ambiguous = true;
-            break;
-        }
-    }
-
-    if (any_ambiguous)
-    {
-        o << "ambig[";
-        for (auto & x : v.ambiguous_alleles)
-        {
-            for(auto y : x)
-            {
-                o << y << " ";
-            }
-            o << ";";
-        }
-        o << "]";
-    }
-    return o;
-}
-
-uint64_t Variants::MAX_VID = 0;
-Variants::Variants() : id(MAX_VID++) {}
-
-void setVariantInfo(Variants & v, std::string const & name, std::string const & value)
-{
-    size_t start = 0, p = v.info.find_first_of(name + "=");
-    std::string resulting_info;
-    do
-    {
-        if(p != std::string::npos)
-        {
-            size_t p2 = p+1;
-            if(p == 0 || v.info[p-1] == ';')
-            {
-                p2 = v.info.find_first_of(";", p+1);
-                resulting_info += v.info.substr(start, p-start);
-                if (p2 == std::string::npos)
-                {
-                    start = v.info.size();
-                    break;
-                }
-                else
-                {
-                    start = p2 + 1;
-                }
-            }
-            p = v.info.find_first_of(name + "=", p2);
-        }
-    }
-    while(p != std::string::npos);
-    resulting_info += v.info.substr(start);
-    if(resulting_info.size() > 0 && resulting_info[resulting_info.size()-1] == ';')
-    {
-        resulting_info.resize(resulting_info.size() - 1);
-    }
-    if(value.size() > 0)
-    {
-        if(resulting_info.size() > 0)
-        {
-            resulting_info += std::string(";");
-        }
-        resulting_info += name + "=" + value;
-    }
-    v.info = resulting_info;
-}
-
 VariantReader::VariantReader()
 {
     _impl = new VariantReaderImpl();
@@ -543,7 +352,6 @@ bool VariantReader::advance(bool get_calls, bool get_info)
     // calculate pos and len
     vars.pos = 0;
     vars.len = 0;
-    vars.info = "";
     vars.ambiguous_alleles.clear();
     bool import_fail = false;
     for (auto & si : _impl->samples)
@@ -555,52 +363,6 @@ bool VariantReader::advance(bool get_calls, bool get_info)
         }
         bcf1_t *line = reader.buffer[0];
         bcf_unpack(line, BCF_UN_SHR);
-
-        if(get_info)
-        {
-            // extract vcf info.
-            // somewhat circular, when parsing a VCF, this has been read, parsed, and now we write it back
-            kstring_t s;
-            s.s = NULL;
-            s.l = s.m = 0;
-            vcf_format(reader.header, line, &s);
-            size_t p0 = 0, q0 = 0, len = 0;
-            int tabs = 0;
-            while(tabs < 8 && p0 < s.l)
-            {
-                ++p0;
-                if(tabs < 7)
-                {
-                    q0 = p0;
-                }
-                else
-                {
-                    ++len;
-                }
-                if (s.s[p0] == '\t')
-                {
-                    ++tabs;
-                    if (tabs == 7)
-                    {
-                        ++q0;
-                    }
-                }
-            }
-            if (len > 0)
-            {
-                --len;
-                std::string qinf(s.s + q0, len);
-                if (qinf != ".")
-                {
-                    if (vars.info.size() > 0)
-                    {
-                        vars.info += ";";
-                    }
-                    vars.info += qinf;
-                }
-            }
-            free(s.s);
-        }
 
         if(vars.chr == "")
         {
@@ -636,11 +398,7 @@ bool VariantReader::advance(bool get_calls, bool get_info)
                           << " REF allele: " << line->d.allele[0] << "\n";
                 if(!import_fail)
                 {
-                    if (!vars.info.empty())
-                    {
-                        vars.info += ";";
-                    }
-                    vars.info += "IMPORT_FAIL";
+                    vars.setInfo("IMPORT_FAIL", true);
                     import_fail = true;
                 }
             }
@@ -653,11 +411,7 @@ bool VariantReader::advance(bool get_calls, bool get_info)
 
                     if(!import_fail)
                     {
-                        if (!vars.info.empty())
-                        {
-                            vars.info += ";";
-                        }
-                        vars.info += "IMPORT_FAIL";
+                        vars.setInfo("IMPORT_FAIL", true);
                         import_fail = true;
                     }
                 }
@@ -737,11 +491,7 @@ bool VariantReader::advance(bool get_calls, bool get_info)
                    rv.alt[qq] != 'X')
                 {
                     std::cerr << "Invalid allele " << rv.alt.c_str() << " at " << refstart << "\n";
-                    if (!vars.info.empty())
-                    {
-                        vars.info += ";";
-                    }
-                    vars.info += "IMPORT_FAIL";
+                    vars.setInfo("IMPORT_FAIL", true);
                 }
             }
 
@@ -852,11 +602,7 @@ bool VariantReader::advance(bool get_calls, bool get_info)
 
             if(ngt > MAX_GT)
             {
-                if (vars.info != "")
-                {
-                    vars.info += ";";
-                }
-                vars.info += "IMPORT_FAIL_GT_" + std::to_string(sid + 1);
+                vars.setInfo("IMPORT_FAIL", true);
                 ngt = MAX_GT;
             }
 
@@ -922,11 +668,7 @@ bool VariantReader::advance(bool get_calls, bool get_info)
                     {
                         if (!import_fail)
                         {
-                            if (!vars.info.empty())
-                            {
-                                vars.info += ";";
-                            }
-                            vars.info += "IMPORT_FAIL";
+                            vars.setInfo("IMPORT_FAIL", true);
                             import_fail = true;
                         }
                         std::cerr << "Invalid GT at " << vars.chr << ":" << vars.pos << " in sample" << sid << "\n";

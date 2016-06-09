@@ -168,7 +168,7 @@ bool VariantPrimitiveSplitter::advance()
         for (Variants & v : _impl->buffered_variants)
         {
             // homref?
-            if(v.variation.size() == 0 || v.info.find("IMPORT_FAIL") != std::string::npos) {
+            if(v.variation.size() == 0 || v.getInfoFlag("IMPORT_FAIL")) {
                 _impl->output_variants.push(v);
                 continue;
             }
@@ -251,7 +251,6 @@ bool VariantPrimitiveSplitter::advance()
             // to fix things up such that the same calls line up again
             Variants vnew;
             vnew.chr = v.chr;
-            vnew.info = v.info;
             vnew.calls.resize(v.calls.size());
             for(size_t ci = 0; ci < v.calls.size(); ++ci)
             {

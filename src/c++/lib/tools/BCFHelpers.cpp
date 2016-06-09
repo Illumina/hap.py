@@ -391,7 +391,7 @@ namespace bcfhelpers
      *
      * @param result the default to return if the field is not present
      */
-    int getInfoInt(bcf_hdr_t * header, bcf1_t * line, const char * field, int result)
+    int getInfoInt(const bcf_hdr_t * header, const bcf1_t * line, const char * field, int result)
     {
         bcf_info_t * info_ptr  = bcf_get_info(header, line, field);
         if(info_ptr)

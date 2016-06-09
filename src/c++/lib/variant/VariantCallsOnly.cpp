@@ -108,7 +108,7 @@ void VariantCallsOnly::add(Variants const & v)
     }
     //
     // keep fails
-    if(v.info.find("IMPORT_FAIL") != std::string::npos)
+    if(v.getInfoFlag("IMPORT_FAIL"))
     {
 #ifdef DEBUG_VARIANTCALLSONLY
         std::cerr << "fail-pass-on: " << v << "\n";

@@ -39,6 +39,7 @@
 
 #include <sstream>
 #include <cstring>
+#include <unordered_set>
 #include <htslib/vcf.h>
 
 // #define DEBUG_VARIANT_GTS
@@ -319,6 +320,39 @@ namespace variant
 
         free(tmp);
 
+        // write info
+        {
+            std::set<std::string> infos_written;
+            std::map<std::string, std::vector<int> > int_infos;
+            std::map<std::string, std::vector<float> > float_infos;
+            std::map<std::string, std::vector<std::string> > string_infos;
+            for(auto & c : var.calls)
+            {
+                const bcf_hdr_t * bhdr = c.bcf_hdr.get();
+                const bcf1_t * bline = c.bcf_rec.get();
+
+                for(int ni = 0; ni < bline->n_info; ++ni)
+                {
+                    bcf_info_t * inf = &bline->d.info[ni];
+                    const char * id = bcf_hdr_int2id(bhdr, BCF_DT_ID, inf->key);
+                    if(infos_written.count(id))
+                    {
+                        continue;
+                    }
+                    switch(inf->type)
+                    {
+                        case BCF_BT_INT8:
+                        case BCF_BT_INT16:
+                        case BCF_BT_INT32:
+                            int_infos.emplace(std::make_pair(
+                                std::string(id),
+                                bcfhelpers::getInfoInt(bhdr, bline, id, bcf_int32_missing)));
+                            break;
+                    }
+                }
+            }
+        }
+
         if (_impl->write_formats)
         {
             auto tmp_dp = std::unique_ptr<int32_t[]>(new int32_t [bcf_hdr_nsamples(hdr)]);
@@ -384,6 +418,9 @@ namespace variant
                         bcf_hdr_id2int(var.calls[g].bcf_hdr.get(), BCF_DT_ID, "AD"),
                         bcf_hdr_id2int(var.calls[g].bcf_hdr.get(), BCF_DT_ID, "ADO"),
                         bcf_hdr_id2int(var.calls[g].bcf_hdr.get(), BCF_DT_ID, "AGT"),
+                        // don't translate these from source bcf, they might have changed
+                        bcf_hdr_id2int(var.calls[g].bcf_hdr.get(), BCF_DT_ID, "AN"),
+                        bcf_hdr_id2int(var.calls[g].bcf_hdr.get(), BCF_DT_ID, "AC"),
                     };
                     for(int f = 0;  f < var.calls[g].bcf_rec->n_fmt; ++f)
                     {
@@ -480,42 +517,6 @@ namespace variant
             for(auto & f : string_fmts)
             {
                 bcfhelpers::setFormatStrings(hdr, rec, f.first.c_str(), f.second);
-            }
-        }
-
-        // write info
-        if(var.info != "")
-        {
-            std::vector<std::string> infs;
-            stringutil::split(var.info, infs, ";");
-            std::set<std::string> already_written;
-            for (std::string & i : infs)
-            {
-                std::vector<std::string> ifo;
-                stringutil::split(i, ifo, "=");
-                if(ifo.size() < 1 || ifo[0] == "END" || already_written.count(ifo[0]))
-                {
-                    continue;
-                }
-                already_written.insert(ifo[0]);
-                std::string val = "";
-                if (ifo.size() > 1)
-                {
-                    val = ifo[1];
-                    for (size_t qi = 2; qi < ifo.size(); ++qi)
-                    {
-                        val+= "=";
-                        val+= ifo[qi];
-                    }
-                }
-                if (val == "")
-                {
-                    bcf_update_info_flag(hdr, rec, ifo[0].c_str(), NULL, 1);
-                }
-                else
-                {
-                    bcf_update_info_string(hdr, rec, ifo[0].c_str(), val.c_str());
-                }
             }
         }
 

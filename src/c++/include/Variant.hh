@@ -179,9 +179,6 @@ struct Variants
     int64_t pos;
     int64_t len;
 
-    // We also store shared info for these variants
-    std::string info;
-
     // We collect all the alleles called in each sample.
     // This captures cases where cannot resolve a diploid
     // genotype
@@ -220,27 +217,17 @@ struct Variants
         return false;
     }
 
-    /** canonicalize INFO fields: sort and remove duplicates -- does not actually remove
-     *  duplicate info fields if they have different values! */
-    inline void canonicalize_info() {
-        std::set<std::string> infos;
-        std::vector<std::string> infs;
-        stringutil::split(info, infs, ";");
-        for (std::string & i : infs)
-        {
-            infos.insert(i);
-        }
-        std::string newinfo;
-        for(auto const & i : infos)
-        {
-            if(!newinfo.empty())
-            {
-                newinfo += ";";
-            }
-            newinfo += i;
-        }
-        info = newinfo;
-    }
+    /** interface to set / get INFO values */
+    int getInfoInt(const char * id) const;
+    float getInfoFloat(const char * id) const;
+    std::string getInfoString(const char * id) const;
+    bool getInfoFlag(const char * id) const;
+
+    void delInfo(const char * id);
+    void setInfo(const char * id, bool);
+    void setInfo(const char * id, int);
+    void setInfo(const char * id, float);
+    void setInfo(const char * id, const char *);
 };
 
 /** variant comparison operator that makes sure indels go after SNPs
@@ -358,12 +345,6 @@ struct VariantCompare
         }
     }
 };
-
-/** find/replace wrapper to set INFO fields via info string.
- *  Warning: doens't work for flags (needs the '=').
- *  Pass an empty string to remove the field.
- **/
-void setVariantInfo(Variants & v, std::string const & name, std::string const & value=".");
 
 extern std::ostream & operator<<(std::ostream &o, gttype const & v);
 extern std::ostream & operator<<(std::ostream &o, Call const & v);

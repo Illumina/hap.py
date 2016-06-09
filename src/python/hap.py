@@ -39,7 +39,7 @@ sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'lib', 'python27')
 import Tools
 from Tools import vcfextract
 from Tools.bcftools import preprocessVCF, bedOverlapCheck
-from Tools.parallel import runParallel
+from Tools.parallel import runParallel, getPool
 from Tools.fastasize import fastaContigLengths
 import Haplo.blocksplit
 import Haplo.xcmp
@@ -550,9 +550,9 @@ def main():
             args.vcf2 = pctf.name
             h2 = vcfextract.extractHeadersJSON(args.vcf2)
 
+        pool = getPool(args.threads)
         if args.threads > 1 and args.engine == "xcmp":
             logging.info("Running using %i parallel processes." % args.threads)
-            pool = multiprocessing.Pool(int(args.threads))
 
             # find balanced pieces
             args.pieces = (args.threads + len(args.locations) - 1) / len(args.locations)
@@ -574,8 +574,6 @@ def main():
                         start = int(ll[1]) + 1
                         end = int(ll[2])
                         args.locations.append("%s:%i-%i" % (xchr, start, end))
-        else:
-            pool = None
 
         # count variants before normalisation
         if "samples" not in h1 or not h1["samples"]:

@@ -109,7 +109,7 @@ void VariantLocationAggregator::add(Variants const & vs)
     if (   _impl->buffered_variants.empty()
         || vs.chr != _impl->buffered_variants.back().chr
         || vs.pos != _impl->buffered_variants.back().pos
-        || vs.info.find("IMPORT_FAIL") != std::string::npos
+        || vs.getInfoFlag("IMPORT_FAIL")
         || (   (vs.anyHomref() || _impl->buffered_variants.back().anyHomref())
             && (vs.pos + vs.len != _impl->buffered_variants.back().pos + _impl->buffered_variants.back().len) )
        )

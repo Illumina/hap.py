@@ -25,33 +25,31 @@ import time
 import itertools
 import multiprocessing
 
-from Tools.parallel import runParallel
+from Tools.parallel import runParallel, getPool
 from Tools.bcftools import runBcftools
+from Tools.vcfextract import extractHeadersJSON
 
 
 def preprocessWrapper(file_and_location, args):
     starttime = time.time()
     filename, location_str = file_and_location
     tf = tempfile.NamedTemporaryFile(delete=False,
-                                     dir=args.scratch_prefix,
                                      prefix="input.%s" % location_str,
-                                     suffix=".prep.vcf.gz")
+                                     suffix=".prep.bcf")
     tf.close()
 
     to_run = "preprocess %s:* %s-o %s -V %i -L %i -r %s" % \
              (filename.replace(" ", "\\ "),
               ("-l %s " % location_str) if location_str else "",
               tf.name,
-              1 if args.int_preprocessing else 0,
-              1 if args.int_preprocessing_ls else 0,
-              args.ref)
+              args["decompose"],
+              args["leftshift"],
+              args["reference"])
 
     tfe = tempfile.NamedTemporaryFile(delete=False,
-                                      dir=args.scratch_prefix,
                                       prefix="stderr",
                                       suffix=".log")
     tfo = tempfile.NamedTemporaryFile(delete=False,
-                                      dir=args.scratch_prefix,
                                       prefix="stdout",
                                       suffix=".log")
     try:
@@ -71,7 +69,7 @@ def preprocessWrapper(file_and_location, args):
 
     elapsed = time.time() - starttime
     logging.info("preprocess for %s -- time taken %.2f" % (location_str, elapsed))
-    runBcftools("index", "-t", tf.name)
+    runBcftools("index", tf.name)
     return tf.name
 
 
@@ -125,46 +123,65 @@ def blocksplitWrapper(location_str, bargs):
                 r.append("%s:%i-%i" % (xchr, start, end))
         result = r
 
-        elapsed = time.time() - starttime
     finally:
+        elapsed = time.time() - starttime
         logging.info("blocksplit for %s -- time taken %.2f" % (location_str, elapsed))
         os.unlink(tf.name)
     return result
 
-def partialCredit(vcfname, outputname, args):
+def partialCredit(vcfname,
+                  outputname,
+                  reference,
+                  threads=1,
+                  window=10000,
+                  leftshift=True,
+                  decompose=True):
     """ Partial-credit-process a VCF file according to our args """
 
-    locations = [""]
-    if args.threads > 1:
-        logging.info("Partial credit processing uses %i parallel processes." % args.threads)
-        pool = multiprocessing.Pool(int(args.threads))
+    pool = getPool(int(threads))
+    if threads > 1:
+        logging.info("Partial credit processing uses %i parallel processes." % threads)
+
+        h = extractHeadersJSON(vcfname)
+        if not h["tabix"]["chromosomes"]:
+            raise Exception("Empty input or not tabix indexed")
+        locations = h["tabix"]["chromosomes"]
 
         # use blocksplit to subdivide input
         res = runParallel(pool,
                           blocksplitWrapper,
-                          args.locations,
-                          {"vcf": vcfname, "dist": 20000, "pieces": min(40, args.threads*4)})
+                          locations,
+                          {"vcf": vcfname,
+                           "dist": window,
+                           "pieces": min(40, threads*4)})
 
         if None in res:
             raise Exception("One of the blocksplit processes failed.")
 
         locations = itertools.chain.from_iterable(res)
     else:
-        pool = None
+        locations = [""]
 
     res = []
     try:
         res = runParallel(pool,
                           preprocessWrapper,
                           itertools.izip(itertools.repeat(vcfname), locations),
-                          args)
+                          {"reference": reference,
+                           "decompose": decompose,
+                           "leftshift": leftshift})
 
         if None in res:
             raise Exception("One of the preprocess jobs failed")
 
-        cmd = ["concat", "-a", "-o", outputname, "-O", "z"] + res
-        runBcftools(*cmd)
-        runBcftools("index", "-t", outputname)
+        if outputname.endswith(".vcf.gz"):
+            cmd = ["concat", "-a", "-o", outputname, "-O", "z"] + res
+            runBcftools(*cmd)
+            runBcftools("index", "-t", outputname)
+        else:  # use bcf
+            cmd = ["concat", "-a", "-o", outputname, "-O", "b"] + res
+            runBcftools(*cmd)
+            runBcftools("index", outputname)
     finally:
         for r in res:
             try:

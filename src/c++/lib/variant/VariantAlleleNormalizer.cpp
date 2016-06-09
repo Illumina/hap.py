@@ -179,7 +179,7 @@ void VariantAlleleNormalizer::add(Variants const & vs)
     }
 
     // don't touch import fails
-    if (vs.info.find("IMPORT_FAIL") != std::string::npos)
+    if (vs.getInfoFlag("IMPORT_FAIL"))
     {
         _impl->buffered_variants.push(vs);
         return;

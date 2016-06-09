@@ -103,7 +103,8 @@ def preprocessVCF(input, output, location="",
                   pass_only=True,
                   chrprefix=True, norm=False,
                   regions=None, targets=None,
-                  reference=Tools.defaultReference()):
+                  reference=Tools.defaultReference(),
+                  filters_only=None):
     """ Preprocess a VCF + create index
 
     :param input: the input VCF / BCF / ...
@@ -115,11 +116,14 @@ def preprocessVCF(input, output, location="",
     :param regions: specify a subset of regions (traversed using tabix index, which must exist)
     :param targets: specify a subset of target regions (streaming traversal)
     :param reference: reference fasta file to use
+    :param filters_only: require a set of filters (overridden by pass_only)
     """
     vargs = ["view", input]
 
     if pass_only:
         vargs += ["-f", "PASS,."]
+    elif filters_only:
+        vargs += ["-f", filters_only]
 
     if chrprefix:
         vargs += ["|", "perl", "-pe", "'s/^([0-9XYM])/chr$1/'", "|", "bcftools", "view"]
@@ -143,9 +147,18 @@ def preprocessVCF(input, output, location="",
         if norm:
             vargs += ["|", "bcftools", "norm", "-f",  reference, "-c", "x", "-D"]
 
-        vargs += ["-o", output, "-O", "z"]
+        vargs += ["-o", output]
+        if output.endswith(".vcf.gz"):
+            vargs += ["-O", "z"]
+            istabix = True
+        else:
+            vargs += ["-O", "b"]
+            istabix = False
         runBcftools(*vargs)
-        runBcftools("index", "-t", output)
+        if istabix:
+            runBcftools("index", "-t", output)
+        else:
+            runBcftools("index", "-t", output)
     finally:
         try:
             os.unlink(tff.name)

@@ -228,6 +228,13 @@ def extractHeadersJSON(vcfname):
             raise Exception("vcfhdr2json call failed on file %s: %s / %s" % (vcfname, o, e))
 
         vfh = json.load(open(tf.name))
+
+        try:
+            # fix empty chr list
+            if not h["tabix"]["chromosomes"]:
+                h["tabix"]["chromosomes"] = []
+        except:
+            pass
     finally:
         try:
             os.unlink(tf.name)
