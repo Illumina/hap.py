@@ -67,6 +67,7 @@ typedef struct _SampleInfo
     int isample;
     int end_in_vcf;
     std::vector<int> allele_map;
+    bcfhelpers::p_bcf_hdr phdr;
 } SampleInfo;
 
 

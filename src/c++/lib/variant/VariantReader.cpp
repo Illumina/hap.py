@@ -380,6 +380,8 @@ int VariantReader::addSample(const char * filename, const char * sname)
         _impl->filename_mapping[filename] = si.ireader;
     }
 
+    si.phdr = bcfhelpers::ph(bcf_hdr_dup(_impl->files->readers[si.ireader].header));
+
     if(sname && strlen(sname) > 0)
     {
         if (std::string(sname) == "*")
@@ -778,7 +780,6 @@ bool VariantReader::advance(bool get_calls, bool get_info)
 
     if(get_calls)
     {
-        bcfhelpers::p_bcf_hdr p_header = bcfhelpers::ph(bcf_hdr_dup(_impl->files->readers[0].header));
         vars.calls.resize(_impl->samples.size());
         vars.ambiguous_alleles.resize(_impl->samples.size());
         for (auto & li : vars.ambiguous_alleles)
@@ -940,7 +941,7 @@ bool VariantReader::advance(bool get_calls, bool get_info)
             {
                 vars.calls[sid].ngt = 0;
             }
-            vars.calls[sid].bcf_hdr = p_header;
+            vars.calls[sid].bcf_hdr = si.phdr;
             vars.calls[sid].bcf_rec = p_line;
             vars.calls[sid].bcf_sample = isample;
 
