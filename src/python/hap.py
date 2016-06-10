@@ -32,6 +32,7 @@ import subprocess
 import multiprocessing
 import gzip
 import tempfile
+import time
 
 scriptDir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'lib', 'python27')))
@@ -222,6 +223,7 @@ def main():
         logging.info("Comparing %s and %s" % (args.vcf1, args.vcf2))
 
         logging.info("Preprocessing truth: %s" % args.vcf1)
+        starttime = time.time()
 
         if not args.usefiltered_truth:
             filtering = "*"
@@ -235,18 +237,18 @@ def main():
         ttf.close()
         tempfiles.append(ttf.name)
         pre.preprocess(args.vcf1,
-                   ttf.name,
-                   args.ref,
-                   args.locations,
-                   None,  # filters
-                   args.fixchr,
-                   args.regions_bedfile,
-                   args.targets_bedfile,
-                   args.preprocessing_leftshift if args.preprocessing_truth else False,
-                   args.preprocessing_decompose if args.preprocessing_truth else False,
-                   args.preprocessing_norm if args.preprocessing_truth else False,
-                   args.window,
-                   args.threads)
+                       ttf.name,
+                       args.ref,
+                       args.locations,
+                       None,  # filters
+                       args.fixchr,
+                       args.regions_bedfile,
+                       args.targets_bedfile,
+                       args.preprocessing_leftshift if args.preprocessing_truth else False,
+                       args.preprocessing_decompose if args.preprocessing_truth else False,
+                       args.preprocessing_norm if args.preprocessing_truth else False,
+                       args.window,
+                       args.threads)
 
         args.vcf1 = ttf.name
         h1 = vcfextract.extractHeadersJSON(args.vcf1)
@@ -255,6 +257,7 @@ def main():
         logging.info("preprocess for %s -- time taken %.2f" % (args.vcf1, elapsed))
 
         logging.info("Preprocessing query: %s" % args.vcf2)
+        starttime = time.time()
 
         if args.pass_only:
             filtering = "*"
@@ -268,18 +271,18 @@ def main():
         qtf.close()
         tempfiles.append(qtf.name)
         pre.preprocess(args.vcf2,
-                   qtf.name,
-                   args.ref,
-                   args.locations,
-                   filtering,
-                   args.fixchr,
-                   args.regions_bedfile,
-                   args.targets_bedfile,
-                   args.preprocessing_leftshift,
-                   args.preprocessing_decompose,
-                   args.preprocessing_norm,
-                   args.window,
-                   args.threads)
+                       qtf.name,
+                       args.ref,
+                       args.locations,
+                       filtering,
+                       args.fixchr,
+                       args.regions_bedfile,
+                       args.targets_bedfile,
+                       args.preprocessing_leftshift,
+                       args.preprocessing_decompose,
+                       args.preprocessing_norm,
+                       args.window,
+                       args.threads)
 
         args.vcf2 = qtf.name
         h2 = vcfextract.extractHeadersJSON(args.vcf2)
@@ -295,7 +298,7 @@ def main():
 
         newlocations = []
 
-        reference_contigs = set(fastaContigLengths(reference).keys())
+        reference_contigs = set(fastaContigLengths(args.ref).keys())
 
         if not args.locations:
             # default set of locations is the overlap between truth and reference
@@ -304,7 +307,7 @@ def main():
                 raise Exception("Truth and reference have no chromosomes in common!")
 
         for _xc in args.locations:
-            if xc not in h2["tabix"]["chromosomes"]:
+            if _xc not in h2["tabix"]["chromosomes"]:
                 logging.warn("No calls for location %s in query!" % xc)
 
         pool = getPool(args.threads)

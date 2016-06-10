@@ -136,7 +136,7 @@ def preprocess(vcf_input,
         # all these require preprocessing
         vtf = vcf_input
 
-        if not (leftshift or decompose):
+        if leftshift or decompose:
             vtf = tempfile.NamedTemporaryFile(delete=False,
                                               suffix=".bcf")
             vtf.close()
