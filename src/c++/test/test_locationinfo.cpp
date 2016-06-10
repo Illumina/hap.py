@@ -107,19 +107,23 @@ BOOST_AUTO_TEST_CASE(testLocationInfoRandom)
 #endif
         if (k % 3 == 0)
         {
-            iv_end = (rand()%count) - 1;
-            li.reset_to(iv_end);
-            std::fill(ivc, ivc + iv_end + 1, false);
+            iv_end = (rand()%count);
+            if(iv_end > 0)
+            {
+                li.reset_to(iv_end - 1);
+                std::fill(ivc, ivc + iv_end, false);
+            }
         }
         else if (k % 3 == 1)
         {
-            iv_start = (rand()%count) - 1;
+            iv_start = (rand()%count);
             li.reset_from(iv_start);
             std::fill(ivc + iv_start, std::end(ivc), false);
         }
 
         for (int i = 0; i < count; ++i) {
             int64_t start = rand() % count;
+            int64_t orig_start = start;
             int64_t end = std::min(start + rand() % 100, (int64_t) count - 1);
 
             int sum_li = -1;
@@ -139,6 +143,12 @@ BOOST_AUTO_TEST_CASE(testLocationInfoRandom)
 
             BOOST_CHECK_EQUAL(sum_iv, sum_li);
             BOOST_CHECK_EQUAL(count_iv, count_li);
+            if(sum_iv != sum_li || count_iv != count_li)
+            {
+                std::cerr << "Failed in iteration " << k << " querying from " << orig_start << " to " << end << "\n";
+                li.dump(std::cerr);
+                return;
+            }
         }
     }
 }

@@ -273,6 +273,14 @@ public:
         return n;
     }
 
+    void dump(std::ostream & o)
+    {
+        for(auto & x : intervals.getIntervals())
+        {
+            o << x.start << "-" << x.end << "; ";
+        }
+    }
+
 private:
     typedef value_interval < value_t > interval_t;
     IntervalList<interval_t> intervals;
