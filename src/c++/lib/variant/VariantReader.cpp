@@ -187,6 +187,9 @@ int VariantReader::addSample(const char * filename, const char * sname)
         }
         si.ireader = _impl->files->nreaders - 1;
         _impl->filename_mapping[filename] = si.ireader;
+        bcf_hdr_append(_impl->files->readers->header,
+                       "##INFO=<ID=IMPORT_FAIL,Number=.,Type=Flag,Description=\"Flag to identify variants that could not be imported.\">");
+        bcf_hdr_sync(_impl->files->readers->header);
     }
 
     si.phdr = bcfhelpers::ph(bcf_hdr_dup(_impl->files->readers[si.ireader].header));
@@ -558,7 +561,9 @@ bool VariantReader::advance(bool get_calls, bool get_info)
 
             bcf_unpack(line, BCF_UN_FLT);
 
-            bcfhelpers::p_bcf1 p_line = bcfhelpers::pb(bcf_dup(line));
+            vars.calls[sid].bcf_hdr = si.phdr;
+            vars.calls[sid].bcf_rec = bcfhelpers::pb(bcf_dup(line));
+            vars.calls[sid].bcf_sample = isample;
 
             vars.calls[sid].nfilter = (size_t) line->d.n_flt;
             if(vars.calls[sid].nfilter > MAX_FILTER)
@@ -672,21 +677,12 @@ bool VariantReader::advance(bool get_calls, bool get_info)
                             import_fail = true;
                         }
                         std::cerr << "Invalid GT at " << vars.chr << ":" << vars.pos << " in sample" << sid << "\n";
-                        // turn this into a homref call so it doesn't get lost later on
-                        vars.calls[sid].gt[i] = 0;
+                        // turn this into a no-call so it doesn't get lost later on
+                        vars.calls[sid].gt[i] = -1;
                         break;
                     }
                 }
             }
-            // normalize no-calls
-            if (gts_gte_0 == 0)
-            {
-                vars.calls[sid].ngt = 0;
-            }
-            vars.calls[sid].bcf_hdr = si.phdr;
-            vars.calls[sid].bcf_rec = p_line;
-            vars.calls[sid].bcf_sample = isample;
-
             bcfhelpers::getDP(reader.header, line, isample,
                               vars.calls[sid].dp);
 

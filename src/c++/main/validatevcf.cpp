@@ -76,7 +76,6 @@ int main(int argc, char* argv[]) {
     std::string regions_bed = "";
     std::string targets_bed = "";
 
-    std::string out_vcf = "";
     std::string out_errors = "";
 
     // = max 12 unphased hets in segment
@@ -88,9 +87,6 @@ int main(int argc, char* argv[]) {
     int64_t hb_expand = 30;
 
     bool apply_filters = true;
-    bool preprocess = false;
-    bool leftshift = false;
-    bool write_preprocessed = false;
 
     try
     {
@@ -100,7 +96,6 @@ int main(int argc, char* argv[]) {
             ("help,h", "produce help message")
             ("version", "Show version")
             ("input-vcf", po::value<std::string>(), "VCF file to validate.")
-            ("output-vcf,o", po::value<std::string>(), "Output VCF.")
             ("output-errors,e", po::value<std::string>(), "Output failure information in a bed file.")
             ("reference,r", po::value<std::string>(), "The reference fasta file.")
             ("location,l", po::value<std::string>(), "The location to start at.")
@@ -113,9 +108,6 @@ int main(int argc, char* argv[]) {
             ("expand-hapblocks", po::value<int64_t>(), "Number of bases to expand around each haplotype block.")
             ("limit", po::value<int64_t>(), "Maximum number of haplotype blocks to process.")
             ("apply-filters", po::value<bool>(), "Apply filtering in VCF (on by default).")
-            ("write-preprocessed,W", po::value<bool>(), "Write preprocessed representations rather than the original representations from the input VCF.")
-            ("preprocess-variants,V", po::value<bool>(), "Apply variant normalisations, trimming, realignment for complex variants (off by default).")
-            ("leftshift,L", po::value<bool>(), "Left-shift indel alleles (off by default).")
         ;
 
         po::positional_options_description popts;
@@ -160,24 +152,9 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        if (vm.count("output-vcf"))
-        {
-            out_vcf = vm["output-vcf"].as< std::string >();
-        }
-
         if (vm.count("output-errors"))
         {
             out_errors = vm["output-errors"].as< std::string >();
-        }
-
-        if (vm.count("preprocess-variants"))
-        {
-            preprocess = vm["preprocess-variants"].as< bool >();
-        }
-
-        if (vm.count("leftshift"))
-        {
-            leftshift = vm["leftshift"].as< bool >();
         }
 
         if (vm.count("location"))
@@ -199,7 +176,7 @@ int main(int argc, char* argv[]) {
         {
             ref_fasta = vm["reference"].as< std::string >();
         }
-        else if(preprocess)
+        else
         {
             error("Please specify a reference file name.");
         }
@@ -238,11 +215,6 @@ int main(int argc, char* argv[]) {
         {
             apply_filters = vm["apply-filters-truth"].as< bool >();
         }
-
-        if (vm.count("write-preprocessed"))
-        {
-            write_preprocessed = vm["write-preprocessed"].as< bool >();
-        }
     }
     catch (po::error & e)
     {
@@ -279,51 +251,20 @@ int main(int argc, char* argv[]) {
 
         vr.setApplyFilters(apply_filters, r1);
 
-        VariantInput vi(
-            ref_fasta.c_str(),
-            preprocess || leftshift,          // bool leftshift
-            false,          // bool refpadding
-            true,                // bool trimalleles = false, (remove unused alleles)
-            preprocess || leftshift,      // bool splitalleles = false,
-            ( preprocess || leftshift ) ? 2 : 0,  // int mergebylocation = false,
-            true,                // bool uniqalleles = false,
-            true,                // bool calls_only = true,
-            false,               // bool homref_split = false // this is handled by calls_only
-            preprocess,          // bool primitives = false
-            false,               // bool homref_output
-            leftshift ? hb_window-1 : 0,   // int64_t leftshift_limit
-            true                // collect_raw
-            );
-
-        VariantProcessor & vp = vi.getProcessor();
-
-        vp.setReader(vr, VariantBufferMode::buffer_block, 10*hb_window);
-
         bool stop_after_chr_change = false;
         if(chr != "")
         {
-            vp.rewind(chr.c_str(), start);
+            vr.rewind(chr.c_str(), start);
             stop_after_chr_change = true;
         }
 
-        std::unique_ptr<VariantWriter> pvw;
-        if (out_vcf != "")
-        {
-            pvw = std::move(std::unique_ptr<VariantWriter> (new VariantWriter(out_vcf.c_str(), ref_fasta.c_str())));
-            pvw->addHeader(vr);
-            pvw->addHeader("##INFO=<ID=ERR,Number=.,Type=String,Description=\"Error annotation if variant failed to validate.\">");
-            pvw->addHeader("##INFO=<ID=SUPERLOCUS_ID,Number=1,Type=Integer,Description=\"Identifier for the surrounding superlocus.\">");
-            pvw->addHeader("##INFO=<ID=SUPERLOCUS_NHAPS,Number=1,Type=Integer,Description=\"Number of haplotypes described by surrounding superlocus.\">");
-            pvw->addHeader("##INFO=<ID=SUPERLOCUS,Number=1,Type=String,Description=\"Location of surrounding superlocus.\">");
-            pvw->addSample("SAMPLE");
-        }
-
         std::ostream * error_out_stream = NULL;
-        if(out_errors == "-")
+        if(out_errors == "-" || out_errors.empty())
         {
-            error_out_stream = &std::cerr;
+            out_errors = "-";
+            error_out_stream = &std::cout;
         }
-        else if(out_errors != "")
+        else
         {
             error_out_stream = new std::ofstream(out_errors.c_str());
         }
@@ -336,27 +277,27 @@ int main(int argc, char* argv[]) {
         int64_t block_start = -1;
         int64_t block_end = -1;
         uint64_t sl_id = 0;
+        std::set<uint64_t> failed_sls;
 
         GraphReference gr(ref_fasta.c_str());
         DiploidReference dr(gr);
         dr.setNPaths(max_n_haplotypes);
 
-        const auto finish_block = [&vi,
-                                   &block_variants, r1,
+        const auto finish_block = [&block_variants, r1,
                                    &chr,
                                    &block_start,
                                    &block_end,
                                    &sl_id,
                                    &dr, max_n_haplotypes,
                                    hb_window,
-                                   write_preprocessed,
-                                   &pvw, &error_out_stream,
+                                   &error_out_stream,
                                    hb_expand] () {
 #ifdef DEBUG_VALIDATEVCF
             std::cerr << "FINISH block " << sl_id << " " << chr << ":" << block_start << "-" << block_end << "\n";
 #endif
+            sl_id++;
             std::list<std::string> result;
-            std::string sl_info;
+            int nhaps = 0;
             if(max_n_haplotypes > 0 && block_variants.size() > 0)
             {
 #ifdef DEBUG_VALIDATEVCF
@@ -364,32 +305,21 @@ int main(int argc, char* argv[]) {
                     std::cerr << "PROCESSED: " << vars << "\n";
                 }
 #endif
-                dr.setRegion(chr.c_str(), block_start, block_end,
-                             block_variants, r1);
-                auto l = dr.result();
-                if(l.size() == 0)
+                try
                 {
-                    result.push_back("DIPENUM_FAIL");
+                    dr.setRegion(chr.c_str(), std::max((int64_t )0, block_start - hb_expand), block_end + hb_expand,
+                                 block_variants, r1);
+                    auto l = dr.result();
+                    if(l.size() == 0)
+                    {
+                        result.push_back("DIPENUM_FAIL: unknown");
+                    }
+                    nhaps = (int)l.size();
                 }
-                sl_info += "SUPERLOCUS_ID=" + std::to_string(sl_id++);
-                sl_info += ";SUPERLOCUS_NHAPS=" + std::to_string(l.size());
-                sl_info += ";SUPERLOCUS=" + chr + ":" + std::to_string(block_start + 1) + "-" + std::to_string(block_end + 1);
-            }
-
-            if(!write_preprocessed)
-            {
-                block_variants.clear();
-            }
-            while(vi.getProcessor(VariantInput::raw).advance())
-            {
-                Variants & vars = vi.getProcessor(VariantInput::raw).current();
-                if(block_end >= 0 && vars.pos > block_end + hb_window) {
-                    vi.getProcessor(VariantInput::raw).putBack(vars);
-                    break;
-                }
-                if(!write_preprocessed)
+                catch (std::runtime_error const & e)
                 {
-                    block_variants.push_back(vars);
+                    nhaps = 0;
+                    result.push_back(std::string("DIPENUM_FAIL: ") + e.what());
                 }
             }
 
@@ -397,28 +327,40 @@ int main(int argc, char* argv[]) {
             {
                 vars.calls[0] = vars.calls[r1];
                 vars.calls.resize(1);
+
 #ifdef DEBUG_VALIDATEVCF
                 std::cerr << "RAW: " << vars << "\n";
 #endif
-                if(!vars.calls[0].isHomref() && !vars.calls[0].isNocall())
+                if((!vars.calls[0].isHomref() && !vars.calls[0].isNocall()) || vars.getInfoFlag("IMPORT_FAIL"))
                 {
-                    if(result.size() > 0 || vars.getInfoFlag("IMPORT_FAIL"))
+                    if(vars.getInfoFlag("IMPORT_FAIL"))
                     {
-                        std::vector<std::string> infos;
+                        result.push_back("IMPORT_FAIL");
+                    }
+                    if(result.size() > 0)
+                    {
                         bool b = false;
+                        std::string allerrors;
                         for (auto i : result) {
-                            if(error_out_stream) *error_out_stream << chr << "\t" << vars.pos << "\t" << vars.pos + vars.len << "\t" << i << "\n";
+                            if(!allerrors.empty())
+                            {
+                                allerrors += ",";
+                            }
+                            allerrors += i;
                             b = true;
                         }
-                        for (auto i : infos) {
-                            if(i.substr(0, 11) == "IMPORT_FAIL") {
-                                if(error_out_stream) *error_out_stream << chr << "\t" << vars.pos << "\t" << vars.pos + vars.len << "\t" << i << "\n";
+                        if(b)
+                        {
+                            allerrors += ",SUPERLOCUS_ID=" + std::to_string(sl_id);
+                            allerrors += ",SUPERLOCUS_NHAPS=" + std::to_string(nhaps);
+                            if(error_out_stream)
+                            {
+                                *error_out_stream << chr << "\t" << vars.pos << "\t"
+                                                  << vars.pos + vars.len << "\t" << vars << "\t" << allerrors << "\n";
                             }
-                            b = true;
                         }
                     }
                 }
-                if(pvw) pvw->put(vars);
             }
             block_variants.clear();
             block_start = -1;
@@ -427,14 +369,14 @@ int main(int argc, char* argv[]) {
 
         auto start_time = std::chrono::high_resolution_clock::now();
         auto last_time = std::chrono::high_resolution_clock::now();
-        while(vp.advance())
+        while(vr.advance())
         {
             if(blimit > 0 && nhb++ > blimit)
             {
                 // reached record limit
                 break;
             }
-            Variants & v = vp.current();
+            Variants & v = vr.current();
 
             if(end != -1 && (v.pos > end || (chr.size() != 0 && chr != v.chr)))
             {
@@ -519,8 +461,6 @@ int main(int argc, char* argv[]) {
                   << "block_size : " << block_variants.size() << "\t"
                   << "\n";
 #endif
-        finish_block();
-        // do it again to flush raw calls
         finish_block();
         if(error_out_stream && out_errors != "-")
         {

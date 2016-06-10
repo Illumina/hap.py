@@ -113,7 +113,7 @@ namespace variant
             {
                 continue;
             }
-            stringutil::split(std::string(hdr_text, len), result, "\n");
+            stringutil::split(std::string(hdr_text, (unsigned long) len), result, "\n");
             free(hdr_text);
             for(std::string hl : result) {
                 if(drop && !(
@@ -180,7 +180,7 @@ namespace variant
                 merged_header_items[oss.str()] = l;
                 if(hrec->type == BCF_HL_INFO || l.substr(0, 6) == "##INFO") {
                     // HAP-79 check if info entries have a description
-                    int idx = bcf_hrec_find_key(hrec, "Description");
+                    idx = bcf_hrec_find_key(hrec, "Description");
                     if (idx < 0)
                     {
                         bcf_hrec_add_key(hrec, "Description", 11);
@@ -215,7 +215,7 @@ namespace variant
         bcf_clear(rec);
 
         rec->rid = bcf_hdr_name2id(hdr, var.chr.c_str());
-        rec->pos = var.pos;
+        rec->pos = (int32_t) var.pos;
 
         /** make alleles */
         if(var.variation.size() > 0)
@@ -327,6 +327,7 @@ namespace variant
             std::map<std::string, std::vector<int> > int_infos;
             std::map<std::string, std::vector<float> > float_infos;
             std::map<std::string, std::string > string_infos;
+            std::set<std::string> flag_infos;
             for(auto & c : var.calls)
             {
                 bcf_hdr_t * bhdr = c.bcf_hdr.get();
@@ -364,7 +365,7 @@ namespace variant
                             infos_written.insert(id);
                             break;
                         default:
-                            // default: ignore
+                            flag_infos.insert(id);
                             break;
                     }
                 }
@@ -391,6 +392,10 @@ namespace variant
             for(auto const & x : string_infos)
             {
                 bcf_update_info_string(hdr, rec, x.first.c_str(), x.second.c_str());
+            }
+            for(auto const & x : flag_infos)
+            {
+                bcf_update_info_flag(hdr, rec, x.c_str(), NULL, 1);
             }
         }
 
