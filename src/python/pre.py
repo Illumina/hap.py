@@ -201,19 +201,12 @@ def preprocessWrapper(args):
     logging.info("preprocess for %s -- time taken %.2f" % (args.input, elapsed))
 
 
-def main():
-    parser = argparse.ArgumentParser("VCF preprocessor")
-
-    # input
-    parser.add_argument("input", help="VCF file to process.", default=[], nargs=1)
-    parser.add_argument("output", help="Output filename.", default=[], nargs=1)
+def updateArgs(parser):
+    """ update command line parser with preprocessing args """
 
     parser.add_argument('--location', '-l', dest='locations', required=False, default=None,
                         help="Comma-separated list of locations [use naming after preprocessing], "
                              "when not specified will use whole VCF.")
-
-    parser.add_argument("-v", "--version", dest="version", action="store_true",
-                        help="Show version number and exit.")
 
     parser.add_argument("--pass-only", dest="pass_only", action="store_true", default=False,
                         help="Keep only PASS variants.")
@@ -229,8 +222,6 @@ def main():
     parser.add_argument("-T", "--target-regions", dest="targets_bedfile",
                         default=None, type=str,
                         help="Restrict analysis to given (dense) regions (using -T in bcftools).")
-
-    parser.add_argument("-r", "--reference", dest="ref", default=None, help="Specify a reference file.")
 
     # preprocessing steps
     parser.add_argument("-L", "--leftshift", dest="preprocessing_leftshift", action="store_true",
@@ -250,6 +241,22 @@ def main():
 
     parser.add_argument("--no-fixchr", dest="fixchr", action="store_false",
                         help="Add chr prefix to query file (default: auto, attempt to match reference).")
+
+
+
+def main():
+    parser = argparse.ArgumentParser("VCF preprocessor")
+
+    # input
+    parser.add_argument("input", help="VCF file to process.", default=[], nargs=1)
+    parser.add_argument("output", help="Output filename.", default=[], nargs=1)
+
+    updateArgs(parser)
+
+    parser.add_argument("-v", "--version", dest="version", action="store_true",
+                        help="Show version number and exit.")
+
+    parser.add_argument("-r", "--reference", dest="ref", default=None, help="Specify a reference file.")
 
     parser.add_argument("-w", "--window-size", dest="window",
                         default=10000, type=int,
