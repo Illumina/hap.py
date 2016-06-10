@@ -101,13 +101,15 @@ namespace bcfhelpers {
      * @param result the default to return if the field is not present
      */
     int getInfoInt(bcf_hdr_t * header, bcf1_t * line, const char * field, int result = -1);
+    std::vector<int> getInfoInts(bcf_hdr_t * header, bcf1_t * line, const char * field);
 
     /**
      * @brief Retrieve an info field as a double
      *
      * @return the value or NaN
      */
-    double getInfoDouble(bcf_hdr_t * header, bcf1_t * line, const char * field);
+    float getInfoFloat(bcf_hdr_t * header, bcf1_t * line, const char * field);
+    std::vector<float> getInfoFloats(bcf_hdr_t * header, bcf1_t * line, const char * field);
 
     /**
      * @brief Retrieve an info flag

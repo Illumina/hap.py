@@ -493,14 +493,10 @@ int main(int argc, char* argv[]) {
             {
                 for (Variants & v : block_variants)
                 {
-                    if(v.info != "")
-                    {
-                        v.info += ";";
-                    }
-                    v.info += std::string("ctype=") + result;
+                    v.setInfo("ctype", result.c_str());
                     if (hap_match)
                     {
-                        v.info += ";HapMatch";
+                        v.setInfo("HapMatch", true);
                     }
                     if(apply_filters_query)
                     {
@@ -508,7 +504,7 @@ int main(int argc, char* argv[]) {
                         {
                             if(v.calls[r2].filter[f] != "PASS" && v.calls[r2].filter[f] != ".")
                             {
-                                v.info += ";Q_FILTERED";
+                                v.setInfo("Q_FILTERED", true);
                                 break;
                             }
                         }

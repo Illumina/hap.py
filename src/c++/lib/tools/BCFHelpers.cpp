@@ -226,58 +226,114 @@ namespace bcfhelpers
         struct bcf_get_info
         {
             bcf_get_info() {}
-            type_t operator()(bcf_info_t * field) const;
+            type_t operator()(bcf_info_t * field, int which = 0) const;
         };
 
         template<>
-        int bcf_get_info<int>::operator()(bcf_info_t * field) const
+        int bcf_get_info<int>::operator()(bcf_info_t * field, int which) const
         {
+            int fieldsize = 4;
+            int fieldmask = 0xffffffff;
             switch(field->type)
             {
                 case BCF_BT_NULL:
                     return 0;
                 case BCF_BT_INT8:
+                    fieldsize >>= 1;
+                    fieldmask >>= 8;
                 case BCF_BT_INT16:
+                    fieldsize >>= 1;
+                    fieldmask >>= 16;
                 case BCF_BT_INT32:
-                    if(field->len != 1)
+                    if(field->len == 1 && which == 0)
                     {
-                        error("Cannot extract int from non-scalar INFO field (len = %i).", field->len);
+                        return field->v1.i;
                     }
-                    return field->v1.i;
+                    else
+                    {
+                        if(field->len <= which)
+                        {
+                            error("Cannot extract int from non-scalar INFO field (len = %i, requested: %i).",
+                                  field->len, which);
+
+                        }
+                        int f = (*(field->vptr + fieldsize*which)) & fieldmask;
+                        return f;
+                    }
                 case BCF_BT_FLOAT:
-                    if(field->len != 1)
+                    if(field->len == 1 && which == 0)
                     {
-                        error("Cannot extract int from non-scalar INFO field (len = %i).", field->len);
+                        return int(field->v1.f);
                     }
-                    return int(field->v1.f);
+                    else
+                    {
+                        if(field->len <= which)
+                        {
+                            error("Cannot extract int from non-scalar INFO field (len = %i, requested: %i).",
+                                  field->len, which);
+
+                        }
+                        return (int) *(((float*)field->vptr) + which );
+                    }
                 case BCF_BT_CHAR:
+                    if(which > 0)
+                    {
+                        error("Cannot extract int %i from string INFO field", which);
+                    }
                     return atoi((const char *)field->vptr);
+                default:
+                    break;
             }
             return -1;
         }
 
         template<>
-        double bcf_get_info<double>::operator()(bcf_info_t * field) const
+        float bcf_get_info<float>::operator()(bcf_info_t * field, int which) const
         {
             switch(field->type)
             {
                 case BCF_BT_NULL:
-                    return std::numeric_limits<double>::quiet_NaN();
+                    return std::numeric_limits<float>::quiet_NaN();
                 case BCF_BT_INT8:
                 case BCF_BT_INT16:
                 case BCF_BT_INT32:
-                    return (double)field->v1.i;
+                    if(which == 0 && field->len == 1)
+                    {
+                        return field->v1.f;
+                    }
+                    else
+                    {
+                        const bcf_get_info<int> gi;
+                        return (float)gi(field, which);
+                    }
                 case BCF_BT_FLOAT:
-                    return (double)field->v1.f;
+                    if(which == 0 && field->len == 1)
+                    {
+                        return field->v1.f;
+                    }
+                    else
+                    {
+                        if(field->len <= which)
+                        {
+                            error("Cannot extract int from non-scalar INFO field (len = %i, requested: %i).",
+                                  field->len, which);
+
+                        }
+                        return *(((float*)field->vptr) + which );
+                    }
                 case BCF_BT_CHAR:
-                    return atof((const char *)field->vptr);
+                    if(which > 0)
+                    {
+                        error("Cannot extract int %i from string INFO field", which);
+                    }
+                    return (float) atof((const char *)field->vptr);
                 default:break;
             }
-            return std::numeric_limits<double>::quiet_NaN();
+            return std::numeric_limits<float>::quiet_NaN();
         }
 
         template<>
-        std::string bcf_get_info<std::string>::operator()(bcf_info_t * field) const
+        std::string bcf_get_info<std::string>::operator()(bcf_info_t * field, int) const
         {
             char num[256];
             switch(field->type)
@@ -391,8 +447,9 @@ namespace bcfhelpers
      *
      * @param result the default to return if the field is not present
      */
-    int getInfoInt(const bcf_hdr_t * header, const bcf1_t * line, const char * field, int result)
+    int getInfoInt(bcf_hdr_t * header, bcf1_t * line, const char * field, int result)
     {
+        bcf_unpack(line, BCF_UN_INFO);
         bcf_info_t * info_ptr  = bcf_get_info(header, line, field);
         if(info_ptr)
         {
@@ -402,19 +459,52 @@ namespace bcfhelpers
         return result;
     }
 
+    std::vector<int> getInfoInts(bcf_hdr_t * header, bcf1_t * line, const char * field)
+    {
+        std::vector<int> result;
+        bcf_unpack(line, BCF_UN_INFO);
+        bcf_info_t * info_ptr  = bcf_get_info(header, line, field);
+        if(info_ptr)
+        {
+            static const bcfhelpers::_impl::bcf_get_info<int> i;
+            for(int j = 0; j < info_ptr->len; ++j)
+            {
+                result.push_back(i(info_ptr, j));
+            }
+        }
+        return result;
+    }
+
     /**
      * @brief Retrieve an info field as a double
      *
      * @return the value or NaN
      */
-    double getInfoDouble(bcf_hdr_t * header, bcf1_t * line, const char * field)
+    float getInfoFloat(bcf_hdr_t * header, bcf1_t * line, const char * field)
     {
-        double result = std::numeric_limits<double>::quiet_NaN();
+        float result = std::numeric_limits<float>::quiet_NaN();
+        bcf_unpack(line, BCF_UN_INFO);
         bcf_info_t * info_ptr  = bcf_get_info(header, line, field);
         if(info_ptr)
         {
-            static const bcfhelpers::_impl::bcf_get_info<double> i;
+            static const bcfhelpers::_impl::bcf_get_info<float> i;
             result = i(info_ptr);
+        }
+        return result;
+    }
+
+    std::vector<float> getInfoFloats(bcf_hdr_t * header, bcf1_t * line, const char * field)
+    {
+        std::vector<float> result;
+        bcf_unpack(line, BCF_UN_INFO);
+        bcf_info_t * info_ptr  = bcf_get_info(header, line, field);
+        if(info_ptr)
+        {
+            static const bcfhelpers::_impl::bcf_get_info<float> i;
+            for(int j = 0; j < info_ptr->len; ++j)
+            {
+                result.push_back(i(info_ptr, j));
+            }
         }
         return result;
     }
@@ -426,6 +516,7 @@ namespace bcfhelpers
      */
     bool getInfoFlag(bcf_hdr_t * hdr, bcf1_t * line, const char * field)
     {
+        bcf_unpack(line, BCF_UN_INFO);
         return bcf_get_info_flag(hdr, line, field, nullptr, 0) == 1;
     }
 
@@ -434,6 +525,7 @@ namespace bcfhelpers
      */
     void getGT(bcf_hdr_t * header, bcf1_t * line, int isample, int * gt, int & ngt, bool & phased)
     {
+        bcf_unpack(line, BCF_UN_FMT);
         bcf_fmt_t * fmt_ptr = bcf_get_fmt(header, line, "GT");
         if (fmt_ptr)
         {
@@ -472,6 +564,7 @@ namespace bcfhelpers
         static const bcf_get_numeric_format<float> gf;
 
         get_fmt_outcome res;
+        bcf_unpack(line, BCF_UN_FMT);
         res = gf(header, line, "GQX", isample, &gq, 1, 0.0);
         if(res == get_fmt_outcome::failure)
         {
@@ -490,6 +583,7 @@ namespace bcfhelpers
         static const bcf_get_numeric_format<int> gf;
 
         get_fmt_outcome res;
+        bcf_unpack(line, BCF_UN_FMT);
         res = gf(header, line, "AD", isample, ad, max_ad, -1);
         if(res == get_fmt_outcome::too_many)
         {
@@ -504,6 +598,7 @@ namespace bcfhelpers
         static const bcf_get_numeric_format<int> gf;
 
         get_fmt_outcome res;
+        bcf_unpack(line, BCF_UN_FMT);
         res = gf(header, line, "DP", isample, &dp, 1, 0);
         if(res == get_fmt_outcome::failure)
         {
@@ -522,6 +617,7 @@ namespace bcfhelpers
         static const bcf_get_numeric_format<int> gf;
 
         get_fmt_outcome res;
+        bcf_unpack(line, BCF_UN_FMT);
         res = gf(header, line, "DP", isample, &defaultresult, 1, 0);
         if(res == get_fmt_outcome::too_many)
         {
@@ -540,6 +636,7 @@ namespace bcfhelpers
         static const bcf_get_numeric_format<double> gf;
 
         get_fmt_outcome res;
+        bcf_unpack(line, BCF_UN_FMT);
         res = gf(header, line, field, isample, &result, 1, 0);
         if(res == get_fmt_outcome::too_many)
         {
@@ -560,6 +657,7 @@ namespace bcfhelpers
             return result;
         }
 
+        bcf_unpack(line, BCF_UN_FMT);
         int tag_id = bcf_hdr_id2int(hdr, BCF_DT_ID, field);
 
         if ( !bcf_hdr_idinfo_exists(hdr,BCF_HL_FMT,tag_id) )
@@ -662,6 +760,7 @@ namespace bcfhelpers
     {
         // TODO this can probably be done faster / better
         std::unique_ptr<const char *[]> p_fmts = std::unique_ptr<const char *[]>(new const char *[line->n_sample]);
+        bcf_unpack(line, BCF_UN_FMT);
         bool any_nonempty = false;
         if(formats.size() != line->n_sample)
         {

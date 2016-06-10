@@ -402,40 +402,19 @@ int main(int argc, char* argv[]) {
 #endif
                 if(!vars.calls[0].isHomref() && !vars.calls[0].isNocall())
                 {
-                    if(result.size() > 0 || vars.info.find("IMPORT_FAIL") != std::string::npos)
+                    if(result.size() > 0 || vars.getInfoFlag("IMPORT_FAIL"))
                     {
                         std::vector<std::string> infos;
-                        stringutil::split(vars.info, infos, ";", false);
-                        if(vars.info.size() > 0) {
-                            vars.info += ";";
-                        }
-                        vars.info += "ERR=";
                         bool b = false;
                         for (auto i : result) {
-                            vars.info += std::string(b ? "," : "") + i;
                             if(error_out_stream) *error_out_stream << chr << "\t" << vars.pos << "\t" << vars.pos + vars.len << "\t" << i << "\n";
                             b = true;
                         }
                         for (auto i : infos) {
                             if(i.substr(0, 11) == "IMPORT_FAIL") {
-                                vars.info += std::string(b ? "," : "") + i;
                                 if(error_out_stream) *error_out_stream << chr << "\t" << vars.pos << "\t" << vars.pos + vars.len << "\t" << i << "\n";
                             }
                             b = true;
-                        }
-                    }
-                    if(sl_info.size())
-                    {
-                        if(vars.info.size() > 0) {
-                            vars.info += ";";
-                        }
-                        if(vars.pos >= block_start - hb_window && vars.pos + vars.len - 1 <= block_end + hb_expand)
-                        {
-                            vars.info += sl_info;
-                        }
-                        else
-                        {
-                            vars.info += "SUPERLOCUS_ID=.";
                         }
                     }
                 }

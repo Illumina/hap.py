@@ -141,7 +141,7 @@ namespace variant
         float QQ = std::numeric_limits<float>::quiet_NaN();
         if(roc_field_is_info)
         {
-            QQ = (float)bcfhelpers::getInfoDouble(_impl->hdr, v, roc_field.c_str());
+            QQ = bcfhelpers::getInfoFloat(_impl->hdr, v, roc_field.c_str());
         }
         else if(roc_field_is_qual)
         {

@@ -217,6 +217,8 @@ struct Variants
         return false;
     }
 
+    float getQual() const;
+
     /** interface to set / get INFO values */
     int getInfoInt(const char * id) const;
     float getInfoFloat(const char * id) const;

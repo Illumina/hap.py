@@ -37,6 +37,9 @@
 #include <htslib/synced_bcf_reader.h>
 #include "VariantImpl.hh"
 
+#include <cmath>
+#include <htslib/vcf.h>
+
 // #define DEBUG_VARIANT_GTS
 
 namespace variant
@@ -131,6 +134,11 @@ namespace variant
             o << v.gt[i];
         }
 
+        if(v.bcf_rec && v.bcf_rec->qual > 0)
+        {
+            o << " " << v.bcf_rec->qual ;
+        }
+
         if(v.nfilter > 0)
         {
             o << " ";
@@ -190,6 +198,23 @@ namespace variant
     uint64_t Variants::MAX_VID = 0;
     Variants::Variants() : id(MAX_VID++) {}
 
+    float Variants::getQual() const
+    {
+        float qual = 0;
+        for(auto const & c : calls)
+        {
+            qual += c.bcf_rec->qual;
+        }
+        if(calls.empty())
+        {
+            return 0;
+        }
+        else
+        {
+            return qual / calls.size();
+        }
+    }
+
     /** interface to set / get INFO values */
     int Variants::getInfoInt(const char * id) const
     {
@@ -208,10 +233,10 @@ namespace variant
     {
         for(auto const & c : calls)
         {
-            double tmp = bcfhelpers::getInfoDouble(c.bcf_hdr.get(), c.bcf_rec.get(), id);
-            if(!isnan(tmp))
+            float tmp = bcfhelpers::getInfoFloat(c.bcf_hdr.get(), c.bcf_rec.get(), id);
+            if(!std::isnan(tmp))
             {
-                return (float)tmp;
+                return tmp;
             }
         }
         return std::numeric_limits<float>::quiet_NaN();
@@ -234,6 +259,7 @@ namespace variant
     {
         for(auto const & c : calls)
         {
+            if(!c.bcf_hdr || !c.bcf_rec) continue;
             if(bcfhelpers::getInfoFlag(c.bcf_hdr.get(), c.bcf_rec.get(), id))
             {
                 return true;
@@ -246,6 +272,7 @@ namespace variant
     {
         for(auto const & c : calls)
         {
+            if(!c.bcf_hdr || !c.bcf_rec) continue;
             bcf_update_info_string(c.bcf_hdr.get(), c.bcf_rec.get(), id, NULL);
         }
     }
@@ -260,6 +287,7 @@ namespace variant
         {
             for(auto const & c : calls)
             {
+                if(!c.bcf_hdr || !c.bcf_rec) continue;
                 bcf_update_info_flag(c.bcf_hdr.get(), c.bcf_rec.get(), id, NULL, 1);
             }
         }
@@ -269,6 +297,7 @@ namespace variant
     {
         for(auto const & c : calls)
         {
+            if(!c.bcf_hdr || !c.bcf_rec) continue;
             bcf_update_info_int32(c.bcf_hdr.get(), c.bcf_rec.get(), id, &val, 1);
         }
     }
@@ -277,6 +306,7 @@ namespace variant
     {
         for(auto const & c : calls)
         {
+            if(!c.bcf_hdr || !c.bcf_rec) continue;
             bcf_update_info_float(c.bcf_hdr.get(), c.bcf_rec.get(), id, &val, 1);
         }
     }
@@ -285,6 +315,7 @@ namespace variant
     {
         for(auto const & c : calls)
         {
+            if(!c.bcf_hdr || !c.bcf_rec) continue;
             bcf_update_info_string(c.bcf_hdr.get(), c.bcf_rec.get(), id, val);
         }
     }

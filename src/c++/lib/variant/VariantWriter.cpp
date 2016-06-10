@@ -322,14 +322,16 @@ namespace variant
 
         // write info
         {
-            std::set<std::string> infos_written;
+            // prevent keeping AN and AC since these might change
+            std::set<std::string> infos_written = {"AN", "AC"};
             std::map<std::string, std::vector<int> > int_infos;
             std::map<std::string, std::vector<float> > float_infos;
-            std::map<std::string, std::vector<std::string> > string_infos;
+            std::map<std::string, std::string > string_infos;
             for(auto & c : var.calls)
             {
-                const bcf_hdr_t * bhdr = c.bcf_hdr.get();
-                const bcf1_t * bline = c.bcf_rec.get();
+                bcf_hdr_t * bhdr = c.bcf_hdr.get();
+                bcf1_t * bline = c.bcf_rec.get();
+                bcf_unpack(bline, BCF_UN_INFO);
 
                 for(int ni = 0; ni < bline->n_info; ++ni)
                 {
@@ -346,10 +348,49 @@ namespace variant
                         case BCF_BT_INT32:
                             int_infos.emplace(std::make_pair(
                                 std::string(id),
-                                bcfhelpers::getInfoInt(bhdr, bline, id, bcf_int32_missing)));
+                                bcfhelpers::getInfoInts(bhdr, bline, id)));
+                            infos_written.insert(id);
+                            break;
+                        case BCF_BT_FLOAT:
+                            float_infos.emplace(std::make_pair(
+                                std::string(id),
+                                bcfhelpers::getInfoFloats(bhdr, bline, id)));
+                            infos_written.insert(id);
+                            break;
+                        case BCF_BT_CHAR:
+                            string_infos.emplace(std::make_pair(
+                                std::string(id),
+                                bcfhelpers::getInfoString(bhdr, bline, id)));
+                            infos_written.insert(id);
+                            break;
+                        default:
+                            // default: ignore
                             break;
                     }
                 }
+            }
+
+            for(auto const & x : int_infos)
+            {
+                auto p = std::unique_ptr<int[]>(new int[x.second.size()]);
+                for(size_t j = 0; j < x.second.size(); ++j)
+                {
+                    p.get()[j] = x.second[j];
+                }
+                bcf_update_info_int32(hdr, rec, x.first.c_str(), p.get(), (int)x.second.size());
+            }
+            for(auto const & x : float_infos)
+            {
+                auto p = std::unique_ptr<float[]>(new float[x.second.size()]);
+                for(size_t j = 0; j < x.second.size(); ++j)
+                {
+                    p.get()[j] = x.second[j];
+                }
+                bcf_update_info_float(hdr, rec, x.first.c_str(), p.get(), (int)x.second.size());
+            }
+            for(auto const & x : string_infos)
+            {
+                bcf_update_info_string(hdr, rec, x.first.c_str(), x.second.c_str());
             }
         }
 
