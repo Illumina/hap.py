@@ -277,11 +277,14 @@ int main(int argc, char* argv[]) {
         int64_t block_start = -1;
         int64_t block_end = -1;
         uint64_t sl_id = 0;
-        std::set<uint64_t> failed_sls;
 
         GraphReference gr(ref_fasta.c_str());
         DiploidReference dr(gr);
         dr.setNPaths(max_n_haplotypes);
+
+        uint64_t total_blocks = 0;
+        uint64_t failed_blocks = 0;
+        uint64_t import_failed_records = 0;
 
         const auto finish_block = [&block_variants, r1,
                                    &chr,
@@ -291,6 +294,9 @@ int main(int argc, char* argv[]) {
                                    &dr, max_n_haplotypes,
                                    hb_window,
                                    &error_out_stream,
+                                   &total_blocks,
+                                   &failed_blocks,
+                                   &import_failed_records,
                                    hb_expand] () {
 #ifdef DEBUG_VALIDATEVCF
             std::cerr << "FINISH block " << sl_id << " " << chr << ":" << block_start << "-" << block_end << "\n";
@@ -323,6 +329,7 @@ int main(int argc, char* argv[]) {
                 }
             }
 
+            bool block_is_failed = false;
             for(auto & vars : block_variants)
             {
                 vars.calls[0] = vars.calls[r1];
@@ -335,10 +342,13 @@ int main(int argc, char* argv[]) {
                 {
                     if(vars.getInfoFlag("IMPORT_FAIL"))
                     {
+                        block_is_failed = true;
+                        import_failed_records++;
                         result.push_back("IMPORT_FAIL");
                     }
                     if(result.size() > 0)
                     {
+                        block_is_failed = true;
                         bool b = false;
                         std::string allerrors;
                         for (auto i : result) {
@@ -362,6 +372,11 @@ int main(int argc, char* argv[]) {
                     }
                 }
             }
+            if(block_is_failed)
+            {
+                ++failed_blocks;
+            }
+            ++total_blocks;
             block_variants.clear();
             block_start = -1;
             block_end = -1;
@@ -462,6 +477,11 @@ int main(int argc, char* argv[]) {
                   << "\n";
 #endif
         finish_block();
+
+        std::cerr << "Total superloci: " << total_blocks <<
+                     " failed: " << failed_blocks <<
+                     " failed records: " << import_failed_records << "\n";
+
         if(error_out_stream && out_errors != "-")
         {
             delete error_out_stream;

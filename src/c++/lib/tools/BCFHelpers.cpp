@@ -42,6 +42,7 @@
 #include <htslib/vcf.h>
 #include <memory>
 #include <limits>
+#include <set>
 
 /**
  * @brief Helper to get out GT fields
@@ -886,4 +887,47 @@ namespace bcfhelpers
         return l;
     }
 
+    /** return number of reference padding bases */
+    int isRefPadded(bcf1_t * line)
+    {
+        bcf_unpack(line, BCF_UN_SHR);
+        int rpos = 0;
+        bool match = true;
+        std::set<int> ign;
+        while(match)
+        {
+            const char * ref = line->d.allele[0] + rpos;
+            if(*ref == 0)
+            {
+                break;
+            }
+            int alts_seen = 0;
+            for(int al = 1; al < line->n_allele; ++al)
+            {
+                if(ign.count(al))
+                {
+                    continue;
+                }
+                const char * alt = line->d.allele[al];
+                if(strcmp(alt, ".") == 0)
+                {
+                    ign.insert(al);
+                    continue;
+                }
+                ++alts_seen;
+                alt += rpos;
+                if(*alt == 0 || *alt == '<' || *alt != *ref)
+                {
+                    match = false;
+                    break;
+                }
+            }
+            if(!match || alts_seen == 0)
+            {
+                break;
+            }
+            ++rpos;
+        }
+        return rpos;
+    }
 } // namespace bcfhelpers

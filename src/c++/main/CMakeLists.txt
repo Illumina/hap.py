@@ -38,6 +38,12 @@ target_link_libraries(roc ${HAPLOTYPES_ALL_LIBS})
 add_executable(validatevcf validatevcf.cpp)
 target_link_libraries(validatevcf ${HAPLOTYPES_ALL_LIBS})
 
-# validatevcf checks ref alleles and tests if haplotypes can be enumerated
+# vcfcheck tests if something will be acceptable by hap.py
+# this is different from validatevcf, which counts the number of
+# superloci that will cause matching problems.
+add_executable(vcfcheck vcfcheck.cpp)
+target_link_libraries(vcfcheck ${HAPLOTYPES_ALL_LIBS})
+
+# preprocess does variant decomposition and leftshifting
 add_executable(preprocess preprocess.cpp)
 target_link_libraries(preprocess ${HAPLOTYPES_ALL_LIBS})

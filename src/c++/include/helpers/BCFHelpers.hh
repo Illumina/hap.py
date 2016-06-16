@@ -153,6 +153,9 @@ namespace bcfhelpers {
     void setFormatInts(const bcf_hdr_t * header, bcf1_t * line, const char * field,
                        const std::vector<int> & value);
 
+    /** return number of reference padding bases */
+    int isRefPadded(bcf1_t * line);
+
     /** shared pointer support for keeping bcf types around */
     typedef std::shared_ptr<bcf_hdr_t> p_bcf_hdr;
     typedef std::shared_ptr<bcf1_t> p_bcf1;
