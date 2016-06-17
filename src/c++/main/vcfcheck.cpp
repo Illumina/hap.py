@@ -50,8 +50,20 @@
 #include <htslib/synced_bcf_reader.h>
 #include <helpers/BCFHelpers.hh>
 
+#include "helpers/Roc.hh"
+
 // error needs to come after boost headers.
 #include "Error.hh"
+
+/* #define DEBUG_VCFCHECK */
+
+namespace WARNING {
+    enum WARNING  {
+        REFPADDING,
+        OVERLAP,
+        SIZE
+    };
+}
 
 int main(int argc, char *argv[])
 {
@@ -68,6 +80,8 @@ int main(int argc, char *argv[])
     int64_t message = -1;
 
     bool apply_filters = false;
+    bool strict_homref = false;
+    bool all_warnings = false;
 
     try
     {
@@ -83,6 +97,8 @@ int main(int argc, char *argv[])
                 ("limit-records", po::value<int64_t>(), "Maximum number of records to process")
                 ("message-every", po::value<int64_t>(), "Print a message every N records.")
                 ("apply-filters,f", po::value<bool>(), "Apply filtering in VCF.")
+                ("strict-homref,H", po::value<bool>(), "Be strict about hom-ref assertions (i.e. don't allow these to overlap).")
+                ("all-warnings,W", po::value<bool>(), "Show all warnings, not just the first instance.")
             ;
 
             po::positional_options_description popts;
@@ -134,6 +150,16 @@ int main(int argc, char *argv[])
             if (vm.count("apply-filters"))
             {
                 apply_filters = vm["apply-filters"].as< bool >();
+            }
+
+            if (vm.count("strict-homref"))
+            {
+                strict_homref = vm["strict-homref"].as< bool >();
+            }
+
+            if (vm.count("all-warnings"))
+            {
+                all_warnings = vm["all-warnings"].as< bool >();
             }
 
             if(file.size() == 0)
@@ -196,6 +222,15 @@ int main(int argc, char *argv[])
         std::string current_chr;
 
         int64_t previous_end = -1;
+        // this could be improved using and interval list
+        // currently, we only check directly adjacent overlaps
+        std::unique_ptr<int[]> previous_allele_count(new int[bcf_hdr_nsamples(hdr)]);
+        memset(previous_allele_count.get(), 0, sizeof(int)*bcf_hdr_nsamples(hdr));
+
+        int has_warned[WARNING::SIZE];
+        memset(has_warned, 0, sizeof(int)*WARNING::SIZE);
+
+        int n_nonref = 0;
 
         while(nl)
         {
@@ -221,6 +256,13 @@ int main(int argc, char *argv[])
             if(end != -1 && ((!current_chr.empty() && vchr != current_chr) || line->pos > end))
             {
                 break;
+            }
+
+            if(!current_chr.empty() && vchr != current_chr)
+            {
+                // chromosome switch
+                previous_end = -1;
+                memset(previous_allele_count.get(), 0, sizeof(int)*bcf_hdr_nsamples(hdr));
             }
 
             if(apply_filters)
@@ -259,6 +301,7 @@ int main(int argc, char *argv[])
             const int refpadding = bcfhelpers::isRefPadded(line);
             if(refpadding)
             {
+#ifdef DEBUG_VCFCHECK
                 std::string alleles;
                 for(int j = 0; j < line->n_allele; ++j)
                 {
@@ -268,18 +311,68 @@ int main(int argc, char *argv[])
                     }
                     alleles += line->d.allele[j];
                 }
-                std::cerr << "at " << vchr << ":" << vstart << " refpadding = " << refpadding << "\n";
+                std::cerr << "at " << vchr << ":" << vstart << " " << alleles << " refpadding = " << refpadding << "\n";
+#endif
                 ++vstart;
                 if(refpadding > 1)
                 {
-                    std::cerr << "[W] variant at " << vchr << ":" << vstart << " has more than one base of reference padding \n";
+                    if(all_warnings || !has_warned[WARNING::REFPADDING])
+                    {
+                        std::cerr << "[W] variant at " << vchr << ":" << vstart << " has more than one base of reference padding \n";
+                    }
+                    has_warned[WARNING::REFPADDING]++;
                 }
             }
 
-            if(vstart < previous_end)
+            if(line->n_sample != bcf_hdr_nsamples(hdr))
             {
-                std::cerr << "[W] overlapping records at " << vchr << ":" << vstart << "\n";
+                error("Number of samples in line and header disagrees at %s:%i", vchr.c_str(), vstart);
             }
+
+            bool any_alts = false;
+            for(int isample = 0; isample < line->n_sample; ++isample)
+            {
+                int gt[MAX_GT];
+                int ngt;
+                bool phased;
+                bcfhelpers::getGT(hdr, line, isample, gt, ngt, phased);
+                int allele_count = 0;
+                for(int g = 0; g < ngt; ++g)
+                {
+                    if(gt[g] > 0)
+                    {
+                        const char * alt = line->d.allele[gt[g]];
+                        if(*alt == 0 || *alt == '*' || *alt == '<' || *alt == '.')
+                        {
+                            // count symbolic alts as non-ref
+                            if(*alt == '<') any_alts = true;
+                            // ignore empty / missing / symbolic alleles
+                            continue;
+                        }
+                        any_alts = true;
+                        ++allele_count;
+                    }
+                    else if(gt[g] == 0 && strict_homref)
+                    {
+                        ++allele_count;
+                    }
+                }
+                if(vstart < previous_end && allele_count + previous_allele_count.get()[isample] > 2)
+                {
+                    if(all_warnings || !has_warned[WARNING::OVERLAP])
+                    {
+                        std::cerr << "[W] overlapping records at " << vchr << ":" << vstart << " for sample " << isample << "\n";
+                    }
+                    has_warned[WARNING::OVERLAP]++;
+                }
+                previous_allele_count.get()[isample] = allele_count;
+            }
+
+            if(any_alts)
+            {
+                ++n_nonref;
+            }
+
             previous_end = vend;
 
             if(line->errcode)
@@ -298,6 +391,17 @@ int main(int argc, char *argv[])
             ++rcount;
         }
 
+        if(has_warned[WARNING::REFPADDING])
+        {
+            std::cerr << "[W] Variants that have >1 base of reference padding: " << has_warned[WARNING::REFPADDING] << "\n";
+        }
+        if(has_warned[WARNING::OVERLAP])
+        {
+            std::cerr << "[W] Variants that overlap on the reference allele: " << has_warned[WARNING::OVERLAP] << "\n";
+        }
+
+        std::cerr << "[I] Total VCF records:         " << rcount << "\n";
+        std::cerr << "[I] Non-reference VCF records: " << n_nonref << "\n";
         bcf_sr_destroy(reader);
     }
     catch(std::runtime_error & e)

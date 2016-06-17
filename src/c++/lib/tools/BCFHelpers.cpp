@@ -891,6 +891,10 @@ namespace bcfhelpers
     int isRefPadded(bcf1_t * line)
     {
         bcf_unpack(line, BCF_UN_SHR);
+        if(line->n_allele == 1)
+        {
+            return 0;
+        }
 
         const char * ref = line->d.allele[0];
         const int reflen = strlen(ref);
