@@ -104,7 +104,7 @@ namespace variant
             std::string type = bcfhelpers::getFormatString(_impl->hdr, v, "BD", si);
             std::string kind = bcfhelpers::getFormatString(_impl->hdr, v, "BK", si);
 
-            if (_impl->count_unk && tag_string.find("CONF") == std::string::npos && kind == ".") {
+            if (_impl->count_unk && tag_string.find("CONF") == std::string::npos) {
                 type = "UNK";
             }
 
