@@ -286,7 +286,7 @@ namespace variant {
         const std::string vt_truth = bcfhelpers::getFormatString(_impl->hdr, v, "BVT", 0, ".");
         const std::string vt_query = bcfhelpers::getFormatString(_impl->hdr, v, "BVT", 1, ".");
 
-        double qq = bcfhelpers::getFormatDouble(_impl->hdr, v, "QQ", 1);
+        double qq = bcfhelpers::getFormatFloat(_impl->hdr, v, "QQ", 1);
         if(std::isnan(qq))
         {
             qq = 0;

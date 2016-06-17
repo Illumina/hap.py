@@ -55,37 +55,32 @@ namespace bcfhelpers
     {
 
 /** C++-ified version of bcf_get_format_values */
-        enum class get_fmt_outcome { success=0, failure=-1, too_many=1 };
         template <typename target_type_t>
         struct bcf_get_numeric_format
         {
             bcf_get_numeric_format() {}
             /* return true when successful
              */
-            get_fmt_outcome operator()(const bcf_hdr_t *hdr, bcf1_t *line,
+            void operator()(const bcf_hdr_t *hdr, bcf1_t *line,
                                        const char *tag, int isample,
-                                       target_type_t * dest, int ndest,
-                                       target_type_t def) const
+                                       std::vector<target_type_t> & dest) const
             {
-                get_fmt_outcome result = get_fmt_outcome::failure;
-
-                for (int i = 0; i < ndest; ++i)
-                {
-                    dest[i] = def;
-                }
-
+                dest.clear();
                 int i;
                 int tag_id = bcf_hdr_id2int(hdr, BCF_DT_ID, tag);
 
                 if ( !bcf_hdr_idinfo_exists(hdr,BCF_HL_FMT,tag_id) )
                 {
-                    return result;
+                    return;
                 }
 
-                if ( !(line->unpacked & BCF_UN_FMT) )
+                int nsmpl = bcf_hdr_nsamples(hdr);
+                if (isample >= nsmpl)
                 {
-                    bcf_unpack(line, BCF_UN_FMT);
+                    return;
                 }
+
+                bcf_unpack(line, BCF_UN_FMT);
 
                 for (i = 0; i < line->n_fmt; i++)
                 {
@@ -97,28 +92,14 @@ namespace bcfhelpers
 
                 if ( i == line->n_fmt )
                 {
-                    return result;
+                    return;
                 }
 
                 bcf_fmt_t *fmt = &line->d.fmt[i];
                 int type = fmt->type;
-                int nsmpl = bcf_hdr_nsamples(hdr);
-                if (isample >= nsmpl)
-                {
-                    return result;
-                }
+                dest.resize((unsigned long) fmt->n);
 
-                if(ndest < fmt->n)
-                {
-                    result = get_fmt_outcome::too_many;
-                }
-
-                if(fmt->n < ndest)
-                {
-                    ndest = fmt->n;
-                }
-
-                for (int i = 0; i < ndest; ++i)
+                for (i = 0; i < fmt->n; ++i)
                 {
                     if ( type == BCF_BT_FLOAT )
                     {
@@ -174,13 +155,10 @@ namespace bcfhelpers
                     }
                     else
                     {
-                        // TODO handle this
                         std::cerr << "[W] string format field ignored when looking for numeric formats!" << "\n";
-                        dest[i] = def;
+                        dest[i] = -1;
                     }
                 }
-                result = get_fmt_outcome::success;
-                return result;
             }
         };
 
@@ -558,22 +536,32 @@ namespace bcfhelpers
         }
     }
 
-    /** read GQ(X) -- will use in this order: GQX, GQ, -1 */
+    /** read GQ(X) -- will use in this order: GQX, GQ, -1
+     *
+     * This is somewhat Illumina-specific, TODO: refactor to avoid using this function in a general setting
+     * */
     void getGQ(const bcf_hdr_t * header, bcf1_t * line, int isample, float & gq)
     {
         using namespace _impl;
         static const bcf_get_numeric_format<float> gf;
 
-        get_fmt_outcome res;
-        bcf_unpack(line, BCF_UN_FMT);
-        res = gf(header, line, "GQX", isample, &gq, 1, 0.0);
-        if(res == get_fmt_outcome::failure)
+        std::vector<float> values;
+        gf(header, line, "GQX", isample, values);
+        if(values.empty())
         {
-            res = gf(header, line, "GQ", isample, &gq, 1, 0.0);
+            gf(header, line, "GQX", isample, values);
         }
-        if(res == get_fmt_outcome::too_many)
+        if(values.size() > 1)
         {
             std::cerr << "[W] too many GQ fields at " << header->id[BCF_DT_CTG][line->rid].key << ":" << line->pos << "\n";
+        }
+        if(values.empty())
+        {
+            gq = -1;
+        }
+        else
+        {
+            gq = values[0];
         }
     }
 
@@ -583,12 +571,15 @@ namespace bcfhelpers
         using namespace _impl;
         static const bcf_get_numeric_format<int> gf;
 
-        get_fmt_outcome res;
-        bcf_unpack(line, BCF_UN_FMT);
-        res = gf(header, line, "AD", isample, ad, max_ad, -1);
-        if(res == get_fmt_outcome::too_many)
+        std::vector<int> values;
+        gf(header, line, "AD", isample, values);
+        if(max_ad < (int)values.size())
         {
             std::cerr << "[W] too many AD fields at " << header->id[BCF_DT_CTG][line->rid].key << ":" << line->pos << "\n";
+        }
+        for(auto q = 0; q < values.size(); ++q)
+        {
+            ad[q] = values[q];
         }
     }
 
@@ -598,16 +589,23 @@ namespace bcfhelpers
         using namespace _impl;
         static const bcf_get_numeric_format<int> gf;
 
-        get_fmt_outcome res;
-        bcf_unpack(line, BCF_UN_FMT);
-        res = gf(header, line, "DP", isample, &dp, 1, 0);
-        if(res == get_fmt_outcome::failure)
+        std::vector<int> values;
+        gf(header, line, "DP", isample, values);
+        if(values.empty())
         {
-            res = gf(header, line, "DPI", isample, &dp, 1, 0);
+            gf(header, line, "DPI", isample, values);
         }
-        if(res == get_fmt_outcome::too_many)
+        if(values.size() > 1)
         {
             std::cerr << "[W] too many DP fields at " << header->id[BCF_DT_CTG][line->rid].key << ":" << line->pos << "\n";
+        }
+        if(values.empty())
+        {
+            dp = 0;
+        }
+        else
+        {
+            dp = values[0];
         }
     }
 
@@ -617,35 +615,58 @@ namespace bcfhelpers
         using namespace _impl;
         static const bcf_get_numeric_format<int> gf;
 
-        get_fmt_outcome res;
-        bcf_unpack(line, BCF_UN_FMT);
-        res = gf(header, line, "DP", isample, &defaultresult, 1, 0);
-        if(res == get_fmt_outcome::too_many)
+        std::vector<int> values;
+        gf(header, line, "DP", isample, values);
+        if(values.size() > 1)
         {
             std::ostringstream os;
             os << "[W] too many " << field << " fields at " << header->id[BCF_DT_CTG][line->rid].key << ":" << line->pos;
             throw importexception(os.str());
+        }
+        if(values.size() == 1)
+        {
+            return values[0];
         }
         return defaultresult;
     }
 
-    /** read a format field as a single double. default return value is NaN */
-    double getFormatDouble(const bcf_hdr_t * header, bcf1_t * line, const char * field, int isample)
+    std::vector<int> getFormatInts(const bcf_hdr_t *header, bcf1_t *line, const char *field, int isample)
     {
         using namespace _impl;
-        double result = std::numeric_limits<double>::quiet_NaN();
-        static const bcf_get_numeric_format<double> gf;
+        static const bcf_get_numeric_format<int> gf;
+        std::vector<int> result;
+        gf(header, line, field, isample, result);
+        return result;
+    }
 
-        get_fmt_outcome res;
-        bcf_unpack(line, BCF_UN_FMT);
-        res = gf(header, line, field, isample, &result, 1, 0);
-        if(res == get_fmt_outcome::too_many)
+    /** read a format field as a single float. default return value is NaN */
+    float getFormatFloat(const bcf_hdr_t *header, bcf1_t *line, const char *field, int isample)
+    {
+        using namespace _impl;
+        float result = std::numeric_limits<float>::quiet_NaN();
+        static const bcf_get_numeric_format<float> gf;
+
+        std::vector<float> values;
+        gf(header, line, field, isample, values);
+        if(values.size() > 1)
         {
             std::ostringstream os;
             os << "[W] too many " << field << " fields at " << header->id[BCF_DT_CTG][line->rid].key << ":" << line->pos;
             throw importexception(os.str());
         }
+        if(values.size() == 1)
+        {
+            result = values[0];
+        }
+        return result;
+    }
 
+    std::vector<float> getFormatFloats(const bcf_hdr_t *header, bcf1_t *line, const char *field, int isample)
+    {
+        using namespace _impl;
+        static const bcf_get_numeric_format<float> gf;
+        std::vector<float> result;
+        gf(header, line, field, isample, result);
         return result;
     }
 
@@ -777,7 +798,7 @@ namespace bcfhelpers
                 any_nonempty = true;
             }
         }
-        int res = -1;
+        int res;
         if(any_nonempty)
         {
             res = bcf_update_format_string(hdr, line, field, p_fmts.get(), line->n_sample);
@@ -897,7 +918,7 @@ namespace bcfhelpers
         }
 
         const char * ref = line->d.allele[0];
-        const int reflen = strlen(ref);
+        const int reflen = (int) strlen(ref);
 
         int max_match = reflen;
         for(int al = 1; al < line->n_allele; ++al)

@@ -39,6 +39,7 @@ sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'lib', 'python27')
 
 import Tools
 from Tools import vcfextract
+from Tools import bcftools
 from Tools.parallel import runParallel, getPool
 from Tools.fastasize import fastaContigLengths
 import Haplo.blocksplit
@@ -315,7 +316,9 @@ def main():
             logging.info("Running using %i parallel processes." % args.threads)
 
             # find balanced pieces
-            args.pieces = (args.threads + len(args.locations) - 1) / len(args.locations)
+            # cap parallelism at 64 since otherwise bcftools concat below might run out
+            # of file handles
+            args.pieces = min(args.threads, 64)
             res = runParallel(pool, Haplo.blocksplit.blocksplitWrapper, args.locations, args)
 
             if None in res:
@@ -342,9 +345,15 @@ def main():
         if "samples" not in h2 or not h2["samples"]:
             raise Exception("Cannot read sample names from query VCF file")
 
+        if args.engine == "xcmp":
+            suffix = ".bcf"
+        else:
+            suffix = ".vcf.gz"
+
         tf = tempfile.NamedTemporaryFile(delete=False,
                                          dir=args.scratch_prefix,
-                                         prefix="hap.py.result.", suffix=".vcf.gz")
+                                         prefix="hap.py.result.",
+                                         suffix=suffix)
         tf.close()
         tempfiles.append(tf.name)
         output_name = tf.name
@@ -367,18 +376,16 @@ def main():
             if len(runme_list) == 0:
                 raise Exception("No outputs to concatenate!")
 
-            fo = Tools.BGZipFile(output_name, True)
-            for i, x in enumerate(runme_list):
-                f = gzip.GzipFile(x)
-                for l in f:
-                    if i == 0 or not l[0] == "#":
-                        fo.write(l)
-            fo.close()
+            if output_name.endswith("bcf"):
+                output_format = "b"
+            else:
+                output_format = "z"
 
+            runme_list = ["concat", "-o", output_name, "-O", output_format] + runme_list
+            logging.info("Concatenating...")
+            bcftools.runBcftools(*runme_list)
             logging.info("Indexing...")
-            to_run = "tabix -p vcf %s" % output_name.replace(" ", "\\ ")
-            logging.info("Running '%s'" % to_run)
-            subprocess.check_call(to_run, shell=True)
+            bcftools.runBcftools("index", output_name)
             # passed to quantify
             args.type = "xcmp"
         elif args.engine == "vcfeval":

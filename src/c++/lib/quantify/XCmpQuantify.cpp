@@ -349,7 +349,7 @@ namespace variant
                 }
                 else
                 {
-                    qqs.push_back((float)bcfhelpers::getFormatDouble(_impl->hdr, v, roc_field.c_str(), i));
+                    qqs.push_back((float) bcfhelpers::getFormatFloat(_impl->hdr, v, roc_field.c_str(), i));
                 }
 
                 key = this_type + ":" + kind + ":" + tag_string + ":" + s;

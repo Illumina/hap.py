@@ -218,105 +218,62 @@ namespace variant
     /** interface to set / get INFO values */
     int Variants::getInfoInt(const char * id) const
     {
-        for(auto const & c : calls)
+        if(!infos.isMember(id))
         {
-            int tmp = bcfhelpers::getInfoInt(c.bcf_hdr.get(), c.bcf_rec.get(), id, bcf_int32_missing);
-            if(tmp != bcf_int32_missing)
-            {
-                return tmp;
-            }
+            return bcf_int32_missing;
         }
-        return bcf_int32_missing;
+        return infos[id].asInt();
     }
 
     float Variants::getInfoFloat(const char * id) const
     {
-        for(auto const & c : calls)
+        if(!infos.isMember(id))
         {
-            float tmp = bcfhelpers::getInfoFloat(c.bcf_hdr.get(), c.bcf_rec.get(), id);
-            if(!std::isnan(tmp))
-            {
-                return tmp;
-            }
+            return std::numeric_limits<float>::quiet_NaN();
         }
-        return std::numeric_limits<float>::quiet_NaN();
+        return infos[id].asFloat();
     }
 
     std::string Variants::getInfoString(const char * id) const
     {
-        for(auto const & c : calls)
+        if(!infos.isMember(id))
         {
-            std::string tmp = bcfhelpers::getInfoString(c.bcf_hdr.get(), c.bcf_rec.get(), id, "");
-            if(!tmp.empty())
-            {
-                return tmp;
-            }
+            return "";
         }
-        return "";
+        return infos[id].asString();
     }
 
     bool Variants::getInfoFlag(const char * id) const
     {
-        for(auto const & c : calls)
+        if(!infos.isMember(id))
         {
-            if(!c.bcf_hdr || !c.bcf_rec) continue;
-            if(bcfhelpers::getInfoFlag(c.bcf_hdr.get(), c.bcf_rec.get(), id))
-            {
-                return true;
-            }
+            return false;
         }
-        return false;
+        return infos[id].asBool();
     }
 
     void Variants::delInfo(const char * id)
     {
-        for(auto const & c : calls)
-        {
-            if(!c.bcf_hdr || !c.bcf_rec) continue;
-            bcf_update_info_string(c.bcf_hdr.get(), c.bcf_rec.get(), id, NULL);
-        }
+        infos.removeMember(id);
     }
 
     void Variants::setInfo(const char * id, bool flag)
     {
-        if(!flag)
-        {
-            delInfo(id);
-        }
-        else
-        {
-            for(auto const & c : calls)
-            {
-                if(!c.bcf_hdr || !c.bcf_rec) continue;
-                bcf_update_info_flag(c.bcf_hdr.get(), c.bcf_rec.get(), id, NULL, 1);
-            }
-        }
+        infos[id] = Json::Value(flag);
     }
 
     void Variants::setInfo(const char * id, int val)
     {
-        for(auto const & c : calls)
-        {
-            if(!c.bcf_hdr || !c.bcf_rec) continue;
-            bcf_update_info_int32(c.bcf_hdr.get(), c.bcf_rec.get(), id, &val, 1);
-        }
+        infos[id] = Json::Value(val);
     }
 
     void Variants::setInfo(const char * id, float val)
     {
-        for(auto const & c : calls)
-        {
-            if(!c.bcf_hdr || !c.bcf_rec) continue;
-            bcf_update_info_float(c.bcf_hdr.get(), c.bcf_rec.get(), id, &val, 1);
-        }
+        infos[id] = Json::Value(val);
     }
 
     void Variants::setInfo(const char * id, const char * val)
     {
-        for(auto const & c : calls)
-        {
-            if(!c.bcf_hdr || !c.bcf_rec) continue;
-            bcf_update_info_string(c.bcf_hdr.get(), c.bcf_rec.get(), id, val);
-        }
+        infos[id] = Json::Value(val);
     }
 }

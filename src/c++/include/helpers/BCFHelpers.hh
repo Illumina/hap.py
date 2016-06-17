@@ -134,9 +134,11 @@ namespace bcfhelpers {
 
     /** read a format field as a single int. */
     int getFormatInt(const bcf_hdr_t * header, bcf1_t * line, const char * field, int isample, int defaultresult = -1);
+    std::vector<int> getFormatInts(const bcf_hdr_t *header, bcf1_t *line, const char *field, int isample);
 
     /** read a format field as a single double. default return value is NaN */
-    double getFormatDouble(const bcf_hdr_t * header, bcf1_t * line, const char * field, int isample);
+    float getFormatFloat(const bcf_hdr_t *header, bcf1_t *line, const char *field, int isample);
+    std::vector<float> getFormatFloats(const bcf_hdr_t *header, bcf1_t *line, const char *field, int isample);
 
     /** read a format field as string. result will not be overwritten on failure */
     std::string getFormatString(const bcf_hdr_t * header, bcf1_t * line, const char * field, int isample, const char * def_result = ".");

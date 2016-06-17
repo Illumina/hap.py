@@ -246,11 +246,7 @@ namespace variant
         rec->qual = 0;
         for(Call const & c : var.calls)
         {
-            if(!c.bcf_rec)
-            {
-                continue;
-            }
-            const float cqual = c.bcf_rec->qual;
+            const float cqual = c.qual;
             if(!std::isnan(cqual))
             {
                 rec->qual = std::max(cqual, rec->qual);
@@ -323,91 +319,69 @@ namespace variant
         // write info
         {
             // prevent keeping AN and AC since these might change
-            std::set<std::string> infos_written = {"AN", "AC"};
-            std::map<std::string, std::vector<int> > int_infos;
-            std::map<std::string, std::vector<float> > float_infos;
-            std::map<std::string, std::string > string_infos;
-            std::set<std::string> flag_infos;
-            for(auto & c : var.calls)
+            std::set<std::string> dont_write = {"AN", "AC"};
+            for(auto const & id : var.infos.getMemberNames())
             {
-                bcf_hdr_t * bhdr = c.bcf_hdr.get();
-                bcf1_t * bline = c.bcf_rec.get();
-                bcf_unpack(bline, BCF_UN_INFO);
-
-                for(int ni = 0; ni < bline->n_info; ++ni)
+                if(dont_write.count(id))
                 {
-                    bcf_info_t * inf = &bline->d.info[ni];
-                    const char * id = bcf_hdr_int2id(bhdr, BCF_DT_ID, inf->key);
-                    if(infos_written.count(id))
+                    continue;
+                }
+                Json::Value const & v = var.infos[id];
+
+                if(v.isArray() && !v.empty())
+                {
+                    if(v[0].isInt())
                     {
-                        continue;
+                        std::unique_ptr<int[]> p_values(new int[v.size()]);
+                        for(auto s = 0; s < v.size(); ++s)
+                        {
+                            p_values.get()[s] = v[s].asInt();
+                        }
+                        bcf_update_info_int32(hdr, rec, id.c_str(), p_values.get(), (int)v.size());
                     }
-                    switch(inf->type)
+                    else if(v[0].isNumeric())
                     {
-                        case BCF_BT_INT8:
-                        case BCF_BT_INT16:
-                        case BCF_BT_INT32:
-                            int_infos.emplace(std::make_pair(
-                                std::string(id),
-                                bcfhelpers::getInfoInts(bhdr, bline, id)));
-                            infos_written.insert(id);
-                            break;
-                        case BCF_BT_FLOAT:
-                            float_infos.emplace(std::make_pair(
-                                std::string(id),
-                                bcfhelpers::getInfoFloats(bhdr, bline, id)));
-                            infos_written.insert(id);
-                            break;
-                        case BCF_BT_CHAR:
-                            string_infos.emplace(std::make_pair(
-                                std::string(id),
-                                bcfhelpers::getInfoString(bhdr, bline, id)));
-                            infos_written.insert(id);
-                            break;
-                        default:
-                            flag_infos.insert(id);
-                            break;
+                        std::unique_ptr<float[]> p_values(new float[v.size()]);
+                        for(auto s = 0; s < v.size(); ++s)
+                        {
+                            p_values.get()[s] = v[s].asFloat();
+                        }
+                        bcf_update_info_float(hdr, rec, id.c_str(), p_values.get(), (int)v.size());
+                    }
+                    else
+                    {
+                        error("VariantWriter: unknown array type in info field at %s:i", var.chr.c_str(), var.pos);
                     }
                 }
-            }
-
-            for(auto const & x : int_infos)
-            {
-                auto p = std::unique_ptr<int[]>(new int[x.second.size()]);
-                for(size_t j = 0; j < x.second.size(); ++j)
+                else if(v.isInt())
                 {
-                    p.get()[j] = x.second[j];
+                    const int value = v.asInt();
+                    bcf_update_info_int32(hdr, rec, id.c_str(), &value, 1);
                 }
-                bcf_update_info_int32(hdr, rec, x.first.c_str(), p.get(), (int)x.second.size());
-            }
-            for(auto const & x : float_infos)
-            {
-                auto p = std::unique_ptr<float[]>(new float[x.second.size()]);
-                for(size_t j = 0; j < x.second.size(); ++j)
+                else if(v.isNumeric())
                 {
-                    p.get()[j] = x.second[j];
+                    const float value = v.asFloat();
+                    bcf_update_info_float(hdr, rec, id.c_str(), &value, 1);
                 }
-                bcf_update_info_float(hdr, rec, x.first.c_str(), p.get(), (int)x.second.size());
-            }
-            for(auto const & x : string_infos)
-            {
-                bcf_update_info_string(hdr, rec, x.first.c_str(), x.second.c_str());
-            }
-            for(auto const & x : flag_infos)
-            {
-                bcf_update_info_flag(hdr, rec, x.c_str(), NULL, 1);
+                else if(v.isBool())
+                {
+                    bcf_update_info_flag(hdr, rec, id.c_str(), NULL, 1);
+                }
+                else
+                {
+                    bcf_update_info_string(hdr, rec, id.c_str(), v.asCString());
+                }
             }
         }
 
         if (_impl->write_formats)
         {
+            std::map<std::string, std::vector<int>> int_fmts;
+            std::map<std::string, std::vector<float>> float_fmts;
+            std::map<std::string, std::vector<std::string>> string_fmts;
             auto tmp_dp = std::unique_ptr<int32_t[]>(new int32_t [bcf_hdr_nsamples(hdr)]);
             auto tmp_ad = std::unique_ptr<int32_t[]>(new int32_t [bcf_hdr_nsamples(hdr) * (var.variation.size() + 1)]);
             auto tmp_ado = std::unique_ptr<int32_t[]>(new int32_t [bcf_hdr_nsamples(hdr)]);
-
-            std::map<std::string, std::vector<int> > int_fmts;
-            std::map<std::string, std::vector<float> > float_fmts;
-            std::map<std::string, std::vector<std::string> > string_fmts;
 
             memset(tmp_ad.get(), 0, sizeof(int32_t)*bcf_hdr_nsamples(hdr)*(var.variation.size() + 1));
             memset(tmp_ado.get(), 0, sizeof(int32_t)*bcf_hdr_nsamples(hdr));
@@ -453,98 +427,49 @@ namespace variant
                         tmp_ad[(var.variation.size() + 1)*g + qq] = bcf_int32_missing;
                     }
                 }
-
-                /** transfer all other formats */
-                if(var.calls[g].bcf_hdr && var.calls[g].bcf_rec)
+                for(auto const & id : c.formats.getMemberNames())
                 {
-                    bcf_unpack(var.calls[g].bcf_rec.get(), BCF_UN_FMT);
-                    const std::set<int> skip = {
-                        bcf_hdr_id2int(var.calls[g].bcf_hdr.get(), BCF_DT_ID, "GT"),
-                        bcf_hdr_id2int(var.calls[g].bcf_hdr.get(), BCF_DT_ID, "DP"),
-                        bcf_hdr_id2int(var.calls[g].bcf_hdr.get(), BCF_DT_ID, "AD"),
-                        bcf_hdr_id2int(var.calls[g].bcf_hdr.get(), BCF_DT_ID, "ADO"),
-                        bcf_hdr_id2int(var.calls[g].bcf_hdr.get(), BCF_DT_ID, "AGT"),
-                        // don't translate these from source bcf, they might have changed
-                        bcf_hdr_id2int(var.calls[g].bcf_hdr.get(), BCF_DT_ID, "AN"),
-                        bcf_hdr_id2int(var.calls[g].bcf_hdr.get(), BCF_DT_ID, "AC"),
-                    };
-                    for(int f = 0;  f < var.calls[g].bcf_rec->n_fmt; ++f)
+                    Json::Value const & v = c.formats[id];
+                    if(v.isArray() && !v.empty())
                     {
-                        const bcf_fmt_t * fmt = &(var.calls[g].bcf_rec->d.fmt[f]);
-                        if(skip.count(fmt->id))
+                        if(v[0].isInt())
                         {
-                            continue;
+                            std::unique_ptr<int[]> p_values(new int[v.size()]);
+                            for(auto s = 0; s < v.size(); ++s)
+                            {
+                                p_values.get()[s] = v[s].asInt();
+                            }
+                            bcf_update_format_int32(hdr, rec, id.c_str(), p_values.get(), (int)v.size());
                         }
-                        const char * id = bcf_hdr_int2id(var.calls[g].bcf_hdr.get(), BCF_DT_ID, fmt->id);
-                        switch(fmt->type)
+                        else if(v[0].isNumeric())
                         {
-                            case BCF_BT_INT8:
-                            case BCF_BT_INT16:
-                            case BCF_BT_INT32:
+                            std::unique_ptr<float[]> p_values(new float[v.size()]);
+                            for(auto s = 0; s < v.size(); ++s)
                             {
-                                int defaultint = bcf_int32_missing;
-                                int value = bcfhelpers::getFormatInt(var.calls[g].bcf_hdr.get(),
-                                                                     var.calls[g].bcf_rec.get(),
-                                                                     id,
-                                                                     var.calls[g].bcf_sample,
-                                                                     defaultint);
-                                auto pf = int_fmts.find(id);
-                                if(pf == int_fmts.end())
-                                {
-                                    pf = int_fmts.emplace(std::make_pair(
-                                            std::string(id),
-                                            std::vector<int>(var.calls.size(), defaultint))
-                                    ).first;
-                                }
-                                pf->second[g] = value;
-                                break;
+                                p_values.get()[s] = v[s].asFloat();
                             }
-                            case BCF_BT_FLOAT:
-                            {
-                                float defaultfloat;
-                                memcpy(&defaultfloat, &bcf_float_missing, sizeof(float));
-                                float value = (float) bcfhelpers::getFormatDouble(var.calls[g].bcf_hdr.get(),
-                                                                                  var.calls[g].bcf_rec.get(),
-                                                                                  id,
-                                                                                  var.calls[g].bcf_sample);
-                                if(std::isnan(value))
-                                {
-                                    memcpy(&value, &bcf_float_missing, sizeof(float));
-                                }
-                                auto pf = float_fmts.find(id);
-                                if(pf == float_fmts.end())
-                                {
-                                    pf = float_fmts.emplace(std::make_pair(
-                                            std::string(id),
-                                            std::vector<float>(var.calls.size(), defaultfloat))
-                                    ).first;
-                                }
-                                pf->second[g] = value;
-                                break;
-                            }
-                                break;
-                            case BCF_BT_CHAR:
-                            {
-                                std::string value = bcfhelpers::getFormatString(var.calls[g].bcf_hdr.get(),
-                                                                                var.calls[g].bcf_rec.get(),
-                                                                                id,
-                                                                                var.calls[g].bcf_sample);
-                                auto pf = string_fmts.find(id);
-                                if(pf == string_fmts.end())
-                                {
-                                    pf = string_fmts.emplace(std::make_pair(
-                                            std::string(id),
-                                            std::vector<std::string>(var.calls.size()))
-                                    ).first;
-                                }
-                                pf->second[g] = value;
-                                break;
-                            }
-                            case BCF_BT_NULL:
-                            default:
-                                break;
+                            bcf_update_format_float(hdr, rec, id.c_str(), p_values.get(), (int)v.size());
+                        }
+                        else
+                        {
+                            error("VariantWriter: unknown array type in format field %s at %s:i", id, var.chr.c_str(), var.pos);
                         }
                     }
+                    else if(v.isInt())
+                    {
+                        const int value = v.asInt();
+                        bcf_update_format_int32(hdr, rec, id.c_str(), &value, 1);
+                    }
+                    else if(v.isNumeric())
+                    {
+                        const float value = v.asFloat();
+                        bcf_update_format_float(hdr, rec, id.c_str(), &value, 1);
+                    }
+                    else
+                    {
+                        bcf_update_format_string(hdr, rec, id.c_str(), v.asCString());
+                    }
+
                 }
             }
 
@@ -552,18 +477,6 @@ namespace variant
             bcf_update_format_int32(hdr, rec, "ADO", tmp_ado.get(), bcf_hdr_nsamples(hdr));
             bcf_update_format_int32(hdr, rec, "DP", tmp_dp.get(), bcf_hdr_nsamples(hdr));
 
-            for(auto & f : int_fmts)
-            {
-                bcfhelpers::setFormatInts(hdr, rec, f.first.c_str(), f.second);
-            }
-            for(auto & f : float_fmts)
-            {
-                bcfhelpers::setFormatFloats(hdr, rec, f.first.c_str(), f.second);
-            }
-            for(auto & f : string_fmts)
-            {
-                bcfhelpers::setFormatStrings(hdr, rec, f.first.c_str(), f.second);
-            }
         }
 
         // write ambiguous

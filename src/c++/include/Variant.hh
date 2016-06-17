@@ -49,6 +49,8 @@
 
 #include "RefVar.hh"
 
+#include "json/json.h"
+
 namespace variant {
 
 #ifndef MAX_FILTER
@@ -142,10 +144,9 @@ struct Call {
 
     int dp;
 
-    /** retain source records */
-    typename ::bcfhelpers::p_bcf_hdr bcf_hdr;
-    typename ::bcfhelpers::p_bcf1 bcf_rec;
-    int bcf_sample;
+    float qual;
+
+    Json::Value formats;
 };
 
 /**
@@ -183,6 +184,9 @@ struct Variants
     // This captures cases where cannot resolve a diploid
     // genotype
     std::vector< std::list<int> > ambiguous_alleles;
+
+    // Store INFO entries
+    Json::Value infos;
 
     /* return if any calls are homref */
     inline bool anyHomref() const {

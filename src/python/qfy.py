@@ -52,7 +52,7 @@ def quantify(args):
 
     logging.info("Counting variants...")
 
-    output_vcf = args.reports_prefix + ".vcf.gz"
+    output_vcf = args.reports_prefix + ".bcf"
     roc_table = args.reports_prefix + ".roc.tsv"
 
     qfyregions = {}
@@ -74,7 +74,7 @@ def quantify(args):
                     raise Exception("Quantification region file %s not found" % f)
                 qfyregions[n] = f
 
-    if vcf_name == output_vcf or vcf_name == output_vcf + ".vcf.gz":
+    if vcf_name == output_vcf or vcf_name == output_vcf + ".bcf":
         raise Exception("Cannot overwrite input VCF: %s would overwritten with output name %s." % (vcf_name, output_vcf))
 
     Haplo.quantify.run_quantify(vcf_name,

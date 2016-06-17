@@ -35,6 +35,7 @@
  */
 
 #include <htslib/synced_bcf_reader.h>
+#include <htslib/vcf.h>
 #include "VariantImpl.hh"
 
 // #define DEBUG_VARIANT_GTS
@@ -192,8 +193,6 @@ int VariantReader::addSample(const char * filename, const char * sname)
         bcf_hdr_sync(_impl->files->readers->header);
     }
 
-    si.phdr = bcfhelpers::ph(bcf_hdr_dup(_impl->files->readers[si.ireader].header));
-
     if(sname && strlen(sname) > 0)
     {
         if (std::string(sname) == "*")
@@ -328,7 +327,7 @@ Variants & VariantReader::current()
     }
 }
 
-bool VariantReader::advance(bool get_calls, bool get_info)
+bool VariantReader::advance()
 {
     if (!_impl->buffered_variants.empty())
     {
@@ -531,172 +530,309 @@ bool VariantReader::advance(bool get_calls, bool get_info)
     std::cerr << vars.chr << ":" << vars.pos << "\n";
 #endif
 
-    if(get_calls)
+    vars.calls.resize(_impl->samples.size());
+    vars.ambiguous_alleles.resize(_impl->samples.size());
+    for (auto & li : vars.ambiguous_alleles)
     {
-        vars.calls.resize(_impl->samples.size());
-        vars.ambiguous_alleles.resize(_impl->samples.size());
-        for (auto & li : vars.ambiguous_alleles)
+        li.clear();
+    }
+
+    int ncalls = 0;
+    int n_non_ref_calls = 0;
+
+    for (size_t sid = 0; sid < _impl->samples.size(); ++sid)
+    {
+        SampleInfo & si = _impl->samples[sid];
+
+        if(!bcf_sr_has_line(_impl->files, si.ireader))
         {
-            li.clear();
+            vars.calls[sid].ngt = 0;
+            vars.calls[sid].phased = false;
+            vars.calls[sid].nfilter = 0;
+            continue;
         }
 
-        int ncalls = 0;
-        int n_non_ref_calls = 0;
+        bcf_sr_t & reader(_impl->files->readers[si.ireader]);
+        const int isample = si.isample;
+        bcf1_t *line = reader.buffer[0];
 
-        for (size_t sid = 0; sid < _impl->samples.size(); ++sid)
+        bcf_unpack(line, BCF_UN_FLT);
+
+        vars.calls[sid].nfilter = (size_t) line->d.n_flt;
+        if(vars.calls[sid].nfilter > MAX_FILTER)
         {
-            SampleInfo & si = _impl->samples[sid];
+            error("Too many filters at %s:%i in sample %i", vars.chr.c_str(), vars.pos, sid);
+        }
 
-            if(!bcf_sr_has_line(_impl->files, si.ireader))
+        bool fail = false;
+        for(int j = 0; j < (int)vars.calls[sid].nfilter; ++j)
+        {
+            std::string filter = "PASS";
+            int k = line->d.flt[j];
+
+            if(k >= 0)
             {
-                vars.calls[sid].ngt = 0;
-                vars.calls[sid].phased = false;
-                vars.calls[sid].nfilter = 0;
+                filter = bcf_hdr_int2id(reader.header, BCF_DT_ID, line->d.flt[j]);
+            }
+            if(filter != "PASS")
+            {
+                fail = true;
+            }
+            vars.calls[sid].filter[j] = filter;
+        }
+
+        if(getApplyFilters((int) sid) && fail)
+        {
+            vars.calls[sid].ngt = 0;
+            vars.calls[sid].phased = false;
+            vars.calls[sid].nfilter = 0;
+            continue;
+        }
+
+        ++ncalls;
+        bcf_unpack(line, BCF_UN_ALL);
+
+        vars.calls[sid].qual = line->qual;
+
+        for(int ni = 0; ni < line->n_info; ++ni)
+        {
+            bcf_info_t * inf = &line->d.info[ni];
+            const char * id = bcf_hdr_int2id(reader.header, BCF_DT_ID, inf->key);
+            if(vars.infos.isMember(id))
+            {
+                // only take first instance.
+                // TODO warn or handle
                 continue;
             }
-
-            bcf_sr_t & reader(_impl->files->readers[si.ireader]);
-            const int isample = si.isample;
-            bcf1_t *line = reader.buffer[0];
-
-            bcf_unpack(line, BCF_UN_FLT);
-
-            vars.calls[sid].bcf_hdr = si.phdr;
-            vars.calls[sid].bcf_rec = bcfhelpers::pb(bcf_dup(line));
-            vars.calls[sid].bcf_sample = isample;
-
-            vars.calls[sid].nfilter = (size_t) line->d.n_flt;
-            if(vars.calls[sid].nfilter > MAX_FILTER)
+            switch(inf->type)
             {
-                error("Too many filters at %s:%i in sample %i", vars.chr.c_str(), vars.pos, sid);
-            }
-
-            bool fail = false;
-            for(int j = 0; j < (int)vars.calls[sid].nfilter; ++j)
-            {
-                std::string filter = "PASS";
-                int k = line->d.flt[j];
-
-                if(k >= 0)
+                case BCF_BT_INT8:
+                case BCF_BT_INT16:
+                case BCF_BT_INT32:
                 {
-                    filter = bcf_hdr_int2id(reader.header, BCF_DT_ID, line->d.flt[j]);
+                    auto ints = bcfhelpers::getInfoInts(reader.header, line, id);
+                    if(ints.size() == 1)
+                    {
+                        vars.infos[id] = ints[0];
+                    }
+                    else if(1 < ints.size())
+                    {
+                        vars.infos[id] = Json::Value(Json::arrayValue);
+                        for(auto q = 0; q < ints.size(); ++q)
+                        {
+                            vars.infos[id][q] = ints[q];
+                        }
+                    }
+                    break;
                 }
-                if(filter != "PASS")
+                case BCF_BT_FLOAT:
                 {
-                    fail = true;
+                    auto floats = bcfhelpers::getInfoFloats(reader.header, line, id);
+                    if (floats.size() == 1)
+                    {
+                        vars.infos[id] = floats[0];
+                    }
+                    else if (1 < floats.size())
+                    {
+                        vars.infos[id] = Json::Value(Json::arrayValue);
+                        for (auto q = 0; q < floats.size(); ++q)
+                        {
+                            vars.infos[id][q] = floats[q];
+                        }
+                    }
+                    break;
                 }
-                vars.calls[sid].filter[j] = filter;
+                case BCF_BT_CHAR:
+                    vars.infos[id] = bcfhelpers::getInfoString(reader.header, line, id);
+                    break;
+                default:
+                    vars.infos[id] = true;
+                    break;
             }
+        }
 
-            if(getApplyFilters((int) sid) && fail)
+        int ngt = 0;
+        bcfhelpers::getGT(reader.header, line, isample,
+                          vars.calls[sid].gt,
+                          ngt,
+                          vars.calls[sid].phased);
+
+        if(ngt > MAX_GT)
+        {
+            vars.setInfo("IMPORT_FAIL", true);
+            ngt = MAX_GT;
+        }
+
+        vars.calls[sid].ngt = (size_t) ngt;
+
+        int adcount = int(vars.variation.size() + 1);
+        int * ad = new int[adcount];
+        memset(ad, -1, sizeof(int)*adcount);
+
+        bcfhelpers::getAD(reader.header, line, isample,
+                          ad, adcount);
+
+        vars.calls[sid].ad_ref = ad[0];
+        vars.calls[sid].ad_other = 0;
+
+        // initialize AD
+        for (int j = 0; j < ngt; ++j)
+        {
+            if(vars.calls[sid].gt[j] >= 0 && ad[vars.calls[sid].gt[j]] >= 0)
             {
-                vars.calls[sid].ngt = 0;
-                vars.calls[sid].phased = false;
-                vars.calls[sid].nfilter = 0;
-                continue;
+                vars.calls[sid].ad[j] = ad[vars.calls[sid].gt[j]];
+                ad[vars.calls[sid].gt[j]] = -1;
             }
+        }
 
-            ++ncalls;
-            bcf_unpack(line, BCF_UN_ALL);
-
-            int ngt = 0;
-            bcfhelpers::getGT(reader.header, line, isample,
-                              vars.calls[sid].gt,
-                              ngt,
-                              vars.calls[sid].phased);
-
-            if(ngt > MAX_GT)
+        for (int i = 0; i < adcount; ++i)
+        {
+            if(ad[i] > 0)
             {
-                vars.setInfo("IMPORT_FAIL", true);
-                ngt = MAX_GT;
+                vars.calls[sid].ad_other += ad[i];
             }
+        }
 
-            vars.calls[sid].ngt = (size_t) ngt;
-
-            int adcount = int(vars.variation.size() + 1);
-            int * ad = new int[adcount];
-            memset(ad, -1, sizeof(int)*adcount);
-
-            bcfhelpers::getAD(reader.header, line, isample,
-                              ad, adcount);
-
-            vars.calls[sid].ad_ref = ad[0];
-            vars.calls[sid].ad_other = 0;
-
-            // initialize AD
-            for (int j = 0; j < ngt; ++j)
-            {
-                if(vars.calls[sid].gt[j] >= 0 && ad[vars.calls[sid].gt[j]] >= 0)
-                {
-                    vars.calls[sid].ad[j] = ad[vars.calls[sid].gt[j]];
-                    ad[vars.calls[sid].gt[j]] = -1;
-                }
-            }
-
-            for (int i = 0; i < adcount; ++i)
-            {
-                if(ad[i] > 0)
-                {
-                    vars.calls[sid].ad_other += ad[i];
-                }
-            }
-
-            delete [] ad;
+        delete [] ad;
 
 
 #ifdef DEBUG_VARIANT_GTS
-            std::cerr << "\ts" << sid << ": ";
-            for (size_t i = 0; i < vars.calls[sid].ngt; ++i)
-            {
-                std::cerr << vars.calls[sid].gt[i] << " ";
-            }
-            std::cerr << "\n";
+        std::cerr << "\ts" << sid << ": ";
+        for (size_t i = 0; i < vars.calls[sid].ngt; ++i)
+        {
+            std::cerr << vars.calls[sid].gt[i] << " ";
+        }
+        std::cerr << "\n";
 #endif
-            // check if the GTs are valid + remap
-            int gts_gte_0 = 0;
-            for (size_t i = 0; i < vars.calls[sid].ngt; ++i)
+        // check if the GTs are valid + remap
+        int gts_gte_0 = 0;
+        for (size_t i = 0; i < vars.calls[sid].ngt; ++i)
+        {
+            int gtv = vars.calls[sid].gt[i];
+            // remap all non-ref alleles
+            if (gtv >= 0)
             {
-                int gtv = vars.calls[sid].gt[i];
-                // remap all non-ref alleles
-                if (gtv >= 0)
+                ++gts_gte_0;
+            }
+            if(gtv > 0)
+            {
+                ++n_non_ref_calls;
+                if((size_t)(gtv-1) < si.allele_map.size())
                 {
-                    ++gts_gte_0;
+                    vars.calls[sid].gt[i] = si.allele_map[gtv-1];
                 }
-                if(gtv > 0)
+                else
                 {
-                    ++n_non_ref_calls;
-                    if((size_t)(gtv-1) < si.allele_map.size())
+                    if (!import_fail)
                     {
-                        vars.calls[sid].gt[i] = si.allele_map[gtv-1];
+                        vars.setInfo("IMPORT_FAIL", true);
+                        import_fail = true;
+                    }
+                    std::cerr << "Invalid GT at " << vars.chr << ":" << vars.pos << " in sample" << sid << "\n";
+                    // turn this into a no-call so it doesn't get lost later on
+                    vars.calls[sid].gt[i] = -1;
+                    break;
+                }
+            }
+        }
+        bcfhelpers::getDP(reader.header, line, isample,
+                          vars.calls[sid].dp);
+
+        const std::set<int> skip = {
+            // these are special and have been handled above
+            bcf_hdr_id2int(reader.header, BCF_DT_ID, "GT"),
+            bcf_hdr_id2int(reader.header, BCF_DT_ID, "DP"),
+            bcf_hdr_id2int(reader.header, BCF_DT_ID, "AD"),
+            bcf_hdr_id2int(reader.header, BCF_DT_ID, "ADO"),
+            bcf_hdr_id2int(reader.header, BCF_DT_ID, "AGT"),
+            // don't translate these from source bcf, they might have changed
+            bcf_hdr_id2int(reader.header, BCF_DT_ID, "AN"),
+            bcf_hdr_id2int(reader.header, BCF_DT_ID, "AC"),
+        };
+
+        for(int f = 0;  f < line->n_fmt; ++f)
+        {
+            const bcf_fmt_t * fmt = &(line->d.fmt[f]);
+            if(skip.count(fmt->id))
+            {
+                continue;
+            }
+            const char * id = bcf_hdr_int2id(reader.header, BCF_DT_ID, fmt->id);
+            switch(fmt->type)
+            {
+                case BCF_BT_INT8:
+                case BCF_BT_INT16:
+                case BCF_BT_INT32:
+                {
+                    const std::vector<int> values = bcfhelpers::getFormatInts(reader.header,
+                                                                              line,
+                                                                              id,
+                                                                              isample);
+                    if(values.empty())
+                    {
+                        // TODO warn?
+                    }
+                    if(values.size() == 1)
+                    {
+                        vars.calls[sid].formats[id] = values[0];
                     }
                     else
                     {
-                        if (!import_fail)
+                        vars.calls[sid].formats[id] = Json::Value(Json::arrayValue);
+                        for(auto ffv = 0; ffv < values.size(); ++ffv)
                         {
-                            vars.setInfo("IMPORT_FAIL", true);
-                            import_fail = true;
+                            vars.calls[sid].formats[id] = values[ffv];
                         }
-                        std::cerr << "Invalid GT at " << vars.chr << ":" << vars.pos << " in sample" << sid << "\n";
-                        // turn this into a no-call so it doesn't get lost later on
-                        vars.calls[sid].gt[i] = -1;
-                        break;
                     }
+                    break;
+                }
+                case BCF_BT_FLOAT:
+                {
+                    const std::vector<float> values = bcfhelpers::getFormatFloats(reader.header,
+                                                                                  line,
+                                                                                  id,
+                                                                                  isample);
+                    if(values.empty())
+                    {
+                        // TODO warn?
+                    }
+                    if(values.size() == 1)
+                    {
+                        vars.calls[sid].formats[id] = values[0];
+                    }
+                    else
+                    {
+                        vars.calls[sid].formats[id] = Json::Value(Json::arrayValue);
+                        for(auto ffv = 0; ffv < values.size(); ++ffv)
+                        {
+                            vars.calls[sid].formats[id] = values[ffv];
+                        }
+                    }
+                    break;
+                }
+                case BCF_BT_CHAR:
+                {
+                    const std::string value = bcfhelpers::getFormatString(reader.header,
+                                                                          line,
+                                                                          id,
+                                                                          isample);
+                    vars.calls[sid].formats[id] = value;
+                    break;
+                }
+                case BCF_BT_NULL:
+                default:
+                {
+                    // TODO handle
+                    break;
                 }
             }
-            bcfhelpers::getDP(reader.header, line, isample,
-                              vars.calls[sid].dp);
-
-        }
-
-        // no calls unpacked because everything is filtered -> go again
-        if (ncalls == 0 || ((!_impl->returnHomref) && n_non_ref_calls == 0))
-        {
-            return advance(get_calls, get_info);
         }
     }
-    else
+
+    // no calls unpacked because everything is filtered -> go again
+    if (ncalls == 0 || ((!_impl->returnHomref) && n_non_ref_calls == 0))
     {
-        vars.calls.clear();
+        return advance();
     }
 
     _impl->buffered_variants.push_back(vars);

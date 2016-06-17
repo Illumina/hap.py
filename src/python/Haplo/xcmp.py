@@ -33,7 +33,7 @@ def xcmpWrapper(location_str, args):
     tf = tempfile.NamedTemporaryFile(delete=False,
                                      dir=args.scratch_prefix,
                                      prefix="result.%s" % location_str,
-                                     suffix=".vcf.gz")
+                                     suffix=".bcf")
     tf.close()
 
     to_run = "xcmp %s %s -l %s -o %s -r %s -f %i -n %i --expand-hapblocks %i " \
