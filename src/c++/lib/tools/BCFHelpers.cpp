@@ -891,43 +891,31 @@ namespace bcfhelpers
     int isRefPadded(bcf1_t * line)
     {
         bcf_unpack(line, BCF_UN_SHR);
-        int rpos = 0;
-        bool match = true;
-        std::set<int> ign;
-        while(match)
+
+        const char * ref = line->d.allele[0];
+        const int reflen = strlen(ref);
+
+        int max_match = reflen;
+        for(int al = 1; al < line->n_allele; ++al)
         {
-            const char * ref = line->d.allele[0] + rpos;
-            if(*ref == 0)
+            const char * alt = line->d.allele[al];
+            // symbolic or missing ALT
+            if(strcmp(alt, ".") == 0 || *alt == '<')
             {
+                max_match = 0;
                 break;
             }
-            int alts_seen = 0;
-            for(int al = 1; al < line->n_allele; ++al)
+            int rpos = 0;
+            for(rpos = 0; rpos < reflen; ++rpos, ++alt)
             {
-                if(ign.count(al))
+                const char rb = *(ref + rpos);
+                if(*alt == 0 || *alt != rb)
                 {
-                    continue;
-                }
-                const char * alt = line->d.allele[al];
-                if(strcmp(alt, ".") == 0)
-                {
-                    ign.insert(al);
-                    continue;
-                }
-                ++alts_seen;
-                alt += rpos;
-                if(*alt == 0 || *alt == '<' || *alt != *ref)
-                {
-                    match = false;
                     break;
                 }
             }
-            if(!match || alts_seen == 0)
-            {
-                break;
-            }
-            ++rpos;
+            max_match = std::min(rpos, max_match);
         }
-        return rpos;
+        return max_match;
     }
 } // namespace bcfhelpers
