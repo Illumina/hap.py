@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
                 ("version", "Show version")
                 ("input-file", po::value<std::string>(), "The input file")
                 ("location,l", po::value<std::string>(), "Start location.")
-                ("limit-records", po::value<int64_t>(), "Maximum umber of records to process")
+                ("limit-records", po::value<int64_t>(), "Maximum number of records to process")
                 ("message-every", po::value<int64_t>(), "Print a message every N records.")
                 ("apply-filters,f", po::value<bool>(), "Apply filtering in VCF.")
             ;
@@ -259,6 +259,16 @@ int main(int argc, char *argv[])
             const int refpadding = bcfhelpers::isRefPadded(line);
             if(refpadding)
             {
+                std::string alleles;
+                for(int j = 0; j < line->n_allele; ++j)
+                {
+                    if(!alleles.empty())
+                    {
+                        alleles += ",";
+                    }
+                    alleles += line->d.allele[j];
+                }
+                std::cerr << "at " << vchr << ":" << vstart << " refpadding = " << refpadding << "\n";
                 ++vstart;
                 if(refpadding > 1)
                 {
