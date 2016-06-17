@@ -309,7 +309,7 @@ chr1	534324	.	G	T	163.84	TruthSensitivityTranche99.90to100.00	Regions=CONF;XCMP=
 chr1	534547	.	G	A	450.49	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:450.49
 chr1	534729	.	C	T	6.05	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:6.05
 chr1	534841	.	C	G	97.75	TruthSensitivityTranche99.90to100.00;LowMQ;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:97.75
-chr1	535328	.	T	TTGTG	0	.	XCMP=FN:missing:gt_het:.:simple:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:.:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	535328	.	T	TTGTG	0	.	XCMP=UNK:missing:gt_het:.:simple:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:.:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	535808	.	A	G	20.12	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:20.12
 chr1	535916	.	A	G	21.77	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:21.77
 chr1	536095	.	C	T	170.81	TruthSensitivityTranche99.90to100.00;LowMQ;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:170.81
@@ -345,10 +345,10 @@ chr1	567888	.	G	A	2285.87	TruthSensitivityTranche99.90to100.00;LowMQ	XCMP=UNK:mi
 chr1	568214	.	C	T	666.11	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:666.11
 chr1	569427	.	C	T	277.86	TruthSensitivityTranche99.90to100.00;LowMQ;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:277.86
 chr1	569712	.	G	A	452.1	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:452.1
-chr1	569874	.	C	T	0	.	XCMP=FN:missing:gt_homalt:.:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:.:ti:SNP:homalt:0	./.:.:.:.:NOCALL:nocall:0
-chr1	569878	.	C	G	0	.	XCMP=FN:missing:gt_homalt:.:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:.:tv:SNP:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	569874	.	C	T	0	.	XCMP=UNK:missing:gt_homalt:.:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:.:ti:SNP:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	569878	.	C	G	0	.	XCMP=UNK:missing:gt_homalt:.:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:.:tv:SNP:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	569983	.	G	A	9.4	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=FP:gtmismatch:gt_homalt:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:am:ti:SNP:homalt:9.4	0/1:FP:am:ti:SNP:het:9.4
-chr1	570178	.	G	A	0	.	XCMP=FN:missing:gt_homalt:.:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:.:ti:SNP:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	570178	.	G	A	0	.	XCMP=UNK:missing:gt_homalt:.:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:.:ti:SNP:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	570638	.	T	C	6.76	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:6.76
 chr1	571623	.	T	G	734.81	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:734.81
 chr1	571629	.	T	C	713.29	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:713.29
@@ -490,7 +490,7 @@ chr1	729679	.	C	G	1410.16	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simpl
 chr1	732772	.	G	A	474.57	TruthSensitivityTranche99.90to100.00	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:474.57	0/1:TP:gm:ti:SNP:het:474.57
 chr1	733998	.	C	T	256.38	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:256.38	1/1:TP:gm:ti:SNP:homalt:256.38
 chr1	734042	.	G	A	628.65	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:628.65	1/1:TP:gm:ti:SNP:homalt:628.65
-chr1	734461	.	G	<DEL>	0	.	XCMP=FN:missing:gt_homalt:.:hap:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:lm:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	734461	.	G	<DEL>	0	.	XCMP=UNK:missing:gt_homalt:.:hap:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:lm:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	734462	.	G	A	279.78	TruthSensitivityTranche99.90to100.00;LowGQX	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:279.78
 chr1	734491	.	T	C	256.28	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:hap:mismatch;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:256.28	1/1:TP:gm:ti:SNP:homalt:256.28
 chr1	734566	.	G	A	684.38	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:684.38
@@ -1777,7 +1777,7 @@ chr1	913396	.	A	C	11.66	TruthSensitivityTranche99.90to100.00;LowGQX	XCMP=UNK:mis
 chr1	913397	.	A	C	15.36	TruthSensitivityTranche99.90to100.00;LowGQX	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:15.36
 chr1	913422	.	T	C	16.21	TruthSensitivityTranche99.90to100.00;LowGQX	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:16.21
 chr1	913426	.	A	C	35.79	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:35.79
-chr1	913426	.	A	<DEL>	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	913426	.	A	<DEL>	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	913427	.	A	C	33.74	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:33.74
 chr1	913889	.	G	A	949.58	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:949.58	0/1:TP:gm:ti:SNP:het:949.58
 chr1	914192	.	G	C	1714.25	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:1714.25	1/1:TP:gm:tv:SNP:homalt:1714.25
@@ -1888,7 +1888,7 @@ chr1	931781	.	A	C	204.73	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.
 chr1	931790	.	T	G	34.58	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:34.58
 chr1	931794	.	G	A	7.95	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:7.95
 chr1	931803	.	C	T	176.76	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:176.76
-chr1	931869	.	CCA	<DEL>	0	.	XCMP=FN:missing:gt_het:.:simple:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:.:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	931869	.	CCA	<DEL>	0	.	XCMP=UNK:missing:gt_het:.:simple:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:.:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	931935	.	T	C	105.52	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:105.52
 chr1	931939	.	G	A	597.73	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:597.73
 chr1	931955	.	T	G	316.79	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:316.79
@@ -1914,7 +1914,7 @@ chr1	937575	.	T	TA	714.18	.	Regions=CONF;XCMP=FP:missing:.:gt_het:simple:mismatc
 chr1	937576	.	T	A	22.21	TruthSensitivityTranche99.00to99.90;LowGQX;LowQD	Regions=CONF;XCMP=FP:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:.:tv:SNP:het:22.21
 chr1	937688	.	T	C	1615.38	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1615.38	1/1:TP:gm:ti:SNP:homalt:1615.38
 chr1	937795	.	C	T	69.28	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:69.28
-chr1	937795	.	C	CANTT	0	.	XCMP=FN:missing:gt_homalt:.:hap:mismatch;VTC=nuc__i,al__i,nocall__nc,homalt__i	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:lm:i1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	937795	.	C	CANTT	0	.	XCMP=UNK:missing:gt_homalt:.:hap:mismatch;VTC=nuc__i,al__i,nocall__nc,homalt__i	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:lm:i1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	937796	.	T	A	997.12	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:997.12
 chr1	937816	.	G	T	46.75	TruthSensitivityTranche99.90to100.00;LowQD	Regions=CONF;XCMP=FP:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:tv:SNP:het:46.75
 chr1	937817	.	A	T	12.78	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	Regions=CONF;XCMP=FP:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:tv:SNP:het:12.78
@@ -2017,7 +2017,7 @@ chr1	965278	.	T	C	591.01	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=T
 chr1	965361	.	A	ATG	440.5	.	XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__i,al__i,het__ri	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:i1_5:INDEL:het:440.5	0/1:TP:gm:i1_5:INDEL:het:440.5
 chr1	965481	.	AT	<DEL>	1230.73	.	XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__d,al__d,het__rd	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:d1_5:INDEL:het:1230.73	0/1:TP:gm:d1_5:INDEL:het:1230.73
 chr1	965523	.	A	G	469.66	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:469.66
-chr1	965523	.	A	ATGTGTG	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:i6_15:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	965523	.	A	ATGTGTG	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:i6_15:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	965604	.	C	T	456.34	TruthSensitivityTranche99.00to99.90	XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:456.34	0/1:TP:gm:ti:SNP:het:456.34
 chr1	965757	.	A	G	97.06	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:97.06
 chr1	965876	.	C	CGT	344	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__i,al__i,het__ri	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:i1_5:INDEL:het:344	0/1:TP:gm:i1_5:INDEL:het:344
@@ -2090,7 +2090,7 @@ chr1	984302	.	T	C	343.42	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=T
 chr1	984476	.	T	G	16.02	TruthSensitivityTranche99.00to99.90;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:16.02
 chr1	984485	.	A	G	10.65	TruthSensitivityTranche99.00to99.90;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:10.65
 chr1	984495	.	C	G	116.45	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:116.45
-chr1	984495	.	C	<DEL>	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	984495	.	C	<DEL>	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	984501	.	A	G	36.62	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:36.62
 chr1	984568	.	T	G	21.89	TruthSensitivityTranche99.00to99.90;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:21.89
 chr1	985266	.	C	T	390.55	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:390.55	0/1:TP:gm:ti:SNP:het:390.55
@@ -2113,7 +2113,7 @@ chr1	991659	.	C	<DEL>	582.4	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:ma
 chr1	991724	.	C	T	373.91	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:373.91	0/1:TP:gm:ti:SNP:het:373.91
 chr1	991806	.	CGGGTA	<DEL>	1294.59	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__d,al__d,het__rd	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:d6_15:INDEL:het:1294.59	0/1:TP:gm:d6_15:INDEL:het:1294.59
 chr1	991977	.	G	A	76.46	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:76.46
-chr1	991981	.	A	ACGTGTGGGTGCGTGTGC	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:i16_plus:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	991981	.	A	ACGTGTGGGTGCGTGTGC	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:i16_plus:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	991982	.	T	C	405.48	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:405.48	0/1:TP:gm:ti:SNP:het:405.48
 chr1	992015	.	T	G	9.63	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:9.63
 chr1	992042	.	C	T	310.36	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:310.36	0/1:TP:gm:ti:SNP:het:310.36
@@ -2458,7 +2458,7 @@ chr1	1223846	.	T	C	44.54	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:mis
 chr1	1223887	.	C	T	367.06	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:367.06
 chr1	1223900	.	C	T	292.41	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:292.41
 chr1	1223976	.	T	C	23.01	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:23.01
-chr1	1223986	.	CC	<DEL>	0	.	XCMP=FN:missing:gt_homalt:.:hap:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:lm:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	1223986	.	CC	<DEL>	0	.	XCMP=UNK:missing:gt_homalt:.:hap:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:lm:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	1224021	.	C	T	305.25	TruthSensitivityTranche99.90to100.00;LowGQX	XCMP=UNK:missing:.:gt_homalt:hap:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:UNK:lm:ti:SNP:homalt:305.25
 chr1	1224052	.	T	C	71.9	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:71.9
 chr1	1224070	.	C	T	163.65	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:163.65
@@ -2472,7 +2472,7 @@ chr1	1224386	.	T	C	10.43	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ;LowQD
 chr1	1224404	.	C	T	10.43	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ;LowQD	XCMP=UNK:missing:.:gt_homalt:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:UNK:.:ti:SNP:homalt:10.43
 chr1	1224652	.	C	T	22.15	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:22.15
 chr1	1224675	.	C	T	24.11	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ	XCMP=UNK:missing:.:gt_homalt:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:UNK:.:ti:SNP:homalt:24.11
-chr1	1224995	.	T	TCC	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	1224995	.	T	TCC	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	1225004	.	T	C	43.27	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:43.27
 chr1	1225056	.	A	T	57.39	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:57.39
 chr1	1225096	.	C	T	70.15	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:70.15
@@ -2695,7 +2695,7 @@ chr1	1294928	.	A	G	2084.67	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simp
 chr1	1295323	.	G	A	1770.07	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1770.07	1/1:TP:gm:ti:SNP:homalt:1770.07
 chr1	1295403	.	T	C	1688	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1688	1/1:TP:gm:ti:SNP:homalt:1688
 chr1	1295682	.	A	G	1448.98	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1448.98	1/1:TP:gm:ti:SNP:homalt:1448.98
-chr1	1295879	.	C	CTGGGGGGCGGGCGGGG	0	.	XCMP=FN:missing:gt_homalt:.:hap:mismatch;VTC=nuc__i,al__i,nocall__nc,homalt__i	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:lm:i16_plus:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	1295879	.	C	CTGGGGGGCGGGCGGGG	0	.	XCMP=UNK:missing:gt_homalt:.:hap:mismatch;VTC=nuc__i,al__i,nocall__nc,homalt__i	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:lm:i16_plus:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	1295882	.	G	GGGGGCGGGC	3722.04	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=FP:missing:.:gt_homalt:hap:mismatch;VTC=nuc__i,al__i,nocall__nc,homalt__i	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:FP:lm:i6_15:INDEL:homalt:3722.04
 chr1	1295887	.	T	C	717.99	TruthSensitivityTranche99.90to100.00	Regions=CONF;XCMP=FP:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:ti:SNP:het:717.99
 chr1	1295887	.	T	TGGGGGGC	3702.6	.	Regions=CONF;XCMP=FP:missing:.:gt_homalt:hap:mismatch;VTC=nuc__i,al__i,nocall__nc,homalt__i	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:FP:lm:i6_15:INDEL:homalt:3702.6
@@ -2769,7 +2769,7 @@ chr1	1312132	.	T	C	2028.92	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simp
 chr1	1312811	.	C	T	1498.8	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1498.8	1/1:TP:gm:ti:SNP:homalt:1498.8
 chr1	1313342	.	A	G	1673.69	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1673.69	1/1:TP:gm:ti:SNP:homalt:1673.69
 chr1	1313584	.	G	C	1450.77	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:1450.77	1/1:TP:gm:tv:SNP:homalt:1450.77
-chr1	1313865	.	T	<DEL>	0	.	XCMP=FN:missing:gt_homalt:.:simple:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:.:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	1313865	.	T	<DEL>	0	.	XCMP=UNK:missing:gt_homalt:.:simple:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:.:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	1314015	.	C	T	1749.49	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1749.49	1/1:TP:gm:ti:SNP:homalt:1749.49
 chr1	1314172	.	C	T	1511.53	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1511.53	1/1:TP:gm:ti:SNP:homalt:1511.53
 chr1	1314245	.	C	T	1480.38	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1480.38	1/1:TP:gm:ti:SNP:homalt:1480.38
@@ -2985,7 +2985,7 @@ chr1	1484026	.	T	G	17.84	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	Regio
 chr1	1484970	.	C	G	799.76	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:799.76	0/1:TP:gm:tv:SNP:het:799.76
 chr1	1485553	.	C	A	55.56	TruthSensitivityTranche99.00to99.90;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:55.56
 chr1	1486834	.	C	A	1015.84	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:1015.84	0/1:TP:gm:tv:SNP:het:1015.84
-chr1	1489000	.	AAAAAAA	<DEL>	0	.	XCMP=FN:missing:gt_het:.:simple:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:.:d6_15:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	1489000	.	AAAAAAA	<DEL>	0	.	XCMP=UNK:missing:gt_het:.:simple:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:.:d6_15:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	1489072	.	A	G	533.09	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:533.09	0/1:TP:gm:ti:SNP:het:533.09
 chr1	1489172	.	A	<DEL>	138.61	.	XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__d,al__d,het__rd	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:d1_5:INDEL:het:138.61	0/1:TP:gm:d1_5:INDEL:het:138.61
 chr1	1489621	.	T	C	704.51	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:704.51	0/1:TP:gm:ti:SNP:het:704.51
@@ -3042,7 +3042,7 @@ chr1	1508271	.	T	G	112.95	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:
 chr1	1508459	.	A	G	563.84	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:563.84	0/1:TP:gm:ti:SNP:het:563.84
 chr1	1508643	.	T	A	196.98	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:196.98
 chr1	1508645	.	C	A	253.24	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:253.24
-chr1	1508645	.	C	CAAAA	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	1508645	.	C	CAAAA	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	1508809	.	C	A	12.46	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	Regions=CONF;XCMP=FP:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:tv:SNP:het:12.46
 chr1	1508810	.	AAAAAAAAAAAAAAAAAA	<DEL>	2739.88	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__d,al__d,het__rd	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:d16_plus:INDEL:het:2739.88	0/1:TP:gm:d16_plus:INDEL:het:2739.88
 chr1	1509034	.	T	C	828.73	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:828.73	0/1:TP:gm:ti:SNP:het:828.73
@@ -3059,7 +3059,7 @@ chr1	1514183	.	C	T	387.87	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:matc
 chr1	1514791	.	T	<DEL>	179.45	.	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:d1_5:INDEL:het:179.45
 chr1	1515097	.	T	A	991.48	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:991.48	0/1:TP:gm:tv:SNP:het:991.48
 chr1	1516270	.	C	T	369.52	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:369.52
-chr1	1519615	.	A	AT	0	.	XCMP=FN:missing:gt_het:.:simple:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:.:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	1519615	.	A	AT	0	.	XCMP=UNK:missing:gt_het:.:simple:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:.:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	1519701	.	T	C	555.37	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:555.37	0/1:TP:gm:ti:SNP:het:555.37
 chr1	1520671	.	TTTG	<DEL>	2664.23	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:hap:mismatch;VTC=nuc__d,al__d,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:d1_5:INDEL:homalt:2664.23	1/1:TP:gm:d1_5:INDEL:homalt:2664.23
 chr1	1520678	.	G	A	417.36	TruthSensitivityTranche99.90to100.00	Regions=CONF;XCMP=FP:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:ti:SNP:het:417.36
@@ -3074,7 +3074,7 @@ chr1	1522059	.	C	T	1287.49	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP
 chr1	1522336	.	T	C	1312.56	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1312.56	1/1:TP:gm:ti:SNP:homalt:1312.56
 chr1	1522367	.	G	A	1478.01	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1478.01	1/1:TP:gm:ti:SNP:homalt:1478.01
 chr1	1522462	.	G	A	683.68	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:683.68	0/1:TP:gm:ti:SNP:het:683.68
-chr1	1522602	.	G	GT	0	.	XCMP=FN:missing:gt_homalt:.:hap:mismatch;VTC=nuc__i,al__i,nocall__nc,homalt__i	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:lm:i1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	1522602	.	G	GT	0	.	XCMP=UNK:missing:gt_homalt:.:hap:mismatch;VTC=nuc__i,al__i,nocall__nc,homalt__i	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:lm:i1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	1522621	.	G	T	166.33	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:166.33
 chr1	1522732	.	A	G	1511.62	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1511.62	1/1:TP:gm:ti:SNP:homalt:1511.62
 chr1	1522777	.	A	AT	672.14	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__i,al__i,homalt__i	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:i1_5:INDEL:homalt:672.14	1/1:TP:gm:i1_5:INDEL:homalt:672.14
@@ -3282,7 +3282,7 @@ chr1	1574076	.	G	A	552.47	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:
 chr1	1574299	.	A	T	7.18	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:7.18
 chr1	1574320	.	G	T	23.35	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:23.35
 chr1	1574709	.	T	G	1723.83	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:1723.83	1/1:TP:gm:tv:SNP:homalt:1723.83
-chr1	1575327	.	C	T	0	.	XCMP=FN:missing:gt_het:.:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:.:ti:SNP:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	1575327	.	C	T	0	.	XCMP=UNK:missing:gt_het:.:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:.:ti:SNP:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	1575616	.	T	C	316.92	TruthSensitivityTranche99.90to100.00;LowMQ	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:316.92	1/1:TP:gm:ti:SNP:homalt:316.92
 chr1	1575836	.	C	G	366.66	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:366.66
 chr1	1576636	.	G	A	1396.35	TruthSensitivityTranche99.00to99.90;LowGQX	XCMP=UNK:missing:.:gt_homalt:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:UNK:.:ti:SNP:homalt:1396.35
@@ -3383,7 +3383,7 @@ chr1	1595867	.	C	A	500.9	TruthSensitivityTranche99.90to100.00	Regions=CONF;XCMP=
 chr1	1596196	.	C	T	589.24	TruthSensitivityTranche99.90to100.00;LowMQ	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:589.24	1/1:TP:gm:ti:SNP:homalt:589.24
 chr1	1596304	.	G	A	915.79	TruthSensitivityTranche99.90to100.00	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:915.79	1/1:TP:gm:ti:SNP:homalt:915.79
 chr1	1596974	.	C	T	1756.28	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1756.28	1/1:TP:gm:ti:SNP:homalt:1756.28
-chr1	1598432	.	T	A	0	.	XCMP=FN:missing:gt_homalt:.:hap:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:lm:tv:SNP:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	1598432	.	T	A	0	.	XCMP=UNK:missing:gt_homalt:.:hap:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:lm:tv:SNP:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	1598432	.	T	<DEL>	410.92	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_homalt:hap:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:UNK:lm:d1_5:INDEL:homalt:410.92
 chr1	1598433	.	A	C	7.42	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=FP:gtmismatch:gt_homalt:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:am:tv:SNP:homalt:7.42	0/1:FP:am:tv:SNP:het:7.42
 chr1	1598434	.	C	T	8.74	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:8.74
@@ -3430,7 +3430,7 @@ chr1	1606307	.	G	A	453.52	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=
 chr1	1606530	.	A	G	144	TruthSensitivityTranche99.90to100.00	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:144	0/1:TP:gm:ti:SNP:het:144
 chr1	1606571	.	A	G	647.42	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:647.42	1/1:TP:gm:ti:SNP:homalt:647.42
 chr1	1606667	.	C	CG	0	.	Regions=CONF;XCMP=FN:missing:gt_homalt:.:simple:mismatch;VTC=nuc__i,al__i,nocall__nc,homalt__i	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:.:i1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
-chr1	1606987	.	CA	<DEL>	0	.	XCMP=FN:missing:gt_het:.:simple:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:.:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	1606987	.	CA	<DEL>	0	.	XCMP=UNK:missing:gt_het:.:simple:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:.:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	1608229	.	C	T	176.62	TruthSensitivityTranche99.90to100.00;LowMQ	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:176.62	0/1:TP:gm:ti:SNP:het:176.62
 chr1	1608394	.	C	T	22.14	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ;LowQD	XCMP=UNK:missing:.:gt_homalt:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:UNK:.:ti:SNP:homalt:22.14
 chr1	1609159	.	T	G	558.66	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:558.66	0/1:TP:gm:tv:SNP:het:558.66
@@ -3453,7 +3453,7 @@ chr1	1616256	.	G	C	343.93	TruthSensitivityTranche99.00to99.90	XCMP=TP:match:gt_h
 chr1	1616270	.	T	G	40.98	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:40.98
 chr1	1616548	.	A	<DEL>	361.94	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__d,al__d,het__rd	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:d1_5:INDEL:het:361.94	0/1:TP:gm:d1_5:INDEL:het:361.94
 chr1	1616853	.	G	A	150.33	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:150.33
-chr1	1616853	.	G	GA	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	1616853	.	G	GA	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	1616872	.	G	A	11.52	TruthSensitivityTranche99.00to99.90;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:11.52
 chr1	1617456	.	A	AT	271.91	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__i,al__i,het__ri	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:i1_5:INDEL:het:271.91	0/1:TP:gm:i1_5:INDEL:het:271.91
 chr1	1617484	.	C	<DEL>	766.88	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__d,al__d,het__rd	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:d1_5:INDEL:het:766.88	0/1:TP:gm:d1_5:INDEL:het:766.88
@@ -3499,7 +3499,7 @@ chr1	1627186	.	C	T	49.7	TruthSensitivityTranche99.90to100.00;LowMQ;LowQD	Regions
 chr1	1627556	.	G	A	794.3	TruthSensitivityTranche99.90to100.00	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:794.3	0/1:TP:gm:ti:SNP:het:794.3
 chr1	1627805	.	A	C	865.2	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:865.2	0/1:TP:gm:tv:SNP:het:865.2
 chr1	1628197	.	A	G	680.63	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:680.63	0/1:TP:gm:ti:SNP:het:680.63
-chr1	1628330	.	GT	<DEL>	0	.	XCMP=FN:missing:gt_homalt:.:simple:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:.:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	1628330	.	GT	<DEL>	0	.	XCMP=UNK:missing:gt_homalt:.:simple:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:.:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	1628453	.	G	T	88.45	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:88.45
 chr1	1628711	.	G	A	569.44	TruthSensitivityTranche99.90to100.00	XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:569.44	0/1:TP:gm:ti:SNP:het:569.44
 chr1	1628906	.	G	A	713.37	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:713.37	0/1:TP:gm:ti:SNP:het:713.37
@@ -3525,7 +3525,7 @@ chr1	1639046	.	C	G	76.66	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.
 chr1	1639062	.	T	C	101.82	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:101.82
 chr1	1639801	.	T	C	241.46	TruthSensitivityTranche99.90to100.00	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:241.46	0/1:TP:gm:ti:SNP:het:241.46
 chr1	1642027	.	C	T	413.39	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:413.39	1/1:TP:gm:ti:SNP:homalt:413.39
-chr1	1643910	.	G	A	0	.	XCMP=FN:missing:gt_homalt:.:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:.:ti:SNP:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	1643910	.	G	A	0	.	XCMP=UNK:missing:gt_homalt:.:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:.:ti:SNP:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	1644572	.	A	G	229.71	TruthSensitivityTranche99.90to100.00;LowGQX	XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:229.71	1/1:TP:gm:ti:SNP:homalt:229.71
 chr1	1644836	.	G	A	200.31	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:200.31
 chr1	1644908	.	C	T	403.31	TruthSensitivityTranche99.90to100.00	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:mismatch;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:403.31	1/1:TP:gm:ti:SNP:homalt:403.31
@@ -3854,7 +3854,7 @@ chr1	1692321	.	T	C	1439.39	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simp
 chr1	1694103	.	A	G	1354.18	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1354.18	1/1:TP:gm:ti:SNP:homalt:1354.18
 chr1	1694199	.	AATG	<DEL>	1923.62	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__d,al__d,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:d1_5:INDEL:homalt:1923.62	1/1:TP:gm:d1_5:INDEL:homalt:1923.62
 chr1	1694251	.	C	T	879.89	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:879.89	0/1:TP:gm:ti:SNP:het:879.89
-chr1	1695074	.	AG	<DEL>	0	.	XCMP=FN:missing:gt_homalt:.:hap:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:lm:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	1695074	.	AG	<DEL>	0	.	XCMP=UNK:missing:gt_homalt:.:hap:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:lm:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	1695075	.	G	A	975.87	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_homalt:hap:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:UNK:lm:ti:SNP:homalt:975.87
 chr1	1695462	.	C	A	1524.11	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:1524.11	1/1:TP:gm:tv:SNP:homalt:1524.11
 chr1	1695574	.	G	T	1392.91	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:1392.91	1/1:TP:gm:tv:SNP:homalt:1392.91
@@ -3928,7 +3928,7 @@ chr1	1734202	.	T	TAA	740.55	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:hap
 chr1	1734219	.	G	A	65.91	TruthSensitivityTranche99.00to99.90;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:65.91
 chr1	1734970	.	C	T	1830.92	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1830.92	1/1:TP:gm:ti:SNP:homalt:1830.92
 chr1	1735443	.	G	A	891.23	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_homalt:hap:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:UNK:lm:ti:SNP:homalt:891.23
-chr1	1735443	.	G	<DEL>	0	.	XCMP=FN:missing:gt_homalt:.:hap:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:lm:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	1735443	.	G	<DEL>	0	.	XCMP=UNK:missing:gt_homalt:.:hap:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:lm:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	1735458	.	T	G	24.9	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	Regions=CONF;XCMP=FP:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:tv:SNP:het:24.9
 chr1	1735494	.	A	G	4.02	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	Regions=CONF;XCMP=FP:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:ti:SNP:het:4.02
 chr1	1736653	.	T	G	1596.77	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:1596.77	1/1:TP:gm:tv:SNP:homalt:1596.77
@@ -3961,7 +3961,7 @@ chr1	1746260	.	G	A	233.71	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:
 chr1	1746268	.	G	A	3.61	TruthSensitivityTranche99.00to99.90;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:3.61
 chr1	1746326	.	T	G	83.36	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:83.36
 chr1	1748072	.	A	T	91.75	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:91.75
-chr1	1748083	.	C	CT	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	1748083	.	C	CT	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	1749412	.	T	G	880.48	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:880.48	0/1:TP:gm:tv:SNP:het:880.48
 chr1	1749732	.	G	A	60.13	TruthSensitivityTranche99.00to99.90;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:60.13
 chr1	1751145	.	T	<DEL>	506.59	.	XCMP=UNK:missing:.:gt_homalt:simple:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:UNK:.:d1_5:INDEL:homalt:506.59
@@ -4103,7 +4103,7 @@ chr1	1834748	.	A	G	1579.81	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simp
 chr1	1834943	.	A	C	87.92	TruthSensitivityTranche99.00to99.90;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:87.92
 chr1	1835042	.	G	A	699.26	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:699.26	1/1:TP:gm:ti:SNP:homalt:699.26
 chr1	1835056	.	C	T	1357.99	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1357.99	1/1:TP:gm:ti:SNP:homalt:1357.99
-chr1	1835259	.	C	CT	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	1835259	.	C	CT	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	1835276	.	C	T	130	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:130
 chr1	1835863	.	A	AAAATAAAT,AAAATAAATAAAT	3178.94	.	Regions=CONF;XCMP=TP:match:gt_hetalt:gt_hetalt:simple:match;VTC=nuc__i,al__i,hetalt__i	GT:BD:BK:BI:BVT:BLT:QQ	2/1:TP:gm:i6_15:INDEL:hetalt:3178.94	2/1:TP:gm:i6_15:INDEL:hetalt:3178.94
 chr1	1836686	.	C	G	1779.3	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:1779.3	1/1:TP:gm:tv:SNP:homalt:1779.3
@@ -4247,7 +4247,7 @@ chr1	1886345	.	C	CA	1372.67	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:hap
 chr1	1886346	.	G	A	167.77	TruthSensitivityTranche99.90to100.00	Regions=CONF;XCMP=FP:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:ti:SNP:het:167.77
 chr1	1886346	.	G	GCC	1570.69	TruthSensitivityTranche99.90to100.00	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:hap:mismatch;VTC=nuc__i,al__i,homalt__i	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:i1_5:INDEL:homalt:1570.69	1/1:TP:gm:i1_5:INDEL:homalt:1570.69
 chr1	1886385	.	T	C	1474.16	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:hap:mismatch;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1474.16	1/1:TP:gm:ti:SNP:homalt:1474.16
-chr1	1886458	.	GGAAGTGCGGCTCACACC	<DEL>	0	.	XCMP=FN:missing:gt_homalt:.:hap:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:lm:d16_plus:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	1886458	.	GGAAGTGCGGCTCACACC	<DEL>	0	.	XCMP=UNK:missing:gt_homalt:.:hap:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:lm:d16_plus:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	1886475	.	C	A	97.86	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:97.86
 chr1	1886501	.	C	A	363.65	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:363.65
 chr1	1886511	.	C	A	151.13	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:151.13
@@ -4270,7 +4270,7 @@ chr1	1892048	.	G	C	1047.51	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:mat
 chr1	1892325	.	T	C	2201.26	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:2201.26	1/1:TP:gm:ti:SNP:homalt:2201.26
 chr1	1893661	.	T	C	1701.51	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1701.51	1/1:TP:gm:ti:SNP:homalt:1701.51
 chr1	1893915	.	C	A	77.1	TruthSensitivityTranche99.00to99.90;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:77.1
-chr1	1893915	.	C	CA	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	1893915	.	C	CA	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	1894284	.	T	C	857.67	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:857.67	0/1:TP:gm:ti:SNP:het:857.67
 chr1	1894845	.	G	A	649.7	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:649.7	0/1:TP:gm:ti:SNP:het:649.7
 chr1	1894895	.	C	A	15.11	TruthSensitivityTranche99.00to99.90;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:15.11
@@ -4589,7 +4589,7 @@ chr1	1942710	.	G	GT	1174.77	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:hap
 chr1	1942722	.	G	T	48.73	TruthSensitivityTranche99.00to99.90;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:48.73
 chr1	1943291	.	C	T	1479.45	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1479.45	1/1:TP:gm:ti:SNP:homalt:1479.45
 chr1	1943718	.	C	T	208.74	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:208.74
-chr1	1943718	.	C	CAAAATAAAAT	0	.	XCMP=FN:missing:gt_homalt:.:hap:mismatch;VTC=nuc__i,al__i,nocall__nc,homalt__i	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:lm:i6_15:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	1943718	.	C	CAAAATAAAAT	0	.	XCMP=UNK:missing:gt_homalt:.:hap:mismatch;VTC=nuc__i,al__i,nocall__nc,homalt__i	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:lm:i6_15:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	1944101	.	C	G	2194.24	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:2194.24	1/1:TP:gm:tv:SNP:homalt:2194.24
 chr1	1946591	.	G	A	1759.75	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1759.75	1/1:TP:gm:ti:SNP:homalt:1759.75
 chr1	1946809	.	C	T	1622.01	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1622.01	1/1:TP:gm:ti:SNP:homalt:1622.01
@@ -4675,7 +4675,7 @@ chr1	2005740	.	T	C	1652.46	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simp
 chr1	2006728	.	T	C	1431.16	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1431.16	1/1:TP:gm:ti:SNP:homalt:1431.16
 chr1	2007674	.	A	G	1167.82	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1167.82	1/1:TP:gm:ti:SNP:homalt:1167.82
 chr1	2009551	.	C	T	794.11	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:794.11	0/1:TP:gm:ti:SNP:het:794.11
-chr1	2010283	.	C	CT	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2010283	.	C	CT	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2010300	.	G	T	120.88	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:120.88
 chr1	2014196	.	G	A	1776.7	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1776.7	1/1:TP:gm:ti:SNP:homalt:1776.7
 chr1	2024507	.	T	C	1566.11	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1566.11	1/1:TP:gm:ti:SNP:homalt:1566.11
@@ -4943,7 +4943,7 @@ chr1	2072785	.	TT	<DEL>	633.33	.	XCMP=UNK:missing:.:gt_homalt:simple:mismatch;VT
 chr1	2073000	.	A	G	1246.1	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1246.1	1/1:TP:gm:ti:SNP:homalt:1246.1
 chr1	2073443	.	T	C	23.88	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ;LowQD	XCMP=UNK:missing:.:gt_homalt:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:UNK:.:ti:SNP:homalt:23.88
 chr1	2073553	.	A	G	223.97	TruthSensitivityTranche99.90to100.00;LowGQX	XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:223.97	1/1:TP:gm:ti:SNP:homalt:223.97
-chr1	2073817	.	C	<DEL>	0	.	XCMP=FN:missing:gt_homalt:.:hap:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:lm:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2073817	.	C	<DEL>	0	.	XCMP=UNK:missing:gt_homalt:.:hap:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:lm:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2073846	.	T	C	176.79	TruthSensitivityTranche99.00to99.90;LowGQX	XCMP=TP:match:gt_homalt:gt_homalt:hap:mismatch;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:176.79	1/1:TP:gm:ti:SNP:homalt:176.79
 chr1	2078804	.	C	T	1094.92	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:1094.92	0/1:TP:gm:ti:SNP:het:1094.92
 chr1	2086561	.	A	G	811.53	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:811.53	0/1:TP:gm:ti:SNP:het:811.53
@@ -5098,7 +5098,7 @@ chr1	2224866	.	G	GC	853.04	.	Regions=CONF;XCMP=FP:missing:.:gt_homalt:hap:mismat
 chr1	2224876	.	A	C	1460.01	TruthSensitivityTranche99.00to99.90	XCMP=TP:match:gt_homalt:gt_homalt:hap:mismatch;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:1460.01	1/1:TP:gm:tv:SNP:homalt:1460.01
 chr1	2225284	.	G	A	2114.14	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:2114.14	1/1:TP:gm:ti:SNP:homalt:2114.14
 chr1	2226333	.	T	A	1470.31	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:1470.31	1/1:TP:gm:tv:SNP:homalt:1470.31
-chr1	2227144	.	GGCCACGTGTGGCTATGTGTCCA	<DEL>	0	.	XCMP=FN:missing:gt_homalt:.:hap:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:lm:d16_plus:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2227144	.	GGCCACGTGTGGCTATGTGTCCA	<DEL>	0	.	XCMP=UNK:missing:gt_homalt:.:hap:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:lm:d16_plus:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2227146	.	C	T	110.82	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:110.82
 chr1	2227150	.	G	A	184.63	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:184.63
 chr1	2227151	.	T	C	182.52	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:182.52
@@ -5171,7 +5171,7 @@ chr1	2256416	.	G	GGCT	2211.87	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:s
 chr1	2256471	.	T	A	383.51	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:383.51	0/1:TP:gm:tv:SNP:het:383.51
 chr1	2256555	.	T	C	29.91	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=TP:match:gt_het:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:29.91	0/1:TP:gm:ti:SNP:het:29.91
 chr1	2256562	.	C	T	11.19	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:11.19
-chr1	2256562	.	C	CTTCT	0	.	XCMP=FN:missing:gt_het:.:hapfail:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:.:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2256562	.	C	CTTCT	0	.	XCMP=UNK:missing:gt_het:.:hapfail:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:.:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2256564	.	T	C	176.38	TruthSensitivityTranche99.90to100.00	Regions=CONF;XCMP=TP:match:gt_het:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:176.38	0/1:TP:gm:ti:SNP:het:176.38
 chr1	2256566	.	C	T	168.07	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:168.07
 chr1	2256571	.	T	C	56.51	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:56.51
@@ -5236,7 +5236,7 @@ chr1	2270098	.	A	G	894.45	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:matc
 chr1	2271864	.	C	T	1431.96	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1431.96	1/1:TP:gm:ti:SNP:homalt:1431.96
 chr1	2272226	.	C	T	693.1	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:693.1	0/1:TP:gm:ti:SNP:het:693.1
 chr1	2272903	.	A	G	1603.94	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1603.94	1/1:TP:gm:ti:SNP:homalt:1603.94
-chr1	2273132	.	A	<DEL>	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2273132	.	A	<DEL>	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2273144	.	A	G	750.91	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:750.91	0/1:TP:gm:ti:SNP:het:750.91
 chr1	2273286	.	T	C	1093.41	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1093.41	1/1:TP:gm:ti:SNP:homalt:1093.41
 chr1	2273431	.	C	G	170.65	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:170.65
@@ -5373,7 +5373,7 @@ chr1	2300378	.	G	C	833.64	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:matc
 chr1	2300649	.	C	T	690.4	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:690.4	0/1:TP:gm:ti:SNP:het:690.4
 chr1	2300775	.	A	G	558.6	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:558.6	0/1:TP:gm:ti:SNP:het:558.6
 chr1	2300794	.	G	A	266.64	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:266.64
-chr1	2300794	.	G	GA	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2300794	.	G	GA	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2300815	.	G	A	85.13	TruthSensitivityTranche99.00to99.90;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:85.13
 chr1	2301153	.	TAAT	<DEL>	2294.23	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__d,al__d,het__rd	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:d1_5:INDEL:het:2294.23	0/1:TP:gm:d1_5:INDEL:het:2294.23
 chr1	2301609	.	G	T	471.38	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:471.38	0/1:TP:gm:tv:SNP:het:471.38
@@ -5402,7 +5402,7 @@ chr1	2319428	.	A	G	728.62	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:matc
 chr1	2319530	.	G	T	679.72	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:679.72	0/1:TP:gm:tv:SNP:het:679.72
 chr1	2320568	.	G	A	104.05	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:104.05
 chr1	2320570	.	A	G	41.95	TruthSensitivityTranche99.00to99.90;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:41.95
-chr1	2320570	.	A	AAAG	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2320570	.	A	AAAG	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2323567	.	T	C	467.58	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:467.58	0/1:TP:gm:ti:SNP:het:467.58
 chr1	2324008	.	C	T	816.13	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:816.13	0/1:TP:gm:ti:SNP:het:816.13
 chr1	2324459	.	A	G	161.61	TruthSensitivityTranche99.90to100.00	Regions=CONF;XCMP=FP:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:ti:SNP:het:161.61
@@ -5433,7 +5433,7 @@ chr1	2332038	.	A	G	838.5	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match
 chr1	2332391	.	C	T	948.61	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:948.61	0/1:TP:gm:ti:SNP:het:948.61
 chr1	2332640	.	T	C	590.51	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=FP:missing:.:gt_homalt:hap:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:FP:lm:ti:SNP:homalt:590.51
 chr1	2332640	.	TGTCCTCCCT	<DEL>	0	.	Regions=CONF;XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:d6_15:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
-chr1	2332681	.	T	TCC	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2332681	.	T	TCC	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2332691	.	T	C	14.94	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:14.94
 chr1	2332705	.	A	<DEL>	144.41	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:d1_5:INDEL:het:144.41
 chr1	2332706	.	C	T	37.45	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:37.45
@@ -5497,7 +5497,7 @@ chr1	2351575	.	G	A	611.33	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:matc
 chr1	2351699	.	T	C	452.29	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:452.29	0/1:TP:gm:ti:SNP:het:452.29
 chr1	2351879	.	C	T	357.42	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:357.42	0/1:TP:gm:ti:SNP:het:357.42
 chr1	2352146	.	C	T	664.25	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:664.25	0/1:TP:gm:ti:SNP:het:664.25
-chr1	2352393	.	C	CTT	0	.	XCMP=FN:missing:gt_het:.:simple:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:.:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2352393	.	C	CTT	0	.	XCMP=UNK:missing:gt_het:.:simple:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:.:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2353085	.	A	G	992.92	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:992.92	0/1:TP:gm:ti:SNP:het:992.92
 chr1	2353295	.	C	T	720.44	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:720.44	0/1:TP:gm:ti:SNP:het:720.44
 chr1	2353420	.	G	GAAGAA	1385.14	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__i,al__i,het__ri	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:i1_5:INDEL:het:1385.14	0/1:TP:gm:i1_5:INDEL:het:1385.14
@@ -5810,9 +5810,9 @@ chr1	2531976	.	AAA	<DEL>	1700.36	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homal
 chr1	2531979	.	A	G	1188.12	TruthSensitivityTranche99.00to99.90;LowGQX	XCMP=UNK:missing:.:gt_homalt:hap:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:UNK:lm:ti:SNP:homalt:1188.12
 chr1	2532124	.	CAAACAAACAAA	<DEL>	3940.46	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:hap:mismatch;VTC=nuc__d,al__d,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:d6_15:INDEL:homalt:3940.46	1/1:TP:gm:d6_15:INDEL:homalt:3940.46
 chr1	2532145	.	A	C	0	.	Regions=CONF;XCMP=FN:missing:gt_homalt:.:hap:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:lm:tv:SNP:homalt:0	./.:.:.:.:NOCALL:nocall:0
-chr1	2532146	.	A	C	0	.	XCMP=FN:missing:gt_homalt:.:hap:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:lm:tv:SNP:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2532146	.	A	C	0	.	XCMP=UNK:missing:gt_homalt:.:hap:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:lm:tv:SNP:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2532157	.	C	T	0	.	Regions=CONF;XCMP=FN:missing:gt_homalt:.:hap:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:lm:ti:SNP:homalt:0	./.:.:.:.:NOCALL:nocall:0
-chr1	2532158	.	C	G	0	.	XCMP=FN:missing:gt_homalt:.:hap:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:lm:tv:SNP:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2532158	.	C	G	0	.	XCMP=UNK:missing:gt_homalt:.:hap:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:lm:tv:SNP:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2532159	.	C	CTGT	2202.33	.	XCMP=TP:match:gt_homalt:gt_homalt:hap:mismatch;VTC=nuc__i,al__i,homalt__i	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:i1_5:INDEL:homalt:2202.33	1/1:TP:gm:i1_5:INDEL:homalt:2202.33
 chr1	2532416	.	T	C	1755.03	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:hap:mismatch;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1755.03	1/1:TP:gm:ti:SNP:homalt:1755.03
 chr1	2532453	.	C	CT	1871	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:hap:mismatch;VTC=nuc__i,al__i,homalt__i	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:i1_5:INDEL:homalt:1871	1/1:TP:gm:i1_5:INDEL:homalt:1871
@@ -5824,10 +5824,10 @@ chr1	2535504	.	A	C	44.07	TruthSensitivityTranche99.00to99.90;LowQD	XCMP=UNK:miss
 chr1	2538013	.	T	G	8.27	TruthSensitivityTranche99.00to99.90;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:8.27
 chr1	2540345	.	C	CACATAT	0	.	Regions=CONF;XCMP=FN:missing:gt_het:.:simple:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:.:i6_15:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2540474	.	ACAC	<DEL>	581.18	.	XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__d,al__d,het__rd	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:d1_5:INDEL:het:581.18	0/1:TP:gm:d1_5:INDEL:het:581.18
-chr1	2540477	.	C	CACAC	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2540477	.	C	CACAC	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2548028	.	A	G	1952.62	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1952.62	1/1:TP:gm:ti:SNP:homalt:1952.62
 chr1	2548865	.	C	A	24.42	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:24.42
-chr1	2551095	.	A	<DEL>	0	.	XCMP=FN:missing:gt_homalt:.:simple:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:.:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2551095	.	A	<DEL>	0	.	XCMP=UNK:missing:gt_homalt:.:simple:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:.:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2551502	.	T	C	1218.1	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:1218.1	0/1:TP:gm:ti:SNP:het:1218.1
 chr1	2551785	.	C	T	917.18	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:917.18	0/1:TP:gm:ti:SNP:het:917.18
 chr1	2552217	.	G	GA	1247.32	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__i,al__i,homalt__i	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:i1_5:INDEL:homalt:1247.32	1/1:TP:gm:i1_5:INDEL:homalt:1247.32
@@ -5855,7 +5855,7 @@ chr1	2565327	.	G	T	893.92	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:matc
 chr1	2566025	.	C	T	696.26	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:696.26	0/1:TP:gm:ti:SNP:het:696.26
 chr1	2566221	.	C	T	31.44	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:31.44
 chr1	2566393	.	CACT	<DEL>	253.84	.	XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__d,al__d,het__rd	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:d1_5:INDEL:het:253.84	0/1:TP:gm:d1_5:INDEL:het:253.84
-chr1	2566434	.	CCC	<DEL>	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2566434	.	CCC	<DEL>	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2566450	.	T	C	37.41	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:37.41
 chr1	2566458	.	G	C	7.98	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:7.98
 chr1	2566480	.	T	C	8.91	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:8.91
@@ -6086,8 +6086,8 @@ chr1	2586027	.	C	T	598.77	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:mi
 chr1	2586032	.	T	G	325.05	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:325.05
 chr1	2586037	.	A	G	740.36	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:740.36
 chr1	2586044	.	T	A	345.52	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:345.52
-chr1	2586047	.	C	G	0	.	XCMP=FN:missing:gt_het:.:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	1/0:FN:.:tv:SNP:het:0	./.:.:.:.:NOCALL:nocall:0
-chr1	2586048	.	A	<DEL>	0	.	XCMP=FN:missing:gt_het:.:hapfail:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	1/0:FN:.:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2586047	.	C	G	0	.	XCMP=UNK:missing:gt_het:.:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	1/0:UNK:.:tv:SNP:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2586048	.	A	<DEL>	0	.	XCMP=UNK:missing:gt_het:.:hapfail:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	1/0:UNK:.:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2586058	.	G	A	2107.82	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:2107.82
 chr1	2586067	.	C	T	228.99	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:228.99
 chr1	2586103	.	T	C	1826.02	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:1826.02
@@ -6171,7 +6171,7 @@ chr1	2588053	.	A	G	23.88	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ;LowQD
 chr1	2588071	.	G	C	35.63	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ;LowQD	XCMP=UNK:missing:.:gt_homalt:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:UNK:.:tv:SNP:homalt:35.63
 chr1	2588085	.	G	C	31.82	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ;LowQD	XCMP=UNK:missing:.:gt_homalt:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:UNK:.:tv:SNP:homalt:31.82
 chr1	2588117	.	G	A	5.06	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ;LowQD	XCMP=UNK:missing:.:gt_homalt:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:UNK:.:ti:SNP:homalt:5.06
-chr1	2588615	.	CACACCCCCA	<DEL>	0	.	XCMP=FN:missing:gt_homalt:.:simple:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:.:d6_15:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2588615	.	CACACCCCCA	<DEL>	0	.	XCMP=UNK:missing:gt_homalt:.:simple:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:.:d6_15:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2589290	.	A	T	70.2	TruthSensitivityTranche99.90to100.00;LowMQ;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:70.2
 chr1	2589537	.	C	G	780.16	TruthSensitivityTranche99.90to100.00;LowMQ	Regions=CONF;XCMP=FP:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:.:tv:SNP:het:780.16
 chr1	2590908	.	T	C	27.89	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ;LowQD	XCMP=UNK:missing:.:gt_homalt:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:UNK:.:ti:SNP:homalt:27.89
@@ -6245,7 +6245,7 @@ chr1	2603718	.	T	C	17.19	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ;LowQD
 chr1	2603748	.	G	A	17.19	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:17.19
 chr1	2603759	.	T	A	17.19	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:17.19
 chr1	2603770	.	C	T	20.13	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:20.13
-chr1	2604307	.	C	G	0	.	XCMP=FN:missing:gt_het:.:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:.:tv:SNP:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2604307	.	C	G	0	.	XCMP=UNK:missing:gt_het:.:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:.:tv:SNP:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2606141	.	C	T	12.36	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ;LowQD	XCMP=UNK:missing:.:gt_homalt:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:UNK:.:ti:SNP:homalt:12.36
 chr1	2606571	.	A	C	40.93	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ	XCMP=UNK:missing:.:gt_homalt:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:UNK:.:tv:SNP:homalt:40.93
 chr1	2606575	.	T	C	40.93	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ	XCMP=UNK:missing:.:gt_homalt:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:UNK:.:ti:SNP:homalt:40.93
@@ -6330,7 +6330,7 @@ chr1	2613727	.	A	G	54.17	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ;LowQD
 chr1	2613770	.	C	T	12.36	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ;LowQD	XCMP=UNK:missing:.:gt_homalt:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:UNK:.:ti:SNP:homalt:12.36
 chr1	2613824	.	A	G	32.97	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ;LowQD	XCMP=UNK:missing:.:gt_homalt:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:UNK:.:ti:SNP:homalt:32.97
 chr1	2614342	.	C	T	21.12	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:21.12
-chr1	2614378	.	C	G	0	.	XCMP=FN:missing:gt_het:.:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:.:tv:SNP:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2614378	.	C	G	0	.	XCMP=UNK:missing:gt_het:.:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:.:tv:SNP:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2614403	.	T	C	132.49	TruthSensitivityTranche99.90to100.00;LowMQ;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:132.49
 chr1	2614409	.	C	T	94.15	TruthSensitivityTranche99.90to100.00;LowMQ;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:94.15
 chr1	2614445	.	T	A	105.33	TruthSensitivityTranche99.90to100.00;LowMQ;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:105.33
@@ -6366,7 +6366,7 @@ chr1	2614780	.	C	G	179.54	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:mi
 chr1	2614799	.	G	T	310.77	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:310.77
 chr1	2614809	.	T	C	220.5	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:220.5
 chr1	2614813	.	T	C	1892.71	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_homalt:hapfail:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:UNK:.:ti:SNP:homalt:1892.71
-chr1	2614831	.	G	<DEL>	0	.	XCMP=FN:missing:gt_homalt:.:hapfail:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:.:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2614831	.	G	<DEL>	0	.	XCMP=UNK:missing:gt_homalt:.:hapfail:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:.:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2614846	.	C	T	898.94	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:898.94
 chr1	2614849	.	T	C	920.26	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:920.26
 chr1	2614861	.	C	G	215.91	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:215.91
@@ -6564,7 +6564,7 @@ chr1	2617476	.	G	A	4.88	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=U
 chr1	2617485	.	A	G	242.17	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:242.17
 chr1	2617495	.	C	T	18.08	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:18.08
 chr1	2617508	.	A	C	263.83	TruthSensitivityTranche99.90to100.00	Regions=CONF;XCMP=FP:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:.:tv:SNP:het:263.83
-chr1	2617524	.	A	<DEL>	0	.	XCMP=FN:missing:gt_het:.:hapfail:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:.:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2617524	.	A	<DEL>	0	.	XCMP=UNK:missing:gt_het:.:hapfail:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:.:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2617549	.	G	A	63.96	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:63.96
 chr1	2617562	.	G	C	763.39	TruthSensitivityTranche99.90to100.00	XCMP=TP:match:gt_het:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:763.39	0/1:TP:gm:tv:SNP:het:763.39
 chr1	2617605	.	G	T	336.66	TruthSensitivityTranche99.90to100.00	Regions=CONF;XCMP=TP:match:gt_het:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:336.66	0/1:TP:gm:tv:SNP:het:336.66
@@ -7233,12 +7233,12 @@ chr1	2629617	.	C	A	757.43	TruthSensitivityTranche99.90to100.00	Regions=CONF;XCMP
 chr1	2629629	.	A	G	1793.05	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:1793.05
 chr1	2629651	.	G	A	733.73	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:733.73
 chr1	2629652	.	C	T	13.25	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:13.25
-chr1	2629653	.	G	<DEL>	0	.	XCMP=FN:missing:gt_homalt:.:hapfail:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:.:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2629653	.	G	<DEL>	0	.	XCMP=UNK:missing:gt_homalt:.:hapfail:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:.:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2629667	.	A	C	585.12	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:585.12
 chr1	2629669	.	G	T	168.6	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:168.6
 chr1	2629670	.	T	G	574.96	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:574.96
 chr1	2629672	.	A	G	73.99	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:73.99
-chr1	2629684	.	C	<DEL>	0	.	XCMP=FN:missing:gt_het:.:hapfail:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:.:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2629684	.	C	<DEL>	0	.	XCMP=UNK:missing:gt_het:.:hapfail:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:.:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2629685	.	C	A	30.77	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:30.77
 chr1	2629693	.	A	G	1202.41	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:1202.41
 chr1	2629710	.	A	G	859.31	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hapfail:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:859.31
@@ -7336,7 +7336,7 @@ chr1	2632573	.	C	A	9.06	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=U
 chr1	2633391	.	G	A	0	.	Regions=CONF;XCMP=FN:missing:gt_homalt:.:simple:mismatch;VTC=nuc__s,al__s,nocall__nc,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:.:ti:SNP:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2684547	.	A	G	622.61	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:622.61	0/1:TP:gm:ti:SNP:het:622.61
 chr1	2684992	.	G	A	133.94	TruthSensitivityTranche99.90to100.00;LowGQX;LowMQ	XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:133.94	1/1:TP:gm:ti:SNP:homalt:133.94
-chr1	2685161	.	C	A	0	.	XCMP=FN:missing:gt_het:.:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:.:tv:SNP:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2685161	.	C	A	0	.	XCMP=UNK:missing:gt_het:.:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:.:tv:SNP:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2686240	.	T	C	4.26	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:4.26
 chr1	2686290	.	C	T	29.51	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:ti:SNP:het:29.51
 chr1	2686433	.	G	T	63.31	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:63.31
@@ -7473,7 +7473,7 @@ chr1	2757196	.	T	C	277.1	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match
 chr1	2757401	.	A	AGTGT	979.54	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__i,al__i,het__ri	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:i1_5:INDEL:het:979.54	0/1:TP:gm:i1_5:INDEL:het:979.54
 chr1	2757426	.	GTGT	<DEL>	655.17	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__d,al__d,het__rd	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:d1_5:INDEL:het:655.17	0/1:TP:gm:d1_5:INDEL:het:655.17
 chr1	2757431	.	T	A	239.53	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:239.53	0/1:TP:gm:tv:SNP:het:239.53
-chr1	2757447	.	T	TGA	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2757447	.	T	TGA	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2757455	.	A	T	356.7	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:356.7	0/1:TP:gm:tv:SNP:het:356.7
 chr1	2757474	.	C	G	403.52	TruthSensitivityTranche99.90to100.00	Regions=CONF;XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:403.52	0/1:TP:gm:tv:SNP:het:403.52
 chr1	2757478	.	G	C	355.47	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:355.47	0/1:TP:gm:tv:SNP:het:355.47
@@ -7576,9 +7576,9 @@ chr1	2773566	.	C	T	443.03	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:matc
 chr1	2773695	.	A	G	1372.82	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1372.82	1/1:TP:gm:ti:SNP:homalt:1372.82
 chr1	2774053	.	A	G	785.52	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:785.52	0/1:TP:gm:ti:SNP:het:785.52
 chr1	2775716	.	A	G	550.98	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:550.98	0/1:TP:gm:ti:SNP:het:550.98
-chr1	2775806	.	G	GA	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2775806	.	G	GA	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2775843	.	C	G	140.07	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:140.07
-chr1	2775851	.	A	AAGGAAGG	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:i6_15:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2775851	.	A	AAGGAAGG	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:i6_15:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2775856	.	A	G	237.34	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:237.34
 chr1	2775858	.	G	A	63.83	TruthSensitivityTranche99.90to100.00	XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:63.83	0/1:TP:gm:ti:SNP:het:63.83
 chr1	2775869	.	A	G	153.79	TruthSensitivityTranche99.90to100.00	Regions=CONF;XCMP=FP:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:ti:SNP:het:153.79
@@ -7642,7 +7642,7 @@ chr1	2789505	.	T	C	1135.4	TruthSensitivityTranche99.90to100.00	XCMP=TP:match:gt_
 chr1	2789509	.	T	C	964.88	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:964.88
 chr1	2789513	.	T	C	722.4	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:722.4
 chr1	2789517	.	T	C	338.88	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:338.88
-chr1	2789532	.	TT	<DEL>	0	.	XCMP=FN:missing:gt_homalt:.:hap:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:lm:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2789532	.	TT	<DEL>	0	.	XCMP=UNK:missing:gt_homalt:.:hap:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:lm:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2789561	.	C	T	654.09	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:654.09
 chr1	2789563	.	T	C	631.67	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:631.67
 chr1	2789620	.	TTTCTTCTCTTTC	<DEL>	4320.74	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__d,al__d,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:d6_15:INDEL:homalt:4320.74	1/1:TP:gm:d6_15:INDEL:homalt:4320.74
@@ -8117,7 +8117,7 @@ chr1	2949028	.	C	T	582.6	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match
 chr1	2949355	.	C	T	483.4	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:483.4	0/1:TP:gm:ti:SNP:het:483.4
 chr1	2949607	.	G	C	561.37	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:561.37	0/1:TP:gm:tv:SNP:het:561.37
 chr1	2949961	.	C	<DEL>	752.14	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__d,al__d,het__rd	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:d1_5:INDEL:het:752.14	0/1:TP:gm:d1_5:INDEL:het:752.14
-chr1	2949988	.	T	<DEL>	0	.	XCMP=FN:missing:gt_homalt:.:hap:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:lm:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2949988	.	T	<DEL>	0	.	XCMP=UNK:missing:gt_homalt:.:hap:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:lm:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2949989	.	A	C	112.86	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:112.86
 chr1	2949990	.	C	<DEL>	407.32	.	XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__d,al__d,het__rd	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:d1_5:INDEL:het:407.32	0/1:TP:gm:d1_5:INDEL:het:407.32
 chr1	2949999	.	G	C	496.5	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:496.5	0/1:TP:gm:tv:SNP:het:496.5
@@ -8178,7 +8178,7 @@ chr1	2958531	.	T	TTTTTC	0	.	Regions=CONF;XCMP=FN:missing:gt_het:.:hap:mismatch;V
 chr1	2958545	.	T	TC	0	.	Regions=CONF;XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2958548	.	C	T	394.91	TruthSensitivityTranche99.00to99.90	XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:394.91	0/1:TP:gm:ti:SNP:het:394.91
 chr1	2958561	.	C	T	6.44	TruthSensitivityTranche99.00to99.90;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:6.44
-chr1	2958562	.	TT	<DEL>	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	2958562	.	TT	<DEL>	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2958708	.	A	G	1011.53	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:1011.53	0/1:TP:gm:ti:SNP:het:1011.53
 chr1	2959178	.	A	AGGCACGCACCACCGCACCC	0	.	Regions=CONF;XCMP=FN:missing:gt_homalt:.:hap:mismatch;VTC=nuc__i,al__i,nocall__nc,homalt__i	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:lm:i16_plus:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	2959197	.	C	T	7.11	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:7.11
@@ -8332,7 +8332,7 @@ chr1	3019627	.	G	A	920.37	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:matc
 chr1	3020188	.	T	C	796.13	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:796.13	0/1:TP:gm:ti:SNP:het:796.13
 chr1	3020246	.	C	A	611.89	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:611.89	0/1:TP:gm:tv:SNP:het:611.89
 chr1	3021063	.	G	A	943.09	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:943.09	0/1:TP:gm:ti:SNP:het:943.09
-chr1	3021145	.	G	GGGACGGGGGTTCTGAGATAAGCAAGCCCCCACCAGGTGAGACCGGCGGAGCTGTGGCCACCGAGGTCCCGGGAGCTGGTGCT	0	.	XCMP=FN:missing:gt_het:.:simple:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:.:i16_plus:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	3021145	.	G	GGGACGGGGGTTCTGAGATAAGCAAGCCCCCACCAGGTGAGACCGGCGGAGCTGTGGCCACCGAGGTCCCGGGAGCTGGTGCT	0	.	XCMP=UNK:missing:gt_het:.:simple:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:.:i16_plus:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	3021296	.	A	C	590.56	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:590.56	0/1:TP:gm:tv:SNP:het:590.56
 chr1	3021552	.	G	A	724.49	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:724.49	0/1:TP:gm:ti:SNP:het:724.49
 chr1	3021687	.	C	T	809.72	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:809.72	0/1:TP:gm:ti:SNP:het:809.72
@@ -8373,7 +8373,7 @@ chr1	3030739	.	G	A	186.92	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:
 chr1	3030740	.	CACA	<DEL>	1071.7	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:d1_5:INDEL:het:1071.7
 chr1	3030753	.	A	G	21.55	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	Regions=CONF;XCMP=FP:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:ti:SNP:het:21.55
 chr1	3030755	.	A	G	587.29	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:587.29
-chr1	3030755	.	A	ACGCACACGCACGCG	0	.	XCMP=FN:missing:gt_homalt:.:hap:mismatch;VTC=nuc__i,al__i,nocall__nc,homalt__i	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:lm:i6_15:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	3030755	.	A	ACGCACACGCACGCG	0	.	XCMP=UNK:missing:gt_homalt:.:hap:mismatch;VTC=nuc__i,al__i,nocall__nc,homalt__i	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:lm:i6_15:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	3030767	.	G	GCA	701.19	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__i,al__i,het__ri	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:i1_5:INDEL:het:701.19	0/1:TP:gm:i1_5:INDEL:het:701.19
 chr1	3030769	.	A	G	8.47	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:8.47
 chr1	3030786	.	CACACG	<DEL>	1305.43	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__d,al__d,het__rd	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:d6_15:INDEL:het:1305.43	0/1:TP:gm:d6_15:INDEL:het:1305.43
@@ -8929,7 +8929,7 @@ chr1	3291389	.	G	A	499.18	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:matc
 chr1	3292876	.	C	T	693.89	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:693.89	0/1:TP:gm:ti:SNP:het:693.89
 chr1	3293665	.	A	G	2040.2	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:2040.2	1/1:TP:gm:ti:SNP:homalt:2040.2
 chr1	3294972	.	G	A	1351.83	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1351.83	1/1:TP:gm:ti:SNP:homalt:1351.83
-chr1	3295697	.	CACACCCCTCCCAG	<DEL>	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:d6_15:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	3295697	.	CACACCCCTCCCAG	<DEL>	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:d6_15:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	3295700	.	A	C	6.17	TruthSensitivityTranche99.90to100.00;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:6.17
 chr1	3295710	.	G	A	37.06	TruthSensitivityTranche99.90to100.00;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:37.06
 chr1	3295724	.	G	A	78.86	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:78.86
@@ -9062,7 +9062,7 @@ chr1	3326358	.	G	T	89.77	TruthSensitivityTranche99.90to100.00	Regions=CONF;XCMP=
 chr1	3326391	.	G	A	179.72	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=FP:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:ti:SNP:het:179.72
 chr1	3326396	.	T	C	277.33	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:277.33
 chr1	3326398	.	G	T	470	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:470
-chr1	3326398	.	G	GGTGTGTGGTGTGTGTATGTGCGT	0	.	XCMP=FN:missing:gt_homalt:.:hap:mismatch;VTC=nuc__i,al__i,nocall__nc,homalt__i	GT:BD:BK:BI:BVT:BLT:QQ	1/1:FN:lm:i16_plus:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	3326398	.	G	GGTGTGTGGTGTGTGTATGTGCGT	0	.	XCMP=UNK:missing:gt_homalt:.:hap:mismatch;VTC=nuc__i,al__i,nocall__nc,homalt__i	GT:BD:BK:BI:BVT:BLT:QQ	1/1:UNK:lm:i16_plus:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
 chr1	3326411	.	G	T	457.3	TruthSensitivityTranche99.00to99.90	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:457.3
 chr1	3326414	.	G	A	128.91	TruthSensitivityTranche99.90to100.00	Regions=CONF;XCMP=FP:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:ti:SNP:het:128.91
 chr1	3326419	.	T	C	99.09	TruthSensitivityTranche99.90to100.00;LowQD	Regions=CONF;XCMP=FP:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:ti:SNP:het:99.09
@@ -9191,7 +9191,7 @@ chr1	3366493	.	C	A	669.01	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:hap:mismatc
 chr1	3366531	.	T	TTA	0	.	Regions=CONF;XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	3366541	.	G	A	17.23	TruthSensitivityTranche99.00to99.90;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:17.23
 chr1	3366577	.	GT	<DEL>	613.76	.	XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__d,al__d,het__rd	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:d1_5:INDEL:het:613.76	0/1:TP:gm:d1_5:INDEL:het:613.76
-chr1	3366578	.	T	TGTGTGTGTGTGTGTGT	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:i16_plus:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	3366578	.	T	TGTGTGTGTGTGTGTGT	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:i16_plus:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	3366606	.	G	T	377.87	TruthSensitivityTranche99.00to99.90	Regions=CONF;XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:377.87	0/1:TP:gm:tv:SNP:het:377.87
 chr1	3367780	.	A	G	1679.43	.	Regions=CONF;XCMP=TP:match:gt_homalt:gt_homalt:simple:match;VTC=nuc__s,al__s,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:ti:SNP:homalt:1679.43	1/1:TP:gm:ti:SNP:homalt:1679.43
 chr1	3368035	.	T	C	493.8	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:493.8	0/1:TP:gm:ti:SNP:het:493.8
@@ -9283,7 +9283,7 @@ chr1	3397564	.	C	T	849.49	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:matc
 chr1	3397905	.	G	C	905.63	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:905.63	0/1:TP:gm:tv:SNP:het:905.63
 chr1	3397925	.	G	A	835.84	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:835.84	0/1:TP:gm:ti:SNP:het:835.84
 chr1	3398878	.	C	G	113.33	TruthSensitivityTranche99.90to100.00	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:tv:SNP:het:113.33
-chr1	3398879	.	G	GGGGGGGCGGGTAGCC	0	.	XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:FN:lm:i6_15:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
+chr1	3398879	.	G	GGGGGGGCGGGTAGCC	0	.	XCMP=UNK:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0/1:UNK:lm:i6_15:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr1	3398895	.	A	G	25.31	TruthSensitivityTranche99.00to99.90;LowGQX;LowQD	XCMP=UNK:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:lm:ti:SNP:het:25.31
 chr1	3398984	.	C	T	534.27	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:534.27	0/1:TP:gm:ti:SNP:het:534.27
 chr1	3399455	.	T	C	654.23	.	Regions=CONF;XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:654.23	0/1:TP:gm:ti:SNP:het:654.23
