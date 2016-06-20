@@ -134,10 +134,7 @@ namespace variant
             o << v.gt[i];
         }
 
-        if(v.bcf_rec && v.bcf_rec->qual > 0)
-        {
-            o << " " << v.bcf_rec->qual ;
-        }
+        o << " " << v.qual ;
 
         if(v.nfilter > 0)
         {
@@ -203,7 +200,7 @@ namespace variant
         float qual = 0;
         for(auto const & c : calls)
         {
-            qual += c.bcf_rec->qual;
+            qual += c.qual;
         }
         if(calls.empty())
         {

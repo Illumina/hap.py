@@ -618,7 +618,7 @@ bool VariantReader::advance()
                     else if(1 < ints.size())
                     {
                         vars.infos[id] = Json::Value(Json::arrayValue);
-                        for(auto q = 0; q < ints.size(); ++q)
+                        for(int q = 0; q < (int)ints.size(); ++q)
                         {
                             vars.infos[id][q] = ints[q];
                         }
@@ -635,7 +635,7 @@ bool VariantReader::advance()
                     else if (1 < floats.size())
                     {
                         vars.infos[id] = Json::Value(Json::arrayValue);
-                        for (auto q = 0; q < floats.size(); ++q)
+                        for (int q = 0; q < (int)floats.size(); ++q)
                         {
                             vars.infos[id][q] = floats[q];
                         }
@@ -779,7 +779,7 @@ bool VariantReader::advance()
                     else
                     {
                         vars.calls[sid].formats[id] = Json::Value(Json::arrayValue);
-                        for(auto ffv = 0; ffv < values.size(); ++ffv)
+                        for(int ffv = 0; ffv < (int)values.size(); ++ffv)
                         {
                             vars.calls[sid].formats[id] = values[ffv];
                         }
@@ -803,7 +803,7 @@ bool VariantReader::advance()
                     else
                     {
                         vars.calls[sid].formats[id] = Json::Value(Json::arrayValue);
-                        for(auto ffv = 0; ffv < values.size(); ++ffv)
+                        for(int ffv = 0; ffv < (int)values.size(); ++ffv)
                         {
                             vars.calls[sid].formats[id] = values[ffv];
                         }

@@ -577,7 +577,7 @@ namespace bcfhelpers
         {
             std::cerr << "[W] too many AD fields at " << header->id[BCF_DT_CTG][line->rid].key << ":" << line->pos << "\n";
         }
-        for(auto q = 0; q < values.size(); ++q)
+        for(size_t q = 0; q < values.size(); ++q)
         {
             ad[q] = values[q];
         }

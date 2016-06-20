@@ -138,8 +138,7 @@ BOOST_AUTO_TEST_CASE(variantReadingFormats)
         	BOOST_CHECK(std::isnan(v.calls[0].bcf_rec->qual));
         }
 
-        float gq = -1;
-        bcfhelpers::getGQ(v.calls[0].bcf_hdr.get(), v.calls[0].bcf_rec.get(), v.calls[0].bcf_sample, gq);
+        float gq = v.calls[0].formats["GQX"].asFloat;
         BOOST_CHECK_CLOSE(gq, expected_gq[count], 0.01);
         BOOST_CHECK_EQUAL(v.calls[0].ad[0], expected_ad[2*count]);
         BOOST_CHECK_EQUAL(v.calls[0].ad[1], expected_ad[2*count+1]);
