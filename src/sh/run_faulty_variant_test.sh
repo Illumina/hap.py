@@ -19,6 +19,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	-o ${TMP_OUT} \
 			 	-X --reference ${DIR}/../data/open_indel/test.fa -l chrQ \
                 -V \
+                --verbose \
 			 	--force-interactive
 
 if [[ $? != 0 ]]; then

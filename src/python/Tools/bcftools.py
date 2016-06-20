@@ -37,7 +37,8 @@ def runBcftools(*args):
     rc = po.returncode
 
     if rc != 0:
-        raise Exception("Error running BCFTOOLS. Return code was %i, output: %s / %s \n" % (rc, o, e))
+        raise Exception("Error running BCFTOOLS; please check if your file has issues using vcfcheck"
+                        ". Return code was %i, output: %s / %s \n" % (rc, o, e))
 
     return o
 
@@ -134,21 +135,30 @@ def preprocessVCF(input, output, location="",
     if location:
         vargs += ["-t", location, "|", "bcftools", "view"]
 
-    tff = tempfile.NamedTemporaryFile(delete=False)
+    if output.endswith(".vcf.gz"):
+        int_suffix = ".vcf.gz"
+    else:
+        int_suffix = ".bcf"
+    tff = tempfile.NamedTemporaryFile(delete=False, suffix=int_suffix)
     try:
         # anything needs tabix? if so do an intermediate stage where we
         # index first
         if regions:
-            vargs += ["-o", tff.name, "-O", "z"]
-            runBcftools(*vargs)
-            runBcftools("index", "-t", tff.name)
+            if int_suffix == ".vcf.gz":
+                vargs += ["-o", tff.name, "-O", "z"]
+                runBcftools(*vargs)
+                runBcftools("index", "-t", tff.name)
+            else:
+                vargs += ["-o", tff.name, "-O", "b"]
+                runBcftools(*vargs)
+                runBcftools("index", tff.name)
             vargs = ["view", tff.name, "-R", regions]
 
         if norm:
             vargs += ["|", "bcftools", "norm", "-f",  reference, "-c", "x", "-D"]
 
         vargs += ["-o", output]
-        if output.endswith(".vcf.gz"):
+        if int_suffix == ".vcf.gz":
             vargs += ["-O", "z"]
             istabix = True
         else:
@@ -158,7 +168,7 @@ def preprocessVCF(input, output, location="",
         if istabix:
             runBcftools("index", "-t", output)
         else:
-            runBcftools("index", "-t", output)
+            runBcftools("index", output)
     finally:
         try:
             os.unlink(tff.name)
@@ -166,6 +176,10 @@ def preprocessVCF(input, output, location="",
             pass
         try:
             os.unlink(tff.name + ".tbi")
+        except:
+            pass
+        try:
+            os.unlink(tff.name + ".csi")
         except:
             pass
 

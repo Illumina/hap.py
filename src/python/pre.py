@@ -95,6 +95,25 @@ def preprocess(vcf_input,
 
     tempfiles = []
     try:
+        # If the input is in BCF format, we can continue to
+        # process it in bcf
+        # if it is in .vcf.gz, don't try to convert it to
+        # bcf because there are a range of things that can
+        # go wrong there (e.g. undefined contigs and bcftools
+        # segfaults)
+        if vcf_input.endswith(".bcf") or vcf_output.endswith(".bcf"):
+            int_suffix = ".bcf"
+            int_format = "b"
+            if not vcf_input.endswith(".bcf") and vcf_output.endswith(".bcf"):
+                logging.warn("Turning vcf into bcf can cause problems when headers aren't consistent with all "
+                             "records in the file. I will run vcfcheck to see if we will run into trouble. "
+                             "To save time in the future, consider converting your files into bcf using bcftools before"
+                             " running pre.py.")
+                subprocess.check_call("vcfcheck %s" % vcf_input, shell=True)
+        else:
+            int_suffix = ".vcf.gz"
+            int_format = "z"
+
         h = vcfextract.extractHeadersJSON(vcf_input)
         reference_contigs = set(fastaContigLengths(reference).keys())
         reference_has_chr_prefix = hasChrPrefix(reference_contigs)
@@ -117,10 +136,10 @@ def preprocess(vcf_input,
                 if not h["tabix"]:
                     logging.warn("input file is not tabix indexed, consider doing this in advance for performance reasons")
                     vtf = tempfile.NamedTemporaryFile(delete=False,
-                                                      suffix=".bcf")
+                                                      suffix=int_suffix)
                     vtf.close()
                     tempfiles.append(vtf.name)
-                    runBcftools("view", "-o", vtf.name, "-O", "b", vcf_input)
+                    runBcftools("view", "-o", vtf.name, "-O", int_format, vcf_input)
                     runBcftools("index", vtf.name)
                     h2 = vcfextract.extractHeadersJSON(vcf_input)
                     chrlist = h2["tabix"]["chromosomes"]
@@ -138,7 +157,7 @@ def preprocess(vcf_input,
 
         if leftshift or decompose:
             vtf = tempfile.NamedTemporaryFile(delete=False,
-                                              suffix=".bcf")
+                                              suffix=int_suffix)
             vtf.close()
             tempfiles.append(vtf.name)
             vtf = vtf.name
@@ -182,6 +201,9 @@ def preprocessWrapper(args):
         filtering = "*"
     else:
         filtering = args.filters_only
+
+    if args.bcf and not args.output.endswith(".bcf"):
+        args.output += ".bcf"
 
     preprocess(args.input,
                args.output,
@@ -242,6 +264,11 @@ def updateArgs(parser):
     parser.add_argument("--no-fixchr", dest="fixchr", action="store_false",
                         help="Add chr prefix to query file (default: auto, attempt to match reference).")
 
+    parser.add_argument("--bcf", dest="bcf", action="store_true", default=False,
+                        help="Use BCF internally. This is the default when the input file"
+                             " is in BCF format already. Using BCF can speed up temp file access, "
+                             " but may fail for VCF files that have broken headers or records that "
+                             " don't comply with the header.")
 
 
 def main():

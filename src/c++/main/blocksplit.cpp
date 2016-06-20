@@ -45,7 +45,7 @@
 #include <htslib/synced_bcf_reader.h>
 #include <htslib/vcf.h>
 
-// error needs to come after program_options. 
+// error needs to come after program_options.
 #include "Error.hh"
 
 using namespace variant;
@@ -104,18 +104,18 @@ int main(int argc, char* argv[]) {
         ;
 
         po::variables_map vm;
-        
+
         po::store(po::command_line_parser(argc, argv).
                   options(cmdline_options).positional(popts).run(), vm);
-        po::notify(vm); 
+        po::notify(vm);
 
-        if (vm.count("version")) 
+        if (vm.count("version"))
         {
             std::cout << "blocksplit version " << HAPLOTYPES_VERSION << "\n";
             return 0;
         }
 
-        if (vm.count("help")) 
+        if (vm.count("help"))
         {
             std::cout << desc << "\n";
             return 1;
@@ -142,7 +142,7 @@ int main(int argc, char* argv[]) {
                 }
 
                 files.push_back(filename);
-                samples.push_back(sample);         
+                samples.push_back(sample);
             }
         }
 
@@ -210,7 +210,7 @@ int main(int argc, char* argv[]) {
             nvars = vm["nvars"].as< int >();
         }
 
-    } 
+    }
     catch (po::error & e)
     {
         std::cerr << e.what() << "\n";
@@ -270,7 +270,7 @@ int main(int argc, char* argv[]) {
                 success = bcf_sr_seek(reader, chr.c_str(), start);
                 std::cerr << "starting at " << chr << ":" << start << "\n";
             }
-            if(success < 0)
+            if(success == -reader->nreaders)
             {
                 error("Cannot seek to %s:%i", chr.c_str(), start);
             }
@@ -283,7 +283,7 @@ int main(int argc, char* argv[]) {
 
         struct Breakpoint
         {
-            std::string chr; 
+            std::string chr;
             int64_t pos;
             int64_t vars;
         };
@@ -390,7 +390,15 @@ int main(int argc, char* argv[]) {
                 // rely on synced_reader to give us records on the same chr
                 int64_t this_v_pos = -1;
                 int64_t this_v_end = -1;
-                bcfhelpers::getLocation(hdr, line, this_v_pos, this_v_end);
+                try
+                {
+                    bcfhelpers::getLocation(hdr, line, this_v_pos, this_v_end);
+                }
+                catch(bcfhelpers::importexception const & e)
+                {
+                    std::cerr << e.what() << "\n";
+                    continue;
+                }
                 if(v_pos < 0)
                 {
                     v_pos = this_v_pos;
@@ -427,8 +435,8 @@ int main(int argc, char* argv[]) {
 
             if(message > 0 && (rcount % message) == 0)
             {
-                std::cerr << "From " << chr << ":" << last_end << " (" 
-                          << breakpoints.size() << " bps, " << vars << " vars)" 
+                std::cerr << "From " << chr << ":" << last_end << " ("
+                          << breakpoints.size() << " bps, " << vars << " vars)"
                           << " -- " << v_chr << ":" << v_pos << "-" << v_end << "\n";
             }
 
@@ -462,9 +470,9 @@ int main(int argc, char* argv[]) {
 
         chr = firstchr;
         // TODO - the correct thing to do here would be to use start = 0
-        // but bcftools / htslib don't like bed coordinates with start 0 
+        // but bcftools / htslib don't like bed coordinates with start 0
         // We should fix this in htslib, and then change it here (currently,
-        // this will miss variants starting at the first coordinate of the 
+        // this will miss variants starting at the first coordinate of the
         // chromosome)
         start = 1;
         int64_t vpb = 0;
@@ -494,7 +502,7 @@ int main(int argc, char* argv[]) {
         }
         if(chr != "")
         {
-            *outputfile << chr << "\t" << start << "\t" << std::max(start + window + 1, end) << "\n"; 
+            *outputfile << chr << "\t" << start << "\t" << std::max(start + window + 1, end) << "\n";
         }
 
         if(out_bed != "-" && out_bed != "")

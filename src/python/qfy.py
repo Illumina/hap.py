@@ -52,7 +52,12 @@ def quantify(args):
 
     logging.info("Counting variants...")
 
-    output_vcf = args.reports_prefix + ".bcf"
+    if args.bcf or (args.vcf1.endswith(".bcf") and args.vcf2.endswith(".bcf")):
+        internal_format_suffix = ".bcf"
+    else:
+        internal_format_suffix = ".vcf.gz"
+
+    output_vcf = args.reports_prefix + internal_format_suffix
     roc_table = args.reports_prefix + ".roc.tsv"
 
     qfyregions = {}
@@ -74,7 +79,7 @@ def quantify(args):
                     raise Exception("Quantification region file %s not found" % f)
                 qfyregions[n] = f
 
-    if vcf_name == output_vcf or vcf_name == output_vcf + ".bcf":
+    if vcf_name == output_vcf or vcf_name == output_vcf + internal_format_suffix:
         raise Exception("Cannot overwrite input VCF: %s would overwritten with output name %s." % (vcf_name, output_vcf))
 
     Haplo.quantify.run_quantify(vcf_name,
@@ -252,6 +257,12 @@ def main():
 
     parser.add_argument("--logfile", dest="logfile", default=None,
                         help="Write logging information into file rather than to stderr")
+
+    parser.add_argument("--bcf", dest="bcf", action="store_true", default=False,
+                        help="Use BCF internally. This is the default when the input file"
+                             " is in BCF format already. Using BCF can speed up temp file access, "
+                             " but may fail for VCF files that have broken headers or records that "
+                             " don't comply with the header.")
 
     verbosity_options = parser.add_mutually_exclusive_group(required=False)
 

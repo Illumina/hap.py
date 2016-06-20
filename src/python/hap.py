@@ -215,7 +215,7 @@ def main():
     tempfiles = []
 
     # xcmp supports bcf; others don't
-    if args.engine == "xcmp":
+    if args.engine == "xcmp" and (args.bcf or (args.vcf1.endswith(".bcf") and args.vcf2.endswith(".bcf"))):
         internal_format_suffix = ".bcf"
     else:
         internal_format_suffix = ".vcf.gz"
@@ -306,10 +306,12 @@ def main():
             args.locations = list(reference_contigs & set(h1["tabix"]["chromosomes"]))
             if not args.locations:
                 raise Exception("Truth and reference have no chromosomes in common!")
+        elif type(args.locations) is not list:
+            args.locations = [args.locations]
 
         for _xc in args.locations:
             if _xc not in h2["tabix"]["chromosomes"]:
-                logging.warn("No calls for location %s in query!" % xc)
+                logging.warn("No calls for location %s in query!" % _xc)
 
         pool = getPool(args.threads)
         if args.threads > 1 and args.engine == "xcmp":
@@ -345,15 +347,10 @@ def main():
         if "samples" not in h2 or not h2["samples"]:
             raise Exception("Cannot read sample names from query VCF file")
 
-        if args.engine == "xcmp":
-            suffix = ".bcf"
-        else:
-            suffix = ".vcf.gz"
-
         tf = tempfile.NamedTemporaryFile(delete=False,
                                          dir=args.scratch_prefix,
                                          prefix="hap.py.result.",
-                                         suffix=suffix)
+                                         suffix=internal_format_suffix)
         tf.close()
         tempfiles.append(tf.name)
         output_name = tf.name

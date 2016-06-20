@@ -296,7 +296,15 @@ int main(int argc, char *argv[])
             bcf_unpack(line, BCF_UN_ALL);
 
             int64_t vstart = -1, vend= -1;
-            bcfhelpers::getLocation(hdr, line, vstart, vend);
+            try
+            {
+                bcfhelpers::getLocation(hdr, line, vstart, vend);
+            }
+            catch(bcfhelpers::importexception const & e)
+            {
+                std::cerr << e.what() << "\n";
+                vend = vstart;
+            }
             // check
             const int refpadding = bcfhelpers::isRefPadded(line);
             if(refpadding)
@@ -378,7 +386,7 @@ int main(int argc, char *argv[])
             if(line->errcode)
             {
                 error("Record at %s:%i will not translate into BCF. Check if the header is incomplete (error code %i)",
-                      current_chr.c_str(), line->pos+1, line->errcode);
+                      vchr.c_str(), line->pos+1, line->errcode);
             }
 
             current_chr = vchr;
