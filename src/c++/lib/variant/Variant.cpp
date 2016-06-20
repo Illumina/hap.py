@@ -121,20 +121,26 @@ namespace variant
 
     std::ostream & operator<<(std::ostream &o, Call const & v)
     {
-        if(v.ngt == 0)
+        if(v.ngt == 0 || v.isNocall())
         {
             o << ".";
         }
-        for (size_t i = 0; i < v.ngt; ++i)
+        else
         {
-            if(i > 0)
+            for (size_t i = 0; i < v.ngt; ++i)
             {
-                o << (v.phased ? "|" : "/");
+                if(i > 0)
+                {
+                    o << (v.phased ? "|" : "/");
+                }
+                o << v.gt[i];
             }
-            o << v.gt[i];
         }
 
-        o << " " << v.qual ;
+        if(!std::isnan(v.qual) && v.qual > 0)
+        {
+            o << " " << v.qual ;
+        }
 
         if(v.nfilter > 0)
         {

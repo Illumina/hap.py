@@ -72,7 +72,7 @@ enum gttype
  * @brief Variant call for a given location
  */
 struct Call {
-    Call() : ad_ref(-1), ad_other(-1), ngt(0), phased(false), nfilter(0), dp(-1)
+    Call() : ad_ref(-1), ad_other(-1), ngt(0), phased(false), nfilter(0), dp(-1), qual(-1)
     {
         for(int i = 0; i < MAX_GT; ++i)
         {

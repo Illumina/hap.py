@@ -549,7 +549,7 @@ namespace bcfhelpers
         gf(header, line, "GQX", isample, values);
         if(values.empty())
         {
-            gf(header, line, "GQX", isample, values);
+            gf(header, line, "GQ", isample, values);
         }
         if(values.size() > 1)
         {

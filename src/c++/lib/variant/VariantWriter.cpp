@@ -333,7 +333,7 @@ namespace variant
                     if(v[0].isInt())
                     {
                         std::unique_ptr<int[]> p_values(new int[v.size()]);
-                        for(auto s = 0; s < v.size(); ++s)
+                        for(int s = 0; s < (int)v.size(); ++s)
                         {
                             p_values.get()[s] = v[s].asInt();
                         }
@@ -342,7 +342,7 @@ namespace variant
                     else if(v[0].isNumeric())
                     {
                         std::unique_ptr<float[]> p_values(new float[v.size()]);
-                        for(auto s = 0; s < v.size(); ++s)
+                        for(int s = 0; s < (int)v.size(); ++s)
                         {
                             p_values.get()[s] = v[s].asFloat();
                         }
@@ -550,7 +550,7 @@ namespace variant
             for(auto & s : string_fmts)
             {
                 std::unique_ptr<const char *[]> values(new const char *[s.second.size()]);
-                for(auto ix = 0; ix < s.second.size(); ++ix)
+                for(int ix = 0; ix < (int)s.second.size(); ++ix)
                 {
                     values.get()[ix] = s.second[ix].c_str();
                 }

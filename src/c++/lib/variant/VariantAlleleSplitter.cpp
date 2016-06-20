@@ -136,7 +136,8 @@ bool VariantAlleleSplitter::advance()
         {
             CallInfo() : ad_ref(-1), ad_other(-1), dp(-1), nfilter(0) {}
 
-            CallInfo(Call const & c) : ad_ref(c.ad_ref), ad_other(c.ad_other), dp(c.dp), qual(c.qual), nfilter(c.nfilter)
+            CallInfo(Call const & c) : ad_ref(c.ad_ref), ad_other(c.ad_other), dp(c.dp), qual(c.qual),
+                                       nfilter(c.nfilter), formats(c.formats)
             {
                 for (size_t i = 0; i < nfilter; ++i)
                 {
@@ -150,6 +151,7 @@ bool VariantAlleleSplitter::advance()
             float qual;
             size_t nfilter;
             std::string filter[MAX_FILTER];
+            Json::Value formats;
         };
 
         // "half-call" -- one allele of a call
@@ -329,6 +331,7 @@ bool VariantAlleleSplitter::advance()
             cur.calls[p.sample].ad_other = p.ci.ad_other;
             cur.calls[p.sample].dp = p.ci.dp;
             cur.calls[p.sample].qual = p.ci.qual;
+            cur.calls[p.sample].formats = p.ci.formats;
             for (size_t i = 0; i < p.ci.nfilter; ++i) cur.calls[p.sample].filter[i] = p.ci.filter[i];
             if(p.is_homref)
             {

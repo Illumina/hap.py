@@ -131,14 +131,15 @@ BOOST_AUTO_TEST_CASE(variantReadingFormats)
 
         if(expected_qual[count] >= 0)
         {
-        	BOOST_CHECK_CLOSE(v.calls[0].bcf_rec->qual, expected_qual[count], 0.01);
+        	BOOST_CHECK_CLOSE(v.calls[0].qual, expected_qual[count], 0.01);
         }
         else
         {
-        	BOOST_CHECK(std::isnan(v.calls[0].bcf_rec->qual));
+        	BOOST_CHECK(std::isnan(v.calls[0].qual));
         }
 
-        float gq = v.calls[0].formats["GQX"].asFloat;
+        float gq = v.calls[0].formats["GQX"].asFloat();
+		if(!gq) gq = v.calls[0].formats["GQ"].asFloat();
         BOOST_CHECK_CLOSE(gq, expected_gq[count], 0.01);
         BOOST_CHECK_EQUAL(v.calls[0].ad[0], expected_ad[2*count]);
         BOOST_CHECK_EQUAL(v.calls[0].ad[1], expected_ad[2*count+1]);
@@ -268,14 +269,14 @@ BOOST_AUTO_TEST_CASE(variantReadingFormats2)
         	// std::cerr << "\t" << i << "\n";
 	        if(expected_qual[count] >= 0)
 	        {
-	        	BOOST_CHECK_CLOSE(v.calls[i].bcf_rec->qual, expected_qual[count + 5*i], 0.01);
+	        	BOOST_CHECK_CLOSE(v.calls[i].qual, expected_qual[count + 5*i], 0.01);
 	        }
 	        else
 	        {
-	        	BOOST_CHECK(std::isnan(v.calls[i].bcf_rec->qual));
+	        	BOOST_CHECK(std::isnan(v.calls[i].qual));
 	        }
-            float gq = -1;
-            bcfhelpers::getGQ(v.calls[i].bcf_hdr.get(), v.calls[i].bcf_rec.get(), v.calls[i].bcf_sample, gq);
+            float gq = v.calls[i].formats["GQX"].asFloat();
+            if(gq <= 0) gq = v.calls[i].formats["GQ"].asFloat();
 	        BOOST_CHECK_CLOSE(gq, expected_gq[count + 5*i], 0.01);
 	        BOOST_CHECK_EQUAL(v.calls[i].ad[0], expected_ad[2*count + 10*i]);
 	        BOOST_CHECK_EQUAL(v.calls[i].ad[1], expected_ad[2*count+1 + 10*i]);
