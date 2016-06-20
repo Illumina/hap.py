@@ -1,4 +1,4 @@
-##fileformat=VCFv4.2
+##fileformat=VCFv4.1
 ##FILTER=<ID=PASS,Description="All filters passed">
 ##reference=hg19
 ##contig=<ID=chr1,length=249250621>
@@ -25,6 +25,7 @@
 ##contig=<ID=chr22,length=51304566>
 ##contig=<ID=chrX,length=155270560>
 ##INFO=<ID=END,Number=.,Type=Integer,Description="SV end position">
+##INFO=<ID=IMPORT_FAIL,Number=.,Type=Flag,Description="Flag to identify variants that could not be imported.">
 ##FORMAT=<ID=AGT,Number=1,Type=String,Description="Genotypes at ambiguous locations">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=GQ,Number=1,Type=Float,Description="Genotype Quality">
@@ -32,5 +33,5 @@
 ##FORMAT=<ID=AD,Number=A,Type=Integer,Description="Allele Depths">
 ##FORMAT=<ID=ADO,Number=.,Type=Integer,Description="Summed depth of non-called alleles.">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA12877	NA12878
-chr1	10005	.	CC	AGGGC,A	0	.	.	GT:GQ:AD:ADO:DP	0/1:10:2,2,0:0:4	0/2:11:4,0,4:0:8
-chr1	10010	.	C	G,T	0	.	.	GT:GQ:AD:ADO:DP	0/1:12:4,2,0:1:7	1/2:13:10,11,12:10:33
+chr1	10005	.	CC	AGGGC,A	0	.	.	GT:AD:ADO:DP:GQ	0/1:2,2,0:0:4:10	0/2:4,0,4:0:8:11
+chr1	10010	.	C	G,T	0	.	.	GT:AD:ADO:DP:GQ	0/1:4,2,0:1:7:12	1/2:10,11,12:10:33:13

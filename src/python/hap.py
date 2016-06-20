@@ -289,7 +289,7 @@ def main():
         h2 = vcfextract.extractHeadersJSON(args.vcf2)
 
         elapsed = time.time() - starttime
-        logging.info("preprocess for %s -- time taken %.2f" % (args.vcf1, elapsed))
+        logging.info("preprocess for %s -- time taken %.2f" % (args.vcf2, elapsed))
 
         if not h1["tabix"]:
             raise Exception("Truth file is not indexed after preprocesing.")
