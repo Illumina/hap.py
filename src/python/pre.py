@@ -251,8 +251,8 @@ def updateArgs(parser):
                         help="Left-shift variants safely.")
 
     parser.add_argument("-D", "--decompose", dest="preprocessing_decompose", action="store_true",
-                        default=False,
-                        help="Decompose variants into primitives.")
+                        default=True,
+                        help="Decompose variants into primitives. This results in more granular counts.")
 
     parser.add_argument("--bcftools-norm", dest="preprocessing_norm", action="store_true", default=False,
                         help="Enable preprocessing through bcftools norm -c x -D (requires external "

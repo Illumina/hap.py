@@ -52,7 +52,15 @@ def quantify(args):
 
     logging.info("Counting variants...")
 
-    if args.bcf or (args.vcf1.endswith(".bcf") and args.vcf2.endswith(".bcf")):
+    truth_or_query_is_bcf = False
+    try:
+        truth_or_query_is_bcf = args.vcf1.endswith(".bcf") and args.vcf2.endswith(".bcf")
+    except:
+        # args.vcf1 and args.vcf2 are only available when we're running
+        # inside hap.py.
+        pass
+
+    if args.bcf or truth_or_query_is_bcf:
         internal_format_suffix = ".bcf"
     else:
         internal_format_suffix = ".vcf.gz"
