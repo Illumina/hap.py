@@ -93,10 +93,8 @@ if [[ ! -z $BUILD_VCFEVAL ]]; then
         echo "Building rtg-tools"
         mkdir -p rtg-tools
         cd rtg-tools
-        if [[ ! -f rtg-tools.zip ]]; then
-            wget https://github.com/RealTimeGenomics/rtg-tools/archive/296c61ed18e363574fdbc982bbe73c0b86c796ce.zip -O rtg-tools.zip
-        fi
-        jar xvf rtg-tools.zip
+        wget http://github.com/RealTimeGenomics/rtg-tools/archive/296c61ed18e363574fdbc982bbe73c0b86c796ce.tar.gz -O rtg-tools.tar.gz
+        tar xvf rtg-tools.tar.gz
         cd rtg-tools-296c61ed18e363574fdbc982bbe73c0b86c796ce
 
         if [[ ! -z ${ANT_HOME} ]]; then

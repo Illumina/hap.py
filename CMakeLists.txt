@@ -25,7 +25,12 @@ endif()
 
 execute_process(
     COMMAND ./make_dependencies.sh
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external)
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external
+    RESULT_VARIABLE EXTERNAL_SUCCESS)
+
+if(NOT "${EXTERNAL_SUCCESS}" STREQUAL "0")
+    message(FATAL_ERROR "Building external dependencies has failed")
+endif()
 
 set(Boost_USE_STATIC_LIBS        ON)  # only find static libs
 set(Boost_USE_MULTITHREADED      ON)
