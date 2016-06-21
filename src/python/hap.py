@@ -111,10 +111,14 @@ def main():
                         help="Comparison engine to use.")
 
     parser.add_argument("--engine-vcfeval-path", dest="engine_vcfeval", required=False,
-                        help="This parameter should give the path to the \"rtg\" executable.")
+                        default=Haplo.vcfeval.findVCFEval(),
+                        help="This parameter should give the path to the \"rtg\" executable. "
+                             "The default is %s" % Haplo.vcfeval.findVCFEval())
     parser.add_argument("--engine-vcfeval-template", dest="engine_vcfeval_template", required=False,
                         help="Vcfeval needs the reference sequence formatted in its own file format "
-                             "(SDF -- run rtg format -o ref.SDF ref.fa).")
+                             "(SDF -- run rtg format -o ref.SDF ref.fa). You can specify this here "
+                             "to save time when running hap.py with vcfeval. If no SDF folder is "
+                             "specified, hap.py will create a temporary one.")
 
     if Tools.has_sge:
         parser.add_argument("--force-interactive", dest="force_interactive",
@@ -241,7 +245,7 @@ def main():
                        ttf.name,
                        args.ref,
                        args.locations,
-                       None,  # filters
+                       None if args.usefiltered_truth else "*",  # filters
                        args.fixchr,
                        args.regions_bedfile,
                        args.targets_bedfile,

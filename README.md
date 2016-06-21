@@ -307,3 +307,11 @@ cd boost_1_55_0
 ./b2 --prefix=$HOME/boost_1_55_0_install install
 ```
 *  `-DUSE_SGE` -- enable the `--force-interactive` switch in hap.py.
+*  `-DBUILD_VCFEVAL=ON` -- Download and build rtgtools / vcfeval. This is a comparison engine that can be used
+   as an alternative to the built-in xcmp in hap.py. To successfully build and run vcfeval, you will need:
+   - A Java JRE, newer than 1.8.x
+   - ant > 1.9.2 (older versions of ant will not successfully build rtgtools)
+   See [src/sh/illumina-setup.sh]() for an example. If running Java requires any special setup
+   (or to configure any other environment variables), you can specify a wrapper script using
+   `-DVCFEVAL_WRAPPER={absolute_path_to_wrapper_script}`. See [src/sh/rtg-wrapper.sh]() for an
+   example.

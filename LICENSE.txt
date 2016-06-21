@@ -62,3 +62,7 @@ Further dependencies (to be installed by the user of this software):
                (https://bitbucket.org/james_taylor/bx-python)
 *   Boost C++ library: Boost software license
     (http://www.boost.org/users/license.html)
+*   RTGtools for variant comparison: Simplified BSD license,
+    Copyright (c) 2015, Real Time Genomics Limited
+    https://github.com/RealTimeGenomics/rtg-tools/blob/ga4gh-test/LICENSE.txt
+    https://github.com/RealTimeGenomics/rtg-tools/tree/ga4gh-test

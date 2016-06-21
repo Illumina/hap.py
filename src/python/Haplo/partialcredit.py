@@ -33,9 +33,14 @@ from Tools.vcfextract import extractHeadersJSON
 def preprocessWrapper(file_and_location, args):
     starttime = time.time()
     filename, location_str = file_and_location
+    if args["bcf"]:
+        int_suffix = "bcf"
+    else:
+        int_suffix = "vcf.gz"
+
     tf = tempfile.NamedTemporaryFile(delete=False,
                                      prefix="input.%s" % location_str,
-                                     suffix=".prep.bcf")
+                                     suffix=".prep." + int_suffix)
     tf.close()
 
     to_run = "preprocess %s:* %s-o %s -V %i -L %i -r %s" % \
@@ -169,7 +174,8 @@ def partialCredit(vcfname,
                           itertools.izip(itertools.repeat(vcfname), locations),
                           {"reference": reference,
                            "decompose": decompose,
-                           "leftshift": leftshift})
+                           "leftshift": leftshift,
+                           "bcf": outputname.endswith(".bcf")})
 
         if None in res:
             raise Exception("One of the preprocess jobs failed")
