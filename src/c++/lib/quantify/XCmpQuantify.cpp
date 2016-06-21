@@ -172,7 +172,7 @@ namespace variant
             type = "TP";
         }
 
-        if (_impl->count_unk && tag_string.find("CONF") == std::string::npos && type == "FP" && kind == "missing") {
+        if (_impl->count_unk && tag_string.find("CONF") == std::string::npos) {
             type = "UNK";
         }
 

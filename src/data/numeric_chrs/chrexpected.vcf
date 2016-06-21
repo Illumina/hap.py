@@ -1,4 +1,4 @@
-chr2	2	.	T	A	0	.	.	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:0	0/1:TP:gm:tv:SNP:het:0
+chr2	2	.	T	A	0	.	Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:0	0/1:TP:gm:tv:SNP:het:0
 chr2	3	.	T	A	0	.	Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:.:tv:SNP:het:0
 chr2	4	.	T	A	0	.	.	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:UNK:.:tv:SNP:het:0
-chr1	2	.	C	T	0	.	.	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:0	0/1:TP:gm:ti:SNP:het:0
+chr1	2	.	C	T	0	.	Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:ti:SNP:het:0	0/1:TP:gm:ti:SNP:het:0

@@ -187,7 +187,7 @@ namespace roc
         {
             const double p = precision();
             const double r = recall();
-            return p*r / (p + r);
+            return 2.0 * p*r / (p + r);
         }
     };
 
