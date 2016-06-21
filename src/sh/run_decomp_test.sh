@@ -18,6 +18,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	${DIR}/../../example/decomp/decomp_test.query.vcf.gz \
 			 	-f ${DIR}/../../example/decomp/decomp_test.conf.bed.gz \
 			 	-o ${TMP_OUT} \
+                --preprocess-truth \
 			 	-X -V \
 			 	--force-interactive
 
@@ -33,7 +34,7 @@ if [[ $? != 0 ]]; then
 fi
 
 gunzip -c ${TMP_OUT}.vcf.gz > ${TMP_OUT}.vcf
-diff ${TMP_OUT}.vcf ${DIR}/../../example/decomp/expected.vcf
+diff -I ^# ${TMP_OUT}.vcf ${DIR}/../../example/decomp/expected.vcf
 if [[ $? != 0 ]]; then
 	echo "Variants differ! diff ${TMP_OUT}.vcf ${DIR}/../../example/decomp/expected.vcf"
 	exit 1

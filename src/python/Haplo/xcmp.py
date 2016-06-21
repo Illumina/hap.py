@@ -33,26 +33,21 @@ def xcmpWrapper(location_str, args):
     tf = tempfile.NamedTemporaryFile(delete=False,
                                      dir=args.scratch_prefix,
                                      prefix="result.%s" % location_str,
-                                     suffix=".vcf.gz")
+                                     suffix=".bcf")
     tf.close()
 
-    to_run = "xcmp %s %s -l %s -o %s -r %s -f %i --apply-filters-truth %i -n %i -V %i --leftshift %i --expand-hapblocks %i " \
-             "--window %i --no-hapcmp %i --roc-vals %i" % \
+    to_run = "xcmp %s %s -l %s -o %s -r %s -f %i -n %i --expand-hapblocks %i " \
+             "--window %i --no-hapcmp %i " % \
              (args.vcf1.replace(" ", "\\ "),
               args.vcf2.replace(" ", "\\ "),
               location_str,
               tf.name,
               args.ref,
-              0 if args.usefiltered else 1,
-              0 if args.usefiltered_truth else 1,
+              1 if args.pass_only else 0,  # -f == apply-filtering
               args.max_enum,
-              1 if args.int_preprocessing else 0,
-              1 if args.int_preprocessing_ls else 0,
               args.hb_expand,
               args.window,
-              1 if args.no_hc else 0,
-              1 if args.roc else 0
-              )
+              1 if args.no_hc else 0)
 
     # regions / targets already have been taken care of in blocksplit / preprocessing
 

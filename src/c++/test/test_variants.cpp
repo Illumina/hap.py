@@ -85,23 +85,7 @@ BOOST_AUTO_TEST_CASE(variantGTT)
 
 BOOST_AUTO_TEST_CASE(variantInfo)
 {
-    Variants v;
-
-    v.info = "a=1;b=2";
-    setVariantInfo(v, "cd", "4");
-    BOOST_CHECK_EQUAL(v.info, "a=1;b=2;cd=4");
-    setVariantInfo(v, "e", "5");
-    BOOST_CHECK_EQUAL(v.info, "a=1;b=2;cd=4;e=5");
-    setVariantInfo(v, "a", "");
-    BOOST_CHECK_EQUAL(v.info, "b=2;cd=4;e=5");
-    setVariantInfo(v, "cd", "");
-    BOOST_CHECK_EQUAL(v.info, "b=2;e=5");
-    setVariantInfo(v, "e", "");
-    BOOST_CHECK_EQUAL(v.info, "b=2");
-    setVariantInfo(v, "b", "");
-    BOOST_CHECK_EQUAL(v.info, "");
-    setVariantInfo(v, "cd", "5");
-    BOOST_CHECK_EQUAL(v.info, "cd=5");
+    // TODO re-add this test-case
 }
  
 BOOST_AUTO_TEST_CASE(variantReading)
@@ -238,7 +222,6 @@ BOOST_AUTO_TEST_CASE(variantReading2s)
         ss << v;
         BOOST_CHECK(count < sizeof(expected)/sizeof(const char *));
         BOOST_CHECK_EQUAL(ss.str(), expected[count]);
-        BOOST_CHECK_EQUAL(v.info, "");
         ++count;
     }
 
@@ -276,14 +259,19 @@ BOOST_AUTO_TEST_CASE(variantReadingRegions)
         "chr1:826161-826167 0/0 PASS",
     };
 
-    const char * expected_info[] = {
-        "",
-        "",
-        "",
-        "",
-        "END=826161",
-        "CIGAR=1M6I;RU=TTTGAT;REFREP=0;IDREP=1",
-        "END=826168",
+    const std::function<void(Variants &)> expected_info[] = {
+        [](Variants & ) {},
+        [](Variants & ) {},
+        [](Variants & ) {},
+        [](Variants & ) {},
+        [](Variants & v) { BOOST_CHECK_EQUAL(v.getInfoInt("END"), 826161); },
+        [](Variants & v) {
+            BOOST_CHECK_EQUAL(v.getInfoInt("REFREP"), 0);
+            BOOST_CHECK_EQUAL(v.getInfoInt("IDREP"), 1);
+            BOOST_CHECK_EQUAL(v.getInfoString("CIGAR"), "1M6I");
+            BOOST_CHECK_EQUAL(v.getInfoString("RU"), "TTTGAT");
+        },
+        [](Variants & v) { BOOST_CHECK_EQUAL(v.getInfoInt("END"), 826168); },
     };
 
     while(r.advance())
@@ -293,10 +281,9 @@ BOOST_AUTO_TEST_CASE(variantReadingRegions)
         ss << v;
         BOOST_CHECK(count < sizeof(expected)/sizeof(const char *));
         BOOST_CHECK_EQUAL(ss.str(), expected[count]);
-        BOOST_CHECK_EQUAL(v.info, expected_info[count]);
+        expected_info[count](v);
         ++count;
     }
-
 }
 
 BOOST_AUTO_TEST_CASE(variantReadingTargets)

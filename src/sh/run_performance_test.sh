@@ -16,7 +16,7 @@ fi
 
 ${HCDIR}/xcmp \
 	${DIR}/../../example/PG_performance.vcf.gz \
-	${DIR}/../../example/performance.varsonly.vcf.gz \
+	${DIR}/../../example/performance.vcf.gz \
 	--always-hapcmp 1 -e performance.bed -o performance.vcf \
 	-r ${HG19} -f 0 -n 256
 

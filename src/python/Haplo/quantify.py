@@ -22,6 +22,7 @@ import json
 import logging
 import Tools
 
+from Tools.bcftools import runBcftools
 
 def _locations_tmp_bed_file(locations):
     """ turn a list of locations into a bed file """
@@ -135,7 +136,7 @@ def run_quantify(filename,
         run_str += " --fix-chr-regions 0"
 
     if write_vcf:
-        if not write_vcf.endswith(".vcf.gz"):
+        if not write_vcf.endswith(".vcf.gz") and not write_vcf.endswith(".bcf"):
             write_vcf += ".vcf.gz"
         run_str += " -v '%s'" % write_vcf
 
@@ -187,8 +188,11 @@ def run_quantify(filename,
     if location_file:
         os.unlink(location_file)
 
-    if write_vcf:
+    if write_vcf and write_vcf.endswith(".bcf"):
+        runBcftools("index", write_vcf)
+    else:
         to_run = "tabix -p vcf '%s'" % write_vcf
         logging.info("Running '%s'" % to_run)
         subprocess.check_call(to_run, shell=True)
+
 

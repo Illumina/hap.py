@@ -134,21 +134,24 @@ bool VariantAlleleSplitter::advance()
 
         struct CallInfo
         {
-            CallInfo() : qual(0), gq(0), ad_ref(-1), ad_other(-1), dp(-1), nfilter(0) {}
+            CallInfo() : ad_ref(-1), ad_other(-1), dp(-1), nfilter(0) {}
 
-            CallInfo(Call const & c) : qual(c.qual), gq(c.gq), ad_ref(c.ad_ref), ad_other(c.ad_other), dp(c.dp), nfilter(c.nfilter)
+            CallInfo(Call const & c) : ad_ref(c.ad_ref), ad_other(c.ad_other), dp(c.dp), qual(c.qual),
+                                       nfilter(c.nfilter), formats(c.formats)
             {
                 for (size_t i = 0; i < nfilter; ++i)
                 {
                     filter[i] = c.filter[i];
                 }
             }
-            float qual;
-            float gq;
+
+            /** retain source records */
             int ad_ref, ad_other;
             int dp;
+            float qual;
             size_t nfilter;
             std::string filter[MAX_FILTER];
+            Json::Value formats;
         };
 
         // "half-call" -- one allele of a call
@@ -159,8 +162,8 @@ bool VariantAlleleSplitter::advance()
             bool is_het;
             bool is_homref;
             size_t sample;
+            Json::Value infos;
             CallInfo ci;
-            std::string info;
         };
 
         std::vector<HCall> loc_alleles;
@@ -178,7 +181,7 @@ bool VariantAlleleSplitter::advance()
                 {
                     if (c.gt[0] > 0)
                     {
-                        loc_alleles.push_back(HCall{v.variation[c.gt[0]-1], c.ad[0], false, false, i, CallInfo(c), v.info});
+                        loc_alleles.push_back(HCall{v.variation[c.gt[0]-1], c.ad[0], false, false, i, v.infos, CallInfo(c)});
                     }
                     else if (c.gt[0] == 0)
                     {
@@ -186,7 +189,7 @@ bool VariantAlleleSplitter::advance()
                         hrv.start = v.pos;
                         hrv.end = v.pos + v.len - 1;
                         hrv.alt = ".";
-                        loc_alleles.push_back(HCall{hrv, c.ad_ref, false, true, i, CallInfo(c), v.info});
+                        loc_alleles.push_back(HCall{hrv, c.ad_ref, false, true, i, v.infos, CallInfo(c)});
                     }
                 }
                 else // everything else
@@ -196,7 +199,7 @@ bool VariantAlleleSplitter::advance()
                     {
                         if (c.gt[j] > 0)
                         {
-                            loc_alleles.push_back(HCall{v.variation[c.gt[j]-1], c.ad[j], true, false, i, CallInfo(c), v.info});
+                            loc_alleles.push_back(HCall{v.variation[c.gt[j]-1], c.ad[j], true, false, i, v.infos, CallInfo(c)});
                             any_nonref = true;
                         }
                     }
@@ -211,7 +214,7 @@ bool VariantAlleleSplitter::advance()
                                 hrv.start = v.pos;
                                 hrv.end = v.pos + v.len - 1;
                                 hrv.alt = ".";
-                                loc_alleles.push_back(HCall{hrv, c.ad_ref, true, true, i, CallInfo(c), v.info});
+                                loc_alleles.push_back(HCall{hrv, c.ad_ref, true, true, i, v.infos, CallInfo(c)});
                             }
                         }
                     }
@@ -225,7 +228,7 @@ bool VariantAlleleSplitter::advance()
                 {
                     if(i > 0)
                     {
-                        loc_alleles.push_back(HCall{v.variation[i-1], -1, true, false, sample, CallInfo(), v.info});
+                        loc_alleles.push_back(HCall{v.variation[i-1], -1, true, false, sample, v.infos, CallInfo()});
                     }
                 }
                 ++sample;
@@ -283,7 +286,6 @@ bool VariantAlleleSplitter::advance()
         cur.len = 0;
         cur.variation.reserve(1);
         cur.calls.resize(n_samples);
-        std::string info;
 
         for (auto & p : loc_alleles)
         {
@@ -296,9 +298,6 @@ bool VariantAlleleSplitter::advance()
             {
                 if (cur.pos >= 0)
                 {
-                    cur.info = info;
-                    info = "";
-                    cur.canonicalize_info();
                     _impl->output_variants.push_back(cur);
                 }
                 for (size_t i = 0; i < cur.calls.size(); ++i)
@@ -317,15 +316,22 @@ bool VariantAlleleSplitter::advance()
                 cur.pos = p.rv.start;
                 cur.len = p.rv.end - p.rv.start + 1;
             }
+            for(auto const & m : p.infos.getMemberNames())
+            {
+                if(!cur.infos.isMember(m))
+                {
+                    cur.infos[m] = p.infos[m];
+                }
+            }
             cur.calls[p.sample].ngt = 2;
-            cur.calls[p.sample].qual = p.ci.qual;
             cur.calls[p.sample].nfilter = p.ci.nfilter;
             cur.calls[p.sample].ad[0] = 0;
             cur.calls[p.sample].ad[1] = 0;
             cur.calls[p.sample].ad_ref = p.ci.ad_ref;
             cur.calls[p.sample].ad_other = p.ci.ad_other;
-            cur.calls[p.sample].gq = p.ci.gq;
             cur.calls[p.sample].dp = p.ci.dp;
+            cur.calls[p.sample].qual = p.ci.qual;
+            cur.calls[p.sample].formats = p.ci.formats;
             for (size_t i = 0; i < p.ci.nfilter; ++i) cur.calls[p.sample].filter[i] = p.ci.filter[i];
             if(p.is_homref)
             {
@@ -348,20 +354,9 @@ bool VariantAlleleSplitter::advance()
                 cur.calls[p.sample].ad[0] = p.ad;
                 cur.calls[p.sample].ad[1] = p.ad;
             }
-            if(info.find(p.info) == std::string::npos)
-            {
-                if(!info.empty())
-                {
-                    info += ";";
-                }
-                info += p.info;
-            }
         }
         if (cur.pos >= 0)
         {
-            cur.info = info;
-            info = "";
-            cur.canonicalize_info();
             _impl->output_variants.push_back(cur);
         }
     }

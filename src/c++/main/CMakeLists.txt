@@ -10,10 +10,6 @@ target_link_libraries(hapenum ${HAPLOTYPES_ALL_LIBS})
 add_executable(dipenum dipenum.cpp)
 target_link_libraries(dipenum ${HAPLOTYPES_ALL_LIBS})
 
-# hapblockfind takes a set of VCFs and outputs potential haplotype block regions
-add_executable(hapblockfind hapblockfind.cpp)
-target_link_libraries(hapblockfind ${HAPLOTYPES_ALL_LIBS})
-
 # blocksplit takes a set of VCFs and regions which do not break haplotype blocks at the edges
 add_executable(blocksplit blocksplit.cpp ../include/helpers/Roc.hh)
 target_link_libraries(blocksplit ${HAPLOTYPES_ALL_LIBS})
@@ -30,10 +26,6 @@ target_link_libraries(xcmp ${HAPLOTYPES_ALL_LIBS})
 add_executable(quantify quantify.cpp)
 target_link_libraries(quantify ${HAPLOTYPES_ALL_LIBS})
 
-# denovo counts variants in only one sample
-add_executable(denovo denovo.cpp)
-target_link_libraries(denovo ${HAPLOTYPES_ALL_LIBS})
-
 # vcfhdr2json turns a VCF header into JSON
 add_executable(vcfhdr2json vcfhdr2json.cpp)
 target_link_libraries(vcfhdr2json ${HAPLOTYPES_ALL_LIBS})
@@ -45,3 +37,13 @@ target_link_libraries(roc ${HAPLOTYPES_ALL_LIBS})
 # validatevcf checks ref alleles and tests if haplotypes can be enumerated
 add_executable(validatevcf validatevcf.cpp)
 target_link_libraries(validatevcf ${HAPLOTYPES_ALL_LIBS})
+
+# vcfcheck tests if something will be acceptable by hap.py
+# this is different from validatevcf, which counts the number of
+# superloci that will cause matching problems.
+add_executable(vcfcheck vcfcheck.cpp)
+target_link_libraries(vcfcheck ${HAPLOTYPES_ALL_LIBS})
+
+# preprocess does variant decomposition and leftshifting
+add_executable(preprocess preprocess.cpp)
+target_link_libraries(preprocess ${HAPLOTYPES_ALL_LIBS})

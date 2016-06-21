@@ -141,7 +141,7 @@ namespace variant
         float QQ = std::numeric_limits<float>::quiet_NaN();
         if(roc_field_is_info)
         {
-            QQ = (float)bcfhelpers::getInfoDouble(_impl->hdr, v, roc_field.c_str());
+            QQ = bcfhelpers::getInfoFloat(_impl->hdr, v, roc_field.c_str());
         }
         else if(roc_field_is_qual)
         {
@@ -349,7 +349,7 @@ namespace variant
                 }
                 else
                 {
-                    qqs.push_back((float)bcfhelpers::getFormatDouble(_impl->hdr, v, roc_field.c_str(), i));
+                    qqs.push_back((float) bcfhelpers::getFormatFloat(_impl->hdr, v, roc_field.c_str(), i));
                 }
 
                 key = this_type + ":" + kind + ":" + tag_string + ":" + s;

@@ -40,20 +40,10 @@
 #include "Version.hh"
 #include "SimpleDiploidCompare.hh"
 #include "Variant.hh"
-#include "VariantInput.hh"
 #include "helpers/StringUtil.hh"
 #include "helpers/GraphUtil.hh"
 #include "GraphReference.hh"
 #include "DiploidCompare.hh"
-
-#include "variant/VariantAlleleRemover.hh"
-#include "variant/VariantAlleleSplitter.hh"
-#include "variant/VariantTee.hh"
-#include "variant/VariantAlleleNormalizer.hh"
-#include "variant/VariantLocationAggregator.hh"
-#include "variant/VariantHomrefSplitter.hh"
-#include "variant/VariantAlleleUniq.hh"
-#include "variant/VariantCallsOnly.hh"
 
 #include <iostream>
 #include <fstream>
@@ -99,11 +89,8 @@ int main(int argc, char* argv[]) {
 
     bool apply_filters_query = false;
     bool apply_filters_truth = true;
-    bool preprocess = false;
-    bool leftshift = false;
     bool always_hapcmp = false;
     bool no_hapcmp = false;
-    bool output_roc_vals = false;
 
     try
     {
@@ -127,11 +114,8 @@ int main(int argc, char* argv[]) {
             ("limit", po::value<int64_t>(), "Maximum number of haplotype blocks to process.")
             ("apply-filters-truth", po::value<bool>(), "Apply filtering in truth VCF (on by default).")
             ("apply-filters-query,f", po::value<bool>(), "Apply filtering in query VCF (off by default).")
-            ("preprocess-variants,V", po::value<bool>(), "Apply variant normalisations, trimming, realignment for complex variants (off by default).")
-            ("leftshift", po::value<bool>(), "Left-shift indel alleles (off by default).")
             ("always-hapcmp", po::value<bool>(), "Always compare haplotype blocks (even if they match). Testing use only/slow.")
             ("no-hapcmp", po::value<bool>(), "Disable haplotype comparison. This overrides all other haplotype comparison options.")
-            ("roc-vals", po::value<bool>(), "Output GQX and qual values for truth and query in INFO (which gets preserved through quantify).")
         ;
 
         po::positional_options_description popts;
@@ -204,16 +188,6 @@ int main(int argc, char* argv[]) {
             out_errors = vm["output-errors"].as< std::string >();
         }
 
-        if (vm.count("preprocess-variants"))
-        {
-            preprocess = vm["preprocess-variants"].as< bool >();
-        }
-
-        if (vm.count("leftshift"))
-        {
-            leftshift = vm["leftshift"].as< bool >();
-        }
-
         if (vm.count("location"))
         {
             stringutil::parsePos(vm["location"].as< std::string >(), chr, start, end);
@@ -233,7 +207,7 @@ int main(int argc, char* argv[]) {
         {
             ref_fasta = vm["reference"].as< std::string >();
         }
-        else if(preprocess)
+        else
         {
             error("Please specify a reference file name.");
         }
@@ -287,11 +261,6 @@ int main(int argc, char* argv[]) {
         {
             no_hapcmp = vm["no-hapcmp"].as< bool >();
         }
-
-        if (vm.count("roc-vals"))
-        {
-            output_roc_vals = vm["roc-vals"].as< bool >();
-        }
     }
     catch (po::error & e)
     {
@@ -330,30 +299,10 @@ int main(int argc, char* argv[]) {
         /* now handled after comparison */
         /* vr.setApplyFilters(apply_filters_query, r2); */
 
-        VariantInput vi(
-            ref_fasta.c_str(),
-            preprocess || leftshift,          // bool leftshift
-            false,          // bool refpadding
-            true,                // bool trimalleles = false, (remove unused alleles)
-            preprocess || leftshift,      // bool splitalleles = false,
-            ( preprocess || leftshift ) ? 2 : 0,  // int mergebylocation = false,
-            true,                // bool uniqalleles = false,
-            true,                // bool calls_only = true,
-            false,               // bool homref_split = false // this is handled by calls_only
-            preprocess,          // bool primitives = false
-            false,               // bool homref_output
-            leftshift ? hb_window-1 : 0,   // int64_t leftshift_limit
-            false
-            );
-
-        VariantProcessor & vp = vi.getProcessor();
-
-        vp.setReader(vr, VariantBufferMode::buffer_block, 10*hb_window);
-
         bool stop_after_chr_change = false;
         if(chr != "")
         {
-            vp.rewind(chr.c_str(), start);
+            vr.rewind(chr.c_str(), start);
             stop_after_chr_change = true;
         }
 
@@ -368,15 +317,6 @@ int main(int argc, char* argv[]) {
             pvw->addHeader("##INFO=<ID=kind,Number=1,Type=String,Description=\"Sub-type for decision (match/mismatch type)\">");
             pvw->addHeader("##INFO=<ID=ctype,Number=1,Type=String,Description=\"Type of comparison performed\">");
             pvw->addHeader("##INFO=<ID=HapMatch,Number=0,Type=Flag,Description=\"Variant is in matching haplotype block\">");
-            if(output_roc_vals)
-            {
-                pvw->addHeader("##INFO=<ID=T_GQ,Number=1,Type=Float,Description=\"GQ field in truth VCF.\">");
-                pvw->addHeader("##INFO=<ID=Q_GQ,Number=1,Type=Float,Description=\"GQ field in query VCF.\">");
-                pvw->addHeader("##INFO=<ID=T_DP,Number=1,Type=Float,Description=\"DP field in truth VCF.\">");
-                pvw->addHeader("##INFO=<ID=Q_DP,Number=1,Type=Float,Description=\"DP field in query VCF.\">");
-                pvw->addHeader("##INFO=<ID=T_QUAL,Number=1,Type=Float,Description=\"Qual column in truth VCF.\">");
-                pvw->addHeader("##INFO=<ID=Q_QUAL,Number=1,Type=Float,Description=\"Qual column in query VCF.\">");
-            }
             if(apply_filters_query)
             {
                 pvw->addHeader("##INFO=<ID=Q_FILTERED,Number=0,Type=Flag,Description=\"Filtered call in query\">");
@@ -408,8 +348,7 @@ int main(int argc, char* argv[]) {
         int n_nonsnp = 0, calls_1 = 0, calls_2 = 0;
         bool has_mismatch = false;
 
-        const auto finish_block = [&vi,
-                                   &block_variants, r1, r2,
+        const auto finish_block = [&block_variants, r1, r2,
                                    &chr,
                                    &block_start,
                                    &block_end,
@@ -554,14 +493,10 @@ int main(int argc, char* argv[]) {
             {
                 for (Variants & v : block_variants)
                 {
-                    if(v.info != "")
-                    {
-                        v.info += ";";
-                    }
-                    v.info += std::string("ctype=") + result;
+                    v.setInfo("ctype", result.c_str());
                     if (hap_match)
                     {
-                        v.info += ";HapMatch";
+                        v.setInfo("HapMatch", true);
                     }
                     if(apply_filters_query)
                     {
@@ -569,7 +504,7 @@ int main(int argc, char* argv[]) {
                         {
                             if(v.calls[r2].filter[f] != "PASS" && v.calls[r2].filter[f] != ".")
                             {
-                                v.info += ";Q_FILTERED";
+                                v.setInfo("Q_FILTERED", true);
                                 break;
                             }
                         }
@@ -589,14 +524,14 @@ int main(int argc, char* argv[]) {
 
         auto start_time = std::chrono::high_resolution_clock::now();
         auto last_time = std::chrono::high_resolution_clock::now();
-        while(vp.advance())
+        while(vr.advance())
         {
             if(blimit > 0 && nhb++ > blimit)
             {
                 // reached record limit
                 break;
             }
-            Variants & v = vp.current();
+            Variants & v = vr.current();
 
             if(end != -1 && (v.pos > end || (chr.size() != 0 && chr != v.chr)))
             {
@@ -642,17 +577,6 @@ int main(int argc, char* argv[]) {
             if(compareVariants(v, r1, r2, n_nonsnp, calls_1, calls_2, !apply_filters_truth, !apply_filters_query) != dco_match)
             {
                 has_mismatch = true;
-            }
-
-            if(output_roc_vals)
-            {
-                if(!v.info.empty()) { v.info += ";"; }
-                v.info += "T_GQ=" + std::to_string(v.calls[r1].gq);
-                v.info += ";Q_GQ=" + std::to_string(v.calls[r2].gq);
-                v.info += ";T_DP=" + std::to_string(v.calls[r1].dp);
-                v.info += ";Q_DP=" + std::to_string(v.calls[r2].dp);
-                v.info += ";T_QUAL=" + std::to_string(v.calls[r1].qual);
-                v.info += ";Q_QUAL=" + std::to_string(v.calls[r2].qual);
             }
 
             block_variants.push_back(v);

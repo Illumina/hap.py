@@ -81,7 +81,7 @@ VariantAlleleUniq const & VariantAlleleUniq::operator=(VariantAlleleUniq const &
 /** enqueue a set of variants */
 void VariantAlleleUniq::add(Variants const & vs)
 {
-    if (vs.variation.size() <= 1 || vs.info.find("IMPORT_FAIL") != std::string::npos)
+    if (vs.variation.size() <= 1 || vs.getInfoFlag("IMPORT_FAIL"))
     {
         _impl->buffered_variants.push_back(vs);
         return;

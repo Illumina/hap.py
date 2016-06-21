@@ -168,7 +168,7 @@ bool VariantPrimitiveSplitter::advance()
         for (Variants & v : _impl->buffered_variants)
         {
             // homref?
-            if(v.variation.size() == 0 || v.info.find("IMPORT_FAIL") != std::string::npos) {
+            if(v.variation.size() == 0 || v.getInfoFlag("IMPORT_FAIL")) {
                 _impl->output_variants.push(v);
                 continue;
             }
@@ -251,8 +251,8 @@ bool VariantPrimitiveSplitter::advance()
             // to fix things up such that the same calls line up again
             Variants vnew;
             vnew.chr = v.chr;
-            vnew.info = v.info;
             vnew.calls.resize(v.calls.size());
+            vnew.infos = v.infos;
             for(size_t ci = 0; ci < v.calls.size(); ++ci)
             {
                 Call & c = v.calls[ci];
@@ -277,7 +277,7 @@ bool VariantPrimitiveSplitter::advance()
                         // add hom-alts only once
                         break;
                     }
-                    int rvallele = -1;
+                    int rvallele;
                     int dp = 0;
                     if(c.gt[gti] <= 0)
                     {
@@ -298,6 +298,8 @@ bool VariantPrimitiveSplitter::advance()
                     }
                     altCall.nfilter = c.nfilter;
                     altCall.qual = c.qual;
+                    altCall.dp = c.dp;
+                    altCall.formats = c.formats;
 
                     // for het calls, add reference haplotype
                     if(c.isHet())
@@ -396,6 +398,14 @@ bool VariantPrimitiveSplitter::advance()
                         vs.variation.push_back(var);
                     }
 
+                    for(auto const & mn : vs2.infos.getMemberNames())
+                    {
+                        if(!vs.infos.isMember(mn))
+                        {
+                            vs.infos[mn] = vs2.infos[mn];
+                        }
+                    }
+
                     // go through calls. If the positions match, we should be able to merge
                     for(size_t ci = 0; ci < vs.calls.size(); ++ci)
                     {
@@ -447,7 +457,7 @@ bool VariantPrimitiveSplitter::advance()
                         {
                             if(c2.gt[g2] > 0)
                             {
-                                vgts[nvgt] = c2.gt[g2] + gt_ofs;
+                                vgts[nvgt] = (int) (c2.gt[g2] + gt_ofs);
                                 vdps[nvgt] = c2.ad[g2];
                                 nvgt++;
                             }

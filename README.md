@@ -46,7 +46,11 @@ Simple Usage
 
 The main two tools are hap.py (diploid precision/recall evaluation) and som.py
 (somatic precision/recall evaluation -- this ignores the GT and just checks for
-presence of alleles).
+presence of alleles). Other tools are qfy.py (which just executes the quantification
+step of the analysis pipeline, this requires a 
+[GA4GH-intermediate](https://github.com/ga4gh/benchmarking-tools/) VCF file), and
+[pre.py](doc/normalisation.md), which is hap.py's input cleaning and 
+variant normalisation step.
 
 Here are some small example command lines. Advanced features like confident call
  / ambiguity / FP regions are also available, see the documentation for each
@@ -307,3 +311,11 @@ cd boost_1_55_0
 ./b2 --prefix=$HOME/boost_1_55_0_install install
 ```
 *  `-DUSE_SGE` -- enable the `--force-interactive` switch in hap.py.
+*  `-DBUILD_VCFEVAL=ON` -- Download and build rtgtools / vcfeval. This is a comparison engine that can be used
+   as an alternative to the built-in xcmp in hap.py. To successfully build and run vcfeval, you will need:
+   - A Java JRE, newer than 1.8.x
+   - ant > 1.9.2 (older versions of ant will not successfully build rtgtools)
+   See [src/sh/illumina-setup.sh]() for an example. If running Java requires any special setup
+   (or to configure any other environment variables), you can specify a wrapper script using
+   `-DVCFEVAL_WRAPPER={absolute_path_to_wrapper_script}`. See [src/sh/rtg-wrapper.sh]() for an
+   example.

@@ -20,6 +20,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	-X --reference ${DIR}/../data/open_indel/test.fa -l chrQ \
                 -V \
 			 	--force-interactive
+                # --verbose \
 
 if [[ $? != 0 ]]; then
 	echo "hap.py failed!"

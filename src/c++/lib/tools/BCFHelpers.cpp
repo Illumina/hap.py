@@ -41,6 +41,8 @@
 #include <sstream>
 #include <htslib/vcf.h>
 #include <memory>
+#include <limits>
+#include <set>
 
 /**
  * @brief Helper to get out GT fields
@@ -53,37 +55,32 @@ namespace bcfhelpers
     {
 
 /** C++-ified version of bcf_get_format_values */
-        enum class get_fmt_outcome { success=0, failure=-1, too_many=1 };
         template <typename target_type_t>
         struct bcf_get_numeric_format
         {
             bcf_get_numeric_format() {}
             /* return true when successful
              */
-            get_fmt_outcome operator()(const bcf_hdr_t *hdr, bcf1_t *line,
+            void operator()(const bcf_hdr_t *hdr, bcf1_t *line,
                                        const char *tag, int isample,
-                                       target_type_t * dest, int ndest,
-                                       target_type_t def) const
+                                       std::vector<target_type_t> & dest) const
             {
-                get_fmt_outcome result = get_fmt_outcome::failure;
-
-                for (int i = 0; i < ndest; ++i)
-                {
-                    dest[i] = def;
-                }
-
+                dest.clear();
                 int i;
                 int tag_id = bcf_hdr_id2int(hdr, BCF_DT_ID, tag);
 
                 if ( !bcf_hdr_idinfo_exists(hdr,BCF_HL_FMT,tag_id) )
                 {
-                    return result;
+                    return;
                 }
 
-                if ( !(line->unpacked & BCF_UN_FMT) )
+                int nsmpl = bcf_hdr_nsamples(hdr);
+                if (isample >= nsmpl)
                 {
-                    bcf_unpack(line, BCF_UN_FMT);
+                    return;
                 }
+
+                bcf_unpack(line, BCF_UN_FMT);
 
                 for (i = 0; i < line->n_fmt; i++)
                 {
@@ -95,28 +92,14 @@ namespace bcfhelpers
 
                 if ( i == line->n_fmt )
                 {
-                    return result;
+                    return;
                 }
 
                 bcf_fmt_t *fmt = &line->d.fmt[i];
                 int type = fmt->type;
-                int nsmpl = bcf_hdr_nsamples(hdr);
-                if (isample >= nsmpl)
-                {
-                    return result;
-                }
+                dest.resize((unsigned long) fmt->n);
 
-                if(ndest < fmt->n)
-                {
-                    result = get_fmt_outcome::too_many;
-                }
-
-                if(fmt->n < ndest)
-                {
-                    ndest = fmt->n;
-                }
-
-                for (int i = 0; i < ndest; ++i)
+                for (i = 0; i < fmt->n; ++i)
                 {
                     if ( type == BCF_BT_FLOAT )
                     {
@@ -172,13 +155,10 @@ namespace bcfhelpers
                     }
                     else
                     {
-                        // TODO handle this
                         std::cerr << "[W] string format field ignored when looking for numeric formats!" << "\n";
-                        dest[i] = def;
+                        dest[i] = -1;
                     }
                 }
-                result = get_fmt_outcome::success;
-                return result;
             }
         };
 
@@ -225,57 +205,114 @@ namespace bcfhelpers
         struct bcf_get_info
         {
             bcf_get_info() {}
-            type_t operator()(bcf_info_t * field) const;
+            type_t operator()(bcf_info_t * field, int which = 0) const;
         };
 
         template<>
-        int bcf_get_info<int>::operator()(bcf_info_t * field) const
+        int bcf_get_info<int>::operator()(bcf_info_t * field, int which) const
         {
+            int fieldsize = 4;
+            int fieldmask = 0xffffffff;
             switch(field->type)
             {
                 case BCF_BT_NULL:
                     return 0;
                 case BCF_BT_INT8:
+                    fieldsize >>= 1;
+                    fieldmask >>= 8;
                 case BCF_BT_INT16:
+                    fieldsize >>= 1;
+                    fieldmask >>= 16;
                 case BCF_BT_INT32:
-                    if(field->len != 1)
+                    if(field->len == 1 && which == 0)
                     {
-                        error("Cannot extract int from non-scalar INFO field (len = %i).", field->len);
+                        return field->v1.i;
                     }
-                    return field->v1.i;
+                    else
+                    {
+                        if(field->len <= which)
+                        {
+                            error("Cannot extract int from non-scalar INFO field (len = %i, requested: %i).",
+                                  field->len, which);
+
+                        }
+                        int f = (*(field->vptr + fieldsize*which)) & fieldmask;
+                        return f;
+                    }
                 case BCF_BT_FLOAT:
-                    if(field->len != 1)
+                    if(field->len == 1 && which == 0)
                     {
-                        error("Cannot extract int from non-scalar INFO field (len = %i).", field->len);
+                        return int(field->v1.f);
                     }
-                    return int(field->v1.f);
+                    else
+                    {
+                        if(field->len <= which)
+                        {
+                            error("Cannot extract int from non-scalar INFO field (len = %i, requested: %i).",
+                                  field->len, which);
+
+                        }
+                        return (int) *(((float*)field->vptr) + which );
+                    }
                 case BCF_BT_CHAR:
+                    if(which > 0)
+                    {
+                        error("Cannot extract int %i from string INFO field", which);
+                    }
                     return atoi((const char *)field->vptr);
+                default:
+                    break;
             }
             return -1;
         }
 
         template<>
-        double bcf_get_info<double>::operator()(bcf_info_t * field) const
+        float bcf_get_info<float>::operator()(bcf_info_t * field, int which) const
         {
             switch(field->type)
             {
                 case BCF_BT_NULL:
-                    return std::numeric_limits<double>::quiet_NaN();
+                    return std::numeric_limits<float>::quiet_NaN();
                 case BCF_BT_INT8:
                 case BCF_BT_INT16:
                 case BCF_BT_INT32:
-                    return (double)field->v1.i;
+                    if(which == 0 && field->len == 1)
+                    {
+                        return field->v1.f;
+                    }
+                    else
+                    {
+                        const bcf_get_info<int> gi;
+                        return (float)gi(field, which);
+                    }
                 case BCF_BT_FLOAT:
-                    return (double)field->v1.f;
+                    if(which == 0 && field->len == 1)
+                    {
+                        return field->v1.f;
+                    }
+                    else
+                    {
+                        if(field->len <= which)
+                        {
+                            error("Cannot extract int from non-scalar INFO field (len = %i, requested: %i).",
+                                  field->len, which);
+
+                        }
+                        return *(((float*)field->vptr) + which );
+                    }
                 case BCF_BT_CHAR:
-                    return atof((const char *)field->vptr);
+                    if(which > 0)
+                    {
+                        error("Cannot extract int %i from string INFO field", which);
+                    }
+                    return (float) atof((const char *)field->vptr);
+                default:break;
             }
-            return std::numeric_limits<double>::quiet_NaN();
+            return std::numeric_limits<float>::quiet_NaN();
         }
 
         template<>
-        std::string bcf_get_info<std::string>::operator()(bcf_info_t * field) const
+        std::string bcf_get_info<std::string>::operator()(bcf_info_t * field, int) const
         {
             char num[256];
             switch(field->type)
@@ -391,6 +428,7 @@ namespace bcfhelpers
      */
     int getInfoInt(bcf_hdr_t * header, bcf1_t * line, const char * field, int result)
     {
+        bcf_unpack(line, BCF_UN_INFO);
         bcf_info_t * info_ptr  = bcf_get_info(header, line, field);
         if(info_ptr)
         {
@@ -400,19 +438,52 @@ namespace bcfhelpers
         return result;
     }
 
+    std::vector<int> getInfoInts(bcf_hdr_t * header, bcf1_t * line, const char * field)
+    {
+        std::vector<int> result;
+        bcf_unpack(line, BCF_UN_INFO);
+        bcf_info_t * info_ptr  = bcf_get_info(header, line, field);
+        if(info_ptr)
+        {
+            static const bcfhelpers::_impl::bcf_get_info<int> i;
+            for(int j = 0; j < info_ptr->len; ++j)
+            {
+                result.push_back(i(info_ptr, j));
+            }
+        }
+        return result;
+    }
+
     /**
      * @brief Retrieve an info field as a double
      *
      * @return the value or NaN
      */
-    double getInfoDouble(bcf_hdr_t * header, bcf1_t * line, const char * field)
+    float getInfoFloat(bcf_hdr_t * header, bcf1_t * line, const char * field)
     {
-        double result = std::numeric_limits<double>::quiet_NaN();
+        float result = std::numeric_limits<float>::quiet_NaN();
+        bcf_unpack(line, BCF_UN_INFO);
         bcf_info_t * info_ptr  = bcf_get_info(header, line, field);
         if(info_ptr)
         {
-            static const bcfhelpers::_impl::bcf_get_info<double> i;
+            static const bcfhelpers::_impl::bcf_get_info<float> i;
             result = i(info_ptr);
+        }
+        return result;
+    }
+
+    std::vector<float> getInfoFloats(bcf_hdr_t * header, bcf1_t * line, const char * field)
+    {
+        std::vector<float> result;
+        bcf_unpack(line, BCF_UN_INFO);
+        bcf_info_t * info_ptr  = bcf_get_info(header, line, field);
+        if(info_ptr)
+        {
+            static const bcfhelpers::_impl::bcf_get_info<float> i;
+            for(int j = 0; j < info_ptr->len; ++j)
+            {
+                result.push_back(i(info_ptr, j));
+            }
         }
         return result;
     }
@@ -424,6 +495,7 @@ namespace bcfhelpers
      */
     bool getInfoFlag(bcf_hdr_t * hdr, bcf1_t * line, const char * field)
     {
+        bcf_unpack(line, BCF_UN_INFO);
         return bcf_get_info_flag(hdr, line, field, nullptr, 0) == 1;
     }
 
@@ -432,6 +504,7 @@ namespace bcfhelpers
      */
     void getGT(bcf_hdr_t * header, bcf1_t * line, int isample, int * gt, int & ngt, bool & phased)
     {
+        bcf_unpack(line, BCF_UN_FMT);
         bcf_fmt_t * fmt_ptr = bcf_get_fmt(header, line, "GT");
         if (fmt_ptr)
         {
@@ -463,21 +536,32 @@ namespace bcfhelpers
         }
     }
 
-    /** read GQ(X) -- will use in this order: GQX, GQ, -1 */
+    /** read GQ(X) -- will use in this order: GQX, GQ, -1
+     *
+     * This is somewhat Illumina-specific, TODO: refactor to avoid using this function in a general setting
+     * */
     void getGQ(const bcf_hdr_t * header, bcf1_t * line, int isample, float & gq)
     {
         using namespace _impl;
         static const bcf_get_numeric_format<float> gf;
 
-        get_fmt_outcome res;
-        res = gf(header, line, "GQX", isample, &gq, 1, 0.0);
-        if(res == get_fmt_outcome::failure)
+        std::vector<float> values;
+        gf(header, line, "GQX", isample, values);
+        if(values.empty())
         {
-            res = gf(header, line, "GQ", isample, &gq, 1, 0.0);
+            gf(header, line, "GQ", isample, values);
         }
-        if(res == get_fmt_outcome::too_many)
+        if(values.size() > 1)
         {
             std::cerr << "[W] too many GQ fields at " << header->id[BCF_DT_CTG][line->rid].key << ":" << line->pos << "\n";
+        }
+        if(values.empty())
+        {
+            gq = -1;
+        }
+        else
+        {
+            gq = values[0];
         }
     }
 
@@ -487,11 +571,15 @@ namespace bcfhelpers
         using namespace _impl;
         static const bcf_get_numeric_format<int> gf;
 
-        get_fmt_outcome res;
-        res = gf(header, line, "AD", isample, ad, max_ad, -1);
-        if(res == get_fmt_outcome::too_many)
+        std::vector<int> values;
+        gf(header, line, "AD", isample, values);
+        if(max_ad < (int)values.size())
         {
             std::cerr << "[W] too many AD fields at " << header->id[BCF_DT_CTG][line->rid].key << ":" << line->pos << "\n";
+        }
+        for(size_t q = 0; q < values.size(); ++q)
+        {
+            ad[q] = values[q];
         }
     }
 
@@ -501,15 +589,23 @@ namespace bcfhelpers
         using namespace _impl;
         static const bcf_get_numeric_format<int> gf;
 
-        get_fmt_outcome res;
-        res = gf(header, line, "DP", isample, &dp, 1, 0);
-        if(res == get_fmt_outcome::failure)
+        std::vector<int> values;
+        gf(header, line, "DP", isample, values);
+        if(values.empty())
         {
-            res = gf(header, line, "DPI", isample, &dp, 1, 0);
+            gf(header, line, "DPI", isample, values);
         }
-        if(res == get_fmt_outcome::too_many)
+        if(values.size() > 1)
         {
             std::cerr << "[W] too many DP fields at " << header->id[BCF_DT_CTG][line->rid].key << ":" << line->pos << "\n";
+        }
+        if(values.empty())
+        {
+            dp = 0;
+        }
+        else
+        {
+            dp = values[0];
         }
     }
 
@@ -519,33 +615,58 @@ namespace bcfhelpers
         using namespace _impl;
         static const bcf_get_numeric_format<int> gf;
 
-        get_fmt_outcome res;
-        res = gf(header, line, "DP", isample, &defaultresult, 1, 0);
-        if(res == get_fmt_outcome::too_many)
+        std::vector<int> values;
+        gf(header, line, "DP", isample, values);
+        if(values.size() > 1)
         {
             std::ostringstream os;
             os << "[W] too many " << field << " fields at " << header->id[BCF_DT_CTG][line->rid].key << ":" << line->pos;
             throw importexception(os.str());
+        }
+        if(values.size() == 1)
+        {
+            return values[0];
         }
         return defaultresult;
     }
 
-    /** read a format field as a single double. default return value is NaN */
-    double getFormatDouble(const bcf_hdr_t * header, bcf1_t * line, const char * field, int isample)
+    std::vector<int> getFormatInts(const bcf_hdr_t *header, bcf1_t *line, const char *field, int isample)
     {
         using namespace _impl;
-        double result = std::numeric_limits<double>::quiet_NaN();
-        static const bcf_get_numeric_format<double> gf;
+        static const bcf_get_numeric_format<int> gf;
+        std::vector<int> result;
+        gf(header, line, field, isample, result);
+        return result;
+    }
 
-        get_fmt_outcome res;
-        res = gf(header, line, field, isample, &result, 1, 0);
-        if(res == get_fmt_outcome::too_many)
+    /** read a format field as a single float. default return value is NaN */
+    float getFormatFloat(const bcf_hdr_t *header, bcf1_t *line, const char *field, int isample)
+    {
+        using namespace _impl;
+        float result = std::numeric_limits<float>::quiet_NaN();
+        static const bcf_get_numeric_format<float> gf;
+
+        std::vector<float> values;
+        gf(header, line, field, isample, values);
+        if(values.size() > 1)
         {
             std::ostringstream os;
             os << "[W] too many " << field << " fields at " << header->id[BCF_DT_CTG][line->rid].key << ":" << line->pos;
             throw importexception(os.str());
         }
+        if(values.size() == 1)
+        {
+            result = values[0];
+        }
+        return result;
+    }
 
+    std::vector<float> getFormatFloats(const bcf_hdr_t *header, bcf1_t *line, const char *field, int isample)
+    {
+        using namespace _impl;
+        static const bcf_get_numeric_format<float> gf;
+        std::vector<float> result;
+        gf(header, line, field, isample, result);
         return result;
     }
 
@@ -558,6 +679,7 @@ namespace bcfhelpers
             return result;
         }
 
+        bcf_unpack(line, BCF_UN_FMT);
         int tag_id = bcf_hdr_id2int(hdr, BCF_DT_ID, field);
 
         if ( !bcf_hdr_idinfo_exists(hdr,BCF_HL_FMT,tag_id) )
@@ -660,6 +782,7 @@ namespace bcfhelpers
     {
         // TODO this can probably be done faster / better
         std::unique_ptr<const char *[]> p_fmts = std::unique_ptr<const char *[]>(new const char *[line->n_sample]);
+        bcf_unpack(line, BCF_UN_FMT);
         bool any_nonempty = false;
         if(formats.size() != line->n_sample)
         {
@@ -675,7 +798,7 @@ namespace bcfhelpers
                 any_nonempty = true;
             }
         }
-        int res = -1;
+        int res;
         if(any_nonempty)
         {
             res = bcf_update_format_string(hdr, line, field, p_fmts.get(), line->n_sample);
@@ -731,6 +854,43 @@ namespace bcfhelpers
         }
     }
 
+    void setFormatInts(const bcf_hdr_t * header, bcf1_t * line, const char * field,
+                       const std::vector<int> & value)
+    {
+        if(value.empty())
+        {
+            int res = bcf_update_format(header, line, field, NULL, 0, 0);
+            if(res != 0)
+            {
+                std::ostringstream os;
+                os << "[W] cannot update format " << field << " " << header->id[BCF_DT_CTG][line->rid].key << ":" << line->pos;
+                throw importexception(os.str());
+            }
+            return;
+        }
+        std::unique_ptr<int[]> p_dbl = std::unique_ptr<int[]>(new int[line->n_sample]);
+
+        for(size_t i = 0; i < line->n_sample; ++i)
+        {
+            if(i < value.size())
+            {
+                p_dbl.get()[i] = value[i];
+            }
+            else
+            {
+                p_dbl.get()[i] = bcf_int32_missing;
+            }
+        }
+
+        int res = bcf_update_format_int32(header, line, field, p_dbl.get(), line->n_sample);
+        if(res != 0)
+        {
+            std::ostringstream os;
+            os << "[W] cannot update format " << field << " " << header->id[BCF_DT_CTG][line->rid].key << ":" << line->pos;
+            throw importexception(os.str());
+        }
+    }
+
     /** return sample names from header */
     std::list<std::string> getSampleNames(const bcf_hdr_t * hdr)
     {
@@ -748,4 +908,39 @@ namespace bcfhelpers
         return l;
     }
 
+    /** return number of reference padding bases */
+    int isRefPadded(bcf1_t * line)
+    {
+        bcf_unpack(line, BCF_UN_SHR);
+        if(line->n_allele == 1)
+        {
+            return 0;
+        }
+
+        const char * ref = line->d.allele[0];
+        const int reflen = (int) strlen(ref);
+
+        int max_match = reflen;
+        for(int al = 1; al < line->n_allele; ++al)
+        {
+            const char * alt = line->d.allele[al];
+            // symbolic or missing ALT
+            if(strcmp(alt, ".") == 0 || *alt == '<')
+            {
+                max_match = 0;
+                break;
+            }
+            int rpos = 0;
+            for(rpos = 0; rpos < reflen; ++rpos, ++alt)
+            {
+                const char rb = *(ref + rpos);
+                if(*alt == 0 || *alt != rb)
+                {
+                    break;
+                }
+            }
+            max_match = std::min(rpos, max_match);
+        }
+        return max_match;
+    }
 } // namespace bcfhelpers

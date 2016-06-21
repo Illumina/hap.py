@@ -39,7 +39,10 @@
 
 #pragma once
 
-#include "../Variant.hh"
+#include <iostream>
+#include <list>
+#include <vector>
+#include <memory>
 
 extern "C" {
 
@@ -53,6 +56,10 @@ extern "C" {
 
 #pragma GCC diagnostic pop
 }
+
+#ifndef MAX_GT
+#define MAX_GT 2
+#endif
 
 namespace bcfhelpers {
 
@@ -94,13 +101,15 @@ namespace bcfhelpers {
      * @param result the default to return if the field is not present
      */
     int getInfoInt(bcf_hdr_t * header, bcf1_t * line, const char * field, int result = -1);
+    std::vector<int> getInfoInts(bcf_hdr_t * header, bcf1_t * line, const char * field);
 
     /**
      * @brief Retrieve an info field as a double
      *
      * @return the value or NaN
      */
-    double getInfoDouble(bcf_hdr_t * header, bcf1_t * line, const char * field);
+    float getInfoFloat(bcf_hdr_t * header, bcf1_t * line, const char * field);
+    std::vector<float> getInfoFloats(bcf_hdr_t * header, bcf1_t * line, const char * field);
 
     /**
      * @brief Retrieve an info flag
@@ -125,9 +134,11 @@ namespace bcfhelpers {
 
     /** read a format field as a single int. */
     int getFormatInt(const bcf_hdr_t * header, bcf1_t * line, const char * field, int isample, int defaultresult = -1);
+    std::vector<int> getFormatInts(const bcf_hdr_t *header, bcf1_t *line, const char *field, int isample);
 
     /** read a format field as a single double. default return value is NaN */
-    double getFormatDouble(const bcf_hdr_t * header, bcf1_t * line, const char * field, int isample);
+    float getFormatFloat(const bcf_hdr_t *header, bcf1_t *line, const char *field, int isample);
+    std::vector<float> getFormatFloats(const bcf_hdr_t *header, bcf1_t *line, const char *field, int isample);
 
     /** read a format field as string. result will not be overwritten on failure */
     std::string getFormatString(const bcf_hdr_t * header, bcf1_t * line, const char * field, int isample, const char * def_result = ".");
@@ -139,4 +150,20 @@ namespace bcfhelpers {
     /** update format with single float values.  */
     void setFormatFloats(const bcf_hdr_t * header, bcf1_t * line, const char * field,
                          const std::vector<float> & value);
+
+    /** update format with single int values.  */
+    void setFormatInts(const bcf_hdr_t * header, bcf1_t * line, const char * field,
+                       const std::vector<int> & value);
+
+    /** return number of reference padding bases */
+    int isRefPadded(bcf1_t * line);
+
+    /** shared pointer support for keeping bcf types around */
+    typedef std::shared_ptr<bcf_hdr_t> p_bcf_hdr;
+    typedef std::shared_ptr<bcf1_t> p_bcf1;
+
+    /** shared-pointerize */
+    static inline p_bcf_hdr ph(bcf_hdr_t * h) { return std::shared_ptr<bcf_hdr_t>(h, bcf_hdr_destroy); }
+    static inline p_bcf1 pb(bcf1_t * b) { return std::shared_ptr<bcf1_t>(b, bcf_destroy); }
+
 } // namespace bcfhelpers

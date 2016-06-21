@@ -46,10 +46,15 @@ ${PYTHON} ${HCDIR}/qfy.py \
            -f ${DIR}/../../example/happy/PG_Conf_chr21.bed.gz \
            -t ga4gh -X -V
 
+if [[ $? != 0 ]]; then
+	echo "qfy.py failed!"
+	exit 1
+fi
+
 # these are all the metrics. We filter out all the command line bits
 cat ${TMP_OUT}.metrics.json | ${PYTHON} -mjson.tool | grep -v timestamp | grep -v hap.py > ${TMP_OUT}.hap.m.json
 cat ${TMP_OUT}.qfy.metrics.json | ${PYTHON} -mjson.tool | grep -v timestamp | grep -v qfy.py > ${TMP_OUT}.qfy.m.json
-diff ${TMP_OUT}.hap.m.json ${TMP_OUT}.qfy.m.json
+diff ${TMP_OUT}.hap.m.json ${TMP_OUT}.qfy.m.json | head
 if [[ $? != 0 ]]; then
 	echo "Re-quantified counts are different! diff ${TMP_OUT}.hap.m.json ${TMP_OUT}.qfy.m.json "
 	exit 1

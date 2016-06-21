@@ -31,14 +31,13 @@ import traceback
 import multiprocessing
 import pandas
 import json
-import pyximport
-
-pyximport.install()
+import tempfile
 
 scriptDir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'lib', 'python27')))
 
 import Tools
+import Tools.vcfextract
 from Tools.metric import makeMetricsObject, dataframeToMetricsTable
 import Haplo.quantify
 import Haplo.happyroc
@@ -53,7 +52,20 @@ def quantify(args):
 
     logging.info("Counting variants...")
 
-    output_vcf = args.reports_prefix + ".vcf.gz"
+    truth_or_query_is_bcf = False
+    try:
+        truth_or_query_is_bcf = args.vcf1.endswith(".bcf") and args.vcf2.endswith(".bcf")
+    except:
+        # args.vcf1 and args.vcf2 are only available when we're running
+        # inside hap.py.
+        pass
+
+    if args.bcf or truth_or_query_is_bcf:
+        internal_format_suffix = ".bcf"
+    else:
+        internal_format_suffix = ".vcf.gz"
+
+    output_vcf = args.reports_prefix + internal_format_suffix
     roc_table = args.reports_prefix + ".roc.tsv"
 
     qfyregions = {}
@@ -75,7 +87,7 @@ def quantify(args):
                     raise Exception("Quantification region file %s not found" % f)
                 qfyregions[n] = f
 
-    if vcf_name == output_vcf or vcf_name == output_vcf + ".vcf.gz":
+    if vcf_name == output_vcf or vcf_name == output_vcf + internal_format_suffix:
         raise Exception("Cannot overwrite input VCF: %s would overwritten with output name %s." % (vcf_name, output_vcf))
 
     Haplo.quantify.run_quantify(vcf_name,
@@ -171,6 +183,18 @@ def quantify(args):
 
 def updateArgs(parser):
     """ add common quantification args """
+    parser.add_argument("--internal-leftshift", dest="int_preprocessing_ls", action="store_true", default=True,
+                        help="Enable xcmp's internal VCF leftshift preprocessing.")
+
+    parser.add_argument("--internal-preprocessing", dest="int_preprocessing", action="store_true", default=True,
+                        help="Enable xcmp's internal VCF leftshift preprocessing.")
+
+    parser.add_argument("--no-internal-leftshift", dest="int_preprocessing_ls", action="store_false",
+                        help="Switch off xcmp's internal VCF leftshift preprocessing.")
+
+    parser.add_argument("--no-internal-preprocessing", dest="int_preprocessing", action="store_false",
+                        help="Switch off xcmp's internal VCF leftshift preprocessing.")
+
     parser.add_argument("-t", "--type", dest="type", choices=["xcmp", "ga4gh"],
                         help="Annotation format in input VCF file.")
 
@@ -230,7 +254,7 @@ def main():
 
     # generic, keep in sync with hap.py!
     parser.add_argument("-o", "--report-prefix", dest="reports_prefix",
-                        default=None,
+                        default=None, required=True,
                         help="Filename prefix for report output.")
 
     parser.add_argument("-r", "--reference", dest="ref", default=None, help="Specify a reference file.")
@@ -241,6 +265,12 @@ def main():
 
     parser.add_argument("--logfile", dest="logfile", default=None,
                         help="Write logging information into file rather than to stderr")
+
+    parser.add_argument("--bcf", dest="bcf", action="store_true", default=False,
+                        help="Use BCF internally. This is the default when the input file"
+                             " is in BCF format already. Using BCF can speed up temp file access, "
+                             " but may fail for VCF files that have broken headers or records that "
+                             " don't comply with the header.")
 
     verbosity_options = parser.add_mutually_exclusive_group(required=False)
 
@@ -256,6 +286,8 @@ def main():
 
     if not args.ref:
         args.ref = Tools.defaultReference()
+
+    args.scratch_prefix = tempfile.gettempdir()
 
     if args.verbose:
         loglevel = logging.INFO

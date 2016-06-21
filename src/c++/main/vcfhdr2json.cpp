@@ -157,7 +157,26 @@ int main(int argc, char* argv[]) {
         tbx_t * tbx_idx = tbx_index_load(file.c_str());
         if ( !tbx_idx )
         {
-            root["tabix"] = Json::Value::null;
+            hts_idx_t * csi_idx = bcf_index_load(file.c_str());
+            if(!csi_idx)
+            {
+                root["tabix"] = Json::Value::null;
+            }
+            else
+            {
+                root["tabix"] = Json::Value();
+                root["tabix"]["chromosomes"] = Json::Value();
+
+                int count = 0;
+                const char ** tbx_names = bcf_index_seqnames(csi_idx, hdr, &count);
+
+                for (int i = 0; i < count; ++i)
+                {
+                    root["tabix"]["chromosomes"].append(tbx_names[i]);
+                }
+                free(tbx_names);
+                hts_idx_destroy(csi_idx);
+            }
         }
         else
         {
@@ -172,6 +191,7 @@ int main(int argc, char* argv[]) {
                 root["tabix"]["chromosomes"].append(tbx_names[i]);
             }
 
+            free(tbx_names);
             tbx_destroy(tbx_idx);
         }
 

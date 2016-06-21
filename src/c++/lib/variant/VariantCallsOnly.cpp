@@ -58,7 +58,6 @@ struct VariantCallsOnly::VariantCallsOnlyImpl
         vs = rhs.vs;
         homref_ivs = rhs.homref_ivs;
         homref_dp = rhs.homref_dp;
-        homref_gq = rhs.homref_gq;
     }
 
     std::list<Variants> buffered_variants;
@@ -66,7 +65,6 @@ struct VariantCallsOnly::VariantCallsOnlyImpl
     // homref information
     intervals::IntervalBuffer homref_ivs;
     std::vector< intervals::LocationInfo<int> > homref_dp;
-    std::vector< intervals::LocationInfo<float> > homref_gq;
 
     Variants vs;
 };
@@ -110,7 +108,7 @@ void VariantCallsOnly::add(Variants const & v)
     }
     //
     // keep fails
-    if(v.info.find("IMPORT_FAIL") != std::string::npos)
+    if(v.getInfoFlag("IMPORT_FAIL"))
     {
 #ifdef DEBUG_VARIANTCALLSONLY
         std::cerr << "fail-pass-on: " << v << "\n";
@@ -124,7 +122,7 @@ void VariantCallsOnly::add(Variants const & v)
     if (v.anyHomref())
     {
         Variants non_hr = v;
-        int n_non_hr = v.calls.size();
+        int n_non_hr = (int) v.calls.size();
         for (size_t q = 0; q < v.calls.size(); ++q)
         {
             if(v.calls[q].isHomref())
@@ -138,14 +136,6 @@ void VariantCallsOnly::add(Variants const & v)
                     _impl->homref_dp.resize(q+1);
                 }
                 _impl->homref_dp[q].set(v.calls[q].dp, v.pos, v.pos + v.len - 1);
-
-                // remember gq
-                if(q >= _impl->homref_gq.size())
-                {
-                    _impl->homref_gq.resize(q+1);
-                }
-                _impl->homref_gq[q].set(v.calls[q].gq, v.pos, v.pos + v.len - 1);
-
                 --n_non_hr;
             }
             else if(v.calls[q].isNocall())
@@ -200,10 +190,6 @@ bool VariantCallsOnly::advance()
     {
         dp.reset_to(_impl->vs.pos-1);
     }
-    for (auto & gq : _impl->homref_gq)
-    {
-        gq.reset_to(_impl->vs.pos-1);
-    }
 
     // fix homref calls if output variant is covered
     for (size_t q = 0; q < _impl->vs.calls.size(); ++q) {
@@ -218,12 +204,6 @@ bool VariantCallsOnly::advance()
                 _impl->homref_dp[q].queryMean(_impl->vs.pos,
                                               _impl->vs.pos + _impl->vs.len - 1,
                                               _impl->vs.calls[q].dp);
-            }
-            if (_impl->homref_gq.size() > q)
-            {
-                _impl->homref_gq[q].queryMean(_impl->vs.pos,
-                                              _impl->vs.pos + _impl->vs.len - 1,
-                                              _impl->vs.calls[q].gq);
             }
         }
     }

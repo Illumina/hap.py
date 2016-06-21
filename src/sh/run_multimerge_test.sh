@@ -132,8 +132,7 @@ if [[ -f "$HG19" ]]; then
 	diff -I^# ${TF} ${DIR}/../../example/multimerge/features.processed.vcf
 
 	if [ $? -ne 0 ]; then
-		cat $TF
-		echo "Multimerge test (5) FAILED."
+		echo "Multimerge test (5) FAILED. diff ${TF} ${DIR}/../../example/multimerge/features.processed.vcf "
 		exit 1
 	else
 		echo "Multimerge test (5) SUCCEEDED."

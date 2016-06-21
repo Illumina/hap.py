@@ -64,12 +64,18 @@ def main():
             print metric + " / " + field
             print data1[metric][field1]
             print data2[metric][field2]
-            if metric.endswith("_ratio") and data1[metric][field1] == "" and data2[metric][field2] == "":
+            if metric.endswith("_ratio") and data1[metric][field1] in ["", "."] and data2[metric][field2] in ["", "."]:
                 # allow empty ratio match
                 continue
-            if metric.endswith("_ratio") and data1[metric][field1] == "." and data2[metric][field2] == ".":
-                # allow empty ratio match
-                continue
+            try:
+                data1[metric][field1] = float(data1[metric][field1])
+            except:
+                data1[metric][field1] = float("NaN")
+            try:
+                data2[metric][field2] = float(data2[metric][field2])
+            except:
+                data2[metric][field2] = float("NaN")
+
             if ("%.3g" % data1[metric][field1]) != ("%.3g" % data2[metric][field2]):
                 different_metrics.append((field,
                                           metric,

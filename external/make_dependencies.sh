@@ -13,6 +13,7 @@ if [ "$1" == "clean" ]; then
     rm -rf htslib
     rm -rf samtools
     rm -rf bcftools
+    rm -rf rtg-tools
     exit 0
 fi
 
@@ -83,4 +84,42 @@ then
     make -j4 -C samtools
 else
     echo "samtools already built. To rebuild, delete external/samtools"
+fi
+
+# get vcfeval
+# https://github.com/RealTimeGenomics/rtg-tools/archive/ga4gh-test.zip
+if [[ ! -z $BUILD_VCFEVAL ]]; then
+    if [[ ! -d rtg-tools/rtg-tools-install ]]; then
+        echo "Building rtg-tools"
+        mkdir -p rtg-tools
+        cd rtg-tools
+        if [[ ! -f rtg-tools.zip ]]; then
+            wget https://github.com/RealTimeGenomics/rtg-tools/archive/296c61ed18e363574fdbc982bbe73c0b86c796ce.zip -O rtg-tools.zip
+        fi
+        jar xvf rtg-tools.zip
+        cd rtg-tools-296c61ed18e363574fdbc982bbe73c0b86c796ce
+
+        if [[ ! -z ${ANT_HOME} ]]; then
+            $ANT_HOME/bin/ant zip-nojre
+        else
+            ant zip-nojre
+        fi
+        cd ..
+
+        RTG_ZIPFILE=$(ls rtg-tools-296c61ed18e363574fdbc982bbe73c0b86c796ce/dist/*-nojre.zip | head -1)
+        RTG_BASE=$(basename $RTG_ZIPFILE -nojre.zip)
+        jar xvf $RTG_ZIPFILE
+        mv $RTG_BASE rtg-tools-install
+        cp ../rtg.cfg rtg-tools-install
+        chmod +x rtg-tools-install/rtg
+        cd ..
+    else
+        echo "rtg-tools is already built. To rebuild, delete external/rtg-tools"
+    fi
+    if [[ -f ${VCFEVAL_WRAPPER} ]]; then
+        cd rtg-tools
+        echo "using wrapper for rtg-tools: ${VCFEVAL_WRAPPER}"
+        cp ${VCFEVAL_WRAPPER} rtg-tools-install/rtg-wrapper.sh
+        chmod +x rtg-tools-install/rtg
+    fi
 fi

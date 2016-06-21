@@ -34,4 +34,4 @@
 ##FORMAT=<ID=ADO,Number=.,Type=Integer,Description="Summed depth of non-called alleles.">
 ##contig=<ID=chrQ,length=37>
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA12877
-chrQ	1	.	AAAC	A,AA,AAA	0	.	.	GT	./.
+chrQ	1	.	AAAC	A,AA,AAA	0	.	IMPORT_FAIL	GT	./.

@@ -109,7 +109,7 @@ void VariantLocationAggregator::add(Variants const & vs)
     if (   _impl->buffered_variants.empty()
         || vs.chr != _impl->buffered_variants.back().chr
         || vs.pos != _impl->buffered_variants.back().pos
-        || vs.info.find("IMPORT_FAIL") != std::string::npos
+        || vs.getInfoFlag("IMPORT_FAIL")
         || (   (vs.anyHomref() || _impl->buffered_variants.back().anyHomref())
             && (vs.pos + vs.len != _impl->buffered_variants.back().pos + _impl->buffered_variants.back().len) )
        )
@@ -227,6 +227,14 @@ void VariantLocationAggregator::add(Variants const & vs)
         return;
     }
 
+    // combine info fields
+    for(auto const & mn : vs.infos.getMemberNames())
+    {
+        if(!back.infos.isMember(mn))
+        {
+            back.infos[mn] = vs.infos[mn];
+        }
+    }
     // simple case: can merge all calls from vs into back
     Variants remaining_calls = vs;
     for (size_t c : combine)
@@ -300,7 +308,6 @@ void VariantLocationAggregator::add(Variants const & vs)
         back.calls[c].ad_other = std::max(vs.calls[c].ad_other, back.calls[c].ad_other);
         back.calls[c].dp = std::max(vs.calls[c].dp, back.calls[c].dp);
         back.calls[c].qual = std::max(vs.calls[c].qual, back.calls[c].qual);
-        back.calls[c].gq = std::max(vs.calls[c].gq, back.calls[c].gq);
 
         // have merged this one -> remove
         remaining_calls.calls[c].ngt = 0;

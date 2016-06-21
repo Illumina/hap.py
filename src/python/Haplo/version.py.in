@@ -13,3 +13,4 @@
 __version__ = "@HAPLOTYPES_VERSION@"
 
 has_sge = @SGE_AVAILABLE@
+has_vcfeval = @VCFEVAL_AVAILABLE@

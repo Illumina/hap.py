@@ -401,11 +401,11 @@ in the ROC outputs.
 
 | Comparison mode              | Leftshifting of Indels | Splitting of Variants | FP/FN/TP Granularity               | Comment                                                         |
 |:-----------------------------|:----------------------:|:---------------------:|:-----------------------------------|-----------------------------------------------------------------|
-| hap.py default               |           Yes          |          Yes          | Superlocus haplotype / exact match | Most granular counting                                          |
-| hap.py `--no-partial-credit` |           No           |           No          | Superlocus haplotype / exact match | Similar to vcfeval but slightly lower precision / recall        |
-| hap.py `--unhappy`           |           No           |           No          | exact match only                   | Naive matching                                                  |
-| hap.py `--engine vcfeval`    |           No           |           No          | haplotype match per VCF record     | Preserves original variant representation, no granular counting |
-
+| hap.py default               |           No           |          Yes          | Superlocus haplotype / exact match | Granular counting, respect phase where possible                 |
+| hap.py `--engine vcfeval`    |           No           |          Yes          | haplotype match per VCF record     | Most granular counting, does not respect variant phase blocks   |
+| hap.py `--internal-leftshift`|          Yes           |          Yes          | Superlocus haplotype / exact match | This can help when variants are represented very differently from their canonical / left-shifted position.  |
+| hap.py `--unhappy`           |           No           |          Yes          | exact match only                   | Naive matching                                                  |
+| hap.py `--unhappy --no-internal-preprocessing`           |           No           |          Yes          | exact match only                   | Naive matching, original variant representation |
 
 We can plot the following ROCs from the *.roc.*.csv files. The plots below also
 show that the results when using xcmp or vcfeval as the comparison engine in
@@ -475,48 +475,8 @@ hap.py hap.py/example/happy/PG_NA12878_hg38-chr21.vcf.gz \
 ### Input Preprocessing using bcftools
 
 Hap.py has a range of options to control pre-processing separately for truth
-and query. Most of these require the `--external-preprocessing`  switch to work.
-
-#### BCFtools norm
-
-Truth and query can be preprocessed using `bcftools norm -c x -D` as follows:
-
-```
-  --preprocess-truth    Preprocess truth file using bcftools.
-  --bcftools-norm       Preprocess query file using bcftools.
-```
-
-### Chromosome naming
-
-Normally, the reference fasta file, truth and query should have matching
-chromosome names. However, since e.g. Platinum Genomes doesn't have a specific
-GRCH37 version with numeric chromosome names (names like `1` rather than
-`chr1`), this can be worked around in pre-processing (assuming the sequences
-are otherwise identical).
-
-```
-  --fixchr-truth        Add chr prefix to truth file (default: auto).
-  --fixchr-query        Add chr prefix to query file (default: auto).
-  --no-fixchr-truth     Disable chr replacement for truth (default: auto).
-  --no-fixchr-query     Add chr prefix to query file (default: auto).
-  --no-auto-index       Disable automatic index creation for input files. The
-                        index is only necessary at this stage if we want to
-                        auto-detect locations. When used with -l, and when it
-                        is known that there are variants at all given
-                        locations this is not needed and can be switched off
-                        to save time.
-```
-
-Normally this is detected automatically from the VCF headers / tabix indexes /
-the reference FASTA file. The reason for having this set of options is that
-Platinum Genomes truth VCFs for hg19 (which have chr1 ... chr22 chromosome names)
-can be used also on grc37 query VCFs(which have numeric chromosome names) because
-PG only provides truth calls on chr1-chr22, chrX (which have identical sequence
-in these two references, only chromosome names are different).
-
-Generally, *the truth files (BED and VCF) should have consistent chromosome names
-with the reference that is used*, and hap.py can be used to add on a chr prefix
-to the query VCF if necessary.
+and query. Hap.py supports the same options as pre.py, which is described in
+[normalisation.md](normalisation.md).
 
 ### Haplotype Comparison Parameters
 
@@ -559,8 +519,14 @@ file formats (see [https://github.com/ga4gh/benchmarking-tools](https://github.c
 Currently, such a version is available in this branch:
 [https://github.com/realtimegenomics/rtg-tools/tree/ga4gh-test](https://github.com/realtimegenomics/rtg-tools/tree/ga4gh-test)
 
+When installing hap.py, we can attempt to build a compatible version of VCFeval.
+The installer has the  `--with-rtgtools` and `--rtgtools-wrapper RTGTOOLS_WRAPPER` 
+command line options to do this.
+
 Before using RTG tools, it is necessary to translate the reference Fasta file into
-the SDF format (this only needs to be done once for each reference sequence):
+the SDF format (this only needs to be done once for each reference sequence). Hap.py can do this
+on the fly, but when using a single reference with multiple VCFs, it is better to do this 
+beforehand.
 
 ```
 rtg format -o hg19.sdf hg19.fa
@@ -574,7 +540,7 @@ in `~/rtg-install`, and that the folder `hg19.sdf` created by the previous comma
 directory):
 
 ```
-hap.py truth.vcf.gz query.vcf.gz -f conf.bed.gz -o ./test -V --engine=vcfeval --engine-vcfeval-path ~/rtg-install/rtg --engine-vcfeval-template hg19
+hap.py truth.vcf.gz query.vcf.gz -f conf.bed.gz -o ./test -V --engine=vcfeval --engine-vcfeval-template hg19
 ```
 
 Most other command line arguments and outputs will work as before.

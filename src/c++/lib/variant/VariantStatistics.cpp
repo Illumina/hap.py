@@ -565,7 +565,7 @@ void VariantStatistics::add(Variants const & rhs, int sample, int ** rtypes, int
     int location_type = CT_UNKNOWN;
     int types = 0;
 
-    if(rhs.info.find("IMPORT_FAIL") != std::string::npos) {
+    if(rhs.getInfoFlag("IMPORT_FAIL")) {
         // ignore fail calls when counting
         location_type = CT_FAIL;
         types = VT_NOCALL;

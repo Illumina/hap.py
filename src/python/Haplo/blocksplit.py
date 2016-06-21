@@ -32,10 +32,14 @@ def blocksplitWrapper(location_str, args):
                                      suffix=".chunks.bed")
     tf.close()
 
-    to_run = "blocksplit %s %s -l %s -o %s --window %i --nblocks %i -f 0" % \
+    if location_str:
+        loc = " -l %s" % location_str
+    else:
+        loc = ""
+    to_run = "blocksplit %s %s%s -o %s --window %i --nblocks %i -f 0" % \
              (args.vcf1.replace(" ", "\\ "),
               args.vcf2.replace(" ", "\\ "),
-              location_str,
+              loc,
               tf.name,
               args.window*2,
               args.pieces)

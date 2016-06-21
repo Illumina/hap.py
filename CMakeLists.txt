@@ -14,6 +14,15 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 include(cxx)
 include(configureFiles)
 
+if(BUILD_VCFEVAL)
+    message("Will build rtg-tools.")
+    set( ENV{BUILD_VCFEVAL} "1" )
+    set( ENV{VCFEVAL_WRAPPER} ${VCFEVAL_WRAPPER} )
+    set (VCFEVAL_AVAILABLE 1)
+else()
+    set (VCFEVAL_AVAILABLE 0)
+endif()
+
 execute_process(
     COMMAND ./make_dependencies.sh
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external)
@@ -61,6 +70,10 @@ configure_files("${CMAKE_CURRENT_SOURCE_DIR}/external/htslib" "bgzip" "${CMAKE_B
 configure_files("${CMAKE_CURRENT_SOURCE_DIR}/external/bcftools" "bcftools" "${CMAKE_BINARY_DIR}/bin")
 configure_files("${CMAKE_CURRENT_SOURCE_DIR}/external/samtools" "samtools" "${CMAKE_BINARY_DIR}/bin")
 
+if(BUILD_VCFEVAL)
+    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/external/rtg-tools/rtg-tools-install" DESTINATION "${CMAKE_BINARY_DIR}/libexec/")
+endif()
+
 include(FindHTSLib)
 
 find_package (Threads REQUIRED)
@@ -95,3 +108,6 @@ add_subdirectory (src/python)
 # install
 install (DIRECTORY "${CMAKE_BINARY_DIR}/bin/" DESTINATION bin FILES_MATCHING PATTERN "*" PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE)
 install (DIRECTORY "${CMAKE_BINARY_DIR}/lib/" DESTINATION lib)
+if(BUILD_VCFEVAL)
+    install (DIRECTORY "${CMAKE_BINARY_DIR}/libexec/" DESTINATION libexec)
+endif()

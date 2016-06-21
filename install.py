@@ -163,6 +163,14 @@ def build_haplotypes(source_dir, build_dir, args):
     if args.sge:
         config_command += " -DUSE_SGE=ON"
 
+    if args.build_rtgtools:
+        config_command += " -DBUILD_VCFEVAL=ON"
+        if args.rtgtools_wrapper:
+            if not os.path.exists(args.rtgtools_wrapper):
+                raise Exception("RTG-tools wrapper %s doesn't exist." % args.rtgtools_wrapper)
+            config_command += "-DVCFEVAL_WRAPPER=%s" % \
+                              os.path.abspath(args.rtgtools_wrapper).replace(" ", "\\ ")
+
     to_run = boost_prefix + "cd %s && %s %s" % (build_dir, boost_prefix, config_command)
     print >>sys.stderr, to_run
     subprocess.check_call(to_run, shell=True)
@@ -261,6 +269,15 @@ def main():
     parser.add_argument("--no-rebuild-external", dest="external_build", default=True,
                         action="store_false",
                         help="Don't rebuild external dependencies if not necessary.")
+
+    parser.add_argument("--with-rtgtools", dest="build_rtgtools", default=False,
+                        action="store_true",
+                        help="Get and build rtgtools. You need to have Java and Ant for this.")
+
+    parser.add_argument("--rtgtools-wrapper", dest="rtgtools_wrapper", default=None,
+                        help="Wrapper script for rtgtools. This is optional, it is useful "
+                             "when the default version of Java must be replaced / the environment "
+                             "needs updating. There is an example in src/sh/rtg-wrapper.sh.")
 
     parser.add_argument("--build-processes", dest="processes",
                         default=multiprocessing.cpu_count(), type=int,

@@ -12,6 +12,7 @@ external/boost_install
 external/boost_subset_1_58_0
 external/bcftools
 external/samtools
+external/rtg-tools
 example/integration/integrationtest_lhs.vcf.gz
 example/integration/integrationtest_lhs.vcf.gz.tbi
 example/integration/integrationtest_rhs.vcf.gz

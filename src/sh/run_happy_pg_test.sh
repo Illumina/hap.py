@@ -14,6 +14,33 @@ HG19=${DIR}/../../example/chr21.fa
 
 TMP_OUT=`mktemp -t happy.XXXXXXXXXX`
 
+HAS_VCFEVAL=$(cat ${HCDIR}/../lib/python27/Haplo/version.py | grep has_vcfeval | perl -pe 's/.*([0-9]+)$/$1/')
+
+if [[ $HAS_VCFEVAL != 0 ]]; then
+	# run hap.py with vcfeval
+	${PYTHON} ${HCDIR}/hap.py \
+				 	-l chr21 \
+				 	${DIR}/../../example/happy/PG_NA12878_chr21.vcf.gz \
+				 	${DIR}/../../example/happy/NA12878_chr21.vcf.gz \
+				 	-f ${DIR}/../../example/happy/PG_Conf_chr21.bed.gz \
+				 	-r ${DIR}/../../example/chr21.fa \
+				 	-o ${TMP_OUT}.vcfeval \
+				 	--engine=vcfeval \
+				 	-X \
+				 	--force-interactive
+
+	if [[ $? != 0 ]]; then
+		echo "hap.py failed!"
+		exit 1
+	fi
+
+	${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.vcfeval.summary.csv ${DIR}/../../example/happy/expected.vcfeval.summary.csv
+	if [[ $? != 0 ]]; then
+		echo "vcfeval summary differs! -- diff ${TMP_OUT}.vcfeval.summary.csv ${DIR}/../../example/happy/expected.vcfeval.summary.csv"
+		exit 1
+	fi	
+fi
+
 # run hap.py
 ${PYTHON} ${HCDIR}/hap.py \
 			 	-l chr21 \

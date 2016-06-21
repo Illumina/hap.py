@@ -42,6 +42,7 @@
 #include <cmath>
 
 #include "Variant.hh"
+#include "helpers/BCFHelpers.hh"
 
 using namespace variant;
 
@@ -136,7 +137,10 @@ BOOST_AUTO_TEST_CASE(variantReadingFormats)
         {
         	BOOST_CHECK(std::isnan(v.calls[0].qual));
         }
-        BOOST_CHECK_CLOSE(v.calls[0].gq, expected_gq[count], 0.01);
+
+        float gq = v.calls[0].formats["GQX"].asFloat();
+		if(!gq) gq = v.calls[0].formats["GQ"].asFloat();
+        BOOST_CHECK_CLOSE(gq, expected_gq[count], 0.01);
         BOOST_CHECK_EQUAL(v.calls[0].ad[0], expected_ad[2*count]);
         BOOST_CHECK_EQUAL(v.calls[0].ad[1], expected_ad[2*count+1]);
         BOOST_CHECK_EQUAL(v.calls[0].ad_ref, expected_ad_r[count]);
@@ -271,7 +275,9 @@ BOOST_AUTO_TEST_CASE(variantReadingFormats2)
 	        {
 	        	BOOST_CHECK(std::isnan(v.calls[i].qual));
 	        }
-	        BOOST_CHECK_CLOSE(v.calls[i].gq, expected_gq[count + 5*i], 0.01);
+            float gq = v.calls[i].formats["GQX"].asFloat();
+            if(gq <= 0) gq = v.calls[i].formats["GQ"].asFloat();
+	        BOOST_CHECK_CLOSE(gq, expected_gq[count + 5*i], 0.01);
 	        BOOST_CHECK_EQUAL(v.calls[i].ad[0], expected_ad[2*count + 10*i]);
 	        BOOST_CHECK_EQUAL(v.calls[i].ad[1], expected_ad[2*count+1 + 10*i]);
 	        BOOST_CHECK_EQUAL(v.calls[i].ad_ref, expected_ad_r[count + 5*i]);

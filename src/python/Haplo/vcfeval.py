@@ -23,7 +23,38 @@ import subprocess
 import tempfile
 import time
 import shutil
+import logging
 import Tools.bcftools
+
+import Haplo.version
+
+
+def findVCFEval():
+    """ Return default version of rtgtools if hap.py was built with
+        rtgtools included.
+    """
+    if Haplo.version.has_vcfeval:
+        base = os.path.join(os.path.dirname(__file__),
+                            "..",   # python27
+                            "..",   # lib
+                            "..",   # hap.py-base
+                            "libexec",
+                            "rtg-tools-install")
+        # prefer wrapper when it's there
+        bfile = os.path.join(base, "rtg-wrapper.sh")
+        bfile2 = os.path.join(base, "rtg")
+        if os.path.isfile(bfile) and os.access(bfile, os.X_OK):
+            return bfile
+        elif os.path.isfile(bfile2) and os.access(bfile2, os.X_OK):
+            return bfile2
+        else:
+            logging.warn(("Could not find our included version of rtg-tools at %s. " % base) +
+                         "To use vcfeval for comparison, you might have to specify "
+                         "its location on the command line.")
+            return "rtg"
+    else:
+        # default: return
+        return "rtg"
 
 
 def runVCFEval(vcf1, vcf2, target, args):
@@ -39,6 +70,7 @@ def runVCFEval(vcf1, vcf2, target, args):
 
     del_vcf1 = False
     del_vcf2 = False
+    del_sdf = False
 
     try:
         if not os.path.exists(vcf1 + ".tbi"):
@@ -48,6 +80,32 @@ def runVCFEval(vcf1, vcf2, target, args):
             vcf2 = Tools.bcftools.makeIndex(vcf2)
             del_vcf2 = True
 
+        if not args.engine_vcfeval_template or not os.path.exists(args.engine_vcfeval_template):
+            logging.warn("Creating template for vcfeval. "
+                         "You can speed this up in the future by doing this in advance.")
+            del_sdf = True
+            stf = tempfile.NamedTemporaryFile(dir=args.scratch_prefix,
+                                              prefix="vcfeval.sdf",
+                                              suffix=".dir")
+            stf.close()
+            args.engine_vcfeval_template = stf.name
+            runme = "%s format -o %s %s" % (
+                args.engine_vcfeval,
+                args.engine_vcfeval_template.replace(" ", "\\ "),
+                args.ref.replace(" ", "\\ "))
+            logging.info(runme)
+            po = subprocess.Popen(runme,
+                                  shell=True,
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE)
+            o, e = po.communicate()
+            po.wait()
+            rc = po.returncode
+            if rc != 0:
+                raise Exception("Error running rtg tools / vcfeval. Return code was %i, output: %s / %s \n" % (rc, o, e))
+            elif o.strip() or e.strip():
+                logging.info("vcfeval output: \n%s\n / \n%s\n" % (o, e))
+
         runme = "%s vcfeval -b %s -c %s -t %s -o %s -T %i -m ga4gh --ref-overlap" % (
             args.engine_vcfeval,
             vcf1.replace(" ", "\\ "),
@@ -55,7 +113,8 @@ def runVCFEval(vcf1, vcf2, target, args):
             args.engine_vcfeval_template.replace(" ", "\\ "),
             vtf.name,
             args.threads)
-        if args.usefiltered:
+
+        if not args.pass_only:
             runme += " --all-records"
 
         if args.roc:
@@ -99,6 +158,11 @@ def runVCFEval(vcf1, vcf2, target, args):
             shutil.rmtree(vtf.name)
         except:
             pass
+        if del_sdf:
+            try:
+                shutil.rmtree(args.engine_vcfeval_template)
+            except:
+                pass
 
     elapsed = time.time() - starttime
     logging.info("vcfeval for %s vs. %s -- time taken %.2f" % (vcf1, vcf2, elapsed))

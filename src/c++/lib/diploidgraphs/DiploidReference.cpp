@@ -282,6 +282,10 @@ void DiploidReference::setRegion(
             }
         }
     }
+    if(_impl->di_haps.empty())
+    {
+        error("Cannot find matching haplotype pairs at %s:%i-%i", chr, start, end);
+    }
     _impl->pos = _impl->di_haps.begin();
 }
 

@@ -39,6 +39,8 @@
 
 #include <sstream>
 #include <cstring>
+#include <unordered_set>
+#include <htslib/vcf.h>
 
 // #define DEBUG_VARIANT_GTS
 
@@ -111,7 +113,7 @@ namespace variant
             {
                 continue;
             }
-            stringutil::split(std::string(hdr_text, len), result, "\n");
+            stringutil::split(std::string(hdr_text, (unsigned long) len), result, "\n");
             free(hdr_text);
             for(std::string hl : result) {
                 if(drop && !(
@@ -178,7 +180,7 @@ namespace variant
                 merged_header_items[oss.str()] = l;
                 if(hrec->type == BCF_HL_INFO || l.substr(0, 6) == "##INFO") {
                     // HAP-79 check if info entries have a description
-                    int idx = bcf_hrec_find_key(hrec, "Description");
+                    idx = bcf_hrec_find_key(hrec, "Description");
                     if (idx < 0)
                     {
                         bcf_hrec_add_key(hrec, "Description", 11);
@@ -213,7 +215,7 @@ namespace variant
         bcf_clear(rec);
 
         rec->rid = bcf_hdr_name2id(hdr, var.chr.c_str());
-        rec->pos = var.pos;
+        rec->pos = (int32_t) var.pos;
 
         /** make alleles */
         if(var.variation.size() > 0)
@@ -236,7 +238,7 @@ namespace variant
         {
             std::string refnt = _impl->reference.query(var.chr.c_str(), rec->pos, rec->pos);
             bcf_update_alleles_str(hdr, rec, refnt.c_str());
-            int varend = (int)var.pos + var.len;
+            int varend = (int) (var.pos + var.len);
             bcf_update_info_int32(hdr, rec, "END", &varend, 1);
         }
 
@@ -244,9 +246,10 @@ namespace variant
         rec->qual = 0;
         for(Call const & c : var.calls)
         {
-            if(!std::isnan(c.qual))
+            const float cqual = c.qual;
+            if(!std::isnan(cqual))
             {
-                rec->qual = std::max(c.qual, rec->qual);
+                rec->qual = std::max(cqual, rec->qual);
             }
         }
 
@@ -313,17 +316,77 @@ namespace variant
 
         free(tmp);
 
+        // write info
+        {
+            // prevent keeping AN and AC since these might change
+            std::set<std::string> dont_write = {"AN", "AC"};
+            for(auto const & id : var.infos.getMemberNames())
+            {
+                if(dont_write.count(id))
+                {
+                    continue;
+                }
+                Json::Value const & v = var.infos[id];
+
+                if(v.isArray() && !v.empty())
+                {
+                    if(v[0].isInt())
+                    {
+                        std::unique_ptr<int[]> p_values(new int[v.size()]);
+                        for(int s = 0; s < (int)v.size(); ++s)
+                        {
+                            p_values.get()[s] = v[s].asInt();
+                        }
+                        bcf_update_info_int32(hdr, rec, id.c_str(), p_values.get(), (int)v.size());
+                    }
+                    else if(v[0].isNumeric())
+                    {
+                        std::unique_ptr<float[]> p_values(new float[v.size()]);
+                        for(int s = 0; s < (int)v.size(); ++s)
+                        {
+                            p_values.get()[s] = v[s].asFloat();
+                        }
+                        bcf_update_info_float(hdr, rec, id.c_str(), p_values.get(), (int)v.size());
+                    }
+                    else
+                    {
+                        error("VariantWriter: unknown array type in info field at %s:i", var.chr.c_str(), var.pos);
+                    }
+                }
+                else if(v.isInt())
+                {
+                    const int value = v.asInt();
+                    bcf_update_info_int32(hdr, rec, id.c_str(), &value, 1);
+                }
+                else if(v.isNumeric())
+                {
+                    const float value = v.asFloat();
+                    bcf_update_info_float(hdr, rec, id.c_str(), &value, 1);
+                }
+                else if(v.isBool())
+                {
+                    bcf_update_info_flag(hdr, rec, id.c_str(), NULL, 1);
+                }
+                else
+                {
+                    bcf_update_info_string(hdr, rec, id.c_str(), v.asCString());
+                }
+            }
+        }
+
         if (_impl->write_formats)
         {
-            float * tmp_gq = (float*)malloc(bcf_hdr_nsamples(hdr)*sizeof(float));
-            int32_t * tmp_dp = (int32_t*)malloc(bcf_hdr_nsamples(hdr)*sizeof(int32_t));
-            int32_t * tmp_ad = (int32_t*)malloc(bcf_hdr_nsamples(hdr)*(var.variation.size() + 1)*sizeof(int32_t));
-            int32_t * tmp_ado = (int32_t*)malloc(bcf_hdr_nsamples(hdr)*sizeof(int32_t));
+            std::map<std::string, std::vector<int>> int_fmts;
+            std::map<std::string, std::vector<float>> float_fmts;
+            std::map<std::string, std::vector<std::string>> string_fmts;
 
-            memset(tmp_ad, 0, sizeof(int32_t)*bcf_hdr_nsamples(hdr)*(var.variation.size() + 1));
-            memset(tmp_ado, 0, sizeof(int32_t)*bcf_hdr_nsamples(hdr));
-            memset(tmp_gq, 0, sizeof(float)*bcf_hdr_nsamples(hdr));
-            memset(tmp_dp, 0, sizeof(int32_t)*bcf_hdr_nsamples(hdr));
+            auto tmp_dp = std::unique_ptr<int32_t[]>(new int32_t [bcf_hdr_nsamples(hdr)]);
+            auto tmp_ad = std::unique_ptr<int32_t[]>(new int32_t [bcf_hdr_nsamples(hdr) * (var.variation.size() + 1)]);
+            auto tmp_ado = std::unique_ptr<int32_t[]>(new int32_t [bcf_hdr_nsamples(hdr)]);
+
+            memset(tmp_ad.get(), 0, sizeof(int32_t)*bcf_hdr_nsamples(hdr)*(var.variation.size() + 1));
+            memset(tmp_ado.get(), 0, sizeof(int32_t)*bcf_hdr_nsamples(hdr));
+            memset(tmp_dp.get(), 0, sizeof(int32_t)*bcf_hdr_nsamples(hdr));
 
             for(size_t g = 0; g < var.calls.size(); ++g)
             {
@@ -334,7 +397,6 @@ namespace variant
                 }
                 Call const & c = var.calls[g];
 
-                tmp_gq[g] = c.gq < 0 ? bcf_float_missing : c.gq;
                 tmp_dp[g] = c.dp < 0 ? bcf_int32_missing : c.dp;
                 tmp_ado[g] = c.ad_other < 0 ? bcf_int32_missing : c.ad_other;
                 // ref allele depth goes first
@@ -366,52 +428,133 @@ namespace variant
                         tmp_ad[(var.variation.size() + 1)*g + qq] = bcf_int32_missing;
                     }
                 }
-            }
-
-            bcf_update_format_float(hdr, rec, "GQ", tmp_gq, bcf_hdr_nsamples(hdr));
-            bcf_update_format_int32(hdr, rec, "AD", tmp_ad, bcf_hdr_nsamples(hdr)*(var.variation.size() + 1));
-            bcf_update_format_int32(hdr, rec, "ADO", tmp_ado, bcf_hdr_nsamples(hdr));
-            bcf_update_format_int32(hdr, rec, "DP", tmp_dp, bcf_hdr_nsamples(hdr));
-
-            free(tmp_ado);
-            free(tmp_ad);
-            free(tmp_gq);
-            free(tmp_dp);
-        }
-
-        // write info
-        if(var.info != "")
-        {
-            std::vector<std::string> infs;
-            stringutil::split(var.info, infs, ";");
-            std::set<std::string> already_written;
-            for (std::string & i : infs)
-            {
-                std::vector<std::string> ifo;
-                stringutil::split(i, ifo, "=");
-                if(ifo.size() < 1 || ifo[0] == "END" || already_written.count(ifo[0]))
+                for(auto const & id : c.formats.getMemberNames())
                 {
-                    continue;
-                }
-                already_written.insert(ifo[0]);
-                std::string val = "";
-                if (ifo.size() > 1)
-                {
-                    val = ifo[1];
-                    for (size_t qi = 2; qi < ifo.size(); ++qi)
+                    Json::Value const & v = c.formats[id];
+                    if(v.isArray() && !v.empty())
                     {
-                        val+= "=";
-                        val+= ifo[qi];
+                        if(v[0].isInt())
+                        {
+                            auto f_it = int_fmts.find(id);
+                            int v_size = v.size();
+                            if(f_it == int_fmts.end())
+                            {
+                                f_it = int_fmts.emplace(std::make_pair(std::string(id),
+                                                                       std::vector<int>(v.size()*var.calls.size()))).first;
+                                std::fill(f_it->second.begin(), f_it->second.end(), bcf_int32_missing);
+                            }
+                            else if(v.size()*var.calls.size() != f_it->second.size())
+                            {
+                                std::cerr << "[W] Inconsistent format field counts at " << var.chr << ":" << var.pos << "\n";
+                                v_size = std::min(v_size, (int) (f_it->second.size() / var.calls.size()));
+                            }
+                            for(auto s = 0; s < v_size; ++s)
+                            {
+                                f_it->second[v_size*g + s] = v[s].asInt();
+                            }
+                        }
+                        else if(v[0].isNumeric())
+                        {
+                            auto f_it = float_fmts.find(id);
+                            int v_size = v.size();
+                            if(f_it == float_fmts.end())
+                            {
+                                f_it = float_fmts.emplace(std::make_pair(std::string(id),
+                                                                         std::vector<float>(v.size()*var.calls.size()))).first;
+                                union { float f; uint32_t i; } missing;
+                                missing.i = bcf_float_missing;
+                                std::fill(f_it->second.begin(), f_it->second.end(), missing.f);
+                            }
+                            else if(v.size()*var.calls.size() != f_it->second.size())
+                            {
+                                std::cerr << "[W] Inconsistent format field counts at " << var.chr << ":" << var.pos << "\n";
+                                v_size = std::min(v_size, (int) (f_it->second.size() / var.calls.size()));
+                            }
+                            for(auto s = 0; s < v_size; ++s)
+                            {
+                                f_it->second[v_size*g + s] = v[s].asFloat();
+                            }
+                        }
+                        else
+                        {
+                            auto f_it = string_fmts.find(id);
+                            if(f_it == string_fmts.end())
+                            {
+                                f_it = string_fmts.emplace(std::make_pair(std::string(id),
+                                                                          std::vector<std::string>(var.calls.size()))).first;
+                            }
+                            f_it->second[g] = v.asString();
+                        }
+                    }
+                    else if(v.isInt())
+                    {
+                        auto f_it = int_fmts.find(id);
+                        int v_size = 1;
+                        if(f_it == int_fmts.end())
+                        {
+                            f_it = int_fmts.emplace(std::make_pair(std::string(id),
+                                                                   std::vector<int>(var.calls.size()))).first;
+                            std::fill(f_it->second.begin(), f_it->second.end(), bcf_int32_missing);
+                        }
+                        else if(var.calls.size() != f_it->second.size())
+                        {
+                            std::cerr << "[W] Inconsistent format field counts at " << var.chr << ":" << var.pos << "\n";
+                            v_size = (int) (f_it->second.size() / var.calls.size());
+                        }
+                        f_it->second[v_size*g] = v.asInt();
+                    }
+                    else if(v.isNumeric())
+                    {
+                        auto f_it = float_fmts.find(id);
+                        int v_size = 1;
+                        if(f_it == float_fmts.end())
+                        {
+                            f_it = float_fmts.emplace(std::make_pair(std::string(id),
+                                                                     std::vector<float>(var.calls.size()))).first;
+                            union { float f; uint32_t i; } missing;
+                            missing.i = bcf_float_missing;
+                            std::fill(f_it->second.begin(), f_it->second.end(), missing.f);
+                        }
+                        else if(var.calls.size() != f_it->second.size())
+                        {
+                            std::cerr << "[W] Inconsistent format field counts at " << var.chr << ":" << var.pos << "\n";
+                            v_size = (int) (f_it->second.size() / var.calls.size());
+                        }
+                        f_it->second[v_size*g] = v.asFloat();
+                    }
+                    else
+                    {
+                        auto f_it = string_fmts.find(id);
+                        if(f_it == string_fmts.end())
+                        {
+                            f_it = string_fmts.emplace(std::make_pair(std::string(id),
+                                                                      std::vector<std::string>(var.calls.size()))).first;
+                        }
+                        f_it->second[g] = v.asString();
                     }
                 }
-                if (val == "")
+            }
+
+            bcf_update_format_int32(hdr, rec, "AD", tmp_ad.get(), bcf_hdr_nsamples(hdr)*((int)var.variation.size() + 1));
+            bcf_update_format_int32(hdr, rec, "ADO", tmp_ado.get(), bcf_hdr_nsamples(hdr));
+            bcf_update_format_int32(hdr, rec, "DP", tmp_dp.get(), bcf_hdr_nsamples(hdr));
+
+            for(auto & i : int_fmts)
+            {
+                bcf_update_format_int32(hdr, rec, i.first.c_str(), i.second.data(), (int)i.second.size());
+            }
+            for(auto & f : float_fmts)
+            {
+                bcf_update_format_float(hdr, rec, f.first.c_str(), f.second.data(), (int)f.second.size());
+            }
+            for(auto & s : string_fmts)
+            {
+                std::unique_ptr<const char *[]> values(new const char *[s.second.size()]);
+                for(int ix = 0; ix < (int)s.second.size(); ++ix)
                 {
-                    bcf_update_info_flag(hdr, rec, ifo[0].c_str(), NULL, 1);
+                    values.get()[ix] = s.second[ix].c_str();
                 }
-                else
-                {
-                    bcf_update_info_string(hdr, rec, ifo[0].c_str(), val.c_str());
-                }
+                bcf_update_format_string(hdr, rec, s.first.c_str(), values.get(), (int)s.second.size());
             }
         }
 

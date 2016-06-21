@@ -130,11 +130,9 @@ public:
 
     /**
      * @brief Advance one position
-     * @param get_calls get the call information
-     * @param get_info get the info string(s)
      * @return true if a variant was retrieved, false otherwise
      */
-    bool advance(bool get_calls=true, bool get_info=true);
+    bool advance();
 
     /**
      * @brief Insert a Variants record into the stream

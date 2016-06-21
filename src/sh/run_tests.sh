@@ -48,19 +48,6 @@ else
 fi
 
 ##############################################################
-# Test Hapblockfind
-##############################################################
-
-/bin/bash ${DIR}/run_hapblockfind_test.sh
-
-if [[ $? -ne 0 ]]; then
-	echo "Hapblockfind test FAILED!"
-	exit 1
-else
-	echo "Hapblockfind test SUCCEEDED!"
-fi
-
-##############################################################
 # Test Hapcmp
 ##############################################################
 
