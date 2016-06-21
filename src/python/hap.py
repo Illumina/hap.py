@@ -41,6 +41,7 @@ import Tools
 from Tools import vcfextract
 from Tools import bcftools
 from Tools.parallel import runParallel, getPool
+from Tools.bcftools import preprocessVCF, bedOverlapCheck
 from Tools.fastasize import fastaContigLengths
 import Haplo.blocksplit
 import Haplo.xcmp

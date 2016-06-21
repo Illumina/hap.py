@@ -46,7 +46,11 @@ Simple Usage
 
 The main two tools are hap.py (diploid precision/recall evaluation) and som.py
 (somatic precision/recall evaluation -- this ignores the GT and just checks for
-presence of alleles).
+presence of alleles). Other tools are qfy.py (which just executes the quantification
+step of the analysis pipeline, this requires a 
+[GA4GH-intermediate](https://github.com/ga4gh/benchmarking-tools/) VCF file), and
+[pre.py](doc/normalisation.md), which is hap.py's input cleaning and 
+variant normalisation step.
 
 Here are some small example command lines. Advanced features like confident call
  / ambiguity / FP regions are also available, see the documentation for each

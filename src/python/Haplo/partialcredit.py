@@ -149,7 +149,15 @@ def partialCredit(vcfname,
 
         h = extractHeadersJSON(vcfname)
         if not h["tabix"]["chromosomes"]:
-            raise Exception("Empty input or not tabix indexed")
+            logging.warn("Empty input or not tabix indexed")
+            if outputname.endswith(".bcf"):
+                runBcftools("view", "-O", "b", "-o", outputname, vcfname)
+                runBcftools("index", outputname)
+            else:
+                runBcftools("view", "-O", "z", "-o", outputname, vcfname)
+                runBcftools("index", "-t", outputname)
+            return
+
         locations = h["tabix"]["chromosomes"]
 
         # use blocksplit to subdivide input
@@ -163,7 +171,11 @@ def partialCredit(vcfname,
         if None in res:
             raise Exception("One of the blocksplit processes failed.")
 
-        locations = itertools.chain.from_iterable(res)
+        locations = list(itertools.chain.from_iterable(res))
+        if not len(locations):
+            logging.warn("Blocksplit returned no blocks. This can happen when "
+                         "an input contains no valid variants.")
+            locations = [""]
     else:
         locations = [""]
 
@@ -179,6 +191,8 @@ def partialCredit(vcfname,
 
         if None in res:
             raise Exception("One of the preprocess jobs failed")
+        if not res:
+            raise Exception("No blocks were processed. List of locations: %s" % str(list(locations)))
 
         if outputname.endswith(".vcf.gz"):
             cmd = ["concat", "-a", "-o", outputname, "-O", "z"] + res

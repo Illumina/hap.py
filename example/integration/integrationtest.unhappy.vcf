@@ -1,7 +1,8 @@
 chr21	20001394	.	C	G	0	.	XCMP=TP:match:gt_het:gt_het:simple:match;VTC=nuc__s,al__s,het__rs	GT:BD:BK:BI:BVT:BLT:QQ	0|1:TP:gm:tv:SNP:het:0	0/1:TP:gm:tv:SNP:het:0
 chr21	20001602	.	A	G	0	.	XCMP=FP:gtmismatch:gt_het:gt_homalt:simple:mismatch;VTC=nuc__s,al__s,het__rs,homalt__s	GT:BD:BK:BI:BVT:BLT:QQ	0|1:FN:am:ti:SNP:het:0	1/1:FP:am:ti:SNP:homalt:0
 chr21	20004839	.	AGTGT	A,AGT	0	.	XCMP=FN:missing:gt_hetalt:.:simple:mismatch;VTC=nuc__d,al__d,hetalt__d,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	2/1:FN:.:d1_5:INDEL:hetalt:0	./.:.:.:.:NOCALL:nocall:0
-chr21	20004839	.	AGTGTGTGTGT	AGTGTGT,AGTGTGTGT,A	0	.	XCMP=FP:missing:.:gt_hetalt:simple:mismatch;VTC=nuc__d,al__d,hetalt__d,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1|2:FP:.:d1_5:INDEL:hetalt:0
+chr21	20004839	.	AGTGT	A	0	.	XCMP=FP:missing:.:gt_het:simple:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:.:d1_5:INDEL:het:0
+chr21	20004843	.	TGT	T	0	.	XCMP=FP:missing:.:gt_het:simple:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:.:d1_5:INDEL:het:0
 chr21	20183772	.	CCA	C	898	.	XCMP=FP:missing:.:gt_het:simple:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:.:d1_5:INDEL:het:898
 chr21	20183776	.	AT	A	0	.	XCMP=FN:missing:gt_het:.:simple:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	1|0:FN:.:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr21	20183777	.	T	A	180	.	XCMP=FP:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:.:tv:SNP:het:180
@@ -9,10 +10,11 @@ chr21	20256842	.	G	GGTGTGT,GGTGTGTGT	0	.	XCMP=FN:missing:gt_het:.:simple:mismatc
 chr21	20256842	.	G	GGTGTGT	378	.	XCMP=FP:missing:.:gt_het:simple:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:.:i6_15:INDEL:het:378
 chr21	20836305	.	C	CAT	167	.	XCMP=FP:missing:.:gt_het:simple:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:.:i1_5:INDEL:het:167
 chr21	20836309	.	CAT	CATACATATATATAT,C	0	.	XCMP=FN:missing:gt_hetalt:.:simple:mismatch;VTC=nuc__i,nuc__d,al__i,al__d,hetalt__id,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	1|2:FN:.:d1_5,i6_15:INDEL:hetalt:0	./.:.:.:.:NOCALL:nocall:0
-chr21	20836309	.	CAT	C,CATAC	215	.	XCMP=FP:missing:.:gt_hetalt:simple:mismatch;VTC=nuc__i,nuc__d,al__i,al__d,hetalt__id,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/2:FP:.:d1_5,i1_5:INDEL:hetalt:215
+chr21	20836309	.	CAT	C	215	.	XCMP=FP:missing:.:gt_het:simple:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:.:d1_5:INDEL:het:215
+chr21	20836311	.	T	TAC	215	.	XCMP=FP:missing:.:gt_het:simple:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:.:i1_5:INDEL:het:215
 chr21	20921501	.	G	C	226	.	XCMP=FP:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:.:tv:SNP:het:226
-chr21	20921518	.	TCTCTCACA	T,TCTCT	373	.	XCMP=FP:missing:.:gt_hetalt:simple:mismatch;VTC=nuc__d,al__d,hetalt__d,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/2:FP:.:d1_5,d6_15:INDEL:hetalt:373
-chr21	20921522	.	TCACA	T	0	.	XCMP=FN:missing:gt_homalt:.:simple:mismatch;VTC=nuc__d,al__d,nocall__nc,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1|1:FN:.:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr21	20921518	.	TCTCTCACA	T	373	.	XCMP=FP:missing:.:gt_het:simple:mismatch;VTC=nuc__d,al__d,het__rd,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:.:d6_15:INDEL:het:373
+chr21	20921522	.	TCACA	T	373	.	XCMP=FP:gtmismatch:gt_homalt:gt_het:simple:mismatch;VTC=nuc__d,al__d,het__rd,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1|1:FN:am:d1_5:INDEL:homalt:373	0/1:FP:am:d1_5:INDEL:het:373
 chr21	21147450	.	C	CAT,CACACAT,CACACACAT	0	.	XCMP=FN:missing:gt_hetalt:.:simple:mismatch;VTC=nuc__i,al__i,hetalt__i,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	3|1:FN:.:i1_5,i6_15:INDEL:hetalt:0	./.:.:.:.:NOCALL:nocall:0
 chr21	21147450	.	C	T	84	.	XCMP=FP:missing:.:gt_het:simple:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:.:ti:SNP:het:84
 chr21	21147450	.	C	CACACACAT	1328	.	XCMP=FP:missing:.:gt_het:simple:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:.:i6_15:INDEL:het:1328

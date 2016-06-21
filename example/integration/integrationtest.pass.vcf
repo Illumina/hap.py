@@ -1,7 +1,8 @@
 chr21	20001394	.	C	G	0	.	.	GT:BD:BK:BI:BVT:BLT:QQ	0|1:TP:gm:tv:SNP:het:0	0/1:TP:gm:tv:SNP:het:0
 chr21	20001602	.	A	G	0	.	.	GT:BD:BK:BI:BVT:BLT:QQ	0|1:FN:am:ti:SNP:het:0	1/1:FP:am:ti:SNP:homalt:0
 chr21	20004839	.	AGTGT	A,AGT	0	.	.	GT:BD:BK:BI:BVT:BLT:QQ	2/1:TP:gm:d1_5:INDEL:hetalt:0	./.:.:.:.:NOCALL:nocall:0
-chr21	20004839	.	AGTGTGTGTGT	AGTGTGT,AGTGTGTGT,A	0	.	.	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1|2:TP:gm:d1_5:INDEL:hetalt:0
+chr21	20004839	.	AGTGT	A	0	.	.	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:TP:gm:d1_5:INDEL:het:0
+chr21	20004843	.	TGT	T	0	.	.	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:TP:gm:d1_5:INDEL:het:0
 chr21	20183772	.	CCA	C	898	.	.	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:d1_5:INDEL:het:898
 chr21	20183776	.	AT	A	0	.	.	GT:BD:BK:BI:BVT:BLT:QQ	1|0:FN:lm:d1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chr21	20183777	.	T	A	180	.	.	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:tv:SNP:het:180
@@ -9,10 +10,11 @@ chr21	20256842	.	G	GGTGTGT,GGTGTGTGT	0	.	.	GT:BD:BK:BI:BVT:BLT:QQ	0|1:TP:gm:i6_1
 chr21	20256842	.	G	GGTGTGT	378	.	.	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:TP:gm:i6_15:INDEL:het:378
 chr21	20836305	.	C	CAT	167	.	.	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:i1_5:INDEL:het:167
 chr21	20836309	.	CAT	CATACATATATATAT,C	0	.	.	GT:BD:BK:BI:BVT:BLT:QQ	1|2:FN:lm:d1_5,i6_15:INDEL:hetalt:0	./.:.:.:.:NOCALL:nocall:0
-chr21	20836309	.	CAT	C,CATAC	215	.	.	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/2:FP:lm:d1_5,i1_5:INDEL:hetalt:215
+chr21	20836309	.	CAT	C	215	.	.	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:d1_5:INDEL:het:215
+chr21	20836311	.	T	TAC	215	.	.	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:i1_5:INDEL:het:215
 chr21	20921501	.	G	C	226	.	.	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:tv:SNP:het:226
-chr21	20921518	.	TCTCTCACA	T,TCTCT	373	.	.	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/2:FP:lm:d1_5,d6_15:INDEL:hetalt:373
-chr21	20921522	.	TCACA	T	0	.	.	GT:BD:BK:BI:BVT:BLT:QQ	1|1:FN:lm:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr21	20921518	.	TCTCTCACA	T	373	.	.	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:d6_15:INDEL:het:373
+chr21	20921522	.	TCACA	T	373	.	.	GT:BD:BK:BI:BVT:BLT:QQ	1|1:FN:am:d1_5:INDEL:homalt:373	0/1:FP:am:d1_5:INDEL:het:373
 chr21	21147450	.	C	CAT,CACACAT,CACACACAT	0	.	.	GT:BD:BK:BI:BVT:BLT:QQ	3|1:FN:lm:i1_5,i6_15:INDEL:hetalt:0	./.:.:.:.:NOCALL:nocall:0
 chr21	21147450	.	C	T	84	.	.	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:ti:SNP:het:84
 chr21	21147450	.	C	CACACACAT	1328	.	.	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	0/1:FP:lm:i6_15:INDEL:het:1328

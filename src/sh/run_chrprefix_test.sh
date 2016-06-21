@@ -20,7 +20,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	-o ${TMP_OUT} \
 			 	-X --reference ${DIR}/../data/numeric_chrs/test.fa \
                 -V \
-			 	--force-interactive
+			 	--force-interactive --verbose
 
 if [[ $? != 0 ]]; then
 	echo "hap.py failed!"
