@@ -164,7 +164,7 @@ def main():
         if unknown_args:
             logging.error("Unknown arguments specified : %s " % str(unknown_args))
         parser.print_help()
-        exit(0)
+        exit(1)
 
     if args.version:
         print "Hap.py %s" % Tools.version
