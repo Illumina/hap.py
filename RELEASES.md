@@ -5,11 +5,14 @@
 | Ticket   | Description                                                                    |
 |----------|--------------------------------------------------------------------------------|
 | HAP-184  | check for empty query/ref vcf                                                  |
-| HAP-185  | som.py --fix-chr-query does not fix MT appropriately                          |
-| HAP-187  | som.py automatically resolve whether the --fix-chr-query switch is required  |
-| HAP-192  | Missing chromosomes cause fp.rate computation to fail in som.py                |
-| HAP-201  | hap.py integration tests failing because of trailing white space               |
+| HAP-185  | som.py --fix-chr-query does not fix MT appropriately                           |
+| HAP-187  | som.py automatically resolve whether the --fix-chr-query switch is required    |
 | HAP-189  | refactor storage of INFO and FORMAT, extract preprocessing into separate script|
+| HAP-192  | Missing chromosomes cause fp.rate computation to fail in som.py                |
+| HAP-197  | AF binning with arbitrary boundaries in som.py                                 |
+| HAP-201  | hap.py integration tests failing because of trailing white space               |
+| HAP-205  | fix EVS feature support in som.py                                              |
+| HAP-206  | Fix header for BLT in hap.py output                                            |
 | HAP-207  | Count TP, FN and FP outside confident regions as UNK                           |
 | HAP-208  | Simpler deployment with vcfeval                                                |
 
