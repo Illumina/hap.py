@@ -68,6 +68,13 @@ namespace bcfhelpers {
         importexception(std::string const what) : std::runtime_error(what) {}
     };
 
+    /** make a missing float */
+    static float missing_float() {
+        union { int32_t i; float f; } val;
+        val.i = bcf_float_missing;
+        return val.f;
+    }
+
     /**
      * @brief Set hg19 contig names in header.
      * @param header BCF header

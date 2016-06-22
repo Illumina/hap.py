@@ -230,7 +230,7 @@ def updateArgs(parser):
                         help="When using XCMP, preserve and merge the INFO fields in truth and query. Useful for ROC computation.")
 
     parser.add_argument("--roc", dest="roc", default="QUAL",
-                        help="Select a feature to produce a ROC on (INFO feature, QUAL, Q_GQ, ...).")
+                        help="Select a feature to produce a ROC on (INFO feature, QUAL, GQX, ...).")
 
     parser.add_argument("--no-roc", dest="do_roc", default=True, action="store_false",
                         help="Disable ROC computation and only output summary statistics for more concise output.")

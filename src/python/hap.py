@@ -231,11 +231,6 @@ def main():
         logging.info("Preprocessing truth: %s" % args.vcf1)
         starttime = time.time()
 
-        if not args.usefiltered_truth:
-            filtering = "*"
-        else:
-            filtering = ""
-
         ttf = tempfile.NamedTemporaryFile(delete=False,
                                           dir=args.scratch_prefix,
                                           prefix="truth.pp",
@@ -301,8 +296,6 @@ def main():
 
         if not h2["tabix"]:
             raise Exception("Query file is not indexed after preprocessing.")
-
-        newlocations = []
 
         reference_contigs = set(fastaContigLengths(args.ref).keys())
 
@@ -390,6 +383,8 @@ def main():
             bcftools.runBcftools("index", output_name)
             # passed to quantify
             args.type = "xcmp"
+            # xcmp extracts whichever field we're using into the QQ info field
+            args.roc = "IQQ"
         elif args.engine == "vcfeval":
             tempfiles += Haplo.vcfeval.runVCFEval(args.vcf1, args.vcf2, output_name, args)
             # passed to quantify

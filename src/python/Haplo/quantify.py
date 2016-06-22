@@ -24,6 +24,7 @@ import Tools
 
 from Tools.bcftools import runBcftools
 
+
 def _locations_tmp_bed_file(locations):
     """ turn a list of locations into a bed file """
     if type(locations) is str:
