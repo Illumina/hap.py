@@ -210,44 +210,23 @@ namespace bcfhelpers
         template<>
         int bcf_get_info<int>::operator()(bcf_info_t * field, int which) const
         {
-            int fieldsize = 4;
-            int fieldmask = 0xffffffff;
+            if(field->type != BCF_BT_CHAR && field->len <= which)
+            {
+                error("Cannot extract int from non-scalar INFO field (len = %i, requested: %i).",
+                      field->len, which);
+            }
             switch(field->type)
             {
                 case BCF_BT_NULL:
                     return 0;
                 case BCF_BT_INT8:
-                    fieldsize >>= 1;
-                    fieldmask >>= 8;
+                    return (int) *(((int8_t *)field->vptr) + which );
                 case BCF_BT_INT16:
-                    fieldsize >>= 1;
-                    fieldmask >>= 16;
+                    return (int) *(((int16_t *)field->vptr) + which );
                 case BCF_BT_INT32:
-                    {
-                        if(field->len <= which)
-                        {
-                            error("Cannot extract int from non-scalar INFO field (len = %i, requested: %i).",
-                                  field->len, which);
-
-                        }
-                        int f = (*(field->vptr + fieldsize*which)) & fieldmask;
-                        return f;
-                    }
+                    return (int) *(((int32_t *)field->vptr) + which );
                 case BCF_BT_FLOAT:
-                    if(field->len == 1 && which == 0)
-                    {
-                        return int(field->v1.f);
-                    }
-                    else
-                    {
-                        if(field->len <= which)
-                        {
-                            error("Cannot extract int from non-scalar INFO field (len = %i, requested: %i).",
-                                  field->len, which);
-
-                        }
-                        return (int) *(((float*)field->vptr) + which );
-                    }
+                    return (int) *(((float*)field->vptr) + which );
                 case BCF_BT_CHAR:
                     if(which > 0)
                     {
@@ -272,7 +251,7 @@ namespace bcfhelpers
                 case BCF_BT_INT32:
                 {
                     const bcf_get_info<int> gi;
-                    return (float)gi(field, which);                    
+                    return (float)gi(field, which);
                 }
                 case BCF_BT_FLOAT:
                     if(field->len <= which)
@@ -769,7 +748,7 @@ namespace bcfhelpers
         if(formats.size() != line->n_sample)
         {
             std::ostringstream os;
-            os << "[W] cannot update format " << field 
+            os << "[W] cannot update format " << field
                << " " << hdr->id[BCF_DT_ID][line->rid].key << ":" << line->pos
                << " -- we have " << formats.size() << " for " << line->n_sample << " samples";
             throw importexception(os.str());
