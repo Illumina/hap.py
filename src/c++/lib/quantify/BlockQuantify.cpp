@@ -46,6 +46,7 @@
 #include <list>
 #include <htslib/vcf.h>
 #include <thread>
+#include <cmath>
 
 #include "BlockQuantify.hh"
 #include "BlockQuantifyImpl.hh"
@@ -257,14 +258,64 @@ namespace variant {
 #ifdef DEBUG_BLOCKQUANTIFY
         int lastpos = 0;
 #endif
+        auto current_bs_start = _impl->variants.begin();
+        std::string current_chr;
+        int current_bs = -1;
+
+        // function to compute the QQ values for truth variants in the current
+        // benchmarking superlocus
+        const auto update_bs_qq = [this, &current_bs_start](BlockQuantifyImpl::variantlist_t::iterator to)
+        {
+            std::vector<float> qqs;
+            for(auto cur = current_bs_start; cur != to; ++cur)
+            {
+                const float qqq = bcfhelpers::getFormatFloat(_impl->hdr, *cur, "QQ", 1);
+                if(!std::isnan(qqq))
+                {
+                    qqs.push_back(qqq);
+                }
+            }
+            float t_qq = bcfhelpers::missing_float();
+            if(!qqs.empty())
+            {
+                std::nth_element(qqs.begin(), qqs.begin() + qqs.size() / 2, qqs.end());
+                t_qq = qqs[qqs.size()/2];
+            }
+
+            int fsize = bcf_hdr_nsamples(_impl->hdr);
+            float * fmt = (float*)calloc((size_t) fsize, sizeof(float));
+            for(auto cur = current_bs_start; cur != to; ++cur)
+            {
+                bcf_get_format_float(_impl->hdr, *cur, "QQ", &fmt, &fsize);
+                fmt[0] = t_qq;
+                bcf_update_format_float(_impl->hdr, *cur, "QQ", fmt, fsize);
+            }
+            free(fmt);
+        };
+
+        for(auto v_it = _impl->variants.begin(); v_it != _impl->variants.end(); ++v_it)
+        {
+            // update fields, must output GA4GH-compliant fields
+            countVariants(*v_it);
+            const std::string vchr = bcfhelpers::getChrom(_impl->hdr, *v_it);
+            const int vbs = bcfhelpers::getInfoInt(_impl->hdr, *v_it, "BS");
+
+
+            if(vbs != current_bs || vbs < 0 || vchr != current_chr)
+            {
+                update_bs_qq(v_it);
+                current_bs = vbs;
+                current_chr = vchr;
+                current_bs_start = v_it;
+            }
+        }
+        update_bs_qq(_impl->variants.end());
+
         for(auto & v : _impl->variants)
         {
 #ifdef DEBUG_BLOCKQUANTIFY
             lastpos = v->pos;
 #endif
-            // update fields, must output GA4GH-compliant fields
-            countVariants(v);
-
             // use BD and BVT to make ROCs
             rocEvaluate(v);
         }
@@ -275,7 +326,8 @@ namespace variant {
     }
 
     // GA4GH-VCF field-based ROC counting
-    void BlockQuantify::rocEvaluate(bcf1_t * v) {
+    void BlockQuantify::rocEvaluate(bcf1_t * v)
+    {
         if (_impl->samples.size() != 2)
         {
             // number of samples must be two, first one is truth, second is query
@@ -286,14 +338,14 @@ namespace variant {
         const std::string vt_truth = bcfhelpers::getFormatString(_impl->hdr, v, "BVT", 0, ".");
         const std::string vt_query = bcfhelpers::getFormatString(_impl->hdr, v, "BVT", 1, ".");
 
-        double qq = bcfhelpers::getFormatFloat(_impl->hdr, v, "QQ", 1);
-        if(std::isnan(qq))
-        {
-            qq = 0;
-        }
-
         if(vt_truth != "NOCALL")
         {
+            double qq = bcfhelpers::getFormatFloat(_impl->hdr, v, "QQ", 0);
+            if(std::isnan(qq))
+            {
+                qq = 0;
+            }
+
             if(bd_truth == "TP")
             {
                 addROCValue(vt_truth, roc::DecisionType::TP, qq, 1, v);
@@ -306,6 +358,11 @@ namespace variant {
 
         if(vt_query != "NOCALL")
         {
+            double qq = bcfhelpers::getFormatFloat(_impl->hdr, v, "QQ", 1);
+            if(std::isnan(qq))
+            {
+                qq = 0;
+            }
             if(bd_query == "FP")
             {
                 addROCValue(vt_query, roc::DecisionType::FP, qq, 1, v);

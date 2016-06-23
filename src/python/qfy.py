@@ -183,18 +183,6 @@ def quantify(args):
 
 def updateArgs(parser):
     """ add common quantification args """
-    parser.add_argument("--internal-leftshift", dest="int_preprocessing_ls", action="store_true", default=True,
-                        help="Enable xcmp's internal VCF leftshift preprocessing.")
-
-    parser.add_argument("--internal-preprocessing", dest="int_preprocessing", action="store_true", default=True,
-                        help="Enable xcmp's internal VCF leftshift preprocessing.")
-
-    parser.add_argument("--no-internal-leftshift", dest="int_preprocessing_ls", action="store_false",
-                        help="Switch off xcmp's internal VCF leftshift preprocessing.")
-
-    parser.add_argument("--no-internal-preprocessing", dest="int_preprocessing", action="store_false",
-                        help="Switch off xcmp's internal VCF leftshift preprocessing.")
-
     parser.add_argument("-t", "--type", dest="type", choices=["xcmp", "ga4gh"],
                         help="Annotation format in input VCF file.")
 
