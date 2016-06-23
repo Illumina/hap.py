@@ -126,33 +126,6 @@ else
 fi
 
 ##############################################################
-# Test PG Counting
-##############################################################
-
-/bin/bash ${DIR}/run_happy_pg_test.sh
-
-if [[ $? -ne 0 ]]; then
-	echo "PG integration test FAILED!"
-	exit 1
-else
-	echo "PG integration test SUCCEEDED!"
-fi
-
-##############################################################
-# Test GA4GH quantification
-##############################################################
-
-/bin/bash ${DIR}/run_quantify_test.sh
-
-if [[ $? -ne 0 ]]; then
-	echo "Quantify integration test FAILED!"
-	exit 1
-else
-	echo "Quantify integration test SUCCEEDED!"
-fi
-
-
-##############################################################
 # Test Hap.py variant decomposition into primitives
 ##############################################################
 
@@ -163,6 +136,18 @@ if [[ $? -ne 0 ]]; then
 	exit 1
 else
 	echo "Variant decomposition test SUCCEEDED!"
+fi
+
+##############################################################
+# Test contig length calculation
+##############################################################
+
+${PYTHON} ${DIR}/run_fastasize_test.py
+if [[ $? -ne 0 ]]; then
+    echo "Contig length calculation test FAILED!"
+    exit 1
+else
+    echo "Contig length calculation test SUCCEEDED!"
 fi
 
 ##############################################################
@@ -179,20 +164,6 @@ else
 fi
 
 ##############################################################
-# Test Hap.py + integration
-##############################################################
-
-/bin/bash ${DIR}/run_sompy_test.sh
-
-if [[ $? -ne 0 ]]; then
-	echo "Som.py test FAILED!"
-	exit 1
-else
-	echo "Som.py test SUCCEEDED!"
-fi
-
-
-##############################################################
 # Test Performance + Consistency
 ##############################################################
 
@@ -205,15 +176,41 @@ else
 	echo "Performance / Consistency test SUCCEEDED!"
 fi
 
-
 ##############################################################
-# Test contig length calculation
+# Test GA4GH quantification
 ##############################################################
 
-${PYTHON} ${DIR}/run_fastasize_test.py
+/bin/bash ${DIR}/run_quantify_test.sh
+
 if [[ $? -ne 0 ]]; then
-    echo "Contig length calculation test FAILED!"
-    exit 1
+	echo "Quantify integration test FAILED!"
+	exit 1
 else
-    echo "Contig length calculation test SUCCEEDED!"
+	echo "Quantify integration test SUCCEEDED!"
+fi
+
+##############################################################
+# Test PG Counting
+##############################################################
+
+/bin/bash ${DIR}/run_happy_pg_test.sh
+
+if [[ $? -ne 0 ]]; then
+	echo "PG integration test FAILED!"
+	exit 1
+else
+	echo "PG integration test SUCCEEDED!"
+fi
+
+##############################################################
+# Test Hap.py + integration
+##############################################################
+
+/bin/bash ${DIR}/run_sompy_test.sh
+
+if [[ $? -ne 0 ]]; then
+	echo "Som.py test FAILED!"
+	exit 1
+else
+	echo "Som.py test SUCCEEDED!"
 fi

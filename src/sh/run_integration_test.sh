@@ -224,7 +224,7 @@ ${PYTHON} ${HCDIR}/hap.py $@ \
 			 	-V -X --output-vtc --bcf \
 			 	-f ${DIR}/../../example/performance.confident.bed.gz \
                 -r ${DIR}/../../example/chr21.fa \
-			 	--force-interactive --threads 1
+			 	--force-interactive
 
 if [[ $? != 0 ]]; then
 	echo "hap.py failed!"
@@ -236,13 +236,13 @@ ${HCDIR}/bcftools view -H ${TMP_OUT}.performance.bcf.bcf -o ${TMP_OUT}.performan
 echo "Comparing vcfs"
 diff -I ^# ${TMP_OUT}.performance.bcf.vcf ${DIR}/../../example/integration/integrationtest.performance.vcf
 if [[ $? != 0 ]]; then
-    echo "Performance output variants differ (t1)! vimdiff ${TMP_OUT}.performance.t1.vcf ${DIR}/../../example/integration/integrationtest.performance.vcf "
+    echo "Performance output variants differ (bcf)! vimdiff ${TMP_OUT}.performance.bcf.vcf ${DIR}/../../example/integration/integrationtest.performance.vcf "
 	exit 1
 fi
 
 ${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.performance.bcf.summary.csv ${DIR}/../../example/integration/integrationtest.performance.summary.csv
 if [[ $? != 0 ]]; then
-	echo "Pass summary differs! vimdiff ${TMP_OUT}.performance.t1.summary.csv ${DIR}/../../example/integration/integrationtest.performance.summary.csv"
+	echo "Pass summary differs! vimdiff ${TMP_OUT}.performance.bcf.summary.csv ${DIR}/../../example/integration/integrationtest.performance.summary.csv"
 	exit 1
 fi
 

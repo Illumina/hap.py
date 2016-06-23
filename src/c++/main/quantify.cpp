@@ -476,6 +476,7 @@ int main(int argc, char* argv[]) {
         };
 
         int nl = 1;
+        int previous_bs = -1;
         while(nl)
         {
             nl = bcf_sr_next_line(reader);
@@ -500,6 +501,12 @@ int main(int argc, char* argv[]) {
             if(end != -1 && ((!current_chr.empty() && vchr != current_chr) || line->pos > end))
             {
                 break;
+            }
+
+            if(vchr != current_chr)
+            {
+                // reset bs on chr switch
+                previous_bs = -1; 
             }
 
             if(apply_filters)
@@ -535,10 +542,10 @@ int main(int argc, char* argv[]) {
 
             current_chr = vchr;
 
-            p_bq->add(bcf_dup(line));
+            const int current_bs = bcfhelpers::getInfoInt(hdr, line, "BS");
 
-            ++vars_in_block;
-            if(vars_in_block > blocksize)
+            // don't break benchmarking superloci across threads
+            if(vars_in_block > blocksize && (current_bs < 0 || previous_bs < 0 || (current_bs != previous_bs)))
             {
                 std::future<void> f = std::async(std::launch::async, &BlockQuantify::count, p_bq.get());
                 // clear / write out some blocks (make sure we have at least 2xthreads tasks left)
@@ -547,7 +554,12 @@ int main(int argc, char* argv[]) {
                 p_bq = std::move(makeQuantifier(hdr, ref_fasta, qtype, qparams));
                 p_bq->rocFiltering(roc_filter);
                 vars_in_block = 0;
+
             }
+
+            p_bq->add(bcf_dup(line));
+            ++vars_in_block;
+            previous_bs = current_bs;
 
             if (message > 0 && (rcount % message) == 0)
             {

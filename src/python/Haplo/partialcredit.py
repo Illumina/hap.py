@@ -26,7 +26,7 @@ import itertools
 import multiprocessing
 
 from Tools.parallel import runParallel, getPool
-from Tools.bcftools import runBcftools
+from Tools.bcftools import runBcftools, concatenateParts
 from Tools.vcfextract import extractHeadersJSON
 
 
@@ -137,6 +137,7 @@ def blocksplitWrapper(location_str, bargs):
 def partialCredit(vcfname,
                   outputname,
                   reference,
+                  locations,
                   threads=1,
                   window=10000,
                   leftshift=True,
@@ -147,18 +148,21 @@ def partialCredit(vcfname,
     if threads > 1:
         logging.info("Partial credit processing uses %i parallel processes." % threads)
 
-        h = extractHeadersJSON(vcfname)
-        if not h["tabix"]["chromosomes"]:
-            logging.warn("Empty input or not tabix indexed")
-            if outputname.endswith(".bcf"):
-                runBcftools("view", "-O", "b", "-o", outputname, vcfname)
-                runBcftools("index", outputname)
-            else:
-                runBcftools("view", "-O", "z", "-o", outputname, vcfname)
-                runBcftools("index", "-t", outputname)
-            return
-
-        locations = h["tabix"]["chromosomes"]
+        if not locations:
+            h = extractHeadersJSON(vcfname)
+            if not h["tabix"]["chromosomes"]:
+                logging.warn("Empty input or not tabix indexed")
+                if outputname.endswith(".bcf"):
+                    runBcftools("view", "-O", "b", "-o", outputname, vcfname)
+                    runBcftools("index", outputname)
+                else:
+                    runBcftools("view", "-O", "z", "-o", outputname, vcfname)
+                    runBcftools("index", "-t", outputname)
+                # just return the same file
+                return
+            locations = h["tabix"]["chromosomes"]
+        elif type(locations) is str:
+            locations = locations.split(",")
 
         # use blocksplit to subdivide input
         res = runParallel(pool,
@@ -194,18 +198,22 @@ def partialCredit(vcfname,
         if not res:
             raise Exception("No blocks were processed. List of locations: %s" % str(list(locations)))
 
+        concatenateParts(outputname, *res)
         if outputname.endswith(".vcf.gz"):
-            cmd = ["concat", "-a", "-o", outputname, "-O", "z"] + res
-            runBcftools(*cmd)
             runBcftools("index", "-t", outputname)
         else:  # use bcf
-            cmd = ["concat", "-a", "-o", outputname, "-O", "b"] + res
-            runBcftools(*cmd)
             runBcftools("index", outputname)
     finally:
         for r in res:
             try:
                 os.unlink(r)
+            except:
+                pass
+            try:
                 os.unlink(r + ".tbi")
+            except:
+                pass
+            try:
+                os.unlink(r + ".csi")
             except:
                 pass

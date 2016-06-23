@@ -665,7 +665,7 @@ bool VariantReader::advance()
 
         vars.calls[sid].ngt = (size_t) ngt;
 
-        int adcount = int(vars.variation.size() + 1);
+        int adcount = std::max((int)(2*vars.calls.size()), int(vars.variation.size() + 1));
         int * ad = new int[adcount];
         memset(ad, -1, sizeof(int)*adcount);
 

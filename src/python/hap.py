@@ -231,17 +231,14 @@ def main():
         logging.info("Preprocessing truth: %s" % args.vcf1)
         starttime = time.time()
 
-        if not args.usefiltered_truth:
-            filtering = "*"
-        else:
-            filtering = ""
-
         ttf = tempfile.NamedTemporaryFile(delete=False,
                                           dir=args.scratch_prefix,
                                           prefix="truth.pp",
                                           suffix=internal_format_suffix)
         ttf.close()
         tempfiles.append(ttf.name)
+        tempfiles.append(ttf.name + ".csi")
+        tempfiles.append(ttf.name + ".tbi")
         pre.preprocess(args.vcf1,
                        ttf.name,
                        args.ref,
@@ -253,7 +250,7 @@ def main():
                        args.preprocessing_leftshift if args.preprocessing_truth else False,
                        args.preprocessing_decompose if args.preprocessing_truth else False,
                        args.preprocessing_norm if args.preprocessing_truth else False,
-                       args.window,
+                       args.preprocess_window,
                        args.threads)
 
         args.vcf1 = ttf.name
@@ -276,6 +273,8 @@ def main():
                                           suffix=internal_format_suffix)
         qtf.close()
         tempfiles.append(qtf.name)
+        tempfiles.append(qtf.name + ".csi")
+        tempfiles.append(qtf.name + ".tbi")
         pre.preprocess(args.vcf2,
                        qtf.name,
                        args.ref,
@@ -287,7 +286,7 @@ def main():
                        args.preprocessing_leftshift,
                        args.preprocessing_decompose,
                        args.preprocessing_norm,
-                       args.window,
+                       args.preprocess_window,
                        args.threads)
 
         args.vcf2 = qtf.name
@@ -301,8 +300,6 @@ def main():
 
         if not h2["tabix"]:
             raise Exception("Query file is not indexed after preprocessing.")
-
-        newlocations = []
 
         reference_contigs = set(fastaContigLengths(args.ref).keys())
 
@@ -358,6 +355,8 @@ def main():
                                          suffix=internal_format_suffix)
         tf.close()
         tempfiles.append(tf.name)
+        tempfiles.append(tf.name + ".tbi")
+        tempfiles.append(tf.name + ".csi")
         output_name = tf.name
 
         if args.engine == "xcmp":
@@ -378,18 +377,14 @@ def main():
             if len(runme_list) == 0:
                 raise Exception("No outputs to concatenate!")
 
-            if output_name.endswith("bcf"):
-                output_format = "b"
-            else:
-                output_format = "z"
-
-            runme_list = ["concat", "-o", output_name, "-O", output_format] + runme_list
             logging.info("Concatenating...")
-            bcftools.runBcftools(*runme_list)
+            bcftools.concatenateParts(output_name, *runme_list)
             logging.info("Indexing...")
             bcftools.runBcftools("index", output_name)
             # passed to quantify
             args.type = "xcmp"
+            # xcmp extracts whichever field we're using into the QQ info field
+            args.roc = "IQQ"
         elif args.engine == "vcfeval":
             tempfiles += Haplo.vcfeval.runVCFEval(args.vcf1, args.vcf2, output_name, args)
             # passed to quantify

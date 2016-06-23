@@ -335,7 +335,14 @@ namespace variant
                         std::unique_ptr<int[]> p_values(new int[v.size()]);
                         for(int s = 0; s < (int)v.size(); ++s)
                         {
-                            p_values.get()[s] = v[s].asInt();
+                            try
+                            {
+                                p_values.get()[s] = v[s].asInt();
+                            }
+                            catch(std::runtime_error const & )
+                            {
+                                p_values.get()[s] = bcf_int32_missing;
+                            }
                         }
                         bcf_update_info_int32(hdr, rec, id.c_str(), p_values.get(), (int)v.size());
                     }
@@ -344,7 +351,14 @@ namespace variant
                         std::unique_ptr<float[]> p_values(new float[v.size()]);
                         for(int s = 0; s < (int)v.size(); ++s)
                         {
-                            p_values.get()[s] = v[s].asFloat();
+                            try
+                            {
+                                p_values.get()[s] = v[s].asFloat();
+                            }
+                            catch(std::runtime_error const & )
+                            {
+                                p_values.get()[s] = bcfhelpers::missing_float();
+                            }
                         }
                         bcf_update_info_float(hdr, rec, id.c_str(), p_values.get(), (int)v.size());
                     }
@@ -355,17 +369,40 @@ namespace variant
                 }
                 else if(v.isInt())
                 {
-                    const int value = v.asInt();
+                    int value;
+                    try
+                    {
+                        value = v.asInt();
+                    }
+                    catch(std::runtime_error const & )
+                    {
+                        value = bcf_int32_missing;
+                    }
                     bcf_update_info_int32(hdr, rec, id.c_str(), &value, 1);
                 }
                 else if(v.isNumeric())
                 {
-                    const float value = v.asFloat();
+                    float value;
+                    try
+                    {
+                        value = v.asFloat();
+                    }
+                    catch(std::runtime_error const & )
+                    {
+                        value = bcfhelpers::missing_float();
+                    }
                     bcf_update_info_float(hdr, rec, id.c_str(), &value, 1);
                 }
                 else if(v.isBool())
                 {
-                    bcf_update_info_flag(hdr, rec, id.c_str(), NULL, 1);
+                    if(v.asBool())
+                    {
+                        bcf_update_info_flag(hdr, rec, id.c_str(), NULL, 1);
+                    }
+                    else
+                    {
+                        bcf_update_info_flag(hdr, rec, id.c_str(), NULL, 0);
+                    }
                 }
                 else
                 {
@@ -450,7 +487,14 @@ namespace variant
                             }
                             for(auto s = 0; s < v_size; ++s)
                             {
-                                f_it->second[v_size*g + s] = v[s].asInt();
+                                try
+                                {
+                                    f_it->second[v_size*g + s] = v[s].asInt();
+                                }
+                                catch(std::runtime_error const & )
+                                {
+                                    f_it->second[v_size*g + s] = bcf_int32_missing;
+                                }
                             }
                         }
                         else if(v[0].isNumeric())
@@ -501,7 +545,14 @@ namespace variant
                             std::cerr << "[W] Inconsistent format field counts at " << var.chr << ":" << var.pos << "\n";
                             v_size = (int) (f_it->second.size() / var.calls.size());
                         }
-                        f_it->second[v_size*g] = v.asInt();
+                        try
+                        {
+                            f_it->second[v_size*g] = v.asInt();
+                        }
+                        catch(std::runtime_error const & )
+                        {
+                            f_it->second[v_size*g] = bcf_int32_missing;
+                        }
                     }
                     else if(v.isNumeric())
                     {

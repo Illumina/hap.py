@@ -225,16 +225,30 @@ namespace variant
         {
             return bcf_int32_missing;
         }
-        return infos[id].asInt();
+        try
+        {
+            return infos[id].asInt();
+        }
+        catch(std::runtime_error const & e)
+        {
+            return bcf_int32_missing;
+        }
     }
 
     float Variants::getInfoFloat(const char * id) const
     {
         if(!infos.isMember(id))
         {
-            return std::numeric_limits<float>::quiet_NaN();
+            return bcfhelpers::missing_float();
         }
-        return infos[id].asFloat();
+        try
+        {
+            return infos[id].asFloat();
+        }
+        catch(std::runtime_error const & e)
+        {
+            return bcfhelpers::missing_float();
+        }
     }
 
     std::string Variants::getInfoString(const char * id) const

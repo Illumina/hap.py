@@ -76,6 +76,8 @@ int main(int argc, char* argv[]) {
     std::string regions_bed = "";
     std::string targets_bed = "";
 
+    std::string qq = "QUAL";
+
     std::string out_vcf = "";
     std::string out_errors = "";
 
@@ -106,6 +108,7 @@ int main(int argc, char* argv[]) {
             ("location,l", po::value<std::string>(), "The location to start at.")
             ("regions,R", po::value<std::string>(), "Use a bed file for getting a subset of regions (traversal via tabix).")
             ("targets,T", po::value<std::string>(), "Use a bed file for getting a subset of targets (streaming the whole file, ignoring things outside the bed regions).")
+            ("qq,q", po::value<std::string>(), "Field to use for quality scoring (this will be output as the QQ info field).")
             ("progress", po::value<bool>(), "Set to true to output progress information.")
             ("progress-seconds", po::value<int>(), "Output progress information every n seconds.")
             ("window,w", po::value<int64_t>(), "Overlap window to create haplotype blocks.")
@@ -232,6 +235,11 @@ int main(int argc, char* argv[]) {
             hb_window = vm["window"].as< int64_t >();
         }
 
+        if (vm.count("qq"))
+        {
+            qq = vm["qq"].as< std::string >();
+        }
+
         if (vm.count("progress"))
         {
             progress = vm["progress"].as< bool >();
@@ -317,6 +325,9 @@ int main(int argc, char* argv[]) {
             pvw->addHeader("##INFO=<ID=kind,Number=1,Type=String,Description=\"Sub-type for decision (match/mismatch type)\">");
             pvw->addHeader("##INFO=<ID=ctype,Number=1,Type=String,Description=\"Type of comparison performed\">");
             pvw->addHeader("##INFO=<ID=HapMatch,Number=0,Type=Flag,Description=\"Variant is in matching haplotype block\">");
+            pvw->addHeader("##INFO=<ID=BS,Number=1,Type=Integer,Description=\"Start position of the benchmarking superlocus on current chromosome\">");
+            pvw->addHeader((std::string("##INFO=<ID=IQQ,Number=1,Type=Float,Description=\"Quality value for query variants (")
+                            + qq + ").\">").c_str());
             if(apply_filters_query)
             {
                 pvw->addHeader("##INFO=<ID=Q_FILTERED,Number=0,Type=Flag,Description=\"Filtered call in query\">");
@@ -356,6 +367,7 @@ int main(int argc, char* argv[]) {
                                    &has_mismatch,
                                    &pvw, &error_out_stream,
                                    &hc,
+                                   qq,
                                    hb_expand,
                                    no_hapcmp,
                                    always_hapcmp,
@@ -493,6 +505,21 @@ int main(int argc, char* argv[]) {
             {
                 for (Variants & v : block_variants)
                 {
+                    v.setInfo("BS", (int)block_start + 1);
+                    
+                    if(qq == "QUAL")
+                    {
+                        v.setInfo("IQQ", v.calls[r2].qual);
+                    }
+                    else if(v.infos.isMember(qq))
+                    {
+                        v.setInfo("IQQ", v.infos[qq].asFloat());
+                    }
+                    else if(v.calls[r2].formats.isMember(qq))
+                    {
+                        v.setInfo("IQQ", v.calls[r2].formats[qq].asFloat());
+                    }
+
                     v.setInfo("ctype", result.c_str());
                     if (hap_match)
                     {

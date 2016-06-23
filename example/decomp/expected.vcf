@@ -40,6 +40,7 @@
 ##FORMAT=<ID=DPI,Number=1,Type=Integer,Description="Read depth associated with indel, taken from the site preceding the indel.">
 ##FORMAT=<ID=GQX,Number=1,Type=Integer,Description="Empirically calibrated variant quality score for variant sites, otherwise Minimum of {Genotype quality assuming variant position,Genotype quality assuming non-variant position}">
 ##INFO=<ID=BLOCKAVG_min30p3a,Number=0,Type=Flag,Description="Non-variant site block. All sites in a block are constrained to be non-variant, have the same filter value, and have all sample values in range [x,y], y <= max(x+3,(x*1.3)). All printed site block sample values are the minimum observed in the region spanned by the block">
+##INFO=<ID=BS,Number=1,Type=Integer,Description="Start position of the benchmarking superlocus on current chromosome">
 ##INFO=<ID=CIGAR,Number=A,Type=String,Description="CIGAR alignment for each alternate indel allele">
 ##INFO=<ID=HapMatch,Number=0,Type=Flag,Description="Variant is in matching haplotype block">
 ##INFO=<ID=IDREP,Number=A,Type=Integer,Description="Number of times RU is repeated in indel allele.">
@@ -67,17 +68,16 @@
 ##Method=<ID=cortex,Description="Method=cortex-1.0.5.11">
 ##Method=<ID=isaac2,Description="Aligner=isaac_aligner-02.14.10.23;VariantCaller=isaac_variant_caller-2.1.4.1">
 ##bcftools_concatVersion=1.3+htslib-1.3
-##bcftools_concatCommand=concat -o /tmp/hap.py.result.Eo6C2u.vcf.gz -O z /tmp/result.chr1:2-21474836478u35_d.bcf
-##INFO=<ID=BS,Number=.,Type=Integer,Description="Benchmarking superlocus ID for these variants.">
+##bcftools_concatCommand=concat -o /tmp/hap.py.result.HDAZUd.vcf.gz -O z /tmp/result.chr1:2-2147483647PMwiX9.bcf
 ##FORMAT=<ID=BD,Number=1,Type=String,Description="Decision for call (TP/FP/FN/N)">
 ##FORMAT=<ID=BK,Number=1,Type=String,Description="Sub-type for decision (match/mismatch type)">
 ##FORMAT=<ID=BI,Number=1,Type=String,Description="Additional comparison information">
 ##FORMAT=<ID=QQ,Number=1,Type=Float,Description="Variant quality for ROC creation.">
 ##INFO=<ID=Regions,Number=.,Type=String,Description="Tags for regions.">
-##FORMAT=<ID=BVT,Number=1,Type=String,Description="High-level variant type in truth (SNP|INDEL).">
-##FORMAT=<ID=BLT,Number=1,Type=String,Description="High-level variant type in query (SNP|INDEL).">
+##FORMAT=<ID=BVT,Number=1,Type=String,Description="High-level variant type (SNP|INDEL).">
+##FORMAT=<ID=BLT,Number=1,Type=String,Description="High-level location type (het|homref|hetalt|homalt|nocall).">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	TRUTH	QUERY
-chr1	237636277	.	AT	A	0	.	Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
-chr1	237636283	.	T	<DEL>	100	.	Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:TP:gm:d1_5:INDEL:homalt:100
-chr1	237636291	.	G	C	100	.	Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:100	1/1:TP:gm:tv:SNP:homalt:100
-chr1	237636309	.	A	T	100	.	Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:100	1/1:TP:gm:tv:SNP:homalt:100
+chr1	237636277	.	AT	A	0	.	BS=237636277;Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:d1_5:INDEL:homalt:0	./.:.:.:.:NOCALL:nocall:0
+chr1	237636283	.	T	<DEL>	100	.	BS=237636277;Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:0	1/1:TP:gm:d1_5:INDEL:homalt:100
+chr1	237636291	.	G	C	100	.	BS=237636277;Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:100	1/1:TP:gm:tv:SNP:homalt:100
+chr1	237636309	.	A	T	100	.	BS=237636277;Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:100	1/1:TP:gm:tv:SNP:homalt:100
