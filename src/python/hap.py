@@ -248,7 +248,7 @@ def main():
                        args.preprocessing_leftshift if args.preprocessing_truth else False,
                        args.preprocessing_decompose if args.preprocessing_truth else False,
                        args.preprocessing_norm if args.preprocessing_truth else False,
-                       args.window,
+                       args.preprocess_window,
                        args.threads)
 
         args.vcf1 = ttf.name
@@ -282,7 +282,7 @@ def main():
                        args.preprocessing_leftshift,
                        args.preprocessing_decompose,
                        args.preprocessing_norm,
-                       args.window,
+                       args.preprocess_window,
                        args.threads)
 
         args.vcf2 = qtf.name
