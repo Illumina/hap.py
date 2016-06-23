@@ -99,6 +99,53 @@ def makeIndex(inputfile, output_name=None):
     return output_name
 
 
+def concatenateParts(output, *args):
+    """ Concatenate BCF files
+
+
+    Trickier than it sounds because when there are many files we might run into
+    various limits like the number of open files, or the length of a command line.
+
+    This function will bcftools concat in a tree-like fashion to avoid this.
+    """
+    to_delete = []
+    try:
+        if output.endswith(".bcf"):
+            outputformat = "b"
+            outputext = ".bcf"
+        else:
+            outputformat = "z"
+            outputext = ".vcf.gz"
+        if len(args) < 10:
+            for x in args:
+                if not os.path.exists(x + ".tbi") and not os.path.exists(x + ".csi"):
+                    to_delete.append(x + ".csi")
+                    runBcftools("index", "-f", x)
+            cmdlist = ["concat", "-a", "-O", outputformat, "-o", output] + list(args)
+            runBcftools(*cmdlist)
+        else:
+            # block in chunks (TODO: make parallel)
+            tf1 = tempfile.NamedTemporaryFile(suffix=outputext, delete=False)
+            tf2 = tempfile.NamedTemporaryFile(suffix=outputext, delete=False)
+            to_delete.append(tf1.name)
+            to_delete.append(tf2.name)
+            to_delete.append(tf1.name + ".csi")
+            to_delete.append(tf2.name + ".csi")
+            half1 = [tf1.name] + list(args[:len(args)/2])
+            half2 = [tf2.name] + list(args[len(args)/2:])
+            concatenateParts(*half1)
+            runBcftools("index", tf1.name)
+            concatenateParts(*half2)
+            runBcftools("index", tf2.name)
+            concatenateParts(output, tf1.name, tf2.name)
+    finally:
+        for f in to_delete:
+            try:
+                os.unlink(f)
+            except:
+                pass
+
+
 # noinspection PyShadowingBuiltins
 def preprocessVCF(input, output, location="",
                   pass_only=True,

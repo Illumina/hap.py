@@ -237,6 +237,8 @@ def main():
                                           suffix=internal_format_suffix)
         ttf.close()
         tempfiles.append(ttf.name)
+        tempfiles.append(ttf.name + ".csi")
+        tempfiles.append(ttf.name + ".tbi")
         pre.preprocess(args.vcf1,
                        ttf.name,
                        args.ref,
@@ -271,6 +273,8 @@ def main():
                                           suffix=internal_format_suffix)
         qtf.close()
         tempfiles.append(qtf.name)
+        tempfiles.append(qtf.name + ".csi")
+        tempfiles.append(qtf.name + ".tbi")
         pre.preprocess(args.vcf2,
                        qtf.name,
                        args.ref,
@@ -351,6 +355,8 @@ def main():
                                          suffix=internal_format_suffix)
         tf.close()
         tempfiles.append(tf.name)
+        tempfiles.append(tf.name + ".tbi")
+        tempfiles.append(tf.name + ".csi")
         output_name = tf.name
 
         if args.engine == "xcmp":
@@ -371,14 +377,8 @@ def main():
             if len(runme_list) == 0:
                 raise Exception("No outputs to concatenate!")
 
-            if output_name.endswith("bcf"):
-                output_format = "b"
-            else:
-                output_format = "z"
-
-            runme_list = ["concat", "-o", output_name, "-O", output_format] + runme_list
             logging.info("Concatenating...")
-            bcftools.runBcftools(*runme_list)
+            bcftools.concatenateParts(output_name, *runme_list)
             logging.info("Indexing...")
             bcftools.runBcftools("index", output_name)
             # passed to quantify
