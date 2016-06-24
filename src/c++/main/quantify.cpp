@@ -128,7 +128,7 @@ int main(int argc, char* argv[]) {
                 ("count-homref", po::value<bool>(), "Count homref locations.")
                 ("output-vtc", po::value<bool>(), "Output variant types counted (debugging).")
                 ("clean-info", po::value<bool>(), "Set to zero to preserve INFO fields (default is 1)")
-                ("output-rocs", po::value<bool>(), "Output ROCs with full set of levels ofver QQ values (default is 1, disable for more concise output)")
+                ("output-rocs", po::value<bool>(), "Output ROCs with full set of levels of QQ values (default is 1, disable for more concise output)")
                 ("fix-chr-regions", po::value<bool>(), "Add chr prefix to regions if necessary (default is off).")
                 ("threads", po::value<int>(), "Number of threads to use.")
                 ("blocksize", po::value<int>(), "Number of variants per block.")

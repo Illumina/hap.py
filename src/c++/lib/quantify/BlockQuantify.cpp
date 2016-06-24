@@ -266,31 +266,53 @@ namespace variant {
         // benchmarking superlocus
         const auto update_bs_qq = [this, &current_bs_start](BlockQuantifyImpl::variantlist_t::iterator to)
         {
-            std::vector<float> qqs;
+            std::vector<float> tp_qqs;
             for(auto cur = current_bs_start; cur != to; ++cur)
             {
                 const float qqq = bcfhelpers::getFormatFloat(_impl->hdr, *cur, "QQ", 1);
-                if(!std::isnan(qqq))
+                if(std::isnan(qqq))
                 {
-                    qqs.push_back(qqq);
+                    continue;
+                }
+                const std::string bd = bcfhelpers::getFormatString(_impl->hdr, *cur, "BD", 1);
+                // we want the scores of all TPs in this BS
+                if(bd == "TP")
+                {
+                    tp_qqs.push_back(qqq);
                 }
             }
+
             float t_qq = bcfhelpers::missing_float();
-            if(!qqs.empty())
+            if(!tp_qqs.empty())
             {
-                std::nth_element(qqs.begin(), qqs.begin() + qqs.size() / 2, qqs.end());
-                t_qq = qqs[qqs.size()/2];
+                t_qq = *(std::max_element(tp_qqs.begin(), tp_qqs.end()));
             }
 
+            /** compute the median over all variants */
             int fsize = bcf_hdr_nsamples(_impl->hdr);
             float * fmt = (float*)calloc((size_t) fsize, sizeof(float));
             for(auto cur = current_bs_start; cur != to; ++cur)
             {
+                const std::string bd = bcfhelpers::getFormatString(_impl->hdr, *cur, "BD", 0);
+                if(bd != "TP")
+                {
+                    continue;
+                }
                 bcf_get_format_float(_impl->hdr, *cur, "QQ", &fmt, &fsize);
                 fmt[0] = t_qq;
                 bcf_update_format_float(_impl->hdr, *cur, "QQ", fmt, fsize);
             }
             free(fmt);
+
+#ifdef DEBUG_BLOCKQUANTIFY
+            const int bs = bcfhelpers::getInfoInt(_impl->hdr, *current_bs_start, "BS", -1);
+            std::string values;
+            for(float x : tp_qqs)
+            {
+                values += std::to_string(x) + ",";
+            }
+            std::cerr << "BS: " << bs << " T_QQ = " << t_qq << " [" << values << "]" << "\n";
+#endif
         };
 
         for(auto v_it = _impl->variants.begin(); v_it != _impl->variants.end(); ++v_it)
@@ -300,8 +322,11 @@ namespace variant {
             const std::string vchr = bcfhelpers::getChrom(_impl->hdr, *v_it);
             const int vbs = bcfhelpers::getInfoInt(_impl->hdr, *v_it, "BS");
 
+#ifdef DEBUG_BLOCKQUANTIFY
+            std::cerr << "current BS = " << current_bs << " vbs = " << vbs << "\n";
+#endif
 
-            if(vbs != current_bs || vbs < 0 || vchr != current_chr)
+            if(current_bs_start != v_it && (vbs != current_bs || vbs < 0 || vchr != current_chr))
             {
                 update_bs_qq(v_it);
                 current_bs = vbs;
