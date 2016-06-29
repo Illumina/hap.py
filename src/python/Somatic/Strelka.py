@@ -274,6 +274,7 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
                 "S.1.TIR", "S.2.TIR",
                 "S.1.TOR", "S.2.TOR",
                 "S.1.BCN50", "S.2.BCN50",
+                "S.1.FDP50", "S.2.FDP50",
                 ]
 
     cols = ["CHROM",
@@ -293,6 +294,8 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
             "T_DP_RATE",
             "N_BCN",
             "T_BCN",
+            "N_FDP",
+            "T_FDP",
             "N_AF",
             "T_AF",
             "SGT",
@@ -348,7 +351,8 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
         for q in ["I.QSI_NT", "I.RC", "I.IC", "I.IHP",
                   "I.EVS",
                   "S.1.DP", "S.2.DP",
-                  "S.1.BCN50", "S.2.BCN50"]:
+                  "S.1.BCN50", "S.2.BCN50",
+                  "S.1.FDP50", "S.2.FDP50"]:
             if q not in rec or rec[q] is None:
                 rec[q] = 0
                 if not ("feat:" + q) in has_warned:
@@ -447,6 +451,8 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
             {"n": "MQ0", "s": "I.MQ0", "def": 0.0, "t": float},
             {"n": "N_BCN", "s": "S.1.BCN50", "def": 0.0, "t": float},
             {"n": "T_BCN", "s": "S.2.BCN50", "def": 0.0, "t": float},
+            {"n": "N_FDP", "s": "S.1.FDP50", "def": 0.0, "t": float},
+            {"n": "T_FDP", "s": "S.2.FDP50", "def": 0.0, "t": float},
         ]
 
         for fd in fields:
