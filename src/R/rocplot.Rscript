@@ -1,0 +1,121 @@
+#!/usr/bin/env Rscript
+#
+# Copyright (c) 2010-2015 Illumina, Inc.
+# All rights reserved.
+#
+# This file is distributed under the simplified BSD license.
+# The full text can be found here (and in LICENSE.txt in the root folder of
+# this distribution):
+#
+# https://github.com/Illumina/licenses/blob/master/Simplified-BSD-License.txt
+#
+# Plot hap.py ROCs and PASS points
+# 
+# This script requires the ggplot2 package. To install, run this command in R:
+#   
+#   install.packages("ggplot2")
+#
+# Usage:
+#
+# This script runs on a set of hap.py results. Result n will have been run
+# with hap.py -o prefix_n. The names for each result are optional, they can
+# be used to specify a custom label for the ROCs in the plot.
+# 
+# run Rscript rocplot.Rscript output_name prefix_1:name_1 ... prefix_n:name_n
+#
+# Author:
+#
+# Peter Krusche <pkrusche@illumina.com>
+#
+
+library(ggplot2)
+library(tools)
+
+args = commandArgs(trailingOnly=TRUE)
+
+if(length(args) < 2) {
+    stop("Usage: rocplot.Rscript output_name prefix_1:name_1 ... ")
+}
+
+read_single = function(x) {
+    nx = strsplit(x, "\\:")[[1]]
+    
+    if(length(nx) == 1) {
+        name = basename(file_path_sans_ext(x))
+    } else {
+        x = nx[1]
+        name = nx[2]
+    }
+    cat(sprintf("Reading %s as %s\n", x, name))
+
+    all_results = list()
+
+    all_results$roc_data_snp_all = read.csv(paste(x, "roc.Locations.SNP", "csv", sep="."))
+    all_results$roc_data_indel_all = read.csv(paste(x, "roc.Locations.INDEL", "csv", sep="."))
+
+    all_results$roc_data_snp_pass = read.csv(paste(x, "roc.Locations.SNP.PASS", "csv", sep="."))
+    all_results$roc_data_indel_pass = read.csv(paste(x, "roc.Locations.INDEL.PASS", "csv", sep="."))
+
+    sel_snp_file = paste(x, "roc.Locations.SNP.SEL", "csv", sep=".")
+    # if we have a selectively-filtered ROC, don't show "ALL" ROC
+    if(file.exists(sel_snp_file)) {
+        # keep the ALL point
+        # all_results$roc_data_snp_all = head(subset(all_results$roc_data_snp_all, 
+        #                                            QQ == min(all_results$roc_data_snp_all["QQ"])),
+        #                                     n=1)
+        # all_results$roc_data_snp_pass = head(subset(all_results$roc_data_snp_pass, 
+        #                                             QQ == min(all_results$roc_data_snp_pass["QQ"])),
+        #                                      n=1)
+        all_results$roc_data_snp_sel = read.csv(sel_snp_file)
+    }
+
+    sel_indel_file = paste(x, "roc.Locations.SNP.SEL", "csv", sep=".")
+    if(file.exists(sel_indel_file)) {
+        # all_results$roc_data_indel_all = head(subset(all_results$roc_data_indel_all, 
+        #                                              QQ == min(all_results$roc_data_indel_all["QQ"])),
+        #                                     n=1)
+        # all_results$roc_data_indel_pass = head(subset(all_results$roc_data_indel_pass, 
+        #                                              QQ == min(all_results$roc_data_indel_pass["QQ"])),
+        #                                        n=1)
+        all_results$roc_data_indel_sel = read.csv(sel_indel_file)
+    }
+
+    result = do.call(rbind, all_results)
+    row.names(result) = NULL
+    result$filename = x
+    result$name = name
+    result$igroup = paste(result$name, 
+                          result$Filter, 
+                          result$Type)
+    return(result)
+}
+
+data = do.call(rbind, lapply(args[[2:length(args)]], read_single))
+
+data
+
+ggplot(data, aes(x=METRIC.Recall, y=METRIC.Precision, 
+                 color=igroup, 
+                 group=igroup)) +
+    facet_wrap(~Type) +
+    geom_line() + 
+    geom_point() + 
+    xlim(c(0.8, 1)) +
+    ylim(c(0.9, 1)) +
+    # xlim(c(0.9, 1)) +
+    # ylim(c(0.99, 1)) +
+    theme_bw(base_size=18)
+
+# data_xcmp = read.csv('~/workspace/hap.py-build/ptest.roc.Locations.INDEL.csv')
+# data_xcmp$tool = "xcmp"
+
+# data_vcfe = read.csv('~/workspace/hap.py-build/ptest-ve.roc.Locations.INDEL.csv')
+# data_vcfe$tool = "vcfeval"
+
+# data = rbind(data_xcmp, data_vcfe)
+
+# ggplot(data, aes(x=METRIC.Recall, y=METRIC.Precision, color=tool)) +
+#   geom_point() + 
+#   xlim(c(0.8, 1)) +
+#   ylim(c(0.9, 1)) +
+#   theme_bw(base_size=18)

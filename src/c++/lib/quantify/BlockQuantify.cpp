@@ -208,7 +208,8 @@ namespace variant {
         };
 
         bcf_unpack(v, BCF_UN_FLT);
-        bool fail = false;
+        bool fail = false;  // fails any of the non-blocked filters
+        bool fail_any = false;  // fails any filter
         for(int j = 0; j < v->d.n_flt; ++j)
         {
             std::string filter = "PASS";
@@ -223,11 +224,17 @@ namespace variant {
                 {
                     fail = true;
                 }
+                fail_any = true;
                 observe("f:" + roc_identifier + ":" + filter, false);
             }
         }
 
-        observe("a:" + roc_identifier + ":PASS", fail);
+        observe("a:" + roc_identifier + ":PASS", fail_any);
+        // selectively-filtered ROCs
+        if(!_impl->filters_to_ignore.empty())
+        {
+            observe("a:" + roc_identifier + ":SEL", fail);
+        }
         observe("a:" + roc_identifier + ":ALL", false);
 
         const std::string regions = bcfhelpers::getInfoString(_impl->hdr, v, "Regions", "");
@@ -241,7 +248,11 @@ namespace variant {
                 {
                     continue;
                 }
-                observe("s|" + r + ":" + roc_identifier + ":PASS", fail);
+                observe("s|" + r + ":" + roc_identifier + ":PASS", fail_any);
+                if(!_impl->filters_to_ignore.empty())
+                {
+                    observe("s|" + r + ":" + roc_identifier + ":SEL", fail);
+                }
                 observe("s|" + r + ":" + roc_identifier + ":ALL", false);
             }
         }
