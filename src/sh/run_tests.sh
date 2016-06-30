@@ -61,19 +61,6 @@ else
 fi
 
 ##############################################################
-# Test Hap.py + integration
-##############################################################
-
-/bin/bash ${DIR}/run_integration_test.sh
-
-if [[ $? -ne 0 ]]; then
-	echo "Integration test FAILED!"
-	exit 1
-else
-	echo "Integration test SUCCEEDED!"
-fi
-
-##############################################################
 # Test Hap.py + path traversals
 ##############################################################
 
@@ -113,6 +100,19 @@ else
 fi
 
 ##############################################################
+# Test hom-ref block expansion and calls-only preprocessing
+##############################################################
+
+/bin/bash ${DIR}/run_gvcf_homref_test.sh
+
+if [[ $? -ne 0 ]]; then
+	echo "GVCF hom-ref test FAILED!"
+	exit 1
+else
+	echo "GVCF hom-ref test SUCCEEDED!"
+fi
+
+##############################################################
 # Test Hap.py + chr prefix detection
 ##############################################################
 
@@ -148,6 +148,19 @@ if [[ $? -ne 0 ]]; then
     exit 1
 else
     echo "Contig length calculation test SUCCEEDED!"
+fi
+
+##############################################################
+# Test Hap.py + integration
+##############################################################
+
+/bin/bash ${DIR}/run_integration_test.sh
+
+if [[ $? -ne 0 ]]; then
+	echo "Integration test FAILED!"
+	exit 1
+else
+	echo "Integration test SUCCEEDED!"
 fi
 
 ##############################################################

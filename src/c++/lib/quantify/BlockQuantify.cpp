@@ -54,7 +54,7 @@
 #include "XCmpQuantify.hh"
 #include "GA4GHQuantify.hh"
 
-//#define DEBUG_BLOCKQUANTIFY
+#define DEBUG_BLOCKQUANTIFY
 
 namespace variant {
 
@@ -257,10 +257,12 @@ namespace variant {
         _impl->fasta_to_use.reset(new FastaFile(_impl->ref_fasta));
 #ifdef DEBUG_BLOCKQUANTIFY
         int lastpos = 0;
+        std::cerr << "starting block." << "\n";
 #endif
         auto current_bs_start = _impl->variants.begin();
         std::string current_chr;
         int current_bs = -1;
+        bool current_bs_valid = false;
 
         // function to compute the QQ values for truth variants in the current
         // benchmarking superlocus
@@ -294,12 +296,15 @@ namespace variant {
             for(auto cur = current_bs_start; cur != to; ++cur)
             {
                 const std::string bd = bcfhelpers::getFormatString(_impl->hdr, *cur, "BD", 0);
+                bcf_get_format_float(_impl->hdr, *cur, "QQ", &fmt, &fsize);
                 if(bd != "TP")
                 {
-                    continue;
+                    fmt[0] = bcfhelpers::missing_float();
                 }
-                bcf_get_format_float(_impl->hdr, *cur, "QQ", &fmt, &fsize);
-                fmt[0] = t_qq;
+                else
+                {
+                    fmt[0] = t_qq;
+                }
                 bcf_update_format_float(_impl->hdr, *cur, "QQ", fmt, fsize);
             }
             free(fmt);
@@ -315,18 +320,28 @@ namespace variant {
 #endif
         };
 
+
         for(auto v_it = _impl->variants.begin(); v_it != _impl->variants.end(); ++v_it)
         {
             // update fields, must output GA4GH-compliant fields
             countVariants(*v_it);
+
+            // determine benchmarking superlocus
             const std::string vchr = bcfhelpers::getChrom(_impl->hdr, *v_it);
             const int vbs = bcfhelpers::getInfoInt(_impl->hdr, *v_it, "BS");
+            if(!current_bs_valid)
+            {
+                current_bs = vbs;
+                current_chr = vchr;
+                current_bs_valid = true;
+            }
 
 #ifdef DEBUG_BLOCKQUANTIFY
             std::cerr << "current BS = " << current_bs << " vbs = " << vbs << "\n";
 #endif
 
-            if(current_bs_start != v_it && (vbs != current_bs || vbs < 0 || vchr != current_chr))
+            if(   current_bs_start != v_it
+               && (vbs != current_bs || vbs < 0 || vchr != current_chr))
             {
                 update_bs_qq(v_it);
                 current_bs = vbs;
@@ -334,6 +349,8 @@ namespace variant {
                 current_bs_start = v_it;
             }
         }
+
+        // write out final superlocus (if any)
         update_bs_qq(_impl->variants.end());
 
         for(auto & v : _impl->variants)
