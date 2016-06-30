@@ -223,9 +223,13 @@ namespace variant {
                 if(!_impl->filters_to_ignore.count("*") && !_impl->filters_to_ignore.count(filter))
                 {
                     fail = true;
+                    observe("f:" + roc_identifier + ":" + filter, false);
+                }
+                else
+                {
+                    observe("f:" + roc_identifier + ":SEL_IGN_" + filter, false);
                 }
                 fail_any = true;
-                observe("f:" + roc_identifier + ":" + filter, false);
             }
         }
 

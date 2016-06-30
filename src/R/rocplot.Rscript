@@ -69,7 +69,7 @@ read_single = function(x) {
         all_results$roc_data_snp_sel = read.csv(sel_snp_file)
     }
 
-    sel_indel_file = paste(x, "roc.Locations.SNP.SEL", "csv", sep=".")
+    sel_indel_file = paste(x, "roc.Locations.INDEL.SEL", "csv", sep=".")
     if(file.exists(sel_indel_file)) {
         # all_results$roc_data_indel_all = head(subset(all_results$roc_data_indel_all, 
         #                                              QQ == min(all_results$roc_data_indel_all["QQ"])),
