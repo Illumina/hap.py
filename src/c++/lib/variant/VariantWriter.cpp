@@ -319,6 +319,7 @@ namespace variant
         // write info
         {
             // prevent keeping AN and AC since these might change
+            // END has been written above already
             std::set<std::string> dont_write = {"AN", "AC", "END"};
             for(auto const & id : var.infos.getMemberNames())
             {

@@ -54,7 +54,7 @@
 #include "XCmpQuantify.hh"
 #include "GA4GHQuantify.hh"
 
-#define DEBUG_BLOCKQUANTIFY
+//#define DEBUG_BLOCKQUANTIFY
 
 namespace variant {
 
