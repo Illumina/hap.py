@@ -1,14 +1,14 @@
 # Micro-benchmark
 
 To test hap.py and show how ROC curves work, a small set of test
-datasets exists in this repository. These are contained in the [example/happy]()
+datasets exists in this repository. These are contained in the [../example/happy]()
 folder.
 
 The folder contains partial callsets for Platinum Genomes 2016.1 and for
 GATK3, Platypus and Freebayes on NA12878. All three methods were run using
 their joint-calling mode across the whole PG pedigree. We benchmark
 their precision and recall against the PG callset using different methods
-and produce ROCs. [example/happy/microbenchmark.sh]() contains a script to
+and produce ROCs. [../example/happy/microbenchmark.sh]() contains a script to
 run hap.py in different configurations on these datasets. It needs to be
 run either from a hap.py build folder, or pointed to a hap.py installation
 using the `HCDIR` environment variable.
@@ -49,4 +49,4 @@ vcfeval.
 | With decomposition | ![microbench_callers_ve.SNP.png](microbench_callers_ve.SNP.png) | ![microbench_callers_ve.SNP.png](microbench_callers_ve.SNP.png) |
 
 Any set of hap.py runs can be plotted like this using the script
-[src/R/rocplot.Rscript]().
+[../src/R/rocplot.Rscript]().
