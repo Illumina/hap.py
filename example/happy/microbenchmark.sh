@@ -10,6 +10,9 @@
 # * hap.py must have been built with VCFEval support. This means we need Java
 # * There must be a version of Rscript available in the PATH.
 # * The ggplot2 package must be installed in R
+#
+# This script will take a while to run, ca. 20-30min on a 4-core laptop.
+# Running with more CPUs will be faster.
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 set -e
