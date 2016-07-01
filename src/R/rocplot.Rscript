@@ -11,9 +11,10 @@
 #
 # Plot hap.py ROCs and PASS points
 # 
-# This script requires the ggplot2 package. To install, run this command in R:
+# This script requires the ggplot2 and plyr packages. 
+# To install these, run this command in R:
 #   
-#   install.packages("ggplot2")
+#   install.packages(c("ggplot2", "plyr"))
 #
 # Usage:
 #
@@ -37,6 +38,7 @@ if(length(args) < 2) {
     stop("Usage: rocplot.Rscript output_name prefix_1:name_1 ... ")
 }
 
+# Read single hap.py / xcmp dataset
 read_single = function(x) {
     nx = strsplit(x, "\\:")[[1]]
     
@@ -57,28 +59,53 @@ read_single = function(x) {
     all_results$roc_data_indel_pass = read.csv(paste(x, "roc.Locations.INDEL.PASS", "csv", sep="."))
 
     sel_snp_file = paste(x, "roc.Locations.SNP.SEL", "csv", sep=".")
-    # if we have a selectively-filtered ROC, don't show "ALL" ROC
+    
+    # if we have a selectively-filtered ROC, don't show "PASS" ROC
     if(file.exists(sel_snp_file)) {
-        # keep the ALL point
-        # all_results$roc_data_snp_all = head(subset(all_results$roc_data_snp_all, 
-        #                                            QQ == min(all_results$roc_data_snp_all["QQ"])),
-        #                                     n=1)
-        # all_results$roc_data_snp_pass = head(subset(all_results$roc_data_snp_pass, 
-        #                                             QQ == min(all_results$roc_data_snp_pass["QQ"])),
-        #                                      n=1)
         all_results$roc_data_snp_sel = read.csv(sel_snp_file)
+    } else {
+        all_results$roc_data_snp_sel = all_results$roc_data_snp_pass
     }
+
+    all_results$roc_data_snp_all = head(subset(all_results$roc_data_snp_all, 
+                                               QQ == min(all_results$roc_data_snp_all["QQ"])),
+                                        n=1)
+    all_results$roc_data_snp_pass = head(subset(all_results$roc_data_snp_pass, 
+                                                QQ == min(all_results$roc_data_snp_pass["QQ"])),
+                                         n=1)
+    sel_min = head(subset(all_results$roc_data_snp_sel, 
+                          QQ == min(all_results$roc_data_snp_sel["QQ"])),
+                          n=1)
+
+    all_results$roc_connector_snp = 
+        rbind(all_results$roc_data_snp_all, sel_min)
+    all_results$roc_connector_snp$Filter = "CONN"
+    all_results$roc_data_snp_sel$Filter = "ROC"
 
     sel_indel_file = paste(x, "roc.Locations.INDEL.SEL", "csv", sep=".")
     if(file.exists(sel_indel_file)) {
-        # all_results$roc_data_indel_all = head(subset(all_results$roc_data_indel_all, 
-        #                                              QQ == min(all_results$roc_data_indel_all["QQ"])),
-        #                                     n=1)
-        # all_results$roc_data_indel_pass = head(subset(all_results$roc_data_indel_pass, 
-        #                                              QQ == min(all_results$roc_data_indel_pass["QQ"])),
-        #                                        n=1)
         all_results$roc_data_indel_sel = read.csv(sel_indel_file)
+    } else {
+        # use PASS ROC if no SEL ROC present
+        all_results$roc_data_indel_sel = all_results$roc_data_indel_pass
     }
+
+    # just keep single ALL and PASS point
+    all_results$roc_data_indel_all = head(subset(all_results$roc_data_indel_all, 
+                                                 QQ == min(all_results$roc_data_indel_all["QQ"])),
+                                          n=1)
+    all_results$roc_data_indel_pass = head(subset(all_results$roc_data_indel_pass, 
+                                                 QQ == min(all_results$roc_data_indel_pass["QQ"])),
+                                           n=1)
+
+    sel_min = head(subset(all_results$roc_data_indel_sel, 
+                          QQ == min(all_results$roc_data_indel_sel["QQ"])),
+                          n=1)
+
+    all_results$roc_connector_indel = 
+        rbind(all_results$roc_data_indel_all, sel_min)
+    all_results$roc_connector_indel$Filter = "CONN"
+    all_results$roc_data_indel_sel$Filter = "ROC"
 
     result = do.call(rbind, all_results)
     row.names(result) = NULL
@@ -90,32 +117,61 @@ read_single = function(x) {
     return(result)
 }
 
-data = do.call(rbind, lapply(args[[2:length(args)]], read_single))
+plot_data = function(pdata) {
+    plt = ggplot(pdata, 
+           aes(x=METRIC.Recall,
+               y=METRIC.Precision,
+               color=name))
+        facet_wrap(~Type)
 
-data
+    # ROC lines
+    plt = plt + 
+        geom_line(data = subset(pdata, Filter %in% c("ROC")), 
+                  mapping=aes(group=igroup),
+                  size=1.5,
+                  linetype=3) 
 
-ggplot(data, aes(x=METRIC.Recall, y=METRIC.Precision, 
-                 color=igroup, 
-                 group=igroup)) +
-    facet_wrap(~Type) +
-    geom_line() + 
-    geom_point() + 
-    xlim(c(0.8, 1)) +
-    ylim(c(0.9, 1)) +
-    # xlim(c(0.9, 1)) +
-    # ylim(c(0.99, 1)) +
-    theme_bw(base_size=18)
+    # Connector between ALL and start of ROC 
+    plt = plt + 
+        geom_line(data = subset(pdata, Filter == "CONN"), 
+                  mapping=aes(group=igroup),
+                  size=1.5, 
+                  linetype=4) 
 
-# data_xcmp = read.csv('~/workspace/hap.py-build/ptest.roc.Locations.INDEL.csv')
-# data_xcmp$tool = "xcmp"
+    plt = plt + 
+        geom_point(data = subset(pdata, Filter %in% c("CONN")), 
+                   mapping=aes(group=igroup),
+                   size=8) 
 
-# data_vcfe = read.csv('~/workspace/hap.py-build/ptest-ve.roc.Locations.INDEL.csv')
-# data_vcfe$tool = "vcfeval"
+    plt = plt + 
+        geom_point(data = subset(pdata, Filter %in% c("PASS", "ALL")), 
+                   mapping=aes(shape=Filter, group=igroup),
+                   size=8) 
 
-# data = rbind(data_xcmp, data_vcfe)
+    xl_min = max(0, 
+                 min(subset(pdata, Filter %in% c("PASS", "ALL"))$METRIC.Recall) - 0.02)
+    xl_max = min(1.0,
+                 max(subset(pdata, Filter %in% c("PASS", "ALL"))$METRIC.Recall) + 0.02)
+    yl_min = max(0, 
+                 min(subset(pdata, Filter %in% c("PASS", "ALL"))$METRIC.Precision) - 0.01)
+    yl_max = min(1.0, 
+                 max(subset(pdata, Filter %in% c("PASS", "ALL"))$METRIC.Precision) + 0.01)
 
-# ggplot(data, aes(x=METRIC.Recall, y=METRIC.Precision, color=tool)) +
-#   geom_point() + 
-#   xlim(c(0.8, 1)) +
-#   ylim(c(0.9, 1)) +
-#   theme_bw(base_size=18)
+    plt = plt +
+        scale_color_brewer("", palette="Set1") + 
+        xlim(c(xl_min, xl_max)) +
+        ylim(c(yl_min, yl_max)) +
+        theme_bw(base_size=18)
+
+    return(plt)
+}
+
+data = do.call(rbind, lapply(args[2:length(args)], read_single))
+
+pdata = subset(data, Type=="SNP")
+ggsave(paste(args[1], "SNP", "png", sep="."),
+       plot_data(pdata), width=8, height=)
+
+pdata = subset(data, Type=="INDEL")
+ggsave(paste(args[1], "INDEL", "png", sep="."),
+       plot_data(pdata), width=8, height=)
