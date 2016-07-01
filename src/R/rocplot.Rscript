@@ -11,10 +11,10 @@
 #
 # Plot hap.py ROCs and PASS points
 # 
-# This script requires the ggplot2 and plyr packages. 
-# To install these, run this command in R:
+# This script requires the ggplot2 package. 
+# To install it, run this command in R:
 #   
-#   install.packages(c("ggplot2", "plyr"))
+#   install.packages(c("ggplot2"))
 #
 # Usage:
 #
@@ -22,7 +22,9 @@
 # with hap.py -o prefix_n. The names for each result are optional, they can
 # be used to specify a custom label for the ROCs in the plot.
 # 
-# run Rscript rocplot.Rscript output_name prefix_1:name_1 ... prefix_n:name_n
+# run Rscript rocplot.Rscript [-pr] output_name prefix_1:name_1 ... prefix_n:name_n
+#
+# Use the -pr switch to produce a precision-recall curve rather than a TPR/FPR curve 
 #
 # Author:
 #
@@ -36,6 +38,13 @@ args = commandArgs(trailingOnly=TRUE)
 
 if(length(args) < 2) {
     stop("Usage: rocplot.Rscript output_name prefix_1:name_1 ... ")
+}
+
+if("-pr" %in% args) {
+    args = args[args != "-pr"]
+    pr = TRUE
+} else {
+    pr = FALSE
 }
 
 # Read single hap.py / xcmp dataset
@@ -117,16 +126,27 @@ read_single = function(x) {
     return(result)
 }
 
-plot_data = function(pdata) {
-    plt = ggplot(pdata, 
-           aes(x=METRIC.Recall,
-               y=METRIC.Precision,
-               color=name))
+# Plot P/R curves
+plot_data = function(pdata, is.PR=FALSE) {
+    # precision / recall curve
+    if(is.PR) {
+        xaxis = "METRIC.Recall"
+        yaxis = "METRIC.Precision"        
+    } else {
+        xaxis = "FPR"
+        yaxis = "TPR"
+        pdata$FPR = pdata$QUERY.FP / (pdata$QUERY.TOTAL - pdata$QUERY.UNK)
+        pdata$TPR = pdata$TRUTH.TP / pdata$TRUTH.TOTAL
+        cc = complete.cases(pdata[, c(xaxis, yaxis)])
+        pdata = pdata[cc, ]
+    }
+
+    plt = ggplot(pdata, aes_string(x=xaxis, y=yaxis, color="name"))
         facet_wrap(~Type)
 
     # ROC lines
     plt = plt + 
-        geom_line(data = subset(pdata, Filter %in% c("ROC")), 
+        geom_line(data = subset(pdata, Filter == "ROC"), 
                   mapping=aes(group=igroup),
                   size=1.5,
                   linetype=3) 
@@ -149,13 +169,13 @@ plot_data = function(pdata) {
                    size=8) 
 
     xl_min = max(0, 
-                 min(subset(pdata, Filter %in% c("PASS", "ALL"))$METRIC.Recall) - 0.02)
+                 min(subset(pdata, Filter %in% c("PASS", "ALL"))[[xaxis]]) - 0.02)
     xl_max = min(1.0,
-                 max(subset(pdata, Filter %in% c("PASS", "ALL"))$METRIC.Recall) + 0.02)
+                 max(subset(pdata, Filter %in% c("PASS", "ALL"))[[xaxis]]) + 0.02)
     yl_min = max(0, 
-                 min(subset(pdata, Filter %in% c("PASS", "ALL"))$METRIC.Precision) - 0.01)
+                 min(subset(pdata, Filter %in% c("PASS", "ALL"))[[yaxis]]) - 0.01)
     yl_max = min(1.0, 
-                 max(subset(pdata, Filter %in% c("PASS", "ALL"))$METRIC.Precision) + 0.01)
+                 max(subset(pdata, Filter %in% c("PASS", "ALL"))[[yaxis]]) + 0.01)
 
     plt = plt +
         scale_color_brewer("", palette="Set1") + 
@@ -170,8 +190,8 @@ data = do.call(rbind, lapply(args[2:length(args)], read_single))
 
 pdata = subset(data, Type=="SNP")
 ggsave(paste(args[1], "SNP", "png", sep="."),
-       plot_data(pdata), width=8, height=)
+       plot_data(pdata, is.PR=pr), width=8, height=)
 
 pdata = subset(data, Type=="INDEL")
 ggsave(paste(args[1], "INDEL", "png", sep="."),
-       plot_data(pdata), width=8, height=)
+       plot_data(pdata, is.PR=pr), width=8, height=)
