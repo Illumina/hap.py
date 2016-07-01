@@ -10,7 +10,7 @@ sequences in *haplotype blocks*. A haplotype block is a small region of the
 genome (sized between 1 and around 1000 bp) that contains one or more variants.
 
 Matching haplotype sequences rather than VCF records is more accurate. It allows
- us to the following things:
+ us to do the following things:
 
 *  We can match up variant records that represent the same alt sequences in a
    different form (see [example/GiaB](example/GiaB)).
@@ -79,7 +79,7 @@ $ ls test.*
 test.metrics.json  test.summary.csv test.extended.csv
 ```
 
-This example compares an example run of GATK 1.6 on NA12878 agains the Platinum
+This example compares an example run of GATK 1.6 on NA12878 against the Platinum
 Genomes reference dataset (***Note: this is a fairly old version of GATK, so
 don't rely on these particular numbers for competitive comparisons!***).
 
@@ -102,7 +102,7 @@ false-positives and as false-negatives. Truth sets like Platinum Genomes or
 NIST/Genome in a Bottle also include "confident call regions", which show places
 where the truth dataset does not expect variant calls.
 Hap.py can use these regions to count query variant calls that do not match
-truth calls and which fall into  these regions as false positives.
+truth calls and which fall into these regions as false positives.
 
 Full List of Command line Options
 ---------------------------------
@@ -242,7 +242,7 @@ for more details.
   --partial-credit      give credit for partially matched variants. this is
                         equivalent to --internal-leftshift and --internal-
                         preprocessing.
-  --no-partial-credit   Give credit for partially matched variants. This is
+  --no-partial-credit   Give no credit for partially matched variants. This is
                         equivalent to --no-internal-leftshift and --no-
                         internal-preprocessing.
   --internal-leftshift  Switch off xcmp's internal VCF leftshift
