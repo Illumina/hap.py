@@ -10,10 +10,10 @@
 # https://github.com/Illumina/licenses/blob/master/Simplified-BSD-License.txt
 #
 # Plot hap.py ROCs and PASS points
-# 
-# This script requires the ggplot2 package. 
+#
+# This script requires the ggplot2 package.
 # To install it, run this command in R:
-#   
+#
 #   install.packages(c("ggplot2"))
 #
 # Usage:
@@ -21,10 +21,10 @@
 # This script runs on a set of hap.py results. Result n will have been run
 # with hap.py -o prefix_n. The names for each result are optional, they can
 # be used to specify a custom label for the ROCs in the plot.
-# 
+#
 # run Rscript rocplot.Rscript [-pr] output_name prefix_1:name_1 ... prefix_n:name_n
 #
-# Use the -pr switch to produce a precision-recall curve rather than a TPR/FPR curve 
+# Use the -pr switch to produce a precision-recall curve rather than a TPR/FPR curve
 #
 # Author:
 #
@@ -50,7 +50,7 @@ if("-pr" %in% args) {
 # Read single hap.py / xcmp dataset
 read_single = function(x) {
     nx = strsplit(x, "\\:")[[1]]
-    
+
     if(length(nx) == 1) {
         name = basename(file_path_sans_ext(x))
     } else {
@@ -68,7 +68,7 @@ read_single = function(x) {
     all_results$roc_data_indel_pass = read.csv(paste(x, "roc.Locations.INDEL.PASS", "csv", sep="."))
 
     sel_snp_file = paste(x, "roc.Locations.SNP.SEL", "csv", sep=".")
-    
+
     # if we have a selectively-filtered ROC, don't show "PASS" ROC
     if(file.exists(sel_snp_file)) {
         all_results$roc_data_snp_sel = read.csv(sel_snp_file)
@@ -76,17 +76,17 @@ read_single = function(x) {
         all_results$roc_data_snp_sel = all_results$roc_data_snp_pass
     }
 
-    all_results$roc_data_snp_all = head(subset(all_results$roc_data_snp_all, 
+    all_results$roc_data_snp_all = head(subset(all_results$roc_data_snp_all,
                                                QQ == min(all_results$roc_data_snp_all["QQ"])),
                                         n=1)
-    all_results$roc_data_snp_pass = head(subset(all_results$roc_data_snp_pass, 
+    all_results$roc_data_snp_pass = head(subset(all_results$roc_data_snp_pass,
                                                 QQ == min(all_results$roc_data_snp_pass["QQ"])),
                                          n=1)
-    sel_min = head(subset(all_results$roc_data_snp_sel, 
+    sel_min = head(subset(all_results$roc_data_snp_sel,
                           QQ == min(all_results$roc_data_snp_sel["QQ"])),
                           n=1)
 
-    all_results$roc_connector_snp = 
+    all_results$roc_connector_snp =
         rbind(all_results$roc_data_snp_all, sel_min)
     all_results$roc_connector_snp$Filter = "CONN"
     all_results$roc_data_snp_sel$Filter = "ROC"
@@ -100,18 +100,18 @@ read_single = function(x) {
     }
 
     # just keep single ALL and PASS point
-    all_results$roc_data_indel_all = head(subset(all_results$roc_data_indel_all, 
+    all_results$roc_data_indel_all = head(subset(all_results$roc_data_indel_all,
                                                  QQ == min(all_results$roc_data_indel_all["QQ"])),
                                           n=1)
-    all_results$roc_data_indel_pass = head(subset(all_results$roc_data_indel_pass, 
+    all_results$roc_data_indel_pass = head(subset(all_results$roc_data_indel_pass,
                                                  QQ == min(all_results$roc_data_indel_pass["QQ"])),
                                            n=1)
 
-    sel_min = head(subset(all_results$roc_data_indel_sel, 
+    sel_min = head(subset(all_results$roc_data_indel_sel,
                           QQ == min(all_results$roc_data_indel_sel["QQ"])),
                           n=1)
 
-    all_results$roc_connector_indel = 
+    all_results$roc_connector_indel =
         rbind(all_results$roc_data_indel_all, sel_min)
     all_results$roc_connector_indel$Filter = "CONN"
     all_results$roc_data_indel_sel$Filter = "ROC"
@@ -120,8 +120,8 @@ read_single = function(x) {
     row.names(result) = NULL
     result$filename = x
     result$name = name
-    result$igroup = paste(result$name, 
-                          result$Filter, 
+    result$igroup = paste(result$name,
+                          result$Filter,
                           result$Type)
     return(result)
 }
@@ -131,12 +131,12 @@ plot_data = function(pdata, is.PR=FALSE) {
     # precision / recall curve
     if(is.PR) {
         xaxis = "METRIC.Recall"
-        yaxis = "METRIC.Precision"        
+        yaxis = "METRIC.Precision"
     } else {
         xaxis = "FPR"
         yaxis = "TPR"
         pdata$FPR = pdata$QUERY.FP / (pdata$QUERY.TOTAL - pdata$QUERY.UNK)
-        pdata$TPR = pdata$TRUTH.TP / pdata$TRUTH.TOTAL
+        pdata$TPR = pdata$TRUTH.TP / (pdata$TRUTH.TP + pdata$TRUTH.FN)
         cc = complete.cases(pdata[, c(xaxis, yaxis)])
         pdata = pdata[cc, ]
     }
@@ -145,40 +145,40 @@ plot_data = function(pdata, is.PR=FALSE) {
         facet_wrap(~Type)
 
     # ROC lines
-    plt = plt + 
-        geom_line(data = subset(pdata, Filter == "ROC"), 
+    plt = plt +
+        geom_line(data = subset(pdata, Filter == "ROC"),
                   mapping=aes(group=igroup),
                   size=1.5,
-                  linetype=3) 
+                  linetype=3)
 
-    # Connector between ALL and start of ROC 
-    plt = plt + 
-        geom_line(data = subset(pdata, Filter == "CONN"), 
+    # Connector between ALL and start of ROC
+    plt = plt +
+        geom_line(data = subset(pdata, Filter == "CONN"),
                   mapping=aes(group=igroup),
-                  size=1.5, 
-                  linetype=4) 
+                  size=1.5,
+                  linetype=4)
 
-    plt = plt + 
-        geom_point(data = subset(pdata, Filter %in% c("CONN")), 
+    plt = plt +
+        geom_point(data = subset(pdata, Filter %in% c("CONN")),
                    mapping=aes(group=igroup),
-                   size=8) 
+                   size=8)
 
-    plt = plt + 
-        geom_point(data = subset(pdata, Filter %in% c("PASS", "ALL")), 
+    plt = plt +
+        geom_point(data = subset(pdata, Filter %in% c("PASS", "ALL")),
                    mapping=aes(shape=Filter, group=igroup),
-                   size=8) 
+                   size=8)
 
-    xl_min = max(0, 
+    xl_min = max(0,
                  min(subset(pdata, Filter %in% c("PASS", "ALL"))[[xaxis]]) - 0.02)
     xl_max = min(1.0,
                  max(subset(pdata, Filter %in% c("PASS", "ALL"))[[xaxis]]) + 0.02)
-    yl_min = max(0, 
+    yl_min = max(0,
                  min(subset(pdata, Filter %in% c("PASS", "ALL"))[[yaxis]]) - 0.01)
-    yl_max = min(1.0, 
+    yl_max = min(1.0,
                  max(subset(pdata, Filter %in% c("PASS", "ALL"))[[yaxis]]) + 0.01)
 
     plt = plt +
-        scale_color_brewer("", palette="Set1") + 
+        scale_color_brewer("", palette="Set1") +
         xlim(c(xl_min, xl_max)) +
         ylim(c(yl_min, yl_max)) +
         theme_bw(base_size=18)

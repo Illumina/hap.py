@@ -19,9 +19,29 @@ The script will produce benchmarking datasets for the following configurations:
 
 Xcmp and vcfeval are two different comparison engines, and decompose /
 no-decompose are two options for pre-processing. Decomposing query variants
-into primitives allows for more granular counting of TPs and FPs.
+into primitives allows for more granular counting of TPs and FPs. However,
+this pre-processing step also removes phasing information that might have
+been implicit in the blocked variants (when using decomposition, phased SNPs
+ / MNPs are allowed to match regardless of phase.
 
-A first observat
+A first observation is that the methods all produce fairly similar results on GATK,
+but as different callers introduce different variant representations, differences
+start to appear. Hap.py's default comparison engine "xcmp" was developed using
+decomposed variant representations and struggles when variants are not decomposed
+into primitives.
 
-| ![microbench_GATK.SNP.png]() | ![microbench_GATK.SNP.png]() |
+| SNPs                         | Indels                       |
 |------------------------------|------------------------------|
+| ![microbench_GATK.SNP.png](microbench_GATK.SNP.png) | ![microbench_GATK.SNP.png](microbench_GATK.SNP.png) |
+| ![microbench_Platypus.SNP.png](microbench_Platypus.SNP.png) | ![microbench_Platypus.SNP.png](microbench_Platypus.SNP.png) |
+| ![microbench_Freebayes.SNP.png](microbench_Freebayes.SNP.png) | ![microbench_Freebayes.SNP.png](microbench_Freebayes.SNP.png) |
+
+We can also compare our three methods with and without variant decomposition.
+
+| | SNPs                         | Indels                       |
+|-----|------------------------------|------------------------------|
+| No decomposition | ![microbench_callers_nve.SNP.png](microbench_callers_nve.SNP.png) | ![microbench_callers_nve.SNP.png](microbench_callers_nve.SNP.png) |
+| With decomposition | ![microbench_callers_ve.SNP.png](microbench_callers_ve.SNP.png) | ![microbench_callers_ve.SNP.png](microbench_callers_ve.SNP.png) |
+
+Any set of hap.py runs can be plotted like this using the script
+[src/R/rocplot.Rscript]().

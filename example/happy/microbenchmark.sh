@@ -37,6 +37,9 @@ PGBED=$DIR/pg-hg38-conf.bed.gz
 
 REF=$DIR/hg38.chr21.fa
 
+# uncomment + matching fi on the bottom to just make plots
+if false; then
+
 # 1. GATK
 # -------
 #
@@ -121,3 +124,15 @@ echo
 echo "... using vcfeval without partial credit"
 $PYTHON $HC $PGVCF $g -f $PGBED -r $REF --no-decompose -o ${f}-nve --engine=vcfeval $ROC
 
+fi
+
+echo
+echo "----------------------------------------------------------------------------------"
+echo
+echo "Making plots (this replaces plots in the doc folder of this checkout!)"
+
+# ${DIR}/../../src/R/rocplot.Rscript ${DIR}/../../doc/microbench_GATK GATK3-ve:GATK-vcfeval GATK3-xcmp:GATK-xcmp GATK3-nve:GATK-vcfeval-nd GATK3-nxcmp:GATK-xcmp-nd -pr
+# ${DIR}/../../src/R/rocplot.Rscript ${DIR}/../../doc/microbench_Platypus Platypus-ve:Platypus-vcfeval Platypus-xcmp:Platypus-xcmp Platypus-nve:Platypus-vcfeval-nd Platypus-nxcmp:Platypus-xcmp-nd -pr
+# ${DIR}/../../src/R/rocplot.Rscript ${DIR}/../../doc/microbench_Freebayes Freebayes-ve:Freebayes-vcfeval Freebayes-xcmp:Freebayes-xcmp Freebayes-nve:Freebayes-vcfeval-nd Freebayes-nxcmp:Freebayes-xcmp-nd -pr
+${DIR}/../../src/R/rocplot.Rscript ${DIR}/../../doc/microbench_callers_nve GATK3-nve:GATK Platypus-nve:Platypus Freebayes-nve:Freebayes -pr
+${DIR}/../../src/R/rocplot.Rscript ${DIR}/../../doc/microbench_callers_ve GATK3-ve:GATK Platypus-ve:Platypus Freebayes-ve:Freebayes -pr
