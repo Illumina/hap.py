@@ -6,8 +6,8 @@ Peter Krusche <pkrusche@illumina.com>
 This is a set of programs based on [htslib](https://github.com/samtools/htslib)
 to compare VCF files by specified haplotype.
 
-Rather than comparing entries individually, we produce a graph-based reference
-from the VCF entries, create all possible haplotype sequences, and compare
+Rather than comparing entries individually, we produce a graph-based representation
+of the VCF entries, create all possible haplotype sequences, and compare
 these by alignment / exact matching. This is more accurate in cases like this:
 
 *Variant representation 1 (shown in purple in the image below):*
@@ -38,8 +38,46 @@ With this tool, we can produce all haplotypes sequences by enumerating paths
 through a reference graph. By finding the paths / alt alleles that are
 consistent between two VCFs files we can produce accurate benchmarking
 numbers for comparing a VCF to a gold standard truth set.
-
 See [doc/spec.md](doc/spec.md) for more information.
+
+Another component of hap.py is a canonical variant counting method which
+deals with complex variant representations and MNPs. When different callers
+may represent variants using a different number of VCF records, we should
+attempt to count these in a consistent fashion between methods. One example
+is the representation of MNVs as individual SNPs vs. as complex variants.
+
+Consider the following case:
+
+*Complex variant representation*:
+```
+chrQ  16    GGG    TTT         0/1
+```
+
+vs.
+
+*Atomized representation*:
+```
+chrQ  16    G      T         0/1
+chrQ  17    G      T         0/1
+chrQ  18    G      T         0/1
+```
+
+If this variant is a false-positive, the first representation would naively
+contribute a single FP record. A variant caller that outputs the second
+representation would instead receive a penalty of three FPs for making
+the same variant call. To avoid these cases, hap.py performs a re-alignment
+of REF and ALT alleles, and counts the atomic variants these contain
+based on the CIGAR string. In the example above, both representations
+will be counted in the SNP category.
+
+To achieve more comparable results between different methods, hap.py
+includes a script to decompose variant calls into primitives.
+
+An alternative method to compare  complex variant calls is implemented in
+[RTG vcfeval](https://github.com/RealTimeGenomics/rtg-tools). Their method is
+more sophisticated than ours and can resolve some corner cases better. It is
+possible to use vcfeval with hap.py, but use hap.py for pre-processing,
+stratification and counting.
 
 Simple Usage
 ============

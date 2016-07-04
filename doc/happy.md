@@ -10,10 +10,10 @@ sequences in a _superlocus_. A _superlocus_ is a small region of the
 genome (sized between 1 and around 1000 bp) that contains one or more variants.
 
 Matching haplotype sequences rather than VCF records is more accurate. It allows
- us to the following things:
+ us to do the following things:
 
 *  We can match up variant records that represent the same alt sequences in a
-   different form (see [../example/GiaB](example/GiaB)).
+   different form (see [../example/GiaB](../example/GiaB)).
 *  We can also more accurately merge variant call sets
    (see [ls_example.md](ls_example.md)).
 
@@ -101,7 +101,7 @@ test.extended.csv  test.roc.all.csv              test.roc.Locations.INDEL.PASS.c
 test.metrics.json  test.roc.Locations.INDEL.csv  test.roc.Locations.SNP.csv         test.summary.csv                 test.vcf.gz.tbi
 ```
 
-This example compares an example run of GATK 1.6 on NA12878 agains the Platinum
+This example compares an example run of GATK 1.6 on NA12878 against the Platinum
 Genomes reference dataset (***Note: this is a fairly old version of GATK, so
 don't rely on these particular numbers for competitive comparisons!***).
 
@@ -132,9 +132,11 @@ False-positives
 When comparing two VCFs, genotype and allele mismatches are counted both as
 false-positives and as false-negatives. Truth sets like Platinum Genomes or
 NIST/Genome in a Bottle also include "confident call regions", which show places
-where the truth dataset does not expect variant calls.
-Hap.py can use these regions to count query variant calls that do not match
-truth calls and which fall into  these regions as false positives.
+where the truth dataset does not expect variant calls, or selects a subset
+of truth variants that are high-confidence.
+
+Hap.py uses these regions to count query variant calls outside these regions
+as unknown (UNK), query variant calls inside these regions either as TP or FP.
 
 Full List of Command line Options
 ---------------------------------
@@ -263,7 +265,8 @@ It shows the merged and normalised truth
 and query calls, together with annotation that shows how they were counted.
 There are two sample columns ("TRUTH" and "QUERY"), showing the genotypes
 for each variant in truth and query, along with information on the decision
-for truth and query calls (TP/FP/FN/N/UNK). See the [GA4GH page above](https://github.com/ga4gh/benchmarking-tools/blob/master/doc/ref-impl/README.md)
+for truth and query calls (TP/FP/FN/N/UNK).
+See the [GA4GH page above](https://github.com/ga4gh/benchmarking-tools/blob/master/doc/ref-impl/README.md)
 for more details.
 
 ### Stratification via Bed Regions
@@ -280,7 +283,7 @@ hap.py example/happy/PG_NA12878_hg38-chr21.vcf.gz example/happy/NA12878-GATK3-ch
     --stratification example/happy/stratification.tsv
 ```
 
-The file [../example/happy/stratification.tsv](stratification.tsv) contains a tab-separated list
+The file [stratification.tsv](../example/happy/stratification.tsv) contains a tab-separated list
 of region names and files (the paths can be relative to the location of the TSV file).
 
 The extended csv file will then contain additional rows like this which give counts, precision and recall
@@ -374,7 +377,7 @@ hap.py hap.py/example/happy/PG_NA12878_hg38-chr21.vcf.gz \
        hap.py/example/happy/NA12878-GATK3-chr21.vcf.gz \
        -f hap.py/example/happy/PG_Conf_hg38-chr21.bed.gz \
        -r hap.py/example/happy/hg38.chr21.fa \
-       -o gatk-all -V \
+       -o gatk-all \
        --roc QUAL --roc-filter LowQual
 ```
 
@@ -433,7 +436,11 @@ Enumeration threshold / maximum number of sequences to enumerate per block.
 Basically, each unphased heterozygous variant in a block doubles the number
 of possible alternate sequences that could be created from the set of variants
 within a haplotype block (10 hets in a row would result in 1024 different
-alternate sequences).
+alternate sequences). The default setting emphasizes accuracy over compute
+time. In some cases, it might be beneficial to reduce this value to 256 (which
+reduces the number of het calls that can be matched in one superlocus to 8
+in truth and query) to get an approximate result more quickly. Another solution
+is to use vcfeval as a comparison engine instead.
 
 ```
   -e HB_EXPAND, --expand-hapblocks HB_EXPAND
