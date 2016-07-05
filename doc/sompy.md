@@ -24,15 +24,21 @@ We compute the following metrics:
 *  Precision: `precision = tp/(tp + fp)`
 *  Not assessed: `na = unk/total(query)`
 
+Confidence intervals for relative recall and precision are calculated based on
+the Jeffreys method for binomial proportions. The lower and upper bound for both
+metrics is reported as `recall_lower`, `recall_upper` and `precision_lower`,
+`precision_upper`, respectively.
+
 ```
 ${HAPPY}/bin/som.py example/sompy/PG_admix_truth_snvs.vcf.gz \ 
                     example/sompy/strelka_admix_snvs.vcf.gz \
                     -f example/sompy/FP_admix.bed.gz \
                     -o test
 [...]
-      type  total.truth  total.query     tp     fp   fn    unk  ambi    recall   recall2  precision        na  ambiguous
-1     SNVs        16235        47530  15573  14698  662  17259     0  0.959224  0.959224   0.514453  0.363118          0
-3  records        16235        47779  15573  14737  662  17469     0  0.959224  0.959224   0.513791  0.365621          0
+
+      type  total.truth  total.query     tp   fp    fn  unk  ambi    recall  recall_lower  recall_upper   recall2  precision  precision_lower  precision_upper   na  ambiguous  fp.region.size    fp.rate
+1     SNVs        16235        15934  15131  803  1104    0     0  0.931999      0.928049      0.935794  0.931999   0.949605         0.946126         0.952920  0.0        0.0        32984914  24.344462
+5  records        16235        15936  15131  805  1104    0     0  0.931999      0.928049      0.935794  0.931999   0.949485         0.946003         0.952804  0.0        0.0        32984914  24.405096
 
 ls test.*
 test.stats.csv
@@ -56,7 +62,7 @@ A feature table is a CSV file which contains all variant locations in truth and 
 their status in a "tag" column (TP/FP/FN/UNK/AMBI). We implement feature tables for some common
 variant callers and truth set types.
 
-For more information, see [src/python/Somatic/__init__.py]. 
+For more information, see [/src/python/Somatic/\_\_init\_\_.py](/src/python/Somatic/\_\_init\_\_.py).
 
 ## ROC Curves
 
@@ -81,18 +87,36 @@ usage: Somatic Comparison [-h] -o OUTPUT [-l LOCATION] [-R REGIONS_BEDFILE]
                           [--no-ambi-fp] [--count-unk] [--no-count-unk] [-e]
                           [-r REF] [--scratch-prefix SCRATCH_PREFIX]
                           [--keep-scratch] [--continue] [-P]
-                          [--feature-table {hcc.strelka.snv,hcc.mutect.snv,
-                                            hcc.varscan2.indel,
-                                            admix.strelka.snv,generic,hcc.strelka.indel,
-                                            admix.strelka.indel,hcc.varscan2.snv,hcc.mutect.indel}]
+                          [--feature-table {
+                              hcc.strelka.snv,
+                              hcc.mutect.snv,
+                              hcc.varscan2.indel,
+                              admix.strelka.snv,
+                              generic,
+                              hcc.strelka.indel,
+                              admix.strelka.indel,
+                              hcc.varscan2.snv,
+                              hcc.mutect.indel}]
                           [--bam BAMS] [--normalize-truth] [--normalize-query]
-                          [-N] [--fix-chr-query] [--fix-chr-truth]
+                          [-N] [--fixchr-truth] [--fixchr-query]
+                          [--fix-chr-truth] [--fix-chr-query]
+                          [--no-fixchr-truth] [--no-fixchr-query]
                           [--no-order-check]
-                          [--roc {strelka.indel.vqsr,varscan2.indel,strelka.snv.qss,strelka.snv,varscan2.snv,strelka.indel}]
+                          [--roc {
+                              varscan2.indel,
+                              strelka.snv.qss,
+                              mutect.snv,
+                              strelka.snv,
+                              strelka.indel.evs,
+                              varscan2.snv,
+                              mutect.indel,
+                              strelka.indel,
+                              strelka.snv.vqsr}]
                           [--bin-afs] [--af-binsize AF_STRAT_BINSIZE]
                           [--af-truth AF_STRAT_TRUTH]
-                          [--af-query AF_STRAT_QUERY] [--logfile LOGFILE]
-                          [--verbose | --quiet]
+                          [--af-query AF_STRAT_QUERY] [-FN]
+                          [--fp-region-size FPR_SIZE] [--ci-level CI_LEVEL]
+                          [--logfile LOGFILE] [--verbose | --quiet]
                           truth query
 
 positional arguments:
@@ -136,7 +160,9 @@ optional arguments:
                         they already exist).
   -P, --include-nonpass
                         Use to include failing variants in comparison.
-  --feature-table {hcc.strelka.snv,hcc.mutect.snv,hcc.varscan2.indel,admix.strelka.snv,generic,hcc.strelka.indel,admix.strelka.indel,hcc.varscan2.snv,hcc.mutect.indel}
+  --feature-table {hcc.strelka.snv,hcc.mutect.snv,hcc.varscan2.indel,
+      admix.strelka.snv,generic,hcc.strelka.indel,admix.strelka.indel,
+      hcc.varscan2.snv,hcc.mutect.indel}
                         Select a feature table to output.
   --bam BAMS            pass one or more BAM files for feature table
                         extraction
@@ -144,26 +170,46 @@ optional arguments:
   --normalize-query     Enable running of bcftools norm on the query file.
   -N, --normalize-all   Enable running of bcftools norm on both truth and
                         query file.
-  --fix-chr-query       Replace numeric chromosome names in the query by
-                        chr*-type names
-  --fix-chr-truth       Replace numeric chromosome names in the truth by
-                        chr*-type names
+  --fixchr-truth        Add chr prefix to truth file (default: true).
+  --fixchr-query        Add chr prefix to query file (default: true).
+  --fix-chr-truth       Same as --fixchr-truth.
+  --fix-chr-query       Same as --fixchr-query.
+  --no-fixchr-truth     Disable chr replacement for truth (default: false).
+  --no-fixchr-query     Add chr prefix to query file (default: false).
   --no-order-check      Disable checking the order of TP features (dev
                         feature).
-  --roc {strelka.indel.vqsr,varscan2.indel,strelka.snv.qss,strelka.snv,varscan2.snv,strelka.indel}
+  --roc {varscan2.indel,strelka.snv.qss,mutect.snv,strelka.snv,strelka.indel.evs,
+      varscan2.snv,mutect.indel,strelka.indel,strelka.snv.vqsr}
                         Create a ROC-style table. This is caller specific -
                         this will override the --feature-table switch!
   --bin-afs             Stratify into different AF buckets. This needs to have
                         features availablefor getting the AF both in truth and
                         query variants.
   --af-binsize AF_STRAT_BINSIZE
-                        Bin size for AF binning (should be < 1)
+                        Bin size for AF binning (should be < 1). Multiple bin
+                        sizes can be specified using a comma, e.g.
+                        0.1,0.2,0.5,0.2 will split at 0.1, 0.3, 0.8 and 1.0.
   --af-truth AF_STRAT_TRUTH
                         Feature name to use for retrieving AF for truth
                         variants (TP and FN)
   --af-query AF_STRAT_QUERY
                         Feature name to use for retrieving AF for query
                         variants (FP/UNK/AMBI)
+  -FN, --count-filtered-fn
+                        Count filtered vs. absent FN numbers. This requires
+                        the -P switch (to use all variants) and either the
+                        --feature-table or --roc switch.
+  --fp-region-size FPR_SIZE
+                        How to obtain the normalisation constant for FP rate.
+                        By default, this will use the FP region bed file size
+                        when using --count-unk and the size of all reference
+                        contigs that overlap with the location specified in -l
+                        otherwise. This can be overridden with: 1) a number of
+                        nucleotides, or 2) "auto" to use the lengths of all
+                        contigs that have calls. The resulting value is used
+                        as fp.region.size.
+  --ci-level CI_LEVEL   Confidence level for precision/recall confidence
+                        intervals (default: 0.95)
   --logfile LOGFILE     Write logging information into file rather than to
                         stderr
   --verbose             Raise logging level from warning to info.

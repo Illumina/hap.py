@@ -226,6 +226,29 @@ fi
 
 #####
 
+echo "Somatic comparison test with custom confidence interval leve for ${HCVERSION} from ${HCDIR}l"
+
+TMP_OUT=`mktemp -t sompy.XXXXXXXXXX`
+
+# run som.py
+${PYTHON} ${HCDIR}/som.py \
+			 	  ${DIR}/../../example/sompy/PG_admix_truth_snvs.vcf.gz \
+			 	  ${DIR}/../../example/sompy/strelka_admix_snvs.vcf.gz \
+			 	  -o ${TMP_OUT} -P --ci-level 0.99
+
+if [[ $? != 0 ]]; then
+	  echo "som.py failed!"
+	  exit 1
+fi
+
+${PYTHON} ${DIR}/compare_sompy.py ${TMP_OUT}.stats.csv ${DIR}/../../example/sompy/stats_ci.csv
+if [[ $? != 0 ]]; then
+	  echo "Output counts differ diff  ${TMP_OUT}.stats.csv ${DIR}/../../example/sompy/stats_ci.csv !"
+	  exit 1
+fi
+
+#####
+
 rm -f ${TMP_OUT}*
 
 echo "Som.py test done"

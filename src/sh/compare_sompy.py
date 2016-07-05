@@ -35,7 +35,8 @@ def main():
     data1 = csvread(sys.argv[1])
     data2 = csvread(sys.argv[2])
 
-    for metric in ['fp', 'ambiguous', 'recall', 'precision', 'tp', 'total.query', 'ambi', 'na',
+    for metric in ['fp', 'ambiguous', 'recall', 'recall_lower', 'recall_upper', 'precision',
+                   'precision_lower', 'precision_upper', 'tp', 'total.query', 'ambi', 'na',
                    'recall2', 'unk', 'total.truth', 'fn', 'fp.region.size', 'fp.rate']:
         if len(data1[metric]) == 0 or len(data2[metric]) == 0:
             raise Exception("Number of metrics to compare is wrong")

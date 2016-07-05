@@ -184,7 +184,7 @@ There are two fast ways to get a running installation of hap.py:
 1. Use the installer script. In the simplest use case, this script can create an
    installation of hap.py from source that uses the system Python. You will need
    tohave the following packages installed: Cython, numpy, pandas, pybedtools,
-   pysam, bx-python.
+   pysam, bx-python, scipy.
 
    The simplest installer command line is the following, it installs everything into
    ~/hap.py-install using the system version of Python:
@@ -260,9 +260,10 @@ You will need these tools / libraries on your system to compile the code.
 * GCC/G++ 4.8+ for compiling
 * Boost 1.55+
 * Python 2, version 2.7.8 or greater
-* Python packages: Pandas, Numpy, pysam, bx-python
+* Python packages: Pandas, Numpy, Scipy, pysam, bx-python
+* Java 1.8 when using vcfeval.
 
-Compiling using CMake
+Then to compile:
 ---------------------
 
 1.  Get a hap.py checkout:

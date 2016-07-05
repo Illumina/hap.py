@@ -44,6 +44,7 @@ from Tools.bcftools import runBcftools, parseStats, preprocessVCF
 from Tools.bamstats import bamStats
 from Tools.bedintervaltree import BedIntervalTree
 from Tools.roc import ROC
+from Tools.ci import binomialCI
 from Tools.metric import makeMetricsObject, dataframeToMetricsTable
 from Tools.fastasize import fastaContigLengths, calculateLength
 import Somatic
@@ -143,7 +144,7 @@ def main():
 
     parser.add_argument("--no-fixchr-query", dest="fixchr_query", action="store_false", default=False,
                         help="Add chr prefix to query file (default: false).")
-    
+
     parser.add_argument("--no-order-check", dest="disable_order_check", default=False, action="store_true",
                         help="Disable checking the order of TP features (dev feature).")
 
@@ -171,6 +172,9 @@ def main():
                              " --count-unk and the size of all reference contigs that overlap with the location specified in -l otherwise."
                              " This can be overridden with: 1) a number of nucleotides, or 2) \"auto\" to use the lengths of all contigs that have calls."
                              " The resulting value is used as fp.region.size.")
+
+    parser.add_argument("--ci-level", dest="ci_level", default=0.95, type = float,
+                        help="Confidence level for precision/recall confidence intervals (default: 0.95)")
 
     parser.add_argument("--logfile", dest="logfile", default=None,
                         help="Write logging information into file rather than to stderr")
@@ -222,6 +226,9 @@ def main():
             logging.warn("When creating ROCs without the -P switch, the ROC data points will only "
                          "include filtered variants (i.e. they will normally end at the caller's "
                          "quality threshold).")
+
+    if not (args.ci_level > 0.0 and args.ci_level < 1.0):
+        raise Exception("Confidence interval level must be > 0.0 and < 1.0.")
 
     if args.af_strat and not args.features:
         raise Exception("To stratify by AFs, a feature table must be selected -- use this switch together "
@@ -668,10 +675,13 @@ def main():
 
         # remove things where we haven't seen any variants in truth and query
         res = res[(res["total.truth"] > 0) & (res["total.query"] > 0)]
-        # summary metrics
-        res["recall"] = res["tp"] / (res["tp"] + res["fn"])
+        # summary metrics with confidence intervals
+        ci_alpha = 1.0 - args.ci_level
+        recall = binomialCI(res["tp"], res["tp"]+res["fn"], ci_alpha)
+        precision = binomialCI(res["tp"], res["tp"]+res["fp"], ci_alpha)
+        res["recall"], res["recall_lower"], res["recall_upper"] = recall
         res["recall2"] = res["tp"] / (res["total.truth"])
-        res["precision"] = res["tp"] / (res["tp"] + res["fp"])
+        res["precision"], res["precision_lower"], res["precision_upper"] = precision
         res["na"] = res["unk"] / (res["total.query"])
         res["ambiguous"] = res["ambi"] / res["total.query"]
 
