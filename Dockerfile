@@ -38,6 +38,15 @@ RUN apt-get install samtools -y
 RUN apt-get install bzip2 -y
 RUN apt-get install wget -y
 RUN apt-get install libbz2-dev -y
+
+
+RUN echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | debconf-set-selections && \
+    add-apt-repository -y ppa:webupd8team/java && \
+    apt-get update && \
+    apt-get install -y oracle-java8-installer && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /var/cache/oracle-jdk8-installer
+
 RUN apt-get clean -y
 
 # copy git repository into the image
@@ -58,9 +67,16 @@ RUN /opt/hap.py-source/src/sh/make_hg19.sh
 # RUN bzcat /opt/hap.py-source/src/data/hg19.fa.bz2 > /opt/hap.py-data/hg19.fa
 RUN samtools faidx /opt/hap.py-data/hg19.fa
 
+# get + install ant
+WORKDIR /opt
+RUN wget http://archive.apache.org/dist/ant/binaries/apache-ant-1.9.7-bin.tar.gz && \
+    tar xzf apache-ant-1.9.7-bin.tar.gz && \
+    rm apache-ant-1.9.7-bin.tar.gz
+ENV PATH $PATH:/opt/apache-ant-1.9.7/bin
+
 # run hap.py installer in the image
 WORKDIR /opt/hap.py-source
-RUN HG19=/opt/hap.py-data/hg19.fa python install.py /opt/hap.py
+RUN HG19=/opt/hap.py-data/hg19.fa python install.py /opt/hap.py --with-rtgtools
 WORKDIR /
 RUN rm -rf /opt/hap.py-source
 
