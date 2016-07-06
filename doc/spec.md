@@ -152,18 +152,6 @@ Input: two VCF files, optionally regions of the genome
 Outputs:
 
 *   An annotated VCF file showing match / mismatch information for each location
-*   A bed file with block matching results
-
-### Compare haplotype blocks (more detailed output): `hapcmp`
-
-This is a helper to debug haplotype comparison in fixed blocks.
-
-Input: haplotype blocks, two VCF files, regions of the genome
-
-Outputs:
-
-*   An annotated VCF file showing match / mismatch information for each location
-*   A bed file with block matching results
 
 ### Count variants: `quantify`
 
@@ -175,6 +163,7 @@ Input: a multi-sample VCF file, optionally bed annotation regions for
 Outputs:
 
 *  a JSON file of stratified counts
+*  a tab-separated table with all ROC values
 *  a VCF file with annotated regions
 
 ### Make ROC tables: `roc`
@@ -183,3 +172,22 @@ Input: tab-separated table of instances classified as TP/FP/FN with a quality
        value each
 
 Output: table of precision / recall values with varying quality threshold.
+
+### Split a number of VCF files into blocks/superloci: `blocksplit`
+
+Given number of VCF files, superloci contain all variant calls that
+are no further apart than a given window length.
+
+Input: one or more VCF files
+
+Output: a bed file with all superloci
+
+### Check a VCF file for errors: `vcfcheck`
+
+VCF files with invalid / incomplete headers can cause problems when converting them
+into the BCF format. Also, in some cases, certain types of alleles or reference
+overlaps might cause problems when comparing variants.
+
+Input: a single VCF / BCF file
+
+Output: return code != zero if the VCF file has problems + some statistics to stdout

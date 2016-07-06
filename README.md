@@ -22,21 +22,22 @@ of somatic callsets).
 som.py truth.vcf query.vcf -f confident.bed -o output_prefix -r reference.fa
 ```
 
-More information can be found below in the [Usage overview](#usage).
+More information can be found below in the [usage section](#usage).
 
 ## Complex variant comparison
 
 A major challenge when comparing VCF files for diploid samples is the handling
 of complex variant representations. In a VCF file, we describe two haplotype
 sequences by means of REF-ALT pairs and genotypes. These variant calls do not
-uniquely represent the haplotype sequences: since alignments are not unique,
+uniquely represent the haplotype sequences: since alignments are always not unique
+even when using a fixed set of gap and substitution scores,
 different variant calling methods may produce different variant representations.
 While some of these representational differences can be handled using
 pre-processing of VCF files (e.g. variant trimming and left-shifting), others
 cannot be fixed easily.
 
-Rather than comparing entries individually, we produce a graph-based representation
-of the VCF entries, create all possible haplotype sequences, and compare
+In addition to comparing VCF records individually, we produce a graph-based representation
+of the VCF alleles, create all possible haplotype sequences, and compare
 these by alignment / exact matching. Here is an example where this is needed:
 
 *Variant representation 1 (shown in purple in the image below):*
@@ -58,10 +59,11 @@ chrQ  19    T    TGTGTG          0/1
 
 Both representations in this example are able to produce the same alt sequences,
 but we are not able to match them up with standard VCF tools. In particular,
-we can see from this example that the second representation actually allows us
-to create two different sets of alt sequences (because we don't know the phasing
-of our variants -- the insertions could happen on different haplotypes with
-representation 2).
+we can see from this example that the second representation actually may allow us
+to create two different sets of alt sequences if they are part of unphased
+heterozygous variant calls. When we don't know the phasing
+of our variants, the insertions could have occurred on different haplotypes when using
+representation 2.
 
 With this tool, we can produce all haplotypes sequences by enumerating paths
 through a reference graph. By finding the paths / alt alleles that are
@@ -70,8 +72,12 @@ numbers for comparing a VCF to a gold standard truth set.
 See [doc/spec.md](doc/spec.md) for more information.
 
 An alternative method to compare  complex variant calls is implemented in
-[RTG vcfeval](https://github.com/RealTimeGenomics/rtg-tools). Their method is
-more sophisticated than ours and can resolve some corner cases more accurately.
+[RTG vcfeval](https://github.com/RealTimeGenomics/rtg-tools). It is possible
+to use vcfeval with hap.py, and to use hap.py only for pre-processing,
+stratification and counting.
+
+The comparison method in vcfeval is more sophisticated than ours and can
+resolve some corner cases more accurately.
 For whole-genome comparisons, the difference between the two benchmarking
 methods is small, but when focusing on difficult subsets of the genome or
 when using variant calling methods that produce many complex variant calls,
@@ -79,8 +85,7 @@ these corner cases can become relevant. Moreover, when benchmarking against
 gold-standard datasets that cover difficult regions of the genome (e.g.
 [Platinum Genomes](http://www.illumina.com/platinumgenomes/)), the more complicated
 subsets of the genome will be respnsible for most of the difference between
-methods. It is possible to use vcfeval with hap.py, but use hap.py for pre-processing,
-stratification and counting.
+methods.
 
 ## Variant Preprocessing
 
@@ -109,7 +114,11 @@ chrQ  18    G      T         0/1
 If this variant is a false-positive, the first representation would naively
 contribute a single FP record. A variant caller that outputs the second
 representation would instead receive a penalty of three FPs for making
-the same variant call. To avoid these cases, hap.py can perform a re-alignment
+the same variant call. Overall, the difference between the two representations
+might show significantly when looking at precision levels or false-positive
+rates (since these are relative to the total number of query counts, which
+use the same representations), but become important when we need to compare
+absolute numbers of false-positives. For this case, hap.py can perform a re-alignment
 of REF and ALT alleles on the query VCF, and splits the records into atomic
 variant alleles to produce more granular counts using [pre.py](doc/normalisation.md).
 Left-shifting and trimming are also supported.
@@ -142,7 +151,7 @@ Another feature of the quantification module in hap.py is stratification into
 variant sub-types and into genomic regions. For example, precision and recall
 can be computed at the same time for all
 [GA4GH stratification regions](https://github.com/ga4gh/benchmarking-tools/tree/master/resources/stratification-bed-files),
-and for different INDEL lengths (\<5, 5-15, 15+). Hap.py also calculates
+and for different INDEL lengths (\<5, 7-15, 16+). Hap.py also calculates
 het-hom and Ti/Tv ratios for all subsets of benchmarked variants.
 
 Finally, we produce input data for ROC and precision/recall curves. An
@@ -214,7 +223,8 @@ ls test.*
 test.stats.csv
 ```
 
-The most relevant metrics here again are recall and precision.
+The most relevant metrics are recall and precision. UNK calls are the calls that are outside the
+coverage of the truthset.
 
 ## Installation
 
