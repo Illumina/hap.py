@@ -13,4 +13,4 @@ module use ~/.local/easybuild/modules/all
 
 module load Java/1.8.0_40
 
-${DIR}/rtg $@
+${DIR}/rtg RTG_MEM=50g $@

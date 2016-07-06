@@ -10,10 +10,10 @@ sequences in a _superlocus_. A _superlocus_ is a small region of the
 genome (sized between 1 and around 1000 bp) that contains one or more variants.
 
 Matching haplotype sequences rather than VCF records is more accurate. It allows
- us to the following things:
+ us to do the following things:
 
 *  We can match up variant records that represent the same alt sequences in a
-   different form (see [../example/GiaB](example/GiaB)).
+   different form (see [../example/GiaB](../example/GiaB)).
 *  We can also more accurately merge variant call sets
    (see [ls_example.md](ls_example.md)).
 
@@ -101,7 +101,7 @@ test.extended.csv  test.roc.all.csv              test.roc.Locations.INDEL.PASS.c
 test.metrics.json  test.roc.Locations.INDEL.csv  test.roc.Locations.SNP.csv         test.summary.csv                 test.vcf.gz.tbi
 ```
 
-This example compares an example run of GATK 1.6 on NA12878 agains the Platinum
+This example compares an example run of GATK 1.6 on NA12878 against the Platinum
 Genomes reference dataset (***Note: this is a fairly old version of GATK, so
 don't rely on these particular numbers for competitive comparisons!***).
 
@@ -132,9 +132,11 @@ False-positives
 When comparing two VCFs, genotype and allele mismatches are counted both as
 false-positives and as false-negatives. Truth sets like Platinum Genomes or
 NIST/Genome in a Bottle also include "confident call regions", which show places
-where the truth dataset does not expect variant calls.
-Hap.py can use these regions to count query variant calls that do not match
-truth calls and which fall into  these regions as false positives.
+where the truth dataset does not expect variant calls, or selects a subset
+of truth variants that are high-confidence.
+
+Hap.py uses these regions to count query variant calls outside these regions
+as unknown (UNK), query variant calls inside these regions either as TP or FP.
 
 Full List of Command line Options
 ---------------------------------
@@ -263,7 +265,8 @@ It shows the merged and normalised truth
 and query calls, together with annotation that shows how they were counted.
 There are two sample columns ("TRUTH" and "QUERY"), showing the genotypes
 for each variant in truth and query, along with information on the decision
-for truth and query calls (TP/FP/FN/N/UNK). See the [GA4GH page above](https://github.com/ga4gh/benchmarking-tools/blob/master/doc/ref-impl/README.md)
+for truth and query calls (TP/FP/FN/N/UNK).
+See the [GA4GH page above](https://github.com/ga4gh/benchmarking-tools/blob/master/doc/ref-impl/README.md)
 for more details.
 
 ### Stratification via Bed Regions
@@ -280,7 +283,7 @@ hap.py example/happy/PG_NA12878_hg38-chr21.vcf.gz example/happy/NA12878-GATK3-ch
     --stratification example/happy/stratification.tsv
 ```
 
-The file [../example/happy/stratification.tsv](stratification.tsv) contains a tab-separated list
+The file [stratification.tsv](../example/happy/stratification.tsv) contains a tab-separated list
 of region names and files (the paths can be relative to the location of the TSV file).
 
 The extended csv file will then contain additional rows like this which give counts, precision and recall
@@ -295,37 +298,40 @@ INDEL,*,exons,ALL,*,QUAL,*,0.96729,0.962791,0.12601600000000002,0.48251700000000
 ### Internal Variant Normalisation and Haplotype Comparison
 
 ```
-  --internal-leftshift  Switch off xcmp's internal VCF leftshift
-                        preprocessing.
-  --internal-preprocessing
-                        Switch off xcmp's internal VCF leftshift
-                        preprocessing.
-  --no-internal-leftshift
-                        Switch off xcmp's internal VCF leftshift
-                        preprocessing.
-  --no-internal-preprocessing
-                        Switch off xcmp's internal VCF leftshift
-                        preprocessing.
-  --no-haplotype-comparison
-                        Disable haplotype comparison (only count direct GT matches as TP).
-  --unhappy
-                        Disable all clever matching (equivalent to --no-internal-leftshift
-                        --no-internal-preprocessing --no-haplotype-comparison).
+  -L, --leftshift       Left-shift variants in their unary representation. This is off by default.
+  -D, --no-decompose    Switch off variant primitive decomposition
+  --unhappy             Disable all clever matching in xcmp (does not do anything with vcfeval).
+
+  --bcftools-norm       Enable preprocessing through bcftools norm -c x -D
+                        (requires external preprocessing to be switched on).
+  --fixchr              Add/remove chr prefix (default: auto, attempt to match
+                        reference).
+  --no-fixchr           Add chr prefix to query file (default: auto, attempt
+                        to match reference).
+  --bcf                 Use BCF internally. This is the default when the input
+                        file is in BCF format already. Using BCF can speed up
+                        temp file access, but may fail for VCF files that have
+                        broken headers or records that don't comply with the
+                        header.
+  --preprocess-truth    Preprocess truth file with same settings as query
+                        (default is to accept truth in original format).
+  --usefiltered-truth   Preprocess truth file with same settings as query
+                        (default is to accept truth in original format).
 ```
 
-These switches control xcmp's internal VCF [leftshifting preprocessing](normalisation.md).
+These switches control VCF [preprocessing](normalisation.md).
 
 Left-shifting attempts to safely left-align indel and complex variant calls
 without shifting variant records past each other.
 
-Internal preprocessing decomposes complex variants into its primitive variants,
+Variant decompositions splits complex variants into its primitive variants,
 leaving only SNPs, insertions and deletions. This type of preprocessing is useful
 when comparing different variant calling methods, for example where one method
 might output an MNP block, and another method multiple SNPs. If these calls are
 FPs, we should count the same number for each method, and this can be achieved in
-many cases by this type of decomposition.
-
-The next section gives some more details on the effect that these comparison modes can have.
+many cases by this type of decomposition. The micro-benchmark example in
+[microbench.md](microbench.md) shows the effect of different pre-processing
+switches.
 
 ### ROC Curves
 
@@ -334,12 +340,11 @@ such curves based on the input variant representations, and not to perform any
 variant splitting or preprocessing.
 
 Here are the options which need to be added to a hap.py command line to create
-a ROC curve based on the query GQX field (currently, hap.py will only use GQ
-if GQX is not available):
+a ROC curve based on the query GQX field:
 
 ```
   ...
-  --roc Q_GQ \
+  --roc GQX \
   ...
 ```
 
@@ -352,11 +357,14 @@ GATK).
 The `--roc-filter` switch may be used to specify the particular VCF filter
 which implements a threshold on the quality score. When calculating filtered
 TP/FP counts, this filter will be removed, and replaced with a threshold filter
-on the feature specified by `--roc`. By default, the ROC will be calculated
-ignoring all filters.
+on the feature specified by `--roc`. By default, a PASS and an ALL ROC will
+be computed corresponding to the variant counts with all filters enabled (PASS)
+and no filters (ALL). When `--roc-filter` is specified, a third ROC curve
+is computed named "SEL", which shows the performance for selectively-filtered
+variants.
 
-Normally, we assume that higher quality scores are better during ROC
-calculation, variants with scores higher than the variable threshold will
+When computing precision/recall curves, we assume that higher quality scores
+are better, variants with scores higher than the variable threshold will
 "pass", all others will "fail".
 
 The output file will be comma-separated value files giving tp / fp / fn counts,
@@ -369,8 +377,8 @@ hap.py hap.py/example/happy/PG_NA12878_hg38-chr21.vcf.gz \
        hap.py/example/happy/NA12878-GATK3-chr21.vcf.gz \
        -f hap.py/example/happy/PG_Conf_hg38-chr21.bed.gz \
        -r hap.py/example/happy/hg38.chr21.fa \
-       -o gatk-all -V \
-       --roc QUAL
+       -o gatk-all \
+       --roc QUAL --roc-filter LowQual
 ```
 
 After running, this will produce a set of outputs as follows.
@@ -387,6 +395,8 @@ After running, this will produce a set of outputs as follows.
 | gatk-all.roc.Locations.SNP.csv         | ROC for ALL SNPs only.                                                                                                                                                    |
 | gatk-all.roc.Locations.INDEL.PASS.csv  | ROC for PASSing indels only.                                                                                                                                              |
 | gatk-all.roc.Locations.SNP.PASS.csv    | ROC for PASSing SNPs only.                                                                                                                                                |
+| gatk-all.roc.Locations.INDEL.SEL.csv   | ROC for selectively-filtered indels only.                                                                                                                                 |
+| gatk-all.roc.Locations.SNP.SEL.csv     | ROC for selectively-filtered SNPs only.                                                                                                                                   |
 
 The ROC files give the same columns as the summary and extended statistics output files
 for a range of thresholds on QUAL (or the feature that was passed to --roc).
@@ -397,80 +407,7 @@ Hap.py can produce ROCs using vcfeval (see below for instructions)
 or xcmp (hap.py's internal comparison engine).
 
 There are a few differences between these comparison modes which are reflected
-in the ROC outputs.
-
-| Comparison mode              | Leftshifting of Indels | Splitting of Variants | FP/FN/TP Granularity               | Comment                                                         |
-|:-----------------------------|:----------------------:|:---------------------:|:-----------------------------------|-----------------------------------------------------------------|
-| hap.py default               |           No           |          Yes          | Superlocus haplotype / exact match | Granular counting, respect phase where possible                 |
-| hap.py `--engine vcfeval`    |           No           |          Yes          | haplotype match per VCF record     | Most granular counting, does not respect variant phase blocks   |
-| hap.py `--internal-leftshift`|          Yes           |          Yes          | Superlocus haplotype / exact match | This can help when variants are represented very differently from their canonical / left-shifted position.  |
-| hap.py `--unhappy`           |           No           |          Yes          | exact match only                   | Naive matching                                                  |
-| hap.py `--unhappy --no-internal-preprocessing`           |           No           |          Yes          | exact match only                   | Naive matching, original variant representation |
-
-We can plot the following ROCs from the *.roc.*.csv files. The plots below also
-show that the results when using xcmp or vcfeval as the comparison engine in
-hap.py are mostly equivalent for SNPs. For indels, xcmp shows higher precision
-for two reasons:
-
-* partial credit matching allows a more fine-grained assessment of precision and
-  accounts better for representational differences observed between different
-  variant callers.
-* when indels have different representations, vcfeval outputs these as separate
-  records, whereas xcmp normalizes them to be in the same VCF row if possible.
-  For creating ROCs, we need to associate ROC values in the query with variants
-  in the truth file, which is currently implemented by using the QQ value from
-  the query sample when present. If records end up in different rows, this is
-  not possible.
-  *NOTE: this is work in progress and based on a development version of vcfeval**
-* When it is necessary to preserve the original variant representation, vcfeval
-  generally matches slightly more records than hap.py when the `--no-partial-credit`
-  is supplied. The reasons for this is that hap.py matches only on a superlocus
-  granularity, whereas vcfeval can assess TP/FP/FN status for each variant also
-  within superloci (blocks of close-by variants). In practice, this results in
-  slightly higher precision estimates when using hap.py with vcfeval vs hap.py
-  without partial credit.
-
-In future versions of hap.py we will implement the following things to address
-the differences between vcfeval and hap.py comparison:
-
-* separate out the pre-processing step such that "partial-credit" preprocessing
-  can also be used with vcfeval
-* Associate the median QQ value from the superlocus with truth variants to make
-  ROCs more robust when variants are represented differently.
-
-|        | *SNP*                      | *INDEL*                      |
-|:------:|:--------------------------:|:----------------------------:|
-| Full   | ![](snprocs-gatk-full.png) | ![](indelrocs-gatk-full.png) |
-| Zoomed | ![](snprocs-gatk.png)      | ![](indelrocs-gatk.png)      |
-
-
-When using Platypus, the ROC behaviour is more complex.
-
-```
-hap.py hap.py/example/happy/PG_NA12878_hg38-chr21.vcf.gz \
-       hap.py/example/happy/NA12878-Platypus-chr21.vcf.gz \
-       -f hap.py/example/happy/PG_Conf_hg38-chr21.bed.gz \
-       -r hap.py/example/happy/hg38.chr21.fa \
-       -o platypus-all -V \
-       --roc QUAL
-```
-
-* Platypus outputs more complex alleles which need to be compared with partial credit
-  to get a more accurate picture of the comparative precision.
-* Platypus has a larger set of filters which are independent of the QUAL score.
-  This means that the ROC for PASS calls (which only considers calls that pass all filters)
-  will have significantly higher precision and lower recall.
-* Platypus prefers to output SNPs in phased blocks, which is very different from the
-  truthset representation of the variants. Splitting these using partial credit gives
-  more resolution when drawing ROCs. Vcfeval's internal ROC code handles this by
-  weighting, which is similar to our partial credit counting; in hap.py we have chosen
-  to implement variant decomposition instead of weights to be able stratify the ROCs
-  more transparently into SNPs and INDELs.
-
-|           *SNP*           |           *INDEL*           |
-|:-------------------------:|:---------------------------:|
-| ![](snprocs-platypus.png) | ![](indelrocs-platypus.png) |
-
+in the ROC outputs. Some examples for this are shown in [microbench.md](microbench.md).
 
 ### Input Preprocessing using bcftools
 
@@ -499,7 +436,11 @@ Enumeration threshold / maximum number of sequences to enumerate per block.
 Basically, each unphased heterozygous variant in a block doubles the number
 of possible alternate sequences that could be created from the set of variants
 within a haplotype block (10 hets in a row would result in 1024 different
-alternate sequences).
+alternate sequences). The default setting emphasizes accuracy over compute
+time. In some cases, it might be beneficial to reduce this value to 256 (which
+reduces the number of het calls that can be matched in one superlocus to 8
+in truth and query) to get an approximate result more quickly. Another solution
+is to use vcfeval as a comparison engine instead.
 
 ```
   -e HB_EXPAND, --expand-hapblocks HB_EXPAND

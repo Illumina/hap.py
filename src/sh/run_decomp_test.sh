@@ -20,7 +20,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	-o ${TMP_OUT} \
                 --preprocess-truth \
 			 	-X -V \
-			 	--force-interactive
+			 	--force-interactive  #  --verbose
 
 if [[ $? != 0 ]]; then
 	echo "hap.py failed!"

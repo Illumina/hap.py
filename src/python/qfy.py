@@ -183,18 +183,6 @@ def quantify(args):
 
 def updateArgs(parser):
     """ add common quantification args """
-    parser.add_argument("--internal-leftshift", dest="int_preprocessing_ls", action="store_true", default=True,
-                        help="Enable xcmp's internal VCF leftshift preprocessing.")
-
-    parser.add_argument("--internal-preprocessing", dest="int_preprocessing", action="store_true", default=True,
-                        help="Enable xcmp's internal VCF leftshift preprocessing.")
-
-    parser.add_argument("--no-internal-leftshift", dest="int_preprocessing_ls", action="store_false",
-                        help="Switch off xcmp's internal VCF leftshift preprocessing.")
-
-    parser.add_argument("--no-internal-preprocessing", dest="int_preprocessing", action="store_false",
-                        help="Switch off xcmp's internal VCF leftshift preprocessing.")
-
     parser.add_argument("-t", "--type", dest="type", choices=["xcmp", "ga4gh"],
                         help="Annotation format in input VCF file.")
 
@@ -238,7 +226,7 @@ def updateArgs(parser):
     parser.add_argument("--roc-filter", dest="roc_filter", default=False,
                         help="Select a filter to ignore when making ROCs.")
 
-    parser.add_argument("--roc-delta", dest="roc_delta", default=1, type=float,
+    parser.add_argument("--roc-delta", dest="roc_delta", default=0.5, type=float,
                         help="Minimum spacing between ROC QQ levels.")
 
 
