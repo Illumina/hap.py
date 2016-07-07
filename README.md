@@ -24,7 +24,28 @@ som.py truth.vcf query.vcf -f confident.bed -o output_prefix -r reference.fa
 
 More information can be found below in the [usage section](#usage).
 
-## Complex variant comparison
+## Contents
+
+* [Motivation](#motivation)
+  * [Complex variant comparison](#complex-variant-comparison)
+  * [Variant preprocessing](#variant-preprocessing)
+  * [Variant counting](#variant-counting)
+* [Usage](#usage)
+  * [hap.py](#happy)
+  * [som.py](#sompy)
+* [Installation](#installation)
+  * [Helper script](#helper-script)
+  * [Docker](#docker)
+  * [Compiling from source with CMake](#compiling-from-source-with-cmake)
+* [System requirements](#system-requirements)
+  * [Hardware](#hardware)
+  * [Linux](#linux)
+  * [OS X](#os-x)
+  * [Windows](#windows)
+  * [Other requirements](#other-requirements)
+
+## Motivation
+### Complex variant comparison
 
 A major challenge when comparing VCF files for diploid samples is the handling
 of complex variant representations. In a VCF file, we describe two haplotype
@@ -87,7 +108,7 @@ gold-standard datasets that cover difficult regions of the genome (e.g.
 subsets of the genome will be respnsible for most of the difference between
 methods.
 
-## Variant Preprocessing
+### Variant preprocessing
 
 Another component of hap.py is a variant pre-processing method which
 deals with complex variant representations and MNPs. When different callers
@@ -123,7 +144,7 @@ of REF and ALT alleles on the query VCF, and splits the records into atomic
 variant alleles to produce more granular counts using [pre.py](doc/normalisation.md).
 Left-shifting and trimming are also supported.
 
-## Variant Counting
+### Variant counting
 
 Hap.py includes a module to produce stratified variant counts. Variant types
 are determined using a re-alignment of REF and ALT alleles. This is more reliable
@@ -157,15 +178,14 @@ het-hom and Ti/Tv ratios for all subsets of benchmarked variants.
 Finally, we produce input data for ROC and precision/recall curves. An
 [example](doc/microbench.md) is included.
 
-<a name="usage"></a>
 ## Usage
 
 The main two tools are hap.py (diploid precision/recall evaluation) and som.py
 (somatic precision/recall evaluation -- this ignores the GT and just checks for
 presence of alleles). Other tools are qfy.py (which just executes the quantification
-step of the analysis pipeline, this requires a 
+step of the analysis pipeline, this requires a
 [GA4GH-intermediate](https://github.com/ga4gh/benchmarking-tools/) VCF file), and
-[pre.py](doc/normalisation.md), which is hap.py's input cleaning and 
+[pre.py](doc/normalisation.md), which is hap.py's input cleaning and
 variant normalisation step.
 
 Here are some small example command lines. Advanced features like confident call
@@ -228,9 +248,142 @@ coverage of the truthset.
 
 ## Installation
 
-### Hardware and OS Requirements
+### Helper script
 
-#### Hardware
+The simplest way to install hap.py is to use the helper script and your system Python install
+(requires these packages: Cython, numpy, pandas, pybedtools, pysam, bx-python).
+
+This command installs everything into ~/hap.py-install:
+
+```
+python install.py ~/hap.py-install
+```
+
+The installer has an option `--boost-root` that allows us to use a specific installation of boost
+(see above for instructions):
+
+```
+python install.py ~/hap.py-install --boost-root $HOME/boost_1_55_0_install
+```
+
+To use a special version of Python, run the installer with it:
+
+```
+$HOME/my-virtualenv/bin/python install.py ~/hap.py-install
+```
+
+To create a virtualenv:
+
+```
+python install.py ~/workspace-is/hap.py-install --python=virtualenv --python-virtualenv-dir=$HOME/my-virtualenv/hc.ve
+```
+
+There are various workaround / testing switches:
+
+* `--python-virtualenv-update`  updates an existing virtualenv
+* `--python-virtualenv-force`  overwrites the virtualenv if it exists
+* `--pip-fix-cert` works around outdated SSL certificates when using pip
+* `--no-tests` disables the unit/integration tests after installation
+* `--no-rebuild-external` don't rebuild the external dependencies (htslib, ...) unless necessary
+* `--sge-mode` require switch `--force-interactive` to run hap.py
+ interactively (useful to prevent running on a head node when installing on
+ systems with SGE)
+
+### Docker
+
+Clone this repository and build a Docker image as follows.
+```
+$ sudo docker build .
+$ sudo docker images
+REPOSITORY     TAG            IMAGE ID            CREATED             VIRTUAL SIZE
+<...>          latest         3d03a99b3d81        1 second ago        <...>
+$ sudo docker run -ti --rm 3d03a99b3d81 bin/bash
+$/ /opt/hap.py/bin/hap.py
+```
+A pre-built docker image can be found here: [https://hub.docker.com/r/pkrusche/hap.py](https://hub.docker.com/r/pkrusche/hap.py). It can
+be obtained by running:
+```bash
+docker pull pkrusche/hap.py
+```
+If the current directory contains a clone of the hap.py repository, hap.py can be run in Docker as follows:
+```bash
+sudo docker run -it -v `pwd`:/data pkrusche/hap.py /opt/hap.py/bin/hap.py /data/example/PG_performance.vcf.gz /data/example/performance.vcf.gz -o /data/test
+```
+The `-v` argument mounts the current directory as `/data` in the Docker image. The output should also
+appear in the current directory.
+
+
+### Compiling from source with CMake
+
+You will need these tools / libraries on your system to compile the code:
+
+* CMake &gt; 2.8
+* GCC/G++ 4.8+ for compiling
+* Boost 1.55+
+* Python 2, version 2.7.8 or greater
+* Python packages: Pandas, Numpy, pysam, bx-python
+* Java 1.8 when using vcfeval.
+
+Then to compile:
+
+1.  Get a hap.py checkout:
+    ```bash
+    git clone https://github.com/sequencing/hap.py
+    ```
+2.  Make a build folder
+    ```bash
+    mkdir hap.py-build
+    cd hap.py-build
+    ```
+3.  Run CMake
+    ```bash
+    cmake ../hap.py
+    ```
+4.  Build
+    ```bash
+    make
+    ```
+
+If this is successful, the bin subdirectory of your build folder will contain binaries and scripts:
+
+```bash
+$ python bin/hap.py --version
+Hap.py v0.3.1
+```
+
+Note that hap.py will copy all Python source files to the build folder, so when making changes to
+any Python component, `make` must be run to make sure the scripts in the build folder are
+up-to-date.
+
+The source for hap.py contains a script [configure.sh](configure.sh) which shows some basic additional
+configuration flags, and an automated way to pre-package CMake setups. Here is a list of additional flags for CMake to change compile options help it find dependencies:
+
+*  `-DCMAKE_BUILD_TYPE=Debug` -- set the build type, allowed values are `Debug` and `Release`
+*  `-DCMAKE_C_COMPILER=/usr/bin/gcc` and `-DCMAKE_CXX_COMPILER=/usr/bin/g++` -- change the compiler path
+*  `-DCMAKE_INSTALL_PREFIX=/usr/local` -- set an installation directory that will be used by make install.
+*  `-DBOOST_ROOT=$HOME/boost_1_55_0_install` -- set the path to Boost. Run the following commands to compile and install boost:
+```bash
+cd ~
+wget http://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.bz2
+tar xjf boost_1_55_0.tar.bz2
+cd boost_1_55_0
+./bootstrap.sh --with-libraries=filesystem,chrono,thread,iostreams,system,regex,test,program_options
+./b2 --prefix=$HOME/boost_1_55_0_install install
+```
+*  `-DUSE_SGE` -- enable the `--force-interactive` switch in hap.py.
+*  `-DBUILD_VCFEVAL=ON` -- Download and build rtgtools / vcfeval. This is a comparison engine that can be used
+   as an alternative to the built-in xcmp in hap.py. To successfully build and run vcfeval, you will need:
+   - A Java JRE, newer than 1.8.x
+   - ant > 1.9.2 (older versions of ant will not successfully build rtgtools)
+   See [src/sh/illumina-setup.sh]() for an example. If running Java requires any special setup
+   (or to configure any other environment variables), you can specify a wrapper script using
+   `-DVCFEVAL_WRAPPER={absolute_path_to_wrapper_script}`. See [src/sh/rtg-wrapper.sh]() for an
+   example.
+
+
+## System requirements
+
+### Hardware
 
 Compiling and testing can be done on a standard desktop system with 8GB of RAM. Whole-genome
 comparisons (e.g. comparing a gVCF file against the [Platinum Genomes truth dataset](http://www.illumina.com/platinumgenomes/))
@@ -238,7 +391,7 @@ can use up to 64GB of RAM (20GB typical, depending on the input VCF) and about 4
 using 40 processor cores. Whole exome comparison (using an exome bed mask and the `-T` switch)
 can be carried out on a desktop system.
 
-#### Linux
+### Linux
 
 Hap.py is known to build and run on the following linux distributions (see also the [Dockerfile](Dockerfile)
 for a list of required packages):
@@ -246,16 +399,16 @@ for a list of required packages):
     Ubuntu 12.04,14.04
     CentOS 5,6,7
 
-#### OS X
+### OS X
 
 Hap.py builds and passes basic tests on OS X 10.9, but full WGS analyses are not tested for this platform.
 
-#### Windows
+### Windows
 
 Hap.py is not tested on Windows. The main dependency that fails compilation is htslib. Given a build
 of htslib and pysam, using hap.py on Windows should be possible.
 
-#### Other Requirements:
+### Other requirements
 
 Hap.py requires a human genome reference sequence which contains at least
 chromosomes 1-22,X,Y,M. The chromosomes should be named chr1-chr22, chrX, chrY,
@@ -292,147 +445,3 @@ export BOOST_ROOT=$HOME/boost_1_55_0_install
 
 The complete list of dependencies / packages to install beforehand can be found
 in the [Dockerfile](Dockerfile).
-
-### Installation Procedure
-
-There are two fast ways to get a running installation of hap.py:
-
-1. Use the installer script. In the simplest use case, this script can create an
-   installation of hap.py from source that uses the system Python. You will need
-   tohave the following packages installed: Cython, numpy, pandas, pybedtools,
-   pysam, bx-python.
-
-   The simplest installer command line is the following, it installs everything into
-   ~/hap.py-install using the system version of Python:
-
-   ```
-   python install.py ~/hap.py-install
-   ```
-
-   The installer has an option `--boost-root` that allows us to use a specific installation of boost
-   (see above for instructions):
-
-   ```
-   python install.py ~/hap.py-install --boost-root $HOME/boost_1_55_0_install
-   ```
-
-   To use a special version of Python, run the installer with it:
-
-   ```
-   $HOME/my-virtualenv/bin/python install.py ~/hap.py-install
-   ```
-
-   To create a virtualenv, you can use the following options:
-
-   ```
-   python install.py ~/workspace-is/hap.py-install --python=virtualenv --python-virtualenv-dir=$HOME/my-virtualenv/hc.ve
-   ```
-
-   There are various workaround / testing switches:
-
-   * `--python-virtualenv-update`  updates an existing virtualenv
-   * `--python-virtualenv-force`  overwrites the virtualenv if it exists
-   * `--pip-fix-cert` works around outdated SSL certificates when using pip
-   * `--no-tests` disables the unit/integration tests after installation
-   * `--no-rebuild-external` don't rebuild the external dependencies (htslib, ...) unless necessary
-   * `--sge-mode` require switch `--force-interactive` to run hap.py
-     interactively (useful to prevent running on a head node when installing on
-     systems with SGE)
-
-2. Use [Docker](https://www.docker.com/). Clone this repository and build a
-   Docker image as follows.
-```
-$ sudo docker build .
-$ sudo docker images
-REPOSITORY     TAG            IMAGE ID            CREATED             VIRTUAL SIZE
-<...>          latest         3d03a99b3d81        1 second ago        <...>
-$ sudo docker run -ti --rm 3d03a99b3d81 bin/bash
-$/ /opt/hap.py/bin/hap.py
-```
-   A pre-built docker image can be found here: [https://hub.docker.com/r/pkrusche/hap.py](https://hub.docker.com/r/pkrusche/hap.py). It can
-   be obtained by running:
-```bash
-docker pull pkrusche/hap.py
-```
-   If the current directory contains a clone of the hap.py repository, hap.py can be run in Docker as follows:
-```bash
-sudo docker run -it -v `pwd`:/data pkrusche/hap.py /opt/hap.py/bin/hap.py /data/example/PG_performance.vcf.gz /data/example/performance.vcf.gz -o /data/test
-```
-   The `-v` argument mounts the current directory as `/data` in the Docker image. The output should also
-   appear in the current directory.
-
-
-## Compiling and development
-
-This section shows how to compile hap.py from source without using the installer.
-
-### List of Dependencies
-
-You will need these tools / libraries on your system to compile the code.
-
-* CMake &gt; 2.8
-* GCC/G++ 4.8+ for compiling
-* Boost 1.55+
-* Python 2, version 2.7.8 or greater
-* Python packages: Pandas, Numpy, pysam, bx-python
-* Java 1.8 when using vcfeval.
-
-### Compiling using CMake
-
-1.  Get a hap.py checkout:
-    ```bash
-    git clone https://github.com/sequencing/hap.py
-    ```
-2.  Make a build folder
-    ```bash
-    mkdir hap.py-build
-    cd hap.py-build
-    ```
-3.  Run CMake
-    ```bash
-    cmake ../hap.py
-    ```
-4.  Build
-    ```bash
-    make
-    ```
-
-If this is successful, the bin subdirectory of your build folder will contain binaries and scripts:
-
-```bash
-$ python bin/hap.py --version
-Hap.py v0.3.1
-```
-
-Note that hap.py will copy all Python source files to the build folder, so when making changes to
-any Python component, `make` must be run to make sure the scripts in the build folder are
-up-to-date.
-
-### Additional Cmake build flags
-
-The source for hap.py contains a script [configure.sh](configure.sh) which shows some basic additional
-configuration flags, and an automated way to pre-package CMake setups.
-
-Here is a list of additional flags for CMake to change compile options help it find dependencies:
-
-*  `-DCMAKE_BUILD_TYPE=Debug` -- set the build type, allowed values are `Debug` and `Release`
-*  `-DCMAKE_C_COMPILER=/usr/bin/gcc` and `-DCMAKE_CXX_COMPILER=/usr/bin/g++` -- change the compiler path
-*  `-DCMAKE_INSTALL_PREFIX=/usr/local` -- set an installation directory that will be used by make install.
-*  `-DBOOST_ROOT=$HOME/boost_1_55_0_install` -- set the path to Boost. Run the following commands to compile and install boost:
-```bash
-cd ~
-wget http://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.bz2
-tar xjf boost_1_55_0.tar.bz2
-cd boost_1_55_0
-./bootstrap.sh --with-libraries=filesystem,chrono,thread,iostreams,system,regex,test,program_options
-./b2 --prefix=$HOME/boost_1_55_0_install install
-```
-*  `-DUSE_SGE` -- enable the `--force-interactive` switch in hap.py.
-*  `-DBUILD_VCFEVAL=ON` -- Download and build rtgtools / vcfeval. This is a comparison engine that can be used
-   as an alternative to the built-in xcmp in hap.py. To successfully build and run vcfeval, you will need:
-   - A Java JRE, newer than 1.8.x
-   - ant > 1.9.2 (older versions of ant will not successfully build rtgtools)
-   See [src/sh/illumina-setup.sh]() for an example. If running Java requires any special setup
-   (or to configure any other environment variables), you can specify a wrapper script using
-   `-DVCFEVAL_WRAPPER={absolute_path_to_wrapper_script}`. See [src/sh/rtg-wrapper.sh]() for an
-   example.
