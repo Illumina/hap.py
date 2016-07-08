@@ -259,6 +259,14 @@ This command installs everything into ~/hap.py-install:
 python install.py ~/hap.py-install
 ```
 
+To also download rtgtools during the installation process and deploy it with this version
+of hap.py, you can add the `--with-rtgtools` flag. For this to work, you must have a working
+installation of Java 1.8 and Apache Ant 1.9.x.
+
+```
+python install.py ~/hap.py-install --with-rtgtools
+```
+
 The installer has an option `--boost-root` that allows us to use a specific installation of boost
 (see above for instructions):
 
