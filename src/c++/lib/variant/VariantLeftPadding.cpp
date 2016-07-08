@@ -28,24 +28,24 @@
 /**
  * \brief Homref interval splitter processor
  *
- * \file VariantLeftpadding.cpp
+ * \file VariantLeftPadding.cpp
  * \author Peter Krusche
  * \email pkrusche@illumina.com
  *
  */
 
-#include "variant/VariantLeftpadding.hh"
+#include "variant/VariantLeftPadding.hh"
 #include "Error.hh"
 
 #include <queue>
 #include <vector>
 #include <list>
 
-// #define DEBUG_VARIANTLEFTPADDING
+// #define DEBUG_VariantLeftPadding
 
 namespace variant {
 
-namespace ns_variantleftpadding
+namespace ns_VariantLeftPadding
 {
     typedef std::priority_queue<
         Variants,
@@ -54,11 +54,11 @@ namespace ns_variantleftpadding
     > VariantQueue;
 }
 
-struct VariantLeftpadding::VariantLeftpaddingImpl
+struct VariantLeftPadding::VariantLeftPaddingImpl
 {
-    VariantLeftpaddingImpl() {}
+    VariantLeftPaddingImpl() {}
 
-    VariantLeftpaddingImpl(VariantLeftpadding::VariantLeftpaddingImpl const & rhs)
+    VariantLeftPaddingImpl(VariantLeftPadding::VariantLeftPaddingImpl const & rhs)
     {
         buffered_variants = rhs.buffered_variants;
         output_variants = rhs.output_variants;
@@ -70,28 +70,28 @@ struct VariantLeftpadding::VariantLeftpaddingImpl
 
     std::shared_ptr<FastaFile> ref;
 
-    ns_variantleftpadding::VariantQueue output_variants;
+    ns_VariantLeftPadding::VariantQueue output_variants;
 
     Variants vs;
 };
 
 
-VariantLeftpadding::VariantLeftpadding()
+VariantLeftPadding::VariantLeftPadding()
 {
-    _impl = new VariantLeftpaddingImpl();
+    _impl = new VariantLeftPaddingImpl();
 }
 
-VariantLeftpadding::VariantLeftpadding(VariantLeftpadding const & rhs)
+VariantLeftPadding::VariantLeftPadding(VariantLeftPadding const & rhs)
 {
-    _impl = new VariantLeftpaddingImpl(*rhs._impl);
+    _impl = new VariantLeftPaddingImpl(*rhs._impl);
 }
 
-VariantLeftpadding::~VariantLeftpadding()
+VariantLeftPadding::~VariantLeftPadding()
 {
     delete _impl;
 }
 
-VariantLeftpadding const & VariantLeftpadding::operator=(VariantLeftpadding const & rhs)
+VariantLeftPadding const & VariantLeftPadding::operator=(VariantLeftPadding const & rhs)
 {
     if (&rhs == this)
     {
@@ -99,7 +99,7 @@ VariantLeftpadding const & VariantLeftpadding::operator=(VariantLeftpadding cons
     }
 
     delete _impl;
-    _impl = new VariantLeftpaddingImpl(*rhs._impl);
+    _impl = new VariantLeftPaddingImpl(*rhs._impl);
     return *this;
 }
 
@@ -107,13 +107,13 @@ VariantLeftpadding const & VariantLeftpadding::operator=(VariantLeftpadding cons
  * @brief Reference for shifting
  *
  */
-void VariantLeftpadding::setReference(std::string const & fasta)
+void VariantLeftPadding::setReference(std::string const & fasta)
 {
-    ref = std::make_shared(new FastaFile(fasta.c_str()));
+    _impl->ref = std::make_shared<FastaFile>(fasta.c_str());
 }
 
 /** enqueue a set of variants */
-void VariantLeftpadding::add(Variants const & vs)
+void VariantLeftPadding::add(Variants const & vs)
 {
     if (_impl->buffered_variants.size() > 0 &&
         vs.chr == _impl->buffered_variants.back().chr &&
@@ -128,9 +128,9 @@ void VariantLeftpadding::add(Variants const & vs)
 /**
  * @brief Return variant block at current position
  **/
-Variants & VariantLeftpadding::current()
+Variants & VariantLeftPadding::current()
 {
-#ifdef DEBUG_VARIANTLEFTPADDING
+#ifdef DEBUG_VariantLeftPadding
     std::cerr << "VLP-output: " << _impl->vs << "\n";
 #endif
     return _impl->vs;
@@ -140,7 +140,7 @@ Variants & VariantLeftpadding::current()
  * @brief Advance one line
  * @return true if a variant was retrieved, false otherwise
  */
-bool VariantLeftpadding::advance()
+bool VariantLeftPadding::advance()
 {
     // refill output buffer?
     if (_impl->output_variants.empty())
@@ -148,12 +148,21 @@ bool VariantLeftpadding::advance()
         for (Variants & v : _impl->buffered_variants)
         {
             bool do_pad = false;
-            for(auto & alt : v.variation)
+            int64_t min_pos = -1;
+            for(auto & al : v.variation)
             {
-                const int64_t reflen = alt.end - alt.start;
-                const int64_t altlen = alt.alt.size();
+                if(min_pos < 0 || al.start < min_pos)
+                {
+                    min_pos = al.start;
+                } 
+            }
 
-                if(reflen == 0 || altlen == 0)
+            for(auto & al : v.variation)
+            {
+                const int64_t reflen = al.end - al.start + 1;
+                const int64_t altlen = al.alt.size();
+
+                if((reflen == 0 || altlen == 0) && al.start == min_pos)
                 {
                     do_pad = true;
                     break;
@@ -162,11 +171,18 @@ bool VariantLeftpadding::advance()
 
             if(do_pad)
             {
-                v.pos--;
-                std::string padding = _impl->ref.query(v.chr, v.pos, v.pos);
+                v.pos -= 1;
+                const std::string padding = _impl->ref->query(v.chr.c_str(), v.pos, v.pos);
                 for(auto & al : v.variation)
                 {
-                    al.start--;
+                    const int64_t reflen = al.end - al.start + 1;
+                    const int64_t altlen = al.alt.size();
+
+                    if((reflen == 0 || altlen == 0) && al.start == min_pos)
+                    {
+                        al.start--;
+                        al.alt = padding + al.alt;
+                    }
                 }
             }
 
@@ -185,10 +201,10 @@ bool VariantLeftpadding::advance()
 }
 
 /** empty internal buffer */
-void VariantLeftpadding::flush()
+void VariantLeftPadding::flush()
 {
     _impl->buffered_variants.clear();
-    _impl->output_variants = ns_varianthomrefsplitter::VariantQueue();
+    _impl->output_variants = ns_VariantLeftPadding::VariantQueue();
     _impl->vs = Variants();
 }
 

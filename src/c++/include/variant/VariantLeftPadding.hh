@@ -28,7 +28,7 @@
 /**
  * \brief Homref interval splitter processor
  *
- * \file VariantLeftpadding.hh
+ * \file VariantLeftPadding.hh
  * \author Peter Krusche
  * \email pkrusche@illumina.com
  *
@@ -40,14 +40,14 @@
 
 namespace variant {
 
-    class VariantLeftpadding : public AbstractVariantProcessingStep
+    class VariantLeftPadding : public AbstractVariantProcessingStep
     {
     public:
-        VariantLeftpadding();
-        VariantLeftpadding(VariantLeftpadding const & );
-        ~VariantLeftpadding();
-        VariantLeftpadding
-        const & operator=(VariantLeftpadding const & );
+        VariantLeftPadding();
+        VariantLeftPadding(VariantLeftPadding const & );
+        ~VariantLeftPadding();
+        VariantLeftPadding
+        const & operator=(VariantLeftPadding const & );
 
         /**
          * @brief Reference for shifting
@@ -73,8 +73,8 @@ namespace variant {
         void flush();
 
     private:
-        struct VariantLeftpaddingImpl;
-        VariantLeftpaddingImpl * _impl;
+        struct VariantLeftPaddingImpl;
+        VariantLeftPaddingImpl * _impl;
     };
 
 }
