@@ -55,7 +55,7 @@
 #include <set>
 #include <bitset>
 
-//#define _DEBUG_GRAPHREFERENCE
+// #define _DEBUG_GRAPHREFERENCE
 
 #ifndef MAX_GRAPHREFERENCE_NODES
 #define MAX_GRAPHREFERENCE_NODES 4096
@@ -676,7 +676,7 @@ void GraphReference::enumeratePaths(
                     {
 #ifdef _DEBUG_GRAPHREFERENCE
                         std::cerr << "Finished path from BP" <<
-                            current.bp_id << " at " << target[target.size()-1].seq(start, end) <<
+                            current.bp_id << " at " << ht.seq(start, end) <<
                             " ... this path does not cover all expected hom variants / doesn't end at sink"
                             " and will be ignored\n";
 #endif

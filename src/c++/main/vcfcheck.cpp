@@ -440,6 +440,14 @@ int main(int argc, char *argv[])
         {
             std::cerr << "[W] Variants that overlap on the reference allele: " << has_warned[WARNING::OVERLAP] << "\n";
         }
+        if(has_warned[WARNING::SYMALT])
+        {
+            std::cerr << "[W] Variants that have symbolic ALT alleles: " << has_warned[WARNING::SYMALT] << "\n";
+        }
+        if(has_warned[WARNING::UNCERTAINLENGTH])
+        {
+            std::cerr << "[W] Variants that have alleles with uncertain length: " << has_warned[WARNING::UNCERTAINLENGTH] << "\n";
+        }
 
         std::cerr << "[I] Total VCF records:         " << rcount << "\n";
         std::cerr << "[I] Non-reference VCF records: " << n_nonref << "\n";
