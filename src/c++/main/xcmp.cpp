@@ -44,6 +44,7 @@
 #include "helpers/GraphUtil.hh"
 #include "GraphReference.hh"
 #include "DiploidCompare.hh"
+#include "VariantInput.hh"
 
 #include <iostream>
 #include <fstream>
@@ -307,6 +308,7 @@ int main(int argc, char* argv[]) {
         /* now handled after comparison */
         /* vr.setApplyFilters(apply_filters_query, r2); */
 
+        // variant input to re-trim alleles
         bool stop_after_chr_change = false;
         if(chr != "")
         {
@@ -506,7 +508,7 @@ int main(int argc, char* argv[]) {
                 for (Variants & v : block_variants)
                 {
                     v.setInfo("BS", (int)block_start + 1);
-                    
+
                     if(qq == "QUAL")
                     {
                         v.setInfo("IQQ", v.calls[r2].qual);

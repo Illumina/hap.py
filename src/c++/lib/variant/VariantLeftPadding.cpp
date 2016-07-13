@@ -147,44 +147,56 @@ bool VariantLeftPadding::advance()
     {
         for (Variants & v : _impl->buffered_variants)
         {
-            bool do_pad = false;
-            int64_t min_pos = -1;
-            for(auto & al : v.variation)
+            int64_t minpos = std::numeric_limits<int64_t>::max();
+            int64_t maxpos = -1;
+
+            for(auto & rv : v.variation)
             {
-                if(min_pos < 0 || al.start < min_pos)
+                minpos = std::min(minpos, rv.start);
+                minpos = std::min(minpos, rv.end);
+                // insertions
+                if(rv.start > rv.end)
                 {
-                    min_pos = al.start;
-                } 
+                    maxpos = std::max(maxpos, rv.end);
+                }
+                else
+                {
+                    maxpos = std::max(maxpos, rv.start);
+                    maxpos = std::max(maxpos, rv.end);
+                }
+            }
+
+            const int64_t record_ref_length = maxpos - minpos + 1;
+            const std::string refbases = _impl->ref->query(v.chr.c_str(), minpos - 1, minpos);
+            const char padding = refbases[0];
+            if(refbases.size() != 2)
+            {
+                error("Cannot retrieve reference padding base at %s:%i", v.chr.c_str(), minpos - 1);
             }
 
             for(auto & al : v.variation)
             {
+                const int64_t refstart = al.start - minpos;
                 const int64_t reflen = al.end - al.start + 1;
                 const int64_t altlen = al.alt.size();
 
-                if((reflen == 0 || altlen == 0) && al.start == min_pos)
+                // deletions of the whole record can only be encoded
+                // using <DEL>. VCFEval doesn't like this, so we pad it on the
+                // left
+                if(refstart == 0 && reflen == record_ref_length  // allele spans the entire ref length
+                   && altlen == 0) // we need to pad if we have no ref bases
                 {
-                    do_pad = true;
-                    break;
+#ifdef DEBUG_VariantLeftPadding
+                    std::cerr << "Padding " << v << ": " << al << "\n";
+#endif
+                    al.start--;
+                    al.alt.insert(0, 1, padding);
+                    minpos = std::min(al.start, minpos);
                 }
             }
 
-            if(do_pad)
-            {
-                v.pos -= 1;
-                const std::string padding = _impl->ref->query(v.chr.c_str(), v.pos, v.pos);
-                for(auto & al : v.variation)
-                {
-                    const int64_t reflen = al.end - al.start + 1;
-                    const int64_t altlen = al.alt.size();
-
-                    if((reflen == 0 || altlen == 0) && al.start == min_pos)
-                    {
-                        al.start--;
-                        al.alt = padding + al.alt;
-                    }
-                }
-            }
+            v.pos = minpos;
+            v.len = maxpos - minpos + 1;
 
             _impl->output_variants.push(v);
         }

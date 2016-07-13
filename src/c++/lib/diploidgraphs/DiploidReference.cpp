@@ -47,7 +47,7 @@
 
 #include "Error.hh"
 
-// #define _DEBUG_DIPLOIDREFERENCE
+/* #define _DEBUG_DIPLOIDREFERENCE */
 
 namespace haplotypes
 {
