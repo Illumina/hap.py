@@ -48,15 +48,15 @@ struct AlignmentParameters
     {
         //  a   c   g   t   n
         const int8_t default_substitution_scores[] = {
-            2, -2, -2, -2,  0,  // a
-           -2,  2, -2, -2,  0,  // c
-           -2, -2,  2, -2,  0,  // g
-           -2, -2, -2,  2,  0,  // t
+            1, -4, -4, -4,  0,  // a
+           -4,  1, -4, -4,  0,  // c
+           -4, -4,  1, -4,  0,  // g
+           -4, -4, -4,  1,  0,  // t
             0,  0,  0,  0,  0,  // n
         };
 
         memcpy(subs_mat, default_substitution_scores, 25*sizeof(int8_t));
-        gapo = 3;
+        gapo = 6;
         gape = 1;
     }
 
