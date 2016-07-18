@@ -183,33 +183,32 @@ void GraphReference::makeGraph(
                 v_copy.id = v.id;
                 v_copy.chr = v.chr;
                 v_copy.calls.resize(1);
-                v_copy.variation.resize(1);
+                v_copy.calls[0] = c;
+                int64_t min_pos = std::numeric_limits<int64_t>::max();
+                int64_t max_pos = -1;
 
                 for(size_t g = 0; g < c.ngt; ++g)
                 {
-                    v_copy.calls[0] = c;
-                    for(size_t g2 = 0; g2 < c.ngt; ++g2)
+                    if(c.gt[g] <= 0 || c.gt[g] > (int)v.variation.size())
                     {
-                        if(g2 != g)
-                        {
-                            v_copy.calls[0].gt[g2] = -1;
-                        }
-                        else
-                        {
-                            if(c.gt[g] < 0 || c.gt[g] > (int)v.variation.size())
-                            {
-                                error("invalid GT at %s:%i", v.chr.c_str(), v.pos);
-                            }
-                            v_copy.variation[0] = v.variation[c.gt[g]-1];
-                            v_copy.calls[0].gt[g2] = 1;
-                        }
+                        error("invalid GT at %s:%i", v.chr.c_str(), v.pos);
                     }
-                    trimLeft(_impl->refsq, v.chr.c_str(), v_copy.variation[0], false);
-                    trimRight(_impl->refsq, v.chr.c_str(), v_copy.variation[0], false);
-                    v_copy.pos = v_copy.variation[0].start;
-                    v_copy.len = v_copy.variation[0].end - v_copy.variation[0].start + 1;
-                    input.push(v_copy);
+                    v_copy.variation.push_back(v.variation[c.gt[g]-1]);
+                    v_copy.calls[0].gt[g] = v_copy.variation.size();
+                    trimLeft(_impl->refsq, v.chr.c_str(), v_copy.variation.back(), false);
+                    trimRight(_impl->refsq, v.chr.c_str(), v_copy.variation.back(), false);
+                    if(min_pos > v_copy.variation.back().start || min_pos > v_copy.variation.back().end)
+                    {
+                        min_pos = std::min(v_copy.variation.back().start, v_copy.variation.back().end);
+                    }
+                    if(max_pos < v_copy.variation.back().start || max_pos < v_copy.variation.back().end)
+                    {
+                        max_pos = std::max(v_copy.variation.back().start, v_copy.variation.back().end);
+                    }
                 }
+                v_copy.pos = min_pos;
+                v_copy.len = max_pos - min_pos + 1;
+                input.push(v_copy);
             }
             break;
             default: break;
@@ -367,9 +366,9 @@ void GraphReference::makeGraph(
         {
             ReferenceNode & node(nodes[x]);
 
-            // will be set to true if we found at least one new node to follow this one
-            int superseeded_count = 0;
+            bool superseeded = false;
 
+            // will be set to true if we found at least one new node to follow this one
             for(int j = 0; j < 2; ++j)
             {
                 if(current_pos[j] == (size_t) -1)
@@ -389,22 +388,16 @@ void GraphReference::makeGraph(
                 {
                     has_predecessor[j] = true;
                     adj[x].insert(current_pos[j]);
-                    ++superseeded_count;
-                    if(current[j].color <= ReferenceNode::black)
-                    {
-                        // when we have appended a hom-alt node,
-                        // don't insert edges in the future that
-                        // might skip it.
-                        superseeded_count = 2;
-                    }
+                    superseeded = true;
                 }
             }
 
-            if(superseeded_count < 2)
+            if(!superseeded)
             {
-                next_previous.push_back(x);
+                next_previous.insert(next_previous.end(), x);
             }
         }
+
         previous = next_previous;
 
         // if variants are out of order, we might need to
