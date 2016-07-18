@@ -241,6 +241,11 @@ struct Variants
  *  start after everything else) */
 struct VariantCompare
 {
+    bool operator() (Variants const * v1, Variants const * v2)
+    {
+        return (*this)(*v1, *v2);
+    }
+
     bool operator() (Variants const & v1, Variants const & v2)
     {
         if(v1.pos == v2.pos)

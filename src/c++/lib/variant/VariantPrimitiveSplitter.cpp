@@ -44,9 +44,7 @@
 #include "Alignment.hh"
 #include "helpers/IntervalBuffer.hh"
 
-#ifdef _DEBUG
-/* #define DEBUG_VARIANTPRIMITIVESPLITTER */
-#endif
+//#define DEBUG_VARIANTPRIMITIVESPLITTER
 
 namespace variant {
 
@@ -238,6 +236,8 @@ bool VariantPrimitiveSplitter::advance()
                 realignRefVar(*(_impl->ref_fasta), v.chr.c_str(), input_variation[i],
                               _impl->aln.get(), rvlists[i]);
 #ifdef DEBUG_VARIANTPRIMITIVESPLITTER
+                std::cerr << "REF allele for realignment: " <<
+                    _impl->ref_fasta->query(v.chr.c_str(), input_variation[i].start, input_variation[i].end) << "\n";
                 std::cerr << "Before realignment: " << input_variation[i] << "\n";
                 for(auto const & rv : rvlists[i])
                 {
