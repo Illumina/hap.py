@@ -56,7 +56,7 @@ struct AlignmentParameters
         };
 
         memcpy(subs_mat, default_substitution_scores, 25*sizeof(int8_t));
-        gapo = 6;
+        gapo = 11;
         gape = 1;
     }
 
