@@ -223,6 +223,7 @@ namespace variant
             bool phased = false;
             bcfhelpers::getGT(_impl->hdr, v, i, gt, ngt, phased);
             const bool isNoCall = ngt == 0 || std::all_of(&gt[0], &gt[ngt], [](int x) { return x < 0; });
+            const bool isHomref = ngt > 0 && std::all_of(&gt[0], &gt[ngt], [](int x) { return x == 0; });
 
             // count as "all"
             std::string key = "all:" + s;
@@ -264,11 +265,28 @@ namespace variant
              *  vt = 1 -> SNP
              *  vt = 2 -> INDEL
              *  vt = 3 -> NOCALL
+             *  vt = 4 -> HOMREF
              */
-            uint64_t vt = vts_seen == VT_NOCALL ? 2 : ((vts_seen == variant::VT_SNP
-                                                     || vts_seen == (variant::VT_SNP | variant::VT_REF)) ? 0 : 1);
+            static const char *nvs[] = {"UNK", "SNP", "INDEL", "NOCALL", "HOMREF"};
+            uint64_t vt = 0;
 
-            static const char *nvs[] = {"UNK", "SNP", "INDEL", "NOCALL"};
+            if(vts_seen == variant::VT_SNP || vts_seen == (variant::VT_SNP | variant::VT_REF))
+            {
+                vt = 1;
+            }
+            else if(vts_seen & VT_INS || vts_seen & VT_DEL || vts_seen & VT_SNP)
+            {
+                vt = 2;
+            }
+            if(isNoCall)
+            {
+                vt = 3;
+            }
+
+            if(isHomref)
+            {
+                vt = 4;
+            }
 
             // determine the types seen in the variant
             if(fail || isNoCall || (i == 1 && q_filtered))
@@ -332,7 +350,7 @@ namespace variant
                     bks.push_back(kind);
                 }
 
-                vts.push_back(nvs[vt + 1]);
+                vts.push_back(nvs[vt]);
                 if(lt < 0x0f)
                 {
                     lts.push_back(CT_NAMES[lt]);

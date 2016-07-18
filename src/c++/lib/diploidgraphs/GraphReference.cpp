@@ -192,7 +192,7 @@ void GraphReference::makeGraph(
                     {
                         if(g2 != g)
                         {
-                            v_copy.calls[0].gt[g2] = 0;
+                            v_copy.calls[0].gt[g2] = -1;
                         }
                         else
                         {
@@ -276,8 +276,22 @@ void GraphReference::makeGraph(
 
         switch(getGTType(call))
         {
-            case gt_het:
-            case gt_hetalt:
+            case gt_homalt:
+                if(call.nfilter > 0 && !(call.nfilter == 1 && call.filter[0] == "PASS"))
+                {
+                    current[0].filtered = true;
+                }
+                current[0].color = ReferenceNode::black;
+                current[0].type = ReferenceNode::alternative;
+                {
+                    RefVar rv = vars.variation[call.gt[0]-1];
+                    current[0].start = rv.start;
+                    current[0].end = rv.end;
+                    current[0].alt = rv.alt;
+                }
+                current[0].het = false;
+                break;
+            default:
                 current[0].het = true;
                 current[1].het = true;
                 if(call.nfilter > 0 && !(call.nfilter == 1 && call.filter[0] == "PASS"))
@@ -295,60 +309,29 @@ void GraphReference::makeGraph(
                     ++*nhets;
                 }
 
-                // het with single alt
-                if(call.isHet())
+                for(size_t j = 0; j < call.ngt; ++j)
                 {
-                    size_t j = 0;
-                    if(call.gt[j] <= 0)
-                    {
-                        j = 1;
-                    }
-                    RefVar rv = vars.variation[call.gt[j]-1];
-                    // remove reference padding
-                    current[j].type = ReferenceNode::alternative;
-                    current[j].start = rv.start;
-                    current[j].end = rv.end;
-                    current[j].alt = rv.alt;
-
-                    current[j ^ 1].type = ReferenceNode::homref;
-                    current[j ^ 1].start = rv.start;
-                    current[j ^ 1].end = rv.start - 1;
-                    current[j ^ 1].alt = "";
-                }
-                else // het-alt
-                {
-                    for(size_t j = 0; j < call.ngt; ++j)
+                    if(call.gt[j] > 0)
                     {
                         RefVar rv = vars.variation[call.gt[j]-1];
+
                         // remove referencbeforee padding
                         current[j].type = ReferenceNode::alternative;
                         current[j].start = rv.start;
                         current[j].end = rv.end;
                         current[j].alt = rv.alt;
+
                     }
+                    else if(call.gt[j] == 0)
+                    {
+                        current[j].type = ReferenceNode::homref;
+                        current[j].start = vars.pos;
+                        current[j].end = vars.pos - 1;
+                        current[j].alt = "";
+                    }
+
                 }
                 break;
-            case gt_haploid:
-                // TODO: we might want to pass on some information into the reference graph here
-            case gt_homalt:
-                if(call.nfilter > 0 && !(call.nfilter == 1 && call.filter[0] == "PASS"))
-                {
-                    current[0].filtered = true;
-                }
-                current[0].color = ReferenceNode::black;
-                current[0].type = ReferenceNode::alternative;
-                {
-                    RefVar rv = vars.variation[call.gt[0]-1];
-                    current[0].start = rv.start;
-                    current[0].end = rv.end;
-                    current[0].alt = rv.alt;
-                }
-                current[0].het = false;
-                break;
-            case gt_homref:
-            default:
-                // all other records are ignored
-                continue;
         }
 
         // List of "previous nodes" to connect
@@ -385,7 +368,7 @@ void GraphReference::makeGraph(
             ReferenceNode & node(nodes[x]);
 
             // will be set to true if we found at least one new node to follow this one
-            bool superseeded = false;
+            int superseeded_count = 0;
 
             for(int j = 0; j < 2; ++j)
             {
@@ -406,11 +389,18 @@ void GraphReference::makeGraph(
                 {
                     has_predecessor[j] = true;
                     adj[x].insert(current_pos[j]);
-                    superseeded = true;
+                    ++superseeded_count;
+                    if(current[j].color <= ReferenceNode::black)
+                    {
+                        // when we have appended a hom-alt node,
+                        // don't insert edges in the future that
+                        // might skip it.
+                        superseeded_count = 2;
+                    }
                 }
             }
 
-            if(!superseeded)
+            if(superseeded_count < 2)
             {
                 next_previous.push_back(x);
             }

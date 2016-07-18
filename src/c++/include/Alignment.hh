@@ -46,6 +46,8 @@ struct AlignmentParameters
 {
     AlignmentParameters()
     {
+        // default: BWA-MEM scores, see
+        // http://bio-bwa.sourceforge.net/bwa.shtml
         //  a   c   g   t   n
         const int8_t default_substitution_scores[] = {
             1, -4, -4, -4,  0,  // a
@@ -56,7 +58,7 @@ struct AlignmentParameters
         };
 
         memcpy(subs_mat, default_substitution_scores, 25*sizeof(int8_t));
-        gapo = 11;
+        gapo = 6;
         gape = 1;
     }
 

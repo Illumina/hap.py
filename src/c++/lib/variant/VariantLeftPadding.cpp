@@ -171,7 +171,8 @@ bool VariantLeftPadding::advance()
             const char padding = refbases[0];
             if(refbases.size() != 2)
             {
-                error("Cannot retrieve reference padding base at %s:%i", v.chr.c_str(), minpos - 1);
+                _impl->output_variants.push(v);
+                continue;
             }
 
             for(auto & al : v.variation)
