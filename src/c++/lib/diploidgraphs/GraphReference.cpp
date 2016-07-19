@@ -134,12 +134,7 @@ void GraphReference::makeGraph(
     size_t * nhets
 )
 {
-    typedef std::priority_queue<
-        Variants,
-        std::vector<Variants>,
-        VariantCompare
-    > VariantQueue;
-    VariantQueue input;
+    std::queue<Variants> input;
 
     // trim and split alleles
     for(auto const & v : _input)
@@ -172,8 +167,16 @@ void GraphReference::makeGraph(
                 v_copy.variation.push_back(v.variation[which_al]);
                 trimLeft(_impl->refsq, v.chr.c_str(), v_copy.variation[0], false);
                 trimRight(_impl->refsq, v.chr.c_str(), v_copy.variation[0], false);
-                v_copy.pos = v_copy.variation[0].start;
-                v_copy.len = v_copy.variation[0].end - v_copy.variation[0].start + 1;
+                if(v_copy.variation[0].start <= v_copy.variation[0].end)
+                {
+                    v_copy.pos = v_copy.variation[0].start;
+                    v_copy.len = v_copy.variation[0].end - v_copy.variation[0].start + 1;
+                }
+                else
+                {
+                    v_copy.pos = v_copy.variation[0].start - 1;
+                    v_copy.len = v_copy.variation[0].end - v_copy.variation[0].start + 1;
+                }
                 input.push(v_copy);
             }
             break;
@@ -183,33 +186,40 @@ void GraphReference::makeGraph(
                 v_copy.id = v.id;
                 v_copy.chr = v.chr;
                 v_copy.calls.resize(1);
-                v_copy.variation.resize(1);
+                v_copy.calls[0] = c;
+                int64_t min_pos = std::numeric_limits<int64_t>::max();
+                int64_t max_pos = -1;
 
                 for(size_t g = 0; g < c.ngt; ++g)
                 {
-                    v_copy.calls[0] = c;
-                    for(size_t g2 = 0; g2 < c.ngt; ++g2)
+                    if(c.gt[g] <= 0 || c.gt[g] > (int)v.variation.size())
                     {
-                        if(g2 != g)
-                        {
-                            v_copy.calls[0].gt[g2] = 0;
-                        }
-                        else
-                        {
-                            if(c.gt[g] < 0 || c.gt[g] > (int)v.variation.size())
-                            {
-                                error("invalid GT at %s:%i", v.chr.c_str(), v.pos);
-                            }
-                            v_copy.variation[0] = v.variation[c.gt[g]-1];
-                            v_copy.calls[0].gt[g2] = 1;
-                        }
+                        error("invalid GT at %s:%i", v.chr.c_str(), v.pos);
                     }
-                    trimLeft(_impl->refsq, v.chr.c_str(), v_copy.variation[0], false);
-                    trimRight(_impl->refsq, v.chr.c_str(), v_copy.variation[0], false);
-                    v_copy.pos = v_copy.variation[0].start;
-                    v_copy.len = v_copy.variation[0].end - v_copy.variation[0].start + 1;
-                    input.push(v_copy);
+                    v_copy.variation.push_back(v.variation[c.gt[g]-1]);
+                    v_copy.calls[0].gt[g] = v_copy.variation.size();
+                    trimLeft(_impl->refsq, v.chr.c_str(), v_copy.variation.back(), false);
+                    trimRight(_impl->refsq, v.chr.c_str(), v_copy.variation.back(), false);
+                    if(min_pos > v_copy.variation.back().start || min_pos > v_copy.variation.back().end)
+                    {
+                        min_pos = std::min(v_copy.variation.back().start, v_copy.variation.back().end);
+                    }
+                    if(max_pos < v_copy.variation.back().start || max_pos < v_copy.variation.back().end)
+                    {
+                        max_pos = std::max(v_copy.variation.back().start, v_copy.variation.back().end);
+                    }
                 }
+                if(min_pos <= max_pos)
+                {
+                    v_copy.pos = min_pos;
+                    v_copy.len = max_pos - min_pos + 1;
+                }
+                else
+                {
+                    v_copy.pos = min_pos - 1;
+                    v_copy.len = max_pos - min_pos + 1;
+                }
+                input.push(v_copy);
             }
             break;
             default: break;
@@ -233,8 +243,8 @@ void GraphReference::makeGraph(
 
     if (!input.empty())
     {
-        chr = input.top().chr;
-        start = input.top().pos;
+        chr = input.front().chr;
+        start = input.front().pos;
     }
 
     std::list<size_t> previous;
@@ -252,7 +262,7 @@ void GraphReference::makeGraph(
     std::vector< std::set <size_t> > adj;
     for(; !input.empty(); input.pop())
     {
-        Variants const & vars = input.top();
+        Variants const & vars = input.front();
 #ifdef _DEBUG_GRAPHREFERENCE
         std::cerr << "VAR: " << stringutil::formatPos(chr, vars.pos) << ": " << vars << "\n";
 #endif
@@ -276,6 +286,23 @@ void GraphReference::makeGraph(
 
         switch(getGTType(call))
         {
+            case gt_homalt:
+                if(call.nfilter > 0 && !(call.nfilter == 1 && call.filter[0] == "PASS"))
+                {
+                    current[0].filtered = true;
+                }
+                current[0].color = ReferenceNode::black;
+                current[0].type = ReferenceNode::alternative;
+                {
+                    RefVar rv = vars.variation[call.gt[0]-1];
+                    current[0].start = rv.start;
+                    current[0].end = rv.end;
+                    current[0].alt = rv.alt;
+                }
+                current[0].het = false;
+                break;
+            default:
+                break;
             case gt_het:
             case gt_hetalt:
                 current[0].het = true;
@@ -294,61 +321,51 @@ void GraphReference::makeGraph(
                 {
                     ++*nhets;
                 }
-
-                // het with single alt
-                if(call.isHet())
+                if(call.gt[0] == 0 || call.gt[1] == 0)
                 {
-                    size_t j = 0;
-                    if(call.gt[j] <= 0)
+                    int j = 0;
+                    if(call.gt[j] == 0)
                     {
-                        j = 1;
+                        ++j;
                     }
+
                     RefVar rv = vars.variation[call.gt[j]-1];
-                    // remove reference padding
+
                     current[j].type = ReferenceNode::alternative;
                     current[j].start = rv.start;
                     current[j].end = rv.end;
                     current[j].alt = rv.alt;
 
-                    current[j ^ 1].type = ReferenceNode::homref;
-                    current[j ^ 1].start = rv.start;
-                    current[j ^ 1].end = rv.start - 1;
-                    current[j ^ 1].alt = "";
-                }
-                else // het-alt
-                {
-                    for(size_t j = 0; j < call.ngt; ++j)
+                    j = j ^ 1;
+
+                    current[j].type = ReferenceNode::homref;
+                    if(rv.start > rv.end)
                     {
-                        RefVar rv = vars.variation[call.gt[j]-1];
-                        // remove referencbeforee padding
-                        current[j].type = ReferenceNode::alternative;
-                        current[j].start = rv.start;
-                        current[j].end = rv.end;
-                        current[j].alt = rv.alt;
+                        // insertion => hom-ref block of length 0
+                        current[j].start = std::max(rv.start, rv.end);
                     }
+                    else
+                    {
+                        current[j].start = rv.start;
+                    }
+                    current[j].end = current[j].start - 1;
+                    current[j].alt = "";
+                }
+                else
+                {
+                    RefVar const & rv1 = vars.variation[call.gt[0]-1];
+                    current[0].type = ReferenceNode::alternative;
+                    current[0].start = rv1.start;
+                    current[0].end = rv1.end;
+                    current[0].alt = rv1.alt;
+
+                    RefVar const & rv2 = vars.variation[call.gt[1]-1];
+                    current[1].type = ReferenceNode::alternative;
+                    current[1].start = rv2.start;
+                    current[1].end = rv2.end;
+                    current[1].alt = rv2.alt;
                 }
                 break;
-            case gt_haploid:
-                // TODO: we might want to pass on some information into the reference graph here
-            case gt_homalt:
-                if(call.nfilter > 0 && !(call.nfilter == 1 && call.filter[0] == "PASS"))
-                {
-                    current[0].filtered = true;
-                }
-                current[0].color = ReferenceNode::black;
-                current[0].type = ReferenceNode::alternative;
-                {
-                    RefVar rv = vars.variation[call.gt[0]-1];
-                    current[0].start = rv.start;
-                    current[0].end = rv.end;
-                    current[0].alt = rv.alt;
-                }
-                current[0].het = false;
-                break;
-            case gt_homref:
-            default:
-                // all other records are ignored
-                continue;
         }
 
         // List of "previous nodes" to connect
@@ -384,9 +401,9 @@ void GraphReference::makeGraph(
         {
             ReferenceNode & node(nodes[x]);
 
-            // will be set to true if we found at least one new node to follow this one
             bool superseeded = false;
 
+            // will be set to true if we found at least one new node to follow this one
             for(int j = 0; j < 2; ++j)
             {
                 if(current_pos[j] == (size_t) -1)
@@ -412,9 +429,10 @@ void GraphReference::makeGraph(
 
             if(!superseeded)
             {
-                next_previous.push_back(x);
+                next_previous.insert(next_previous.end(), x);
             }
         }
+
         previous = next_previous;
 
         // if variants are out of order, we might need to

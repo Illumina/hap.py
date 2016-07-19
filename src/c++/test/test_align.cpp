@@ -92,17 +92,17 @@ BOOST_AUTO_TEST_CASE(alignKlibIndel)
     //
     // AAATGACCACCAGGATTG
 
-    aln->setRef("AAATGACGGATTG");
-    aln->setQuery("AAATGACCACCAGGATTG");
+    aln->setRef("AAAAAAAAAAAAATGACGGATTGAAAAAAAAAA");
+    aln->setQuery("AAAAAAAAAAAAATGACCACCAGGATTGAAAAAAAAAA");
     aln->dump();
 
     aln->getCigar(r0, r1, a0, a1, cig);
 
     BOOST_CHECK_EQUAL(r0, 0);
-    BOOST_CHECK_EQUAL(r1, 12);
+    BOOST_CHECK_EQUAL(r1, 32);
     BOOST_CHECK_EQUAL(a0, 0);
-    BOOST_CHECK_EQUAL(a1, 17);
-    BOOST_CHECK_EQUAL(cig, "7M5D6M");
+    BOOST_CHECK_EQUAL(a1, 37);
+    BOOST_CHECK_EQUAL(cig, "17M5D16M");
 
     // ref ins / alt del
 
@@ -110,36 +110,36 @@ BOOST_AUTO_TEST_CASE(alignKlibIndel)
     //
     // AAATGAC-----GGATTG
 
-    aln->setRef("AAATGACCACCAGGATTG");
-    aln->setQuery("AAATGACGGATTG");
+    aln->setRef("AAAAAAAAAAAAATGACCACCAGGATTGAAAAAAAAAA");
+    aln->setQuery("AAAAAAAAAAAAATGACGGATTGAAAAAAAAAA");
     aln->dump();
 
     aln->getCigar(r0, r1, a0, a1, cig);
 
     BOOST_CHECK_EQUAL(r0, 0);
-    BOOST_CHECK_EQUAL(r1, 17);
+    BOOST_CHECK_EQUAL(r1, 37);
     BOOST_CHECK_EQUAL(a0, 0);
-    BOOST_CHECK_EQUAL(a1, 12);
-    BOOST_CHECK_EQUAL(cig, "7M5I6M");
+    BOOST_CHECK_EQUAL(a1, 32);
+    BOOST_CHECK_EQUAL(cig, "17M5I16M");
 
     // complex
 
-    aln->setRef("AAATGACGGGGCATTGCCA");
-    aln->setQuery("AAATGACCACCAGGATTGCCA");
+    aln->setRef("AAAAAAAAAAAAAAAAAATGACGGGGCATTGCCAAAAAAAAAAAAAAAAA");
+    aln->setQuery("AAAAAAAAAAAAAAAAAATGACCACCAGGATTGCCAAAAAAAAAAAAAAAAA");
 
-    // AAATGAC---GGGGCATTG
-    //
-    // AAATGACCACCAGG-ATTG
+    // AAAAAAAAAAAAAAAAAATGAC-----GGGGCATTGCCAAAAAAAAAAAAAAAAA";
+    //                                *
+    // AAAAAAAAAAAAAAAAAATGACCACCA---GGATTGCCAAAAAAAAAAAAAAAAA";
 
     aln->dump();
 
     aln->getCigar(r0, r1, a0, a1, cig);
 
     BOOST_CHECK_EQUAL(r0, 0);
-    BOOST_CHECK_EQUAL(r1, 18);
+    BOOST_CHECK_EQUAL(r1, 49);
     BOOST_CHECK_EQUAL(a0, 0);
-    BOOST_CHECK_EQUAL(a1, 20);
-    BOOST_CHECK_EQUAL(cig, "9M3D2M1I7M");
+    BOOST_CHECK_EQUAL(a1, 51);
+    BOOST_CHECK_EQUAL(cig, "22M5D2M3I23M");
 
     delete aln;
 

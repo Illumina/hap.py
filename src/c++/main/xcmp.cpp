@@ -497,7 +497,7 @@ int main(int argc, char* argv[]) {
                 result += "mismatch";
             }
 
-            if(error_out_stream)
+            if(error_out_stream && hap_fail)
             {
                 *error_out_stream << chr << "\t" << block_start << "\t" << block_end+1 << "\t" << result << "\t"
                                   << has_mismatch << ":" << hap_match << ":" << hap_fail << ":"
