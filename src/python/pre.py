@@ -288,7 +288,8 @@ def main():
     parser.add_argument("-v", "--version", dest="version", action="store_true",
                         help="Show version number and exit.")
 
-    parser.add_argument("-r", "--reference", dest="ref", default=None, help="Specify a reference file.")
+    parser.add_argument("-r", "--reference", dest="ref", help="Specify a reference file.",
+                        default=Tools.defaultReference())
 
     parser.add_argument("-w", "--window-size", dest="window",
                         default=10000, type=int,

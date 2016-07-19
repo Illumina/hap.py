@@ -134,12 +134,7 @@ void GraphReference::makeGraph(
     size_t * nhets
 )
 {
-    typedef std::priority_queue<
-        Variants,
-        std::vector<Variants>,
-        VariantCompare
-    > VariantQueue;
-    VariantQueue input;
+    std::queue<Variants> input;
 
     // trim and split alleles
     for(auto const & v : _input)
@@ -172,8 +167,16 @@ void GraphReference::makeGraph(
                 v_copy.variation.push_back(v.variation[which_al]);
                 trimLeft(_impl->refsq, v.chr.c_str(), v_copy.variation[0], false);
                 trimRight(_impl->refsq, v.chr.c_str(), v_copy.variation[0], false);
-                v_copy.pos = v_copy.variation[0].start;
-                v_copy.len = v_copy.variation[0].end - v_copy.variation[0].start + 1;
+                if(v_copy.variation[0].start <= v_copy.variation[0].end)
+                {
+                    v_copy.pos = v_copy.variation[0].start;
+                    v_copy.len = v_copy.variation[0].end - v_copy.variation[0].start + 1;
+                }
+                else
+                {
+                    v_copy.pos = v_copy.variation[0].start - 1;
+                    v_copy.len = v_copy.variation[0].end - v_copy.variation[0].start + 1;
+                }
                 input.push(v_copy);
             }
             break;
@@ -206,8 +209,16 @@ void GraphReference::makeGraph(
                         max_pos = std::max(v_copy.variation.back().start, v_copy.variation.back().end);
                     }
                 }
-                v_copy.pos = min_pos;
-                v_copy.len = max_pos - min_pos + 1;
+                if(min_pos <= max_pos)
+                {
+                    v_copy.pos = min_pos;
+                    v_copy.len = max_pos - min_pos + 1;
+                }
+                else
+                {
+                    v_copy.pos = min_pos - 1;
+                    v_copy.len = max_pos - min_pos + 1;
+                }
                 input.push(v_copy);
             }
             break;
@@ -232,8 +243,8 @@ void GraphReference::makeGraph(
 
     if (!input.empty())
     {
-        chr = input.top().chr;
-        start = input.top().pos;
+        chr = input.front().chr;
+        start = input.front().pos;
     }
 
     std::list<size_t> previous;
@@ -251,7 +262,7 @@ void GraphReference::makeGraph(
     std::vector< std::set <size_t> > adj;
     for(; !input.empty(); input.pop())
     {
-        Variants const & vars = input.top();
+        Variants const & vars = input.front();
 #ifdef _DEBUG_GRAPHREFERENCE
         std::cerr << "VAR: " << stringutil::formatPos(chr, vars.pos) << ": " << vars << "\n";
 #endif
@@ -291,6 +302,9 @@ void GraphReference::makeGraph(
                 current[0].het = false;
                 break;
             default:
+                break;
+            case gt_het:
+            case gt_hetalt:
                 current[0].het = true;
                 current[1].het = true;
                 if(call.nfilter > 0 && !(call.nfilter == 1 && call.filter[0] == "PASS"))
@@ -307,28 +321,49 @@ void GraphReference::makeGraph(
                 {
                     ++*nhets;
                 }
-
-                for(size_t j = 0; j < call.ngt; ++j)
+                if(call.gt[0] == 0 || call.gt[1] == 0)
                 {
-                    if(call.gt[j] > 0)
+                    int j = 0;
+                    if(call.gt[j] == 0)
                     {
-                        RefVar rv = vars.variation[call.gt[j]-1];
+                        ++j;
+                    }
 
-                        // remove referencbeforee padding
-                        current[j].type = ReferenceNode::alternative;
+                    RefVar rv = vars.variation[call.gt[j]-1];
+
+                    current[j].type = ReferenceNode::alternative;
+                    current[j].start = rv.start;
+                    current[j].end = rv.end;
+                    current[j].alt = rv.alt;
+
+                    j = j ^ 1;
+
+                    current[j].type = ReferenceNode::homref;
+                    if(rv.start > rv.end)
+                    {
+                        // insertion => hom-ref block of length 0
+                        current[j].start = std::max(rv.start, rv.end);
+                    }
+                    else
+                    {
                         current[j].start = rv.start;
-                        current[j].end = rv.end;
-                        current[j].alt = rv.alt;
-
                     }
-                    else if(call.gt[j] == 0)
-                    {
-                        current[j].type = ReferenceNode::homref;
-                        current[j].start = vars.pos;
-                        current[j].end = vars.pos - 1;
-                        current[j].alt = "";
-                    }
+                    current[j].end = current[j].start - 1;
+                    current[j].alt = "";
+                }
+                else
+                {
+                    RefVar const & rv1 = vars.variation[call.gt[0]-1];
+                    current[0].type = ReferenceNode::alternative;
+                    current[0].start = rv1.start;
+                    current[0].end = rv1.end;
+                    current[0].alt = rv1.alt;
 
+                    RefVar const & rv2 = vars.variation[call.gt[1]-1];
+                    current[1].type = ReferenceNode::alternative;
+                    current[1].start = rv2.start;
+                    current[1].end = rv2.end;
+                    current[1].alt = rv2.alt;
                 }
                 break;
         }

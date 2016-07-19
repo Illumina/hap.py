@@ -37,7 +37,7 @@ def xcmpWrapper(location_str, args):
     tf.close()
 
     to_run = "xcmp %s %s -l %s -o %s -r %s -f %i -n %i --expand-hapblocks %i " \
-             "--window %i --no-hapcmp %i --qq %s " % \
+             "--window %i --no-hapcmp %i --qq %s" % \
              (args.vcf1.replace(" ", "\\ "),
               args.vcf2.replace(" ", "\\ "),
               location_str,
@@ -49,6 +49,10 @@ def xcmpWrapper(location_str, args):
               args.window,
               1 if args.no_hc else 0,
               args.roc if args.roc else "QUAL")
+
+    if args.verbose:
+        # this prints information on failed sites
+        to_run += " -e -"
 
     # regions / targets already have been taken care of in blocksplit / preprocessing
 
