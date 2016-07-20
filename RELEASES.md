@@ -24,6 +24,10 @@
 | HAP-212 | Improve ROC filter handling / add selective filtering                              |
 | HAP-213 | Update Dockerfile                                                                  |
 | HAP-215 | include FDP in som.py indel features                                               |
+| HAP-217 | pad symbolic deletions in pre-processing for vcfeval                               |
+| HAP-218 | improve pre.py command line usage                                                  |
+| HAP-219 | Don't mix variants with different filtering during preprocessing                   |
+| HAP-220 | Quantify counts hom-ref records as INDEL for UNK and for N                         |
 
 ## v0.3.0
 
