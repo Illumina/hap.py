@@ -109,7 +109,8 @@ class CallerInfo(object):
                         options = hf["values"]["CommandLineOptions"]
                     except:
                         pass
-                    self.callers.append([caller, version, options])
+                    if "HaplotypeCaller" in caller or "UnifiedGenotyper" in caller:
+                        self.callers.append([caller, version, options])
             except:
                 pass
         if source_found:
