@@ -579,7 +579,7 @@ namespace bcfhelpers
         static const bcf_get_numeric_format<int> gf;
 
         std::vector<int> values;
-        gf(header, line, "DP", isample, values);
+        gf(header, line, field, isample, values);
         if(values.size() > 1)
         {
             std::ostringstream os;
