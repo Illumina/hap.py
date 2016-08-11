@@ -60,7 +60,7 @@ class CallerInfo(object):
                 pass
 
         cp = ['unknown', 'unknown', '']
-
+        gatk_callers = ["haplotypecaller", "unifiedgenotyper", "mutect"]
         source_found = False
 
         for hf in vfh["fields"]:
@@ -109,7 +109,8 @@ class CallerInfo(object):
                         options = hf["values"]["CommandLineOptions"]
                     except:
                         pass
-                    self.callers.append([caller, version, options])
+                    if any(g in caller.lower() for g in gatk_callers):
+                        self.callers.append([caller, version, options])
             except:
                 pass
         if source_found:
