@@ -272,7 +272,23 @@ int main(int argc, char* argv[]) {
             }
             if(success == -reader->nreaders)
             {
-                error("Cannot seek to %s:%i", chr.c_str(), start);
+                // cannot seek -> return no output
+                // write blocks
+                std::ostream * outputfile = NULL;
+
+                if(out_bed == "-" || out_bed == "")
+                {
+                    return 0;
+                }
+                else
+                {
+                    if(verbose)
+                    {
+                        std::cerr << "Writing to " << out_bed << "\n";
+                    }
+                    volatile std::ofstream f(out_bed.c_str());
+                    return 0;
+                }
             }
             stop_after_chr_change = true;
         }

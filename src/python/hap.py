@@ -388,6 +388,7 @@ def main():
             # passed to quantify
             args.type = "xcmp"
             # xcmp extracts whichever field we're using into the QQ info field
+            args.roc_header = args.roc
             args.roc = "IQQ"
         elif args.engine == "vcfeval":
             tempfiles += Haplo.vcfeval.runVCFEval(args.vcf1, args.vcf2, output_name, args)

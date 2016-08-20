@@ -70,6 +70,7 @@ def run_quantify(filename,
                  qtype=None,
                  roc_file=None,
                  roc_val=None,
+                 roc_header=None,
                  roc_filter=None,
                  roc_delta=None,
                  clean_info=True,
@@ -87,6 +88,7 @@ def run_quantify(filename,
     :param output_rocs: enable / disable output of ROCs by QQ level
     :param roc_file: filename for a TSV file with ROC observations
     :param roc_val: field to use for ROC QQ
+    :param roc_header: name of ROC value for tables
     :param roc_filter: ROC filtering settings
     :param roc_delta: ROC minimum spacing between levels
     :param clean_info: remove unused INFO fields
@@ -119,6 +121,10 @@ def run_quantify(filename,
 
     if roc_val:
         run_str += " --qq %s" % roc_val
+        if roc_header != roc_val:
+            # for xcmp, we extract the QQ value into the IQQ INFO field
+            # we pass the original name along here
+            run_str += " --qq-header %s" % roc_header
 
     if roc_filter:
         run_str += " --roc-filter '%s'" % roc_filter

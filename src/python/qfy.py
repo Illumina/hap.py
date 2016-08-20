@@ -90,6 +90,12 @@ def quantify(args):
     if vcf_name == output_vcf or vcf_name == output_vcf + internal_format_suffix:
         raise Exception("Cannot overwrite input VCF: %s would overwritten with output name %s." % (vcf_name, output_vcf))
 
+    roc_header = args.roc
+    try:
+        roc_header = args.roc_header
+    except:
+        pass
+
     Haplo.quantify.run_quantify(vcf_name,
                                 roc_table,
                                 output_vcf if args.write_vcf else False,
@@ -100,6 +106,7 @@ def quantify(args):
                                 output_rocs=args.do_roc,
                                 qtype=args.type,
                                 roc_val=args.roc,
+                                roc_header=roc_header,
                                 roc_filter=args.roc_filter,
                                 roc_delta=args.roc_delta,
                                 clean_info=not args.preserve_info,
