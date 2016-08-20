@@ -274,8 +274,6 @@ int main(int argc, char* argv[]) {
             {
                 // cannot seek -> return no output
                 // write blocks
-                std::ostream * outputfile = NULL;
-
                 if(out_bed == "-" || out_bed == "")
                 {
                     return 0;

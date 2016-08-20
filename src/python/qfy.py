@@ -32,6 +32,7 @@ import multiprocessing
 import pandas
 import json
 import tempfile
+import gzip
 
 scriptDir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'lib', 'python27')))
@@ -184,7 +185,8 @@ def quantify(args):
     for t in res.iterkeys():
         metrics_output["metrics"].append(dataframeToMetricsTable("roc." + t, res[t]))
 
-    with open(args.reports_prefix + ".metrics.json", "w") as fp:
+    # gzip JSON output
+    with gzip.open(args.reports_prefix + ".metrics.json.gz", "w") as fp:
         json.dump(metrics_output, fp)
 
 
