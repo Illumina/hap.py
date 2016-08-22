@@ -32,6 +32,7 @@ import multiprocessing
 import pandas
 import json
 import tempfile
+import gzip
 
 scriptDir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'lib', 'python27')))
@@ -90,6 +91,12 @@ def quantify(args):
     if vcf_name == output_vcf or vcf_name == output_vcf + internal_format_suffix:
         raise Exception("Cannot overwrite input VCF: %s would overwritten with output name %s." % (vcf_name, output_vcf))
 
+    roc_header = args.roc
+    try:
+        roc_header = args.roc_header
+    except:
+        pass
+
     Haplo.quantify.run_quantify(vcf_name,
                                 roc_table,
                                 output_vcf if args.write_vcf else False,
@@ -100,6 +107,7 @@ def quantify(args):
                                 output_rocs=args.do_roc,
                                 qtype=args.type,
                                 roc_val=args.roc,
+                                roc_header=roc_header,
                                 roc_filter=args.roc_filter,
                                 roc_delta=args.roc_delta,
                                 clean_info=not args.preserve_info,
@@ -177,7 +185,8 @@ def quantify(args):
     for t in res.iterkeys():
         metrics_output["metrics"].append(dataframeToMetricsTable("roc." + t, res[t]))
 
-    with open(args.reports_prefix + ".metrics.json", "w") as fp:
+    # gzip JSON output
+    with gzip.open(args.reports_prefix + ".metrics.json.gz", "w") as fp:
         json.dump(metrics_output, fp)
 
 

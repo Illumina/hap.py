@@ -76,6 +76,7 @@ int main(int argc, char* argv[]) {
     std::string only_regions;
     std::string qtype = "xcmp";
     std::string qq = "QUAL";
+    std::string qq_header = "QUAL";
     std::string roc_filter = "";
     double roc_delta = 0.1;
 
@@ -116,6 +117,7 @@ int main(int argc, char* argv[]) {
                 ("roc-filter", po::value<std::string>(), "Ignore certain filters when creating a ROC.")
                 ("roc-delta", po::value<double>(), "Minium spacing of levels on ROC QQ trace.")
                 ("qq", po::value<std::string>(), "Field to use for QQ (ROC quantity). Can be QUAL / GQ / ... / any INFO field name.")
+                ("qq-header", po::value<std::string>(), "Field header to use for QQ in output tables (ROC quantity). Defaults to QQ.")
                 ("reference,r", po::value<std::string>(), "The reference fasta file (needed only for VCF output).")
                 ("location,l", po::value<std::string>(), "Start location.")
                 ("regions,R", po::value< std::vector<std::string> >(),
@@ -202,6 +204,15 @@ int main(int argc, char* argv[]) {
             if (vm.count("qq"))
             {
                 qq = vm["qq"].as< std::string >();
+            }
+
+            if (vm.count("qq-header"))
+            {
+                qq_header = vm["qq-header"].as< std::string >();
+            }
+            else
+            {
+                qq_header = qq;
             }
 
             if (vm.count("roc-filter"))
@@ -586,7 +597,7 @@ int main(int argc, char* argv[]) {
         if(roc_map)
         {
             std::ofstream out_roc(output_roc);
-            roc::ROCOutput ro(*roc_map, qq, output_rocs, roc_delta);
+            roc::ROCOutput ro(*roc_map, qq_header, output_rocs, roc_delta);
             ro.write(out_roc);
             out_roc.close();
         }

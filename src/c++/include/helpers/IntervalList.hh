@@ -162,7 +162,7 @@ public:
 
         // if using advance, we don't need to search -- the first interval will
         // already be the one we're looking for
-        if(it->second.end < start)
+        if(it != intervals.cend() && it->second.end < start)
         {
             it = intervals.lower_bound(start);
         }

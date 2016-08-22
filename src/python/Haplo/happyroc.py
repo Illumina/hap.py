@@ -219,7 +219,8 @@ def roc(roc_table, output_path, filter_handling=None):
         result[k] = _postprocessRocData(pandas.DataFrame(v, columns=RESULT_ALLCOLUMNS))
         vt = re.sub("[^A-Za-z0-9\\.\\-_]", "_", k, flags=re.IGNORECASE)
         if output_path:
-            result[k].to_csv(output_path + "." + vt + ".csv", index=False)
+            result[k].to_csv(output_path + "." + vt + ".csv.gz", index=False,
+                             compression="gzip")
 
     return result
 
