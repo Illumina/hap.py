@@ -251,7 +251,7 @@ coverage of the truthset.
 ### Helper script
 
 The simplest way to install hap.py is to use the helper script and your system Python install
-(requires these packages: Cython, numpy, pandas, pybedtools, pysam, bx-python).
+(requires these packages: Cython, Scipy, numpy, pandas, pybedtools, pysam, bx-python).
 
 This command installs everything into ~/hap.py-install:
 
@@ -329,7 +329,7 @@ You will need these tools / libraries on your system to compile the code:
 * GCC/G++ 4.8+ for compiling
 * Boost 1.55+
 * Python 2, version 2.7.8 or greater
-* Python packages: Pandas, Numpy, pysam, bx-python
+* Python packages: Pandas, Numpy, Scipy, pysam, bx-python
 * Java 1.8 when using vcfeval.
 
 Then to compile:

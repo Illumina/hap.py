@@ -30,6 +30,7 @@ RUN pip install --upgrade pandas
 RUN pip install pybedtools
 RUN pip install pysam
 RUN pip install bx-python
+RUN pip install scipy
 
 # boost and cmake for hap.py
 RUN apt-get install libncurses5-dev -y
