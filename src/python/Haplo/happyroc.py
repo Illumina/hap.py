@@ -186,6 +186,21 @@ def roc(roc_table, output_path, filter_handling=None):
                 except:
                     pass
 
+                try:
+                    if rec["Type"] in ["SNP", "INDEL"] \
+                       and rec["Filter"] == "SEL" \
+                       and rec["Subset"] == "*" \
+                       and rec["Genotype"] == "*" \
+                       and rec["Subtype"] == "*" \
+                       and rec["QQ"] != "*":  # this is the ROC score field
+                        roc = "Locations." + rec["Type"] + ".SEL"
+                        if roc not in result:
+                            result[roc] = [rec]
+                        else:
+                            result[roc].append(rec)
+                except:
+                    pass
+
                 roc = "all"
                 if roc not in result:
                     result[roc] = [rec]

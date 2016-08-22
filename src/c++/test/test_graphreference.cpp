@@ -317,27 +317,19 @@ BOOST_AUTO_TEST_CASE(graphNodesUsed)
     gr.enumeratePaths("chrQ", 0, 24, nodes, edges, target, 0, -1, -1, &nodes_used);
 
     std::set<std::string> expected;
-    // "chrQ:1-20:CCGGGAAACCCTAACCCGGC:101010101011101"
     expected.insert("chrQ:1-20:CCGGGAAACCCTAACCCGGC:0000000000000000000000000000000000000000000000000000000001010001");
-    // "chrQ:1-20:CCGGGAAACTTGAACCCGGT:110101010011101"
     expected.insert("chrQ:1-20:CCGGGAAACTTGAACCCGGT:0000000000000000000000000000000000000000000000000000000010101101");
-    // "chrQ:1-20:CCGGGAAAGCCTAACCCGGC:101010101101101"
     expected.insert("chrQ:1-20:CCGGGAAAGCCTAACCCGGC:0000000000000000000000000000000000000000000000000000000001010011");
-    // "chrQ:1-20:CCGGGAAAGTTGAACCCGGT:110101010101101"
     expected.insert("chrQ:1-20:CCGGGAAAGTTGAACCCGGT:0000000000000000000000000000000000000000000000000000000010101111");
-    // "chrQ:6-20:GGGAAACCCTAACCCGGC:101010101011011"
     expected.insert("chrQ:6-20:GGGAAACCCTAACCCGGC:0000000000000000000000000000000000000000000000000000000001010000");
-    // "chrQ:6-20:GGGAAACTTGAACCCGGT:110101010011011"
     expected.insert("chrQ:6-20:GGGAAACTTGAACCCGGT:0000000000000000000000000000000000000000000000000000000010101100");
-    // "chrQ:6-20:GGGAAAGCCTAACCCGGC:101010101101011"
     expected.insert("chrQ:6-20:GGGAAAGCCTAACCCGGC:0000000000000000000000000000000000000000000000000000000001010010");
-    // "chrQ:6-20:GGGAAAGTTGAACCCGGT:110101010101011"
     expected.insert("chrQ:6-20:GGGAAAGTTGAACCCGGT:0000000000000000000000000000000000000000000000000000000010101110");
 
     size_t is = 0;
     for(std::string const & s : nodes_used)
     {
-//        std::cerr << target[is].repr() + ":" + s << "\n";
+        /* std::cerr << target[is].repr() + ":" + s << "\n"; */
         BOOST_CHECK_EQUAL(expected.count(target[is].repr() + ":" + s), (size_t)1);
         ++is;
     }
@@ -374,7 +366,7 @@ BOOST_AUTO_TEST_CASE(graphNodesUsedPhased)
     size_t is = 0;
     for(std::string const & s : nodes_used)
     {
-//        std::cerr << target[is].repr() + ":" + s << "\n";
+        /* std::cerr << target[is].repr() + ":" + s << "\n"; */
         BOOST_CHECK_EQUAL(expected.count(target[is].repr() + ":" + s), (size_t)1);
         ++is;
     }

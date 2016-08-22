@@ -302,7 +302,7 @@ void realignRefVar(FastaFile const & f, const char * chr, RefVar const & in_rv, 
     int64_t rstart = in_rv.start, rend = in_rv.end, reflen = rend - rstart + 1;
     int64_t altlen = (int64_t)in_rv.alt.size();
 
-    if(reflen < 2 || altlen < 2)
+    if(reflen < 2 || altlen < 2) //  || reflen == altlen)
     {
         // no complex ref / alt => use fast and simple function
         toPrimitives(f, chr, in_rv, vars);
@@ -331,7 +331,7 @@ void realignRefVar(FastaFile const & f, const char * chr, RefVar const & in_rv, 
     for (int i = 0; i < ncigar; ++i)
     {
         uint32_t count = icigar[i] >> 4;
-        uint8_t op = icigar[i] & 0x000f;
+        uint8_t op = (uint8_t) (icigar[i] & 0x000f);
         switch(op)
         {
             case 0: // 'M'
@@ -366,11 +366,12 @@ void realignRefVar(FastaFile const & f, const char * chr, RefVar const & in_rv, 
                 // this is interpreted as an insertion before pos.
                 rv.start = rstart + refpos;
                 rv.end = rstart + refpos - 1;
-                rv.alt = altseq.substr(altpos, count);
+                rv.alt = altseq.substr((unsigned long) altpos, count);
                 vars.push_back(rv);
 
                 altpos += count;
             break;
+            default:break;
         }
     }
 }
@@ -419,7 +420,7 @@ void realignRefVar(FastaFile const & f, const char * chr, variant::RefVar const 
     for (int i = 0; i < ncigar; ++i)
     {
         uint32_t count = icigar[i] >> 4;
-        uint8_t op = icigar[i] & 0x000f;
+        uint8_t op = (uint8_t) (icigar[i] & 0x000f);
         switch(op)
         {
             case 0: // 'M'
@@ -467,6 +468,7 @@ void realignRefVar(FastaFile const & f, const char * chr, variant::RefVar const 
                 ins+= count;
                 altpos += count;
             break;
+            default:break;
         }
     }
 }

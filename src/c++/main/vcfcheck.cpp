@@ -61,6 +61,8 @@ namespace WARNING {
     enum WARNING  {
         REFPADDING,
         OVERLAP,
+        SYMALT,
+        UNCERTAINLENGTH,
         SIZE
     };
 }
@@ -338,6 +340,8 @@ int main(int argc, char *argv[])
             }
 
             bool any_alts = false;
+            bool any_symbolic = false;
+            bool any_uncertain = false;
             for(int isample = 0; isample < line->n_sample; ++isample)
             {
                 int gt[MAX_GT];
@@ -350,10 +354,21 @@ int main(int argc, char *argv[])
                     if(gt[g] > 0)
                     {
                         const char * alt = line->d.allele[gt[g]];
+
+                        if(strchr(alt, '.') && strlen(alt) > 1)
+                        {
+                            any_uncertain = true;
+                        }
+
                         if(*alt == 0 || *alt == '*' || *alt == '<' || *alt == '.')
                         {
                             // count symbolic alts as non-ref
-                            if(*alt == '<') any_alts = true;
+                            if(*alt == '<')
+                            {
+                                any_alts = true;
+                                any_symbolic = true;
+                            }
+
                             // ignore empty / missing / symbolic alleles
                             continue;
                         }
@@ -374,6 +389,24 @@ int main(int argc, char *argv[])
                     has_warned[WARNING::OVERLAP]++;
                 }
                 previous_allele_count.get()[isample] = allele_count;
+            }
+
+            if(any_symbolic)
+            {
+                if(all_warnings || !has_warned[WARNING::SYMALT])
+                {
+                    std::cerr << "[W] Symbolic / SV ALT alleles at " << vchr << ":" << vstart << "\n";
+                }
+                has_warned[WARNING::SYMALT]++;
+            }
+
+            if(any_uncertain)
+            {
+                if(all_warnings || !has_warned[WARNING::UNCERTAINLENGTH])
+                {
+                    std::cerr << "[W] Alleles with uncertain length at " << vchr << ":" << vstart << "\n";
+                }
+                has_warned[WARNING::UNCERTAINLENGTH]++;
             }
 
             if(any_alts)
@@ -406,6 +439,14 @@ int main(int argc, char *argv[])
         if(has_warned[WARNING::OVERLAP])
         {
             std::cerr << "[W] Variants that overlap on the reference allele: " << has_warned[WARNING::OVERLAP] << "\n";
+        }
+        if(has_warned[WARNING::SYMALT])
+        {
+            std::cerr << "[W] Variants that have symbolic ALT alleles: " << has_warned[WARNING::SYMALT] << "\n";
+        }
+        if(has_warned[WARNING::UNCERTAINLENGTH])
+        {
+            std::cerr << "[W] Variants that have alleles with uncertain length: " << has_warned[WARNING::UNCERTAINLENGTH] << "\n";
         }
 
         std::cerr << "[I] Total VCF records:         " << rcount << "\n";

@@ -174,6 +174,7 @@ void VariantLocationAggregator::add(Variants const & vs)
         compatible_vartype = true;
     }
 
+
     if(!compatible_vartype)
     {
         _impl->buffered_variants.push_back(vs);
@@ -185,6 +186,28 @@ void VariantLocationAggregator::add(Variants const & vs)
         bool can_combine = false;
         bool vs_has_call = (i < vs.calls.size()) && (!vs.calls[i].isNocall());
         bool back_has_call = (i < back.calls.size()) && (!back.calls[i].isNocall());
+
+        bool compatible_filters = true;
+
+        if(vs_has_call && back_has_call)
+        {
+            std::set<std::string> vs_filters;
+            std::set<std::string> back_filters;
+
+            for(size_t f = 0; f < vs.calls[i].nfilter; ++f)
+            {
+                vs_filters.insert(vs.calls[i].filter[f]);
+            }
+            for(size_t f = 0; f < back.calls[i].nfilter; ++f)
+            {
+                back_filters.insert(back.calls[i].filter[f]);
+            }
+            if(vs_filters != back_filters)
+            {
+                compatible_filters = false;
+            }
+        }
+
         switch(_impl->aggregationtype)
         {
             case aggregate_nocall:
@@ -193,10 +216,10 @@ void VariantLocationAggregator::add(Variants const & vs)
             case aggregate_hetalt:
                 can_combine = (!(back_has_call &&  vs_has_call))
                            || ( back_has_call && vs_has_call && back.calls[i].isHet() && vs.calls[i].isHet() );
-                can_combine = can_combine && compatible_vartype;
+                can_combine = can_combine && compatible_vartype && compatible_filters;
                 break;
             case aggregate_ambigous:
-                can_combine = true;
+                can_combine = compatible_filters;
                 break;
             default:
             break;

@@ -250,9 +250,13 @@ def updateArgs(parser):
     parser.add_argument("-L", "--leftshift", dest="preprocessing_leftshift", action="store_true",
                         default=False,
                         help="Left-shift variants safely.")
+    parser.add_argument("--no-leftshift", dest="preprocessing_leftshift", action="store_false",
+                        help="Left-shift variants safely.")
 
-    parser.add_argument("-D", "--decompose", dest="preprocessing_decompose", action="store_true",
+    parser.add_argument("--decompose", dest="preprocessing_decompose", action="store_true",
                         default=True,
+                        help="Decompose variants into primitives. This results in more granular counts.")
+    parser.add_argument("-D", "--no-decompose", dest="preprocessing_decompose", action="store_false",
                         help="Decompose variants into primitives. This results in more granular counts.")
 
     parser.add_argument("--bcftools-norm", dest="preprocessing_norm", action="store_true", default=False,
@@ -284,7 +288,8 @@ def main():
     parser.add_argument("-v", "--version", dest="version", action="store_true",
                         help="Show version number and exit.")
 
-    parser.add_argument("-r", "--reference", dest="ref", default=None, help="Specify a reference file.")
+    parser.add_argument("-r", "--reference", dest="ref", help="Specify a reference file.",
+                        default=Tools.defaultReference())
 
     parser.add_argument("-w", "--window-size", dest="window",
                         default=10000, type=int,

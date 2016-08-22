@@ -14,12 +14,12 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 echo "Running GVCF homref test"
 TF="${DIR}/../data/temp.vcf"
 
-cat ~/workspace_lx/haplotypes/example/homref/homref.vcf \
-	| bgzip > ~/workspace_lx/haplotypes/example/homref/homref.vcf.gz \
-   && tabix -p vcf ~/workspace_lx/haplotypes/example/homref/homref.vcf.gz
-cat ~/workspace_lx/haplotypes/example/homref/homref2.vcf \
-	| bgzip > ~/workspace_lx/haplotypes/example/homref/homref2.vcf.gz \
-   && tabix -p vcf ~/workspace_lx/haplotypes/example/homref/homref2.vcf.gz
+cat ${DIR}/../../example/homref/homref.vcf \
+	| bgzip > ${DIR}/../../example/homref/homref.vcf.gz \
+   && tabix -p vcf ${DIR}/../../example/homref/homref.vcf.gz
+cat ${DIR}/../../example/homref/homref2.vcf \
+	| bgzip > ${DIR}/../../example/homref/homref2.vcf.gz \
+   && tabix -p vcf ${DIR}/../../example/homref/homref2.vcf.gz
 
 echo "${HCDIR}/multimerge ${DIR}/../../example/homref/homref.vcf.gz \
 					${DIR}/../../example/homref/homref2.vcf.gz \
@@ -35,7 +35,7 @@ ${HCDIR}/multimerge ${DIR}/../../example/homref/homref.vcf.gz \
 					--homref-split=1 --unique-alleles=1 \
 					--calls-only=0
 
-diff ${TF} ${DIR}/../../example/homref/expected_merge.vcf
+diff -I ^# ${TF} ${DIR}/../../example/homref/expected_merge.vcf
 
 if [ $? -ne 0 ]; then
 	echo "GVCF homref test FAILED. You can inspect ${TF} for the failed result."
@@ -52,9 +52,9 @@ fi
 echo "Running GVCF homref + Variants test"
 TF="${DIR}/../data/temp.vcf"
 
-cat ~/workspace_lx/haplotypes/example/callsonly/call_merge.vcf \
-	| bgzip > ~/workspace_lx/haplotypes/example/callsonly/call_merge.vcf.gz \
-   && tabix -p vcf ~/workspace_lx/haplotypes/example/callsonly/call_merge.vcf.gz
+cat ${DIR}/../../example/callsonly/call_merge.vcf \
+	| bgzip > ${DIR}/../../example/callsonly/call_merge.vcf.gz \
+   && tabix -p vcf ${DIR}/../../example/callsonly/call_merge.vcf.gz
 
 echo "${HCDIR}/multimerge ${DIR}/../../example/callsonly/call_merge.vcf.gz:* \
 					-o ${TF} -r ${DIR}/../../example/chr21.fa \

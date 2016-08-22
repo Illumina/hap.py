@@ -45,6 +45,7 @@
 #include "variant/VariantAlleleUniq.hh"
 #include "variant/VariantCallsOnly.hh"
 #include "variant/VariantPrimitiveSplitter.hh"
+#include "variant/VariantLeftPadding.hh"
 
 #include <memory>
 
@@ -70,6 +71,7 @@ struct VariantInput::VariantInputImpl {
     std::unique_ptr<VariantAlleleSplitter> p_allele_splitter;
     std::unique_ptr<VariantPrimitiveSplitter> p_primitive_splitter;
     std::unique_ptr<VariantLocationAggregator> p_merger_p;
+    std::unique_ptr<VariantLeftPadding> p_padding;
 };
 
 VariantInput::VariantInput(
@@ -189,6 +191,13 @@ VariantInput::VariantInput(
     {
         _impl->p_allele_uniq = std::move(std::unique_ptr<VariantAlleleUniq>(new VariantAlleleUniq()));
         _impl->proc.addStep(*_impl->p_allele_uniq);
+    }
+
+    if(refpadding)
+    {
+        _impl->p_padding = std::move(std::unique_ptr<VariantLeftPadding>(new VariantLeftPadding()));
+        _impl->p_padding->setReference(_ref_fasta);
+        _impl->proc.addStep(*_impl->p_padding);
     }
 
     if (calls_only)

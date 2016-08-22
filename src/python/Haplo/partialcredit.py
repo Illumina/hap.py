@@ -161,7 +161,7 @@ def partialCredit(vcfname,
                 # just return the same file
                 return
             locations = h["tabix"]["chromosomes"]
-        elif type(locations) is str:
+        elif type(locations) is str or type(locations) is unicode:
             locations = locations.split(",")
 
         # use blocksplit to subdivide input

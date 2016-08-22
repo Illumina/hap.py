@@ -46,6 +46,7 @@
 #include <list>
 #include <htslib/vcf.h>
 #include <thread>
+#include <cmath>
 
 #include "BlockQuantify.hh"
 #include "BlockQuantifyImpl.hh"
@@ -207,7 +208,8 @@ namespace variant {
         };
 
         bcf_unpack(v, BCF_UN_FLT);
-        bool fail = false;
+        bool fail = false;  // fails any of the non-blocked filters
+        bool fail_any = false;  // fails any filter
         for(int j = 0; j < v->d.n_flt; ++j)
         {
             std::string filter = "PASS";
@@ -221,12 +223,22 @@ namespace variant {
                 if(!_impl->filters_to_ignore.count("*") && !_impl->filters_to_ignore.count(filter))
                 {
                     fail = true;
+                    observe("f:" + roc_identifier + ":" + filter, false);
                 }
-                observe("f:" + roc_identifier + ":" + filter, false);
+                else
+                {
+                    observe("f:" + roc_identifier + ":SEL_IGN_" + filter, false);
+                }
+                fail_any = true;
             }
         }
 
-        observe("a:" + roc_identifier + ":PASS", fail);
+        observe("a:" + roc_identifier + ":PASS", fail_any);
+        // selectively-filtered ROCs
+        if(!_impl->filters_to_ignore.empty())
+        {
+            observe("a:" + roc_identifier + ":SEL", fail);
+        }
         observe("a:" + roc_identifier + ":ALL", false);
 
         const std::string regions = bcfhelpers::getInfoString(_impl->hdr, v, "Regions", "");
@@ -240,7 +252,11 @@ namespace variant {
                 {
                     continue;
                 }
-                observe("s|" + r + ":" + roc_identifier + ":PASS", fail);
+                observe("s|" + r + ":" + roc_identifier + ":PASS", fail_any);
+                if(!_impl->filters_to_ignore.empty())
+                {
+                    observe("s|" + r + ":" + roc_identifier + ":SEL", fail);
+                }
                 observe("s|" + r + ":" + roc_identifier + ":ALL", false);
             }
         }
@@ -256,15 +272,107 @@ namespace variant {
         _impl->fasta_to_use.reset(new FastaFile(_impl->ref_fasta));
 #ifdef DEBUG_BLOCKQUANTIFY
         int lastpos = 0;
+        std::cerr << "starting block." << "\n";
 #endif
+        auto current_bs_start = _impl->variants.begin();
+        std::string current_chr;
+        int current_bs = -1;
+        bool current_bs_valid = false;
+
+        // function to compute the QQ values for truth variants in the current
+        // benchmarking superlocus
+        const auto update_bs_qq = [this, &current_bs_start](BlockQuantifyImpl::variantlist_t::iterator to)
+        {
+            std::vector<float> tp_qqs;
+            for(auto cur = current_bs_start; cur != to; ++cur)
+            {
+                const float qqq = bcfhelpers::getFormatFloat(_impl->hdr, *cur, "QQ", 1);
+                if(std::isnan(qqq))
+                {
+                    continue;
+                }
+                const std::string bd = bcfhelpers::getFormatString(_impl->hdr, *cur, "BD", 1);
+                // we want the scores of all TPs in this BS
+                if(bd == "TP")
+                {
+                    tp_qqs.push_back(qqq);
+                }
+            }
+
+            float t_qq = bcfhelpers::missing_float();
+            if(!tp_qqs.empty())
+            {
+                t_qq = *(std::max_element(tp_qqs.begin(), tp_qqs.end()));
+            }
+
+            /** compute the median over all variants */
+            int fsize = bcf_hdr_nsamples(_impl->hdr);
+            float * fmt = (float*)calloc((size_t) fsize, sizeof(float));
+            for(auto cur = current_bs_start; cur != to; ++cur)
+            {
+                const std::string bd = bcfhelpers::getFormatString(_impl->hdr, *cur, "BD", 0);
+                bcf_get_format_float(_impl->hdr, *cur, "QQ", &fmt, &fsize);
+                if(bd != "TP")
+                {
+                    fmt[0] = bcfhelpers::missing_float();
+                }
+                else
+                {
+                    fmt[0] = t_qq;
+                }
+                bcf_update_format_float(_impl->hdr, *cur, "QQ", fmt, fsize);
+            }
+            free(fmt);
+
+#ifdef DEBUG_BLOCKQUANTIFY
+            const int bs = bcfhelpers::getInfoInt(_impl->hdr, *current_bs_start, "BS", -1);
+            std::string values;
+            for(float x : tp_qqs)
+            {
+                values += std::to_string(x) + ",";
+            }
+            std::cerr << "BS: " << bs << " T_QQ = " << t_qq << " [" << values << "]" << "\n";
+#endif
+        };
+
+
+        for(auto v_it = _impl->variants.begin(); v_it != _impl->variants.end(); ++v_it)
+        {
+            // update fields, must output GA4GH-compliant fields
+            countVariants(*v_it);
+
+            // determine benchmarking superlocus
+            const std::string vchr = bcfhelpers::getChrom(_impl->hdr, *v_it);
+            const int vbs = bcfhelpers::getInfoInt(_impl->hdr, *v_it, "BS");
+            if(!current_bs_valid)
+            {
+                current_bs = vbs;
+                current_chr = vchr;
+                current_bs_valid = true;
+            }
+
+#ifdef DEBUG_BLOCKQUANTIFY
+            std::cerr << "current BS = " << current_bs << " vbs = " << vbs << "\n";
+#endif
+
+            if(   current_bs_start != v_it
+               && (vbs != current_bs || vbs < 0 || vchr != current_chr))
+            {
+                update_bs_qq(v_it);
+                current_bs = vbs;
+                current_chr = vchr;
+                current_bs_start = v_it;
+            }
+        }
+
+        // write out final superlocus (if any)
+        update_bs_qq(_impl->variants.end());
+
         for(auto & v : _impl->variants)
         {
 #ifdef DEBUG_BLOCKQUANTIFY
             lastpos = v->pos;
 #endif
-            // update fields, must output GA4GH-compliant fields
-            countVariants(v);
-
             // use BD and BVT to make ROCs
             rocEvaluate(v);
         }
@@ -275,7 +383,8 @@ namespace variant {
     }
 
     // GA4GH-VCF field-based ROC counting
-    void BlockQuantify::rocEvaluate(bcf1_t * v) {
+    void BlockQuantify::rocEvaluate(bcf1_t * v)
+    {
         if (_impl->samples.size() != 2)
         {
             // number of samples must be two, first one is truth, second is query
@@ -286,14 +395,14 @@ namespace variant {
         const std::string vt_truth = bcfhelpers::getFormatString(_impl->hdr, v, "BVT", 0, ".");
         const std::string vt_query = bcfhelpers::getFormatString(_impl->hdr, v, "BVT", 1, ".");
 
-        double qq = bcfhelpers::getFormatFloat(_impl->hdr, v, "QQ", 1);
-        if(std::isnan(qq))
-        {
-            qq = 0;
-        }
-
         if(vt_truth != "NOCALL")
         {
+            double qq = bcfhelpers::getFormatFloat(_impl->hdr, v, "QQ", 0);
+            if(std::isnan(qq))
+            {
+                qq = 0;
+            }
+
             if(bd_truth == "TP")
             {
                 addROCValue(vt_truth, roc::DecisionType::TP, qq, 1, v);
@@ -306,6 +415,11 @@ namespace variant {
 
         if(vt_query != "NOCALL")
         {
+            double qq = bcfhelpers::getFormatFloat(_impl->hdr, v, "QQ", 1);
+            if(std::isnan(qq))
+            {
+                qq = 0;
+            }
             if(bd_query == "FP")
             {
                 addROCValue(vt_query, roc::DecisionType::FP, qq, 1, v);

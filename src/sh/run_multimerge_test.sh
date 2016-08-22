@@ -44,32 +44,32 @@ else
 fi
 
 if [[ -f "$HG19" ]]; then
-	# echo "Running Multimerge test (2)"
+	echo "Running Multimerge test (2)"
 
-	# HF1=${DIR}/../../example/multimerge/hap_alleles_1.vcf
-	# HF2=${DIR}/../../example/multimerge/hap_alleles_2.vcf
+	HF1=${DIR}/../../example/multimerge/hap_alleles_1.vcf
+	HF2=${DIR}/../../example/multimerge/hap_alleles_2.vcf
 
-	# cat $HF1 | bgzip > $HF1.gz
-	# tabix -p vcf $HF1.gz
+	cat $HF1 | bgzip > $HF1.gz
+	tabix -p vcf $HF1.gz
 
-	# cat $HF2 | bgzip > $HF2.gz
-	# tabix -p vcf $HF2.gz
+	cat $HF2 | bgzip > $HF2.gz
+	tabix -p vcf $HF2.gz
 
-	# TF=`mktemp -t multimerge.XXXXXXXXXX`.vcf
-	# echo "Output is in $TF"
-	# ${HCDIR}/multimerge $HF1.gz $HF2.gz -r $HG19 -o $TF --leftshift=1 --splitalleles=1
+	TF=`mktemp -t multimerge.XXXXXXXXXX`.vcf
+	echo "Output is in $TF"
+	${HCDIR}/multimerge $HF1.gz $HF2.gz -r $HG19 -o $TF --leftshift=1 --splitalleles=1
 
-	# diff -I^# ${TF} ${DIR}/../../example/multimerge/hap_alleles_leftshifted.vcf
+	diff -I^# ${TF} ${DIR}/../../example/multimerge/hap_alleles_leftshifted.vcf
 
-	# if [ $? -ne 0 ]; then
-	# 	cat $TF
-	# 	echo "Multimerge test (2) FAILED. diff -I^# ${TF} ${DIR}/../../example/multimerge/hap_alleles_leftshifted.vcf"
-	# 	exit 1
-	# else
-	# 	echo "Multimerge test (2) SUCCEEDED."
-	# fi
+	if [ $? -ne 0 ]; then
+		cat $TF
+		echo "Multimerge test (2) FAILED. diff -I^# ${TF} ${DIR}/../../example/multimerge/hap_alleles_leftshifted.vcf"
+		exit 1
+	else
+		echo "Multimerge test (2) SUCCEEDED."
+	fi
 
-	# rm -f TF
+	rm -f TF
 
 	echo "Running Multimerge test (3)"
 	# TODO this fails when writing BCF -- fix this

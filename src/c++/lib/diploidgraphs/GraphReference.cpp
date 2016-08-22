@@ -54,8 +54,9 @@
 #include <map>
 #include <set>
 #include <bitset>
+#include <queue>
 
-//#define _DEBUG_GRAPHREFERENCE
+/* #define _DEBUG_GRAPHREFERENCE */
 
 #ifndef MAX_GRAPHREFERENCE_NODES
 #define MAX_GRAPHREFERENCE_NODES 4096
@@ -127,12 +128,105 @@ FastaFile const & GraphReference::getRefFasta() const
  * (proxy for number of paths)
  */
 void GraphReference::makeGraph(
-    std::list<variant::Variants> const & input, int ix,
+    std::list<variant::Variants> const & _input, int ix,
     std::vector<ReferenceNode> & nodes,
     std::vector<ReferenceEdge> & edges,
     size_t * nhets
 )
 {
+    std::queue<Variants> input;
+
+    // trim and split alleles
+    for(auto const & v : _input)
+    {
+        Call const & c = v.calls[ix];
+        switch(getGTType(c))
+        {
+            case gt_homalt:
+            case gt_het:
+            {
+                Variants v_copy;
+                v_copy.id = v.id;
+                v_copy.chr = v.chr;
+                v_copy.calls.push_back(c);
+                int which_al = -1;
+                if(v_copy.calls[0].gt[0] != 0)
+                {
+                    which_al = v_copy.calls[0].gt[0] - 1;
+                    v_copy.calls[0].gt[0] = 1;
+                }
+                if(v_copy.calls[0].gt[1] != 0)
+                {
+                    which_al = v_copy.calls[0].gt[1] - 1;
+                    v_copy.calls[0].gt[1] = 1;
+                }
+                if(which_al < 0 || which_al >= (int)v.variation.size())
+                {
+                    error("invalid GT at %s:%i", v.chr.c_str(), v.pos);
+                }
+                v_copy.variation.push_back(v.variation[which_al]);
+                trimLeft(_impl->refsq, v.chr.c_str(), v_copy.variation[0], false);
+                trimRight(_impl->refsq, v.chr.c_str(), v_copy.variation[0], false);
+                if(v_copy.variation[0].start <= v_copy.variation[0].end)
+                {
+                    v_copy.pos = v_copy.variation[0].start;
+                    v_copy.len = v_copy.variation[0].end - v_copy.variation[0].start + 1;
+                }
+                else
+                {
+                    v_copy.pos = v_copy.variation[0].start - 1;
+                    v_copy.len = v_copy.variation[0].end - v_copy.variation[0].start + 1;
+                }
+                input.push(v_copy);
+            }
+            break;
+            case gt_hetalt:
+            {
+                Variants v_copy;
+                v_copy.id = v.id;
+                v_copy.chr = v.chr;
+                v_copy.calls.resize(1);
+                v_copy.calls[0] = c;
+                int64_t min_pos = std::numeric_limits<int64_t>::max();
+                int64_t max_pos = -1;
+
+                for(size_t g = 0; g < c.ngt; ++g)
+                {
+                    if(c.gt[g] <= 0 || c.gt[g] > (int)v.variation.size())
+                    {
+                        error("invalid GT at %s:%i", v.chr.c_str(), v.pos);
+                    }
+                    v_copy.variation.push_back(v.variation[c.gt[g]-1]);
+                    v_copy.calls[0].gt[g] = v_copy.variation.size();
+                    trimLeft(_impl->refsq, v.chr.c_str(), v_copy.variation.back(), false);
+                    trimRight(_impl->refsq, v.chr.c_str(), v_copy.variation.back(), false);
+                    if(min_pos > v_copy.variation.back().start || min_pos > v_copy.variation.back().end)
+                    {
+                        min_pos = std::min(v_copy.variation.back().start, v_copy.variation.back().end);
+                    }
+                    if(max_pos < v_copy.variation.back().start || max_pos < v_copy.variation.back().end)
+                    {
+                        max_pos = std::max(v_copy.variation.back().start, v_copy.variation.back().end);
+                    }
+                }
+                if(min_pos <= max_pos)
+                {
+                    v_copy.pos = min_pos;
+                    v_copy.len = max_pos - min_pos + 1;
+                }
+                else
+                {
+                    v_copy.pos = min_pos - 1;
+                    v_copy.len = max_pos - min_pos + 1;
+                }
+                input.push(v_copy);
+            }
+            break;
+            default: break;
+        }
+    }
+    // we have retrieved calls only for our sample
+    ix = 0;
     if(nhets != NULL)
     {
         *nhets = 0;
@@ -166,8 +260,9 @@ void GraphReference::makeGraph(
     ReferenceNode current[2];
     // dynamically build adjacency list
     std::vector< std::set <size_t> > adj;
-    for(Variants const & vars : input)
+    for(; !input.empty(); input.pop())
     {
+        Variants const & vars = input.front();
 #ifdef _DEBUG_GRAPHREFERENCE
         std::cerr << "VAR: " << stringutil::formatPos(chr, vars.pos) << ": " << vars << "\n";
 #endif
@@ -191,6 +286,23 @@ void GraphReference::makeGraph(
 
         switch(getGTType(call))
         {
+            case gt_homalt:
+                if(call.nfilter > 0 && !(call.nfilter == 1 && call.filter[0] == "PASS"))
+                {
+                    current[0].filtered = true;
+                }
+                current[0].color = ReferenceNode::black;
+                current[0].type = ReferenceNode::alternative;
+                {
+                    RefVar rv = vars.variation[call.gt[0]-1];
+                    current[0].start = rv.start;
+                    current[0].end = rv.end;
+                    current[0].alt = rv.alt;
+                }
+                current[0].het = false;
+                break;
+            default:
+                break;
             case gt_het:
             case gt_hetalt:
                 current[0].het = true;
@@ -209,84 +321,50 @@ void GraphReference::makeGraph(
                 {
                     ++*nhets;
                 }
-
-                // het with single alt
-                if(call.isHet())
+                if(call.gt[0] == 0 || call.gt[1] == 0)
                 {
-                    size_t j = 0;
-                    if(call.gt[j] <= 0)
+                    int j = 0;
+                    if(call.gt[j] == 0)
                     {
-                        j = 1;
+                        ++j;
                     }
+
                     RefVar rv = vars.variation[call.gt[j]-1];
-                    // remove reference padding
-#ifdef _DEBUG_GRAPHREFERENCE
-                    std::cerr << "RV before trimming: " << rv << "\n";
-#endif
-                    variant::trimLeft(_impl->refsq, vars.chr.c_str(), rv, false);
-                    variant::trimRight(_impl->refsq, vars.chr.c_str(), rv, false);
-#ifdef _DEBUG_GRAPHREFERENCE
-                    std::cerr << "RV after trimming: " << rv << "\n";
-#endif
+
                     current[j].type = ReferenceNode::alternative;
                     current[j].start = rv.start;
                     current[j].end = rv.end;
                     current[j].alt = rv.alt;
 
-                    current[j ^ 1].type = ReferenceNode::homref;
-                    current[j ^ 1].start = rv.start;
-                    current[j ^ 1].end = rv.start - 1;
-                    current[j ^ 1].alt = "";
-                }
-                else // het-alt
-                {
-                    for(size_t j = 0; j < call.ngt; ++j)
+                    j = j ^ 1;
+
+                    current[j].type = ReferenceNode::homref;
+                    if(rv.start > rv.end)
                     {
-                        RefVar rv = vars.variation[call.gt[j]-1];
-                        // remove referencbeforee padding
-#ifdef _DEBUG_GRAPHREFERENCE
-                        std::cerr << "RV before trimming: " << rv << "\n";
-#endif
-                        variant::trimLeft(_impl->refsq, vars.chr.c_str(), rv, false);
-                        variant::trimRight(_impl->refsq, vars.chr.c_str(), rv, false);
-#ifdef _DEBUG_GRAPHREFERENCE
-                        std::cerr << "RV after trimming: " << rv << "\n";
-#endif
-                        current[j].type = ReferenceNode::alternative;
-                        current[j].start = rv.start;
-                        current[j].end = rv.end;
-                        current[j].alt = rv.alt;
+                        // insertion => hom-ref block of length 0
+                        current[j].start = std::max(rv.start, rv.end);
                     }
+                    else
+                    {
+                        current[j].start = rv.start;
+                    }
+                    current[j].end = current[j].start - 1;
+                    current[j].alt = "";
                 }
-                break;
-            case gt_haploid:
-                // TODO: we might want to pass on some information into the reference graph here
-            case gt_homalt:
-                if(call.nfilter > 0 && !(call.nfilter == 1 && call.filter[0] == "PASS"))
+                else
                 {
-                    current[0].filtered = true;
+                    RefVar const & rv1 = vars.variation[call.gt[0]-1];
+                    current[0].type = ReferenceNode::alternative;
+                    current[0].start = rv1.start;
+                    current[0].end = rv1.end;
+                    current[0].alt = rv1.alt;
+
+                    RefVar const & rv2 = vars.variation[call.gt[1]-1];
+                    current[1].type = ReferenceNode::alternative;
+                    current[1].start = rv2.start;
+                    current[1].end = rv2.end;
+                    current[1].alt = rv2.alt;
                 }
-                current[0].color = ReferenceNode::black;
-                current[0].type = ReferenceNode::alternative;
-                {
-                    RefVar rv = vars.variation[call.gt[0]-1];
-#ifdef _DEBUG_GRAPHREFERENCE
-                    std::cerr << "RV before trimming: " << rv << "\n";
-#endif
-                    variant::trimLeft(_impl->refsq, vars.chr.c_str(), rv, false);
-                    variant::trimRight(_impl->refsq, vars.chr.c_str(), rv, false);
-#ifdef _DEBUG_GRAPHREFERENCE
-                    std::cerr << "RV after trimming: " << rv << "\n";
-#endif
-                    current[0].start = rv.start;
-                    current[0].end = rv.end;
-                    current[0].alt = rv.alt;
-                }
-                current[0].het = false;
-                break;
-            case gt_homref:
-            default:
-                // all other records are ignored
                 break;
         }
 
@@ -323,9 +401,9 @@ void GraphReference::makeGraph(
         {
             ReferenceNode & node(nodes[x]);
 
-            // will be set to true if we found at least one new node to follow this one
             bool superseeded = false;
 
+            // will be set to true if we found at least one new node to follow this one
             for(int j = 0; j < 2; ++j)
             {
                 if(current_pos[j] == (size_t) -1)
@@ -351,9 +429,10 @@ void GraphReference::makeGraph(
 
             if(!superseeded)
             {
-                next_previous.push_back(x);
+                next_previous.insert(next_previous.end(), x);
             }
         }
+
         previous = next_previous;
 
         // if variants are out of order, we might need to
@@ -403,32 +482,6 @@ void GraphReference::makeGraph(
         ReferenceNode::sink
     );
     nodes.push_back(rs);
-
-    // alternate paths for het nodes
-
-    /* std::list< std::pair<size_t, size_t> > current_nodes; */
-    /* current_nodes.push_back(std::make_pair(size_t(0), size_t(-1))); */
-    /* while(!current_nodes.empty()) */
-    /* { */
-    /*     std::pair<size_t, size_t> & n = current_nodes.front(); */
-    /*     if(adj.size() <= n.first) */
-    /*     { */
-    /*         current_nodes.pop_front(); */
-    /*         continue; */
-    /*     } */
-    /*     ReferenceNode & nn = nodes[n.first]; */
-
-    /*     for(size_t succ : adj[n.first]) */
-    /*     { */
-    /*         // add bypass edge for hets */
-    /*         if(n.second != ( (size_t)-1 ) && nn.het) */
-    /*         { */
-    /*             adj[n.second].insert(succ); */
-    /*         } */
-    /*         current_nodes.push_back(std::make_pair(succ, n.first)); */
-    /*     } */
-    /*     current_nodes.pop_front(); */
-    /* } */
 
     for(size_t from = 0; from < adj.size(); ++from)
     {
@@ -676,7 +729,7 @@ void GraphReference::enumeratePaths(
                     {
 #ifdef _DEBUG_GRAPHREFERENCE
                         std::cerr << "Finished path from BP" <<
-                            current.bp_id << " at " << target[target.size()-1].seq(start, end) <<
+                            current.bp_id << " at " << ht.seq(start, end) <<
                             " ... this path does not cover all expected hom variants / doesn't end at sink"
                             " and will be ignored\n";
 #endif

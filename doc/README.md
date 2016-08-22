@@ -10,3 +10,4 @@ These documentation files are available:
     -  [ls_example.md](ls_example.md)
 *  [refgraph.md](refgraph.md) -- introduction to reference graphs for variant 
    comparison
+*  [microbench.md](microbench.md) -- Micro-benchmark with some ROC plots

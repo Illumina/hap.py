@@ -259,6 +259,20 @@ def main():
         elapsed = time.time() - starttime
         logging.info("preprocess for %s -- time taken %.2f" % (args.vcf1, elapsed))
 
+        # once we have preprocessed the truth file we can resolve the locations
+        # doing this here improves the time for query preprocessing below
+        reference_contigs = set(fastaContigLengths(args.ref).keys())
+
+        if not args.locations:
+            # default set of locations is the overlap between truth and reference
+            args.locations = list(reference_contigs & set(h1["tabix"]["chromosomes"]))
+            if not args.locations:
+                raise Exception("Truth and reference have no chromosomes in common!")
+        elif type(args.locations) is not list:
+            args.locations = [args.locations]
+
+        args.locations = sorted(args.locations)
+
         logging.info("Preprocessing query: %s" % args.vcf2)
         starttime = time.time()
 
@@ -278,7 +292,7 @@ def main():
         pre.preprocess(args.vcf2,
                        qtf.name,
                        args.ref,
-                       args.locations,
+                       str(",".join(args.locations)),
                        filtering,
                        args.fixchr,
                        args.regions_bedfile,
@@ -300,16 +314,6 @@ def main():
 
         if not h2["tabix"]:
             raise Exception("Query file is not indexed after preprocessing.")
-
-        reference_contigs = set(fastaContigLengths(args.ref).keys())
-
-        if not args.locations:
-            # default set of locations is the overlap between truth and reference
-            args.locations = list(reference_contigs & set(h1["tabix"]["chromosomes"]))
-            if not args.locations:
-                raise Exception("Truth and reference have no chromosomes in common!")
-        elif type(args.locations) is not list:
-            args.locations = [args.locations]
 
         for _xc in args.locations:
             if _xc not in h2["tabix"]["chromosomes"]:

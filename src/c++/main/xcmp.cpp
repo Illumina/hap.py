@@ -44,6 +44,7 @@
 #include "helpers/GraphUtil.hh"
 #include "GraphReference.hh"
 #include "DiploidCompare.hh"
+#include "VariantInput.hh"
 
 #include <iostream>
 #include <fstream>
@@ -307,6 +308,7 @@ int main(int argc, char* argv[]) {
         /* now handled after comparison */
         /* vr.setApplyFilters(apply_filters_query, r2); */
 
+        // variant input to re-trim alleles
         bool stop_after_chr_change = false;
         if(chr != "")
         {
@@ -495,7 +497,7 @@ int main(int argc, char* argv[]) {
                 result += "mismatch";
             }
 
-            if(error_out_stream)
+            if(error_out_stream && hap_fail)
             {
                 *error_out_stream << chr << "\t" << block_start << "\t" << block_end+1 << "\t" << result << "\t"
                                   << has_mismatch << ":" << hap_match << ":" << hap_fail << ":"
@@ -506,7 +508,7 @@ int main(int argc, char* argv[]) {
                 for (Variants & v : block_variants)
                 {
                     v.setInfo("BS", (int)block_start + 1);
-                    
+
                     if(qq == "QUAL")
                     {
                         v.setInfo("IQQ", v.calls[r2].qual);

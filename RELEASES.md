@@ -2,19 +2,32 @@
 
 ## v0.3.1
 
-| Ticket   | Description                                                                    |
-|----------|--------------------------------------------------------------------------------|
-| HAP-184  | check for empty query/ref vcf                                                  |
-| HAP-185  | som.py --fix-chr-query does not fix MT appropriately                           |
-| HAP-187  | som.py automatically resolve whether the --fix-chr-query switch is required    |
-| HAP-189  | refactor storage of INFO and FORMAT, extract preprocessing into separate script|
-| HAP-192  | Missing chromosomes cause fp.rate computation to fail in som.py                |
-| HAP-197  | AF binning with arbitrary boundaries in som.py                                 |
-| HAP-201  | hap.py integration tests failing because of trailing white space               |
-| HAP-205  | fix EVS feature support in som.py                                              |
-| HAP-206  | Fix header for BLT in hap.py output                                            |
-| HAP-207  | Count TP, FN and FP outside confident regions as UNK                           |
-| HAP-208  | Simpler deployment with vcfeval                                                |
+| Ticket  | Description                                                                        |
+|---------|------------------------------------------------------------------------------------|
+| HAP-175 | Enable GQX as a ROC feature                                                        |
+| HAP-184 | check for empty query/ref vcf                                                      |
+| HAP-185 | som.py --fix-chr-query does not fix MT appropriately                               |
+| HAP-187 | som.py automatically resolve whether the --fix-chr-query switch is required        |
+| HAP-189 | refactor storage of INFO and FORMAT, extract preprocessing into separate script    |
+| HAP-192 | Missing chromosomes cause fp.rate computation to fail in som.py                    |
+| HAP-197 | AF binning with arbitrary boundaries in som.py                                     |
+| HAP-201 | hap.py integration tests failing because of trailing white space                   |
+| HAP-202 | F-score computation is not correct                                                 |
+| HAP-204 | When no / wrong command line is specified, hap.py should have non-zero return code |
+| HAP-205 | fix EVS feature support in som.py                                                  |
+| HAP-206 | Fix header for BLT in hap.py output                                                |
+| HAP-207 | Count TP, FN and FP outside confident regions as UNK                               |
+| HAP-208 | Simpler deployment with vcfeval                                                    |
+| HAP-209 | Update documentation and release notes                                             |
+| HAP-210 | Calculate truth-QQ values as max over all query BS TPs                             |
+| HAP-211 | Output BS in xcmp                                                                  |
+| HAP-212 | Improve ROC filter handling / add selective filtering                              |
+| HAP-213 | Update Dockerfile                                                                  |
+| HAP-215 | include FDP in som.py indel features                                               |
+| HAP-217 | pad symbolic deletions in pre-processing for vcfeval                               |
+| HAP-218 | improve pre.py command line usage                                                  |
+| HAP-219 | Don't mix variants with different filtering during preprocessing                   |
+| HAP-220 | Quantify counts hom-ref records as INDEL for UNK and for N                         |
 
 ## v0.3.0
 
