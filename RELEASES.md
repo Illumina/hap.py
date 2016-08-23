@@ -1,5 +1,19 @@
 # Hap.py Release Notes / Change Log
 
+## v0.3.2
+
+| Ticket  | Description                                                                        |
+|---------|------------------------------------------------------------------------------------|
+| HAP-180 | Confidence intervals for precision and recall in som.py                            |
+| HAP-221 | document how stratification region overlap is calculated                           |
+| HAP-222 | document all output columns in result CSV files                                    |
+| HAP-223 | getFormatInt is broken / only returns DP, which leads to incorrect ROCs            |
+| HAP-225 | System BOOST install can break installation process. Only use included version.    |
+| HAP-226 | cnx gets wrong caller version for GATK in some cases                               |
+| HAP-227 | QQ.Field should not be IQQ when using xcmp for comparison                          |
+| HAP-229 | Hap.py fails when query does not contain all default chromosomes                   |
+| HAP-230 | Compress large output files to save space when writing ROCs to JSON                |
+
 ## v0.3.1
 
 | Ticket  | Description                                                                        |

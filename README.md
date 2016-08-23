@@ -174,6 +174,26 @@ can be computed at the same time for all
 [GA4GH stratification regions](https://github.com/ga4gh/benchmarking-tools/tree/master/resources/stratification-bed-files),
 and for different INDEL lengths (\<5, 7-15, 16+). Hap.py also calculates
 het-hom and Ti/Tv ratios for all subsets of benchmarked variants.
+Note that all region matching in hap.py is based on reference coordinates
+only. One case where this can lead to counterintuitive results is when considering
+hompolymer insertions:
+
+```
+Reference:
+
+>chrQ
+CAAAAA
+
+VCF:
+chrQ    1   C   CA  0/1
+
+BED for homopolymers:
+1   6
+```
+
+In this example, the variant call given above would not be captured by the bed region for the
+homopolymers because it is associated with the reference base just before. To account for this,
+the bed intervals need to be expanded to include the padding base just before the regions.
 
 Finally, we produce input data for ROC and precision/recall curves. An
 [example](doc/microbench.md) is included.
