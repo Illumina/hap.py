@@ -61,13 +61,13 @@ read_single = function(x) {
 
     all_results = list()
 
-    all_results$roc_data_snp_all = read.csv(paste(x, "roc.Locations.SNP", "csv", sep="."))
-    all_results$roc_data_indel_all = read.csv(paste(x, "roc.Locations.INDEL", "csv", sep="."))
+    all_results$roc_data_snp_all = read.csv(paste(x, "roc.Locations.SNP", "csv", "gz", sep="."))
+    all_results$roc_data_indel_all = read.csv(paste(x, "roc.Locations.INDEL", "csv", "gz", sep="."))
 
-    all_results$roc_data_snp_pass = read.csv(paste(x, "roc.Locations.SNP.PASS", "csv", sep="."))
-    all_results$roc_data_indel_pass = read.csv(paste(x, "roc.Locations.INDEL.PASS", "csv", sep="."))
+    all_results$roc_data_snp_pass = read.csv(paste(x, "roc.Locations.SNP.PASS", "csv", "gz", sep="."))
+    all_results$roc_data_indel_pass = read.csv(paste(x, "roc.Locations.INDEL.PASS", "csv", "gz", sep="."))
 
-    sel_snp_file = paste(x, "roc.Locations.SNP.SEL", "csv", sep=".")
+    sel_snp_file = paste(x, "roc.Locations.SNP.SEL", "csv", "gz", sep=".")
 
     # if we have a selectively-filtered ROC, don't show "PASS" ROC
     if(file.exists(sel_snp_file)) {
@@ -91,7 +91,7 @@ read_single = function(x) {
     all_results$roc_connector_snp$Filter = "CONN"
     all_results$roc_data_snp_sel$Filter = "ROC"
 
-    sel_indel_file = paste(x, "roc.Locations.INDEL.SEL", "csv", sep=".")
+    sel_indel_file = paste(x, "roc.Locations.INDEL.SEL", "csv", "gz", sep=".")
     if(file.exists(sel_indel_file)) {
         all_results$roc_data_indel_sel = read.csv(sel_indel_file)
     } else {
@@ -133,6 +133,7 @@ plot_data = function(pdata, is.PR=FALSE) {
         xaxis = "METRIC.Recall"
         yaxis = "METRIC.Precision"
     } else {
+        # approximate ROC-style curve (FPR is not correct)
         xaxis = "FPR"
         yaxis = "TPR"
         pdata$FPR = pdata$QUERY.FP / (pdata$QUERY.TOTAL - pdata$QUERY.UNK)
