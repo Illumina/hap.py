@@ -1,8 +1,27 @@
-Hap.py User's Manual
-====================
+# Hap.py User's Manual
 
-Introduction
-------------
+<!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+- [Hap.py User's Manual](#happy-users-manual)
+- [Introduction](#introduction)
+- [Getting Started](#getting-started)
+- [Full List of Command line Options](#full-list-of-command-line-options)
+	- [Minimal Options](#minimal-options)
+	- [Running / Debugging issues](#running-debugging-issues)
+	- [Restricting to Subsets of the Genome / Input](#restricting-to-subsets-of-the-genome-input)
+	- [Additional Input Options](#additional-input-options)
+	- [Additional Outputs](#additional-outputs)
+	- [Stratification via Bed Regions](#stratification-via-bed-regions)
+	- [Internal Variant Normalisation and Haplotype Comparison](#internal-variant-normalisation-and-haplotype-comparison)
+	- [ROC Curves](#roc-curves)
+	- [Input Preprocessing using bcftools](#input-preprocessing-using-bcftools)
+	- [Haplotype Comparison Parameters](#haplotype-comparison-parameters)
+	- [Using RTG-Tools / VCFEval as the comparison engine](#using-rtg-tools-vcfeval-as-the-comparison-engine)
+-  [Full-List-of-Output-Columns](#full-list-of-output-columns)
+
+<!-- /TOC -->
+
+# Introduction
 
 Hap.py is a tool to compare diploid genotypes at haplotype level. Rather than
 comparing VCF records row by row, hap.py will generate and match alternate
@@ -41,7 +60,16 @@ Frac_NA = UNK/total(query)
 F1_Score = 2 * Precision * Recall / (Precision + Recall)
 ```
 
-These counts and statistics will be calculated for the following subsets of
+When comparing two VCFs, genotype and allele mismatches are counted both as
+false-positives and as false-negatives. Truth sets like Platinum Genomes or
+NIST/Genome in a Bottle also include "confident call regions", which show places
+where the truth dataset does not expect variant calls, or selects a subset
+of truth variants that are high-confidence.
+Hap.py uses these regions to count truth or query variant calls outside these
+regions as unknown (UNK), query variant calls inside these regions either as
+TP or FP.
+
+Counts and statistics will be calculated for the following subsets of
 variants:
 
 | **Type** | **Description**                                                    |
@@ -84,9 +112,7 @@ example use case is computing precision / recall on exoms as well as on the whol
 or using the stratification regions from the GA4GH benchmarking repository at
 [https://github.com/ga4gh/benchmarking-tools](https://github.com/ga4gh/benchmarking-tools).
 
-
-Simple Usage
-------------
+# Getting Started
 
 Below, we assume that the code has been installed to the directory `${HAPPY}`.
 
@@ -126,22 +152,9 @@ The extended table gives metrics in a more stratified format:
 
 ![](extended.table.png)
 
-False-positives
----------------
+# Full List of Command line Options
 
-When comparing two VCFs, genotype and allele mismatches are counted both as
-false-positives and as false-negatives. Truth sets like Platinum Genomes or
-NIST/Genome in a Bottle also include "confident call regions", which show places
-where the truth dataset does not expect variant calls, or selects a subset
-of truth variants that are high-confidence.
-
-Hap.py uses these regions to count query variant calls outside these regions
-as unknown (UNK), query variant calls inside these regions either as TP or FP.
-
-Full List of Command line Options
----------------------------------
-
-### Minimal Options
+## Minimal Options
 
 You can run hap.py with the -h switch to get help.
 
@@ -154,7 +167,7 @@ $ ${HAPPY}/bin/hap.py truth.vcf.gz query.vcf.gz \
       -o output-prefix --force-interactive
 ```
 
-### Running / Debugging issues
+## Running / Debugging issues
 
 ```
   --force-interactive
@@ -194,7 +207,7 @@ All temporary files go into a scratch folder, which normally defaults to a
 subdirectory of `/tmp`. This can be customised (e.g. when fast local storage is
 available).
 
-### Restricting to Subsets of the Genome / Input
+## Restricting to Subsets of the Genome / Input
 
 ```
   --location LOCATIONS, -l LOCATIONS
@@ -226,7 +239,7 @@ will fail).
 Restrict analysis to given (dense) regions (similar to using -T in bcftools).
 One example use for this is to restrict the analysis to exome-only data.
 
-### Additional Input Options
+## Additional Input Options
 
 ```
   -f FP_BEDFILE, --false-positives FP_BEDFILE
@@ -252,7 +265,7 @@ export HGREF=path-to-your-reference.fa
 
 before running hap.py.
 
-### Additional Outputs
+## Additional Outputs
 
 ```
   -V, --write-vcf
@@ -269,7 +282,7 @@ for truth and query calls (TP/FP/FN/N/UNK).
 See the [GA4GH page above](https://github.com/ga4gh/benchmarking-tools/blob/master/doc/ref-impl/README.md)
 for more details.
 
-### Stratification via Bed Regions
+## Stratification via Bed Regions
 
 Hap.py can compute stratified counts using bed regions of interest. One set of such regions can
 be found here:
@@ -295,7 +308,7 @@ INDEL,*,exons,ALL,*,QUAL,*,0.96729,0.962791,0.12601600000000002,0.48251700000000
 ...
 ```
 
-### Internal Variant Normalisation and Haplotype Comparison
+## Internal Variant Normalisation and Haplotype Comparison
 
 ```
   -L, --leftshift       Left-shift variants in their unary representation. This is off by default.
@@ -333,7 +346,7 @@ many cases by this type of decomposition. The micro-benchmark example in
 [microbench.md](microbench.md) shows the effect of different pre-processing
 switches.
 
-### ROC Curves
+## ROC Curves
 
 Hap.py can create data for ROC-style curves. Normally, it is preferable to calculate
 such curves based on the input variant representations, and not to perform any
@@ -409,13 +422,13 @@ or xcmp (hap.py's internal comparison engine).
 There are a few differences between these comparison modes which are reflected
 in the ROC outputs. Some examples for this are shown in [microbench.md](microbench.md).
 
-### Input Preprocessing using bcftools
+## Input Preprocessing using bcftools
 
 Hap.py has a range of options to control pre-processing separately for truth
 and query. Hap.py supports the same options as pre.py, which is described in
 [normalisation.md](normalisation.md).
 
-### Haplotype Comparison Parameters
+## Haplotype Comparison Parameters
 
 ```
   -w WINDOW, --window-size WINDOW
@@ -449,7 +462,7 @@ is to use vcfeval as a comparison engine instead.
 Reference-pad and expand the sequences generate haplotype blocks by this many
 basepairs left and right.  This is useful for approximate block matching.
 
-### Using RTG-Tools / VCFEval as the comparison engine
+## Using RTG-Tools / VCFEval as the comparison engine
 
 RTG-Tools (see [https://github.com/RealTimeGenomics/rtg-tools](https://github.com/RealTimeGenomics/rtg-tools)
 provides a feature called "vcfeval" which performs complex variant comparisons. Hap.py
@@ -461,12 +474,12 @@ Currently, such a version is available in this branch:
 [https://github.com/realtimegenomics/rtg-tools/tree/ga4gh-test](https://github.com/realtimegenomics/rtg-tools/tree/ga4gh-test)
 
 When installing hap.py, we can attempt to build a compatible version of VCFeval.
-The installer has the  `--with-rtgtools` and `--rtgtools-wrapper RTGTOOLS_WRAPPER` 
+The installer has the  `--with-rtgtools` and `--rtgtools-wrapper RTGTOOLS_WRAPPER`
 command line options to do this.
 
 Before using RTG tools, it is necessary to translate the reference Fasta file into
 the SDF format (this only needs to be done once for each reference sequence). Hap.py can do this
-on the fly, but when using a single reference with multiple VCFs, it is better to do this 
+on the fly, but when using a single reference with multiple VCFs, it is better to do this
 beforehand.
 
 ```
@@ -485,3 +498,53 @@ hap.py truth.vcf.gz query.vcf.gz -f conf.bed.gz -o ./test -V --engine=vcfeval --
 ```
 
 Most other command line arguments and outputs will work as before.
+
+# Full List of Output Columns
+
+Happy outputs a set of stratification columns, followed by metrics columns.
+Stratification columns may contain the placeholder "*" value, which indicates
+that counts in this row are aggregated over all possible values of the column.
+In case of a subtype, this means that the counts have been summed across all
+subtypes. In case of QQ, it means that the counts correspond to all variants
+rather than only ones below a QQ threshold.
+
+| Stratification Column | Description                                                                        |
+|:----------------------|------------------------------------------------------------------------------------|
+| Type                  | Variant type (SNP / INDEL)                                                         |
+| Subtype               | Variant Subtype (ti/tv/indel length, see above                                     |
+| Subset                | Subset of the genome/stratification region                                         |
+| Filter                | Variant filters: PASS, SEL, ALL, or a particular filter from the query VCF         |
+| Genotype              | Genotype of benchmarked variants (het / homalt / hetalt)                           |
+| QQ.Field              | Which field from the original VCF was used to produce QQ values in truth and query |
+| QQ                    | QQ threshold for ROC values                                                        |
+
+
+| Metric Column             | Description                                                                                                 |
+|:--------------------------|-------------------------------------------------------------------------------------------------------------|
+| METRIC.Recall             | Recall for truth variant representation = TRUTH.TP / (TRUTH.TP + TRUTH.FN)                                  |
+| METRIC.Precision          | Precision of query variants = QUERY.TP / (QUERY.TP + QUERY.FP)                                              |
+| METRIC.Frac_NA            | Fraction of non-assessed query calls = QUERY.UNK / QUERY.TOTAL                                              |
+| METRIC.F1_Score           | Harmonic mean of precision and recall = 2*METRIC.Recall*Metric.Precision/(METRIC.Recall + METRIC.Precision) |
+| TRUTH.TOTAL               | Total number of truth variants                                                                              |
+| TRUTH.TP                  | Number of true-positive calls in truth representation (counted via the truth sample column)                 |
+| TRUTH.FN                  | Number of false-negative calls = calls in truth without matching query call                                 |
+| QUERY.TOTAL               | Total number of query calls                                                                                 |
+| QUERY.TP                  | Number of true positive calls in query representation (counted via the query sample column)                 |
+| QUERY.FP                  | Number of false-positive calls in the query file (mismatched query calls within the confident regions)      |
+| QUERY.UNK                 | Number of query calls outside the confident regions                                                         |
+| FP.gt                     | Number of genotype mismatches (alleles match, but different zygosity)                                       |
+| FP.al                     | Number of allele mismatches (variants matched by position and not by haplotype)                             |
+| TRUTH.TOTAL.TiTv_ratio    | Transition / Transversion ratio for all truth variants                                                      |
+| TRUTH.TOTAL.het_hom_ratio | Het/Hom ratio for all truth variants                                                                        |
+| TRUTH.FN.TiTv_ratio       | Transition / Transversion ratio for false-negative variants                                                 |
+| TRUTH.FN.het_hom_ratio    | Het/Hom ratio for false-negative variants                                                                   |
+| TRUTH.TP.TiTv_ratio       | Transition / Transversion ratio for true positive variants                                                  |
+| TRUTH.TP.het_hom_ratio    | Het/Hom ratio for true positive variants                                                                    |
+| QUERY.FP.TiTv_ratio       | Transition / Transversion ratio for false positive variants                                                 |
+| QUERY.FP.het_hom_ratio    | Het/Hom ratio for false-positive variants                                                                   |
+| QUERY.TOTAL.TiTv_ratio    | Transition / Transversion ratio for all query variants                                                      |
+| QUERY.TOTAL.het_hom_ratio | Het/Hom ratio for all query variants                                                                        |
+| QUERY.TP.TiTv_ratio       | Transition / Transversion ratio for true positive variants (query representation)                           |
+| QUERY.TP.het_hom_ratio    | Het/Hom ratio for true positive variants (query representation)                                             |
+| QUERY.UNK.TiTv_ratio      | Transition / Transversion ratio for unknown variants                                                        |
+| QUERY.UNK.het_hom_ratio   | Het/Hom ratio for unknown variants                                                                          |
