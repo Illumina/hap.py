@@ -251,23 +251,23 @@ def updateArgs(parser):
                         default=False,
                         help="Left-shift variants safely.")
     parser.add_argument("--no-leftshift", dest="preprocessing_leftshift", action="store_false",
-                        help="Left-shift variants safely.")
+                        help="Do not left-shift variants safely.")
 
     parser.add_argument("--decompose", dest="preprocessing_decompose", action="store_true",
                         default=True,
                         help="Decompose variants into primitives. This results in more granular counts.")
     parser.add_argument("-D", "--no-decompose", dest="preprocessing_decompose", action="store_false",
-                        help="Decompose variants into primitives. This results in more granular counts.")
+                        help="Do not decompose variants into primitives.")
 
     parser.add_argument("--bcftools-norm", dest="preprocessing_norm", action="store_true", default=False,
                         help="Enable preprocessing through bcftools norm -c x -D (requires external "
                              " preprocessing to be switched on).")
 
     parser.add_argument("--fixchr", dest="fixchr", action="store_true", default=None,
-                        help="Add/remove chr prefix (default: auto, attempt to match reference).")
+                        help="Add chr prefix to VCF records where necessary (default: auto, attempt to match reference).")
 
     parser.add_argument("--no-fixchr", dest="fixchr", action="store_false",
-                        help="Add chr prefix to query file (default: auto, attempt to match reference).")
+                        help="Do not add chr prefix to VCF records (default: auto, attempt to match reference).")
 
     parser.add_argument("--bcf", dest="bcf", action="store_true", default=False,
                         help="Use BCF internally. This is the default when the input file"
