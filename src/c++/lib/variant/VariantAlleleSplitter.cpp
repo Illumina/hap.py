@@ -315,6 +315,7 @@ bool VariantAlleleSplitter::advance()
                 }
                 cur.pos = p.rv.start;
                 cur.len = p.rv.end - p.rv.start + 1;
+                cur.infos = p.infos;
             }
             for(auto const & m : p.infos.getMemberNames())
             {
