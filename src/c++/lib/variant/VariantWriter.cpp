@@ -158,8 +158,8 @@ namespace variant
             int idx = bcf_hrec_find_key(hrec, "ID");
             if ( idx < 0 )
             {
-                // no ID => skip
-                bcf_hrec_destroy(hrec);
+                // no ID => pass on
+                bcf_hdr_add_hrec(hdr, hrec);
                 continue;
             }
 
