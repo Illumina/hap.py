@@ -52,9 +52,17 @@ if [[ $? != 0 ]]; then
 fi
 
 # these are all the metrics. We filter out all the command line bits
-cat ${TMP_OUT}.metrics.json | ${PYTHON} -mjson.tool | grep -v timestamp | grep -v hap.py > ${TMP_OUT}.hap.m.json
-cat ${TMP_OUT}.qfy.metrics.json | ${PYTHON} -mjson.tool | grep -v timestamp | grep -v qfy.py > ${TMP_OUT}.qfy.m.json
-diff ${TMP_OUT}.hap.m.json ${TMP_OUT}.qfy.m.json | head
+gunzip -c ${TMP_OUT}.metrics.json.gz | ${PYTHON} -mjson.tool | grep -v timestamp | grep -v hap.py > ${TMP_OUT}.hap.m.json
+if [[ $? != 0 ]] || [[ ! -s ${TMP_OUT}.hap.m.json ]]; then
+	echo "Cannot unzip metrics for original run."
+	exit 1
+fi
+gunzip -c ${TMP_OUT}.qfy.metrics.json.gz | ${PYTHON} -mjson.tool | grep -v timestamp | grep -v qfy.py > ${TMP_OUT}.qfy.m.json
+if [[ $? != 0 ]] || [[ ! -s ${TMP_OUT}.qfy.m.json ]]; then
+	echo "Cannot unzip metrics for re-quantified run."
+	exit 1
+fi
+diff ${TMP_OUT}.hap.m.json ${TMP_OUT}.qfy.m.json
 if [[ $? != 0 ]]; then
 	echo "Re-quantified counts are different! diff ${TMP_OUT}.hap.m.json ${TMP_OUT}.qfy.m.json "
 	exit 1
