@@ -30,6 +30,7 @@ import logging
 import traceback
 import tempfile
 import json
+import pandas
 
 scriptDir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'lib', 'python27')))
@@ -41,15 +42,28 @@ import Tools.bamstats
 def main():
     parser = argparse.ArgumentParser("BAM Statistics")
 
-    parser.add_argument("input", nargs=1)
+    parser.add_argument("input", nargs="+")
 
     parser.add_argument("-o", "--output", dest="output", help="Output CSV file name")
 
     args = parser.parse_args()
-    bs = Tools.bamstats.bamStats(args.input[0])
-    print str(bs)
+
+    all_results = []
+    for inp in args.input:
+        bs = Tools.bamstats.bamStats(inp)
+        bs["FILE"] = inp
+        all_results.append(bs)
+
+    all_results = pandas.concat(all_results)
+    all_results.reset_index(inplace=True)
+
+    pandas.set_option("display.width", 10000)
+    pandas.set_option("display.max_colwidth", 2048)
+    pandas.set_option("display.max_columns", 10000)
+    pandas.set_option("display.max_rows", 1000000)
+    print str(all_results)
     if args.output:
-        bs.to_csv(args.output)
+        all_results.to_csv(args.output)
 
 
 if __name__ == '__main__':
