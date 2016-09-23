@@ -1,5 +1,14 @@
 # Hap.py Release Notes / Change Log
 
+## v0.3.3
+
+| Ticket  | Description                                                                        |
+|---------|------------------------------------------------------------------------------------|
+| HAP-232 | Fix help text in hap.py and pre.py                                                 |
+| HAP-233 | INFO fields don't get mixed up in preprocessing anymore                            |
+| HAP-234 | Forward unstructured headers through hap.py                                        |
+| HAP-236 | Fix quanitify test to work with compressed outputs                                 |
+
 ## v0.3.2
 
 | Ticket  | Description                                                                        |

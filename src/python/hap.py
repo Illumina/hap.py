@@ -82,7 +82,7 @@ def main():
     parser.add_argument("--preprocess-truth", dest="preprocessing_truth", action="store_true", default=False,
                         help="Preprocess truth file with same settings as query (default is to accept truth in original format).")
     parser.add_argument("--usefiltered-truth", dest="usefiltered_truth", action="store_true", default=False,
-                        help="Preprocess truth file with same settings as query (default is to accept truth in original format).")
+                        help="Use filtered variant calls in truth file (by default, only PASS calls in the truth file are used)")
     parser.add_argument("--preprocessing-window-size", dest="preprocess_window",
                         default=10000, type=int,
                         help="Preprocessing window size (variants further apart than that size are not expected to interfere).")

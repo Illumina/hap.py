@@ -45,8 +45,8 @@ class CallerInfo(object):
         tf.close()
         vfh = {}
         try:
-            sp = subprocess.Popen("vcfhdr2json %s %s" % (vcfname, tf.name),
-                                  shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            sp = subprocess.Popen("vcfhdr2json '%s' '%s'" % (vcfname, tf.name),
+                shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             o, e = sp.communicate()
 
             if sp.returncode != 0:
@@ -120,7 +120,7 @@ class CallerInfo(object):
         """ Extract aligner information from a BAM file
         :param bamfile: name of BAM file
         """
-        sp = subprocess.Popen("samtools view -H %s" % bamfile,
+        sp = subprocess.Popen("samtools view -H '%s'" % bamfile,
                               shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         o, e = sp.communicate()
 
