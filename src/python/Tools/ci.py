@@ -23,6 +23,10 @@ def jeffreysCI(x, n, alpha=0.05):
     Brown, Cai and DasGupta: Interval Estimation for a Binomial Proportion.
     2001, doi:10.1214/ss/1009213286'''
 
+    # HAP-240 avoid division by zero
+    if n == 0:
+        return 0.0, 0.0, 1.0
+
     p = x / n
     beta = stats.distributions.beta(x+0.5, n-x+0.5)
 
