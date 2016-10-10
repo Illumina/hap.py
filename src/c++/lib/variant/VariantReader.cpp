@@ -591,6 +591,44 @@ bool VariantReader::advance()
 
         ++ncalls;
         bcf_unpack(line, BCF_UN_ALL);
+        
+        std::string fmt_strings = bcfhelpers::getFormatString(reader.header, line, "FT", isample, "");
+        std::vector<std::string> fmt_filters;
+        stringutil::split(fmt_strings, fmt_filters, ";", false);
+        for(auto const & f : fmt_filters) 
+        {
+            if(f.empty() || f == "PASS") 
+            {
+                continue;
+            }
+            fail = true;
+            bool has_filter = false;
+            for(size_t ff = 0; ff < vars.calls[sid].nfilter; ++ff)
+            {
+                if(f == vars.calls[sid].filter[ff])
+                {
+                    has_filter = true;
+                    break;
+                }
+            }
+            if(!has_filter)
+            {
+                if(vars.calls[sid].nfilter + 1 > MAX_FILTER)
+                {
+                    error("Too many filters at %s:%i in sample %i", vars.chr.c_str(), vars.pos, sid);
+                }
+                vars.calls[sid].filter[vars.calls[sid].nfilter - 1] = f;
+                vars.calls[sid].nfilter++;
+            }
+        }
+
+        if(getApplyFilters((int) sid) && fail)
+        {
+            vars.calls[sid].ngt = 0;
+            vars.calls[sid].phased = false;
+            vars.calls[sid].nfilter = 0;
+            continue;
+        }
 
         vars.calls[sid].qual = line->qual;
 

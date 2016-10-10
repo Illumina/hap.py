@@ -1,0 +1,12 @@
+##fileformat=VCFv4.1
+##contig=<ID=chrQ,length=37>
+##INFO=<ID=END,Number=1,Type=Integer,Description="Variant end">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=FT,Number=1,Type=String,Description="Per-sample filter">
+##FILTER=<ID=PASS,Description="All filters passed">
+##FILTER=<ID=A,Description="Filter A">
+##FILTER=<ID=B,Description="Filter B">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA12877
+chrQ	1	.	A	G	.	PASS	.	GT	0/1
+chrQ	2	.	A	T	.	PASS	.	GT:FT	0/1:A
+chrQ	3	.	A	T	.	PASS	.	GT:FT	0/1:A;B
