@@ -483,12 +483,7 @@ int main(int argc, char* argv[]) {
         }
 
         chr = firstchr;
-        // TODO - the correct thing to do here would be to use start = 0
-        // but bcftools / htslib don't like bed coordinates with start 0
-        // We should fix this in htslib, and then change it here (currently,
-        // this will miss variants starting at the first coordinate of the
-        // chromosome)
-        start = 1;
+        start = 0;
         int64_t vpb = 0;
         int64_t target_vpb = std::max(nvars, ((int)total_vars) / nblocks);
 

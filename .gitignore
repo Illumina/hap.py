@@ -31,3 +31,7 @@ tags_sorted_by_file
 *.sublime-project
 *.sublime-workspace
 Thumbs.db
+/bin
+/lib
+/include
+/nbproject
