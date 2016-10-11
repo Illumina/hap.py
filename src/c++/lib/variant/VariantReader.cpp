@@ -617,8 +617,7 @@ bool VariantReader::advance()
                 {
                     error("Too many filters at %s:%i in sample %i", vars.chr.c_str(), vars.pos, sid);
                 }
-                vars.calls[sid].filter[vars.calls[sid].nfilter - 1] = f;
-                vars.calls[sid].nfilter++;
+                vars.calls[sid].filter[vars.calls[sid].nfilter++] = f;
             }
         }
 

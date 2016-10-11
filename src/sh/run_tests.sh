@@ -100,6 +100,19 @@ else
 fi
 
 ##############################################################
+# Test Hap.py + other VCF items
+##############################################################
+
+/bin/bash ${DIR}/run_other_vcf_tests.sh
+
+if [[ $? -ne 0 ]]; then
+	echo "Other VCF tests FAILED!"
+	exit 1
+else
+	echo "Other VCF tests SUCCEEDED!"
+fi
+
+##############################################################
 # Test hom-ref block expansion and calls-only preprocessing
 ##############################################################
 
