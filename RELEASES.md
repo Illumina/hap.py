@@ -1,5 +1,14 @@
 # Hap.py Release Notes / Change Log
 
+## v0.3.4
+
+| Ticket  | Description                                                                        |
+|---------|------------------------------------------------------------------------------------|
+| HAP-240 | Fix division by zero in som.py CI computation                                      |
+| HAP-241 | Add genotype validation to vcfcheck. Will now fail when alleles don't exist.       |
+| HAP-242 | Improved counts in bamstats.py                                                     |
+| HAP-244 | Support the FT format field to enable per-sample filtering                         |
+
 ## v0.3.3
 
 | Ticket  | Description                                                                        |
