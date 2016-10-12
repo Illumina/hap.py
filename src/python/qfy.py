@@ -124,7 +124,9 @@ def quantify(args):
         # if we run this through qfy, these arguments are not present
         pass
 
-    res = Haplo.happyroc.roc(roc_table, args.reports_prefix + ".roc", filter_handling)
+    res = Haplo.happyroc.roc(roc_table, args.reports_prefix + ".roc",
+                             filter_handling=filter_handling,
+                             ci_alpha=args.ci_alpha)
     df = res["all"]
 
     # only use summary numbers
@@ -243,6 +245,9 @@ def updateArgs(parser):
 
     parser.add_argument("--roc-delta", dest="roc_delta", default=0.5, type=float,
                         help="Minimum spacing between ROC QQ levels.")
+
+    parser.add_argument("--ci-alpha", dest="ci_alpha", default=0.0, type=float,
+                        help="Confidence level for Jeffrey's CI for recall, precision and fraction of non-assessed calls.")
 
     parser.add_argument("--no-json", dest="write_json", default=True, action="store_false",
                         help="Disable JSON file output.")

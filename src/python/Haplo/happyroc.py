@@ -26,6 +26,8 @@ import pandas
 import numpy as np
 import itertools
 
+from Tools import ci
+
 RESULT_ALLCOLUMNS = ["Type",
                      "Subtype",
                      "Subset",
@@ -101,7 +103,9 @@ def _run(cmd):
     return o
 
 
-def roc(roc_table, output_path, filter_handling=None):
+def roc(roc_table, output_path,
+        filter_handling=None,
+        ci_alpha=0.05):
     """ Calculate SNP and indel ROC.
 
     Return a dictionary of variant types and corresponding files.
@@ -109,6 +113,7 @@ def roc(roc_table, output_path, filter_handling=None):
     :param filter_handling: can be None, "PASS" or "ALL" to filter rows based on the "Filter" column.
                             this is necessary because vcfeval doesn't preserve filter information
                             in GA4GH output mode, so we need to remve the corresponding rows here
+    :param ci_alpha: Jeffrey's CI confidence level for recall, precision, na
 
     """
     result = {}
@@ -199,6 +204,29 @@ def roc(roc_table, output_path, filter_handling=None):
             result[k][count_type + ".het_hom_ratio"] = pandas.to_numeric(result[k][count_type + ".het"], errors="coerce") / pandas.to_numeric(result[k][count_type + ".homalt"], errors="coerce")
             result[k][count_type + ".TiTv_ratio"].replace([np.inf, -np.inf], np.nan, inplace=True)
             result[k][count_type + ".het_hom_ratio"].replace([np.inf, -np.inf], np.nan, inplace=True)
+
+
+        if 0 < ci_alpha < 1:
+            logging.info("Computing recall CIs for %s" % k)
+            rc, rc_min, rc_max = ci.binomialCI( result[k]["TRUTH.TP"].values,
+                                               (result[k]["TRUTH.TP"] + result[k]["TRUTH.FN"]).values,
+                                               ci_alpha)
+            result[k]["METRIC.Recall.Lower"] = rc_min
+            result[k]["METRIC.Recall.Upper"] = rc_max
+
+            logging.info("Computing precision CIs for %s" % k)
+            pc, pc_min, pc_max = ci.binomialCI( result[k]["QUERY.TP"].values,
+                                               (result[k]["QUERY.TP"] + result[k]["QUERY.FP"]).values,
+                                               ci_alpha)
+            result[k]["METRIC.Precision.Lower"] = pc_min
+            result[k]["METRIC.Precision.Upper"] = pc_max
+
+            logging.info("Computing Frac_NA CIs for %s" % k)
+            fna, fna_min, fna_max = ci.binomialCI(result[k]["QUERY.UNK"].values,
+                                                  result[k]["QUERY.TOTAL"].values,
+                                                  ci_alpha)
+            result[k]["METRIC.Frac_NA.Lower"] = fna_min
+            result[k]["METRIC.Frac_NA.Upper"] = fna_max
 
         vt = re.sub("[^A-Za-z0-9\\.\\-_]", "_", k, flags=re.IGNORECASE)
         if output_path:

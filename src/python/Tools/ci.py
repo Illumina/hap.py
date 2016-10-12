@@ -18,6 +18,11 @@ import numpy as np
 import scipy.stats as stats
 
 
+_VALUE_CACHE = {}
+
+
+
+
 def jeffreysCI(x, n, alpha=0.05):
     '''Modified Jeffreys confidence interval for binomial proportions:
     Brown, Cai and DasGupta: Interval Estimation for a Binomial Proportion.
@@ -26,6 +31,12 @@ def jeffreysCI(x, n, alpha=0.05):
     # HAP-240 avoid division by zero
     if n == 0:
         return 0.0, 0.0, 1.0
+
+    key = "%i_%i_%f" % (x, n, alpha)
+    try:
+        return _VALUE_CACHE[key]
+    except:
+        pass
 
     p = x / n
     beta = stats.distributions.beta(x+0.5, n-x+0.5)
@@ -49,6 +60,8 @@ def jeffreysCI(x, n, alpha=0.05):
     # avoid values outside the unit range due to potential numerical inaccuracy
     lower = max(lower, 0.0)
     upper = min(upper, 1.0)
+
+    _VALUE_CACHE[key] = (p, lower, upper)
 
     return (p, lower, upper)
 
