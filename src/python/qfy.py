@@ -82,6 +82,11 @@ def quantify(args):
                 n, _, f = l.strip().partition("\t")
                 if n in qfyregions:
                     raise Exception("Duplicate stratification region ID: %s" % n)
+                if not f:
+                    if n:
+                        raise Exception("No file for stratification region %s" % n)
+                    else:
+                        continue
                 if not os.path.exists(f):
                     f = os.path.join(os.path.abspath(os.path.dirname(args.strat_tsv)), f)
                 if not os.path.exists(f):
