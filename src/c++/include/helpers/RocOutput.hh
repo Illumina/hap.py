@@ -37,6 +37,7 @@
 #define HAPLOTYPES_ROCOUTPUT_HH
 
 #include "Roc.hh"
+#include "QuantifyRegions.hh"
 
 namespace roc
 {
@@ -49,16 +50,23 @@ namespace roc
          * ROC output class
          *
          * @param r the set of ROCs to write
-         * @param _fullRoc only write totals when false
+         * @param _qq_field the name of the qual field (this gets written into each row of the table)
+         * @param _output_rocs true to write ROCs (otherwise, just write totals)
+         * @param _roc_delta minimum QQ distance between ROC datapoints
+         * @param _regions regions datastructure for adding region sizes
          */
         ROCOutput(RocMap const & r,
                   std::string _qq_field,
                   bool _output_rocs,
-                  double _roc_delta
+                  double _roc_delta,
+                  variant::QuantifyRegions const & _regions,
+                  std::vector<std::string> const & _roc_regions
         ) : rocs(r),
             qq_field(_qq_field),
             output_rocs(_output_rocs),
-            roc_delta(_roc_delta)
+            roc_delta(_roc_delta),
+            regions(_regions),
+            roc_regions(_roc_regions)
         {}
 
         /** compute metrics and write output */
@@ -68,6 +76,8 @@ namespace roc
         std::string qq_field;
         bool output_rocs;
         double roc_delta;
+        variant::QuantifyRegions const & regions;
+        std::vector<std::string> const & roc_regions;
    };
 }
 

@@ -110,6 +110,7 @@ def quantify(args):
                                 roc_header=roc_header,
                                 roc_filter=args.roc_filter,
                                 roc_delta=args.roc_delta,
+                                roc_regions=args.roc_regions,
                                 clean_info=not args.preserve_info,
                                 strat_fixchr=args.strat_fixchr)
 
@@ -186,8 +187,9 @@ def quantify(args):
         metrics_output["metrics"].append(dataframeToMetricsTable("roc." + t, res[t]))
 
     # gzip JSON output
-    with gzip.open(args.reports_prefix + ".metrics.json.gz", "w") as fp:
-        json.dump(metrics_output, fp)
+    if args.write_json:
+        with gzip.open(args.reports_prefix + ".metrics.json.gz", "w") as fp:
+            json.dump(metrics_output, fp)
 
 
 def updateArgs(parser):
@@ -232,11 +234,19 @@ def updateArgs(parser):
     parser.add_argument("--no-roc", dest="do_roc", default=True, action="store_false",
                         help="Disable ROC computation and only output summary statistics for more concise output.")
 
+    parser.add_argument("--roc-regions", dest="roc_regions", default=['*'], action="append",
+                        help="Select a list of regions to compute ROCs in. By default, only the '*' region will"
+                             " produce ROC output (aggregate variant counts).")
+
     parser.add_argument("--roc-filter", dest="roc_filter", default=False,
                         help="Select a filter to ignore when making ROCs.")
 
     parser.add_argument("--roc-delta", dest="roc_delta", default=0.5, type=float,
                         help="Minimum spacing between ROC QQ levels.")
+
+    parser.add_argument("--no-json", dest="write_json", default=True, action="store_false",
+                        help="Disable JSON file output.")
+
 
 
 def main():

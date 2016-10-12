@@ -53,8 +53,10 @@ namespace variant
     struct QuantifyRegions::QuantifyRegionsImpl
     {
         std::vector<std::string> names;
+        std::unordered_map<std::string, size_t> label_map;
         std::unordered_map<std::string, std::unique_ptr<intervals::IntervalBuffer>> ib;
         std::unordered_map<std::string, std::unique_ptr<intervals::IntervalBuffer>>::iterator current_chr = ib.end();
+        std::unordered_map<size_t, size_t> region_sizes;
         int64_t current_pos = -1;
     };
 
@@ -72,18 +74,19 @@ namespace variant
      * regions (everything unknown is a FP) from the one where the confident
      * region file is empty (every FP is unknown).
      */
-    bool QuantifyRegions::hasRegions() const
+    bool QuantifyRegions::hasRegions(std::string const & rname) const
     {
-        return !_impl->names.empty();
+        return _impl->label_map.find(rname) != _impl->label_map.cend();
     }
 
     void QuantifyRegions::load(std::vector<std::string> const &rnames, bool fixchr)
     {
-        std::map<std::string, size_t> label_map;
+        std::unordered_map<std::string, size_t> label_map;
         for (std::string const &f : rnames)
         {
             std::vector<std::string> v;
             stringutil::split(f, v, ":");
+            bool fixed_label = false;
 
             std::string filename, label = "";
 
@@ -97,6 +100,15 @@ namespace variant
             {
                 label = v[0];
                 filename = v[1];
+                if(label[0] == '=')
+                {
+                    label = label.substr(1);
+                    fixed_label = true;
+                }
+                if(label == "CONF")
+                {
+                    fixed_label = true;
+                }
             }
             else
             {
@@ -176,7 +188,46 @@ namespace variant
                             std::cerr << "[W] ignoring invalid interval in " << filename << " : " << line << "\n";
                             continue;
                         }
-                        chr_it->second->addInterval(start, stop, label_id);
+
+                        size_t this_label_id = label_id;
+                        if(!fixed_label && v.size() > 3) {
+                            const std::string entry_label = label + "_" + v[3];
+                            auto li_it2 = label_map.find(entry_label);
+                            if (li_it2 == label_map.end())
+                            {
+                                this_label_id = _impl->names.size();
+                                _impl->names.push_back(entry_label);
+                                label_map[entry_label] = this_label_id;
+                            }
+                            else
+                            {
+                                this_label_id = li_it2->second;
+                            }
+                        }
+                        auto size_it = _impl->region_sizes.find(this_label_id);
+                        if(size_it == _impl->region_sizes.end())
+                        {
+                            _impl->region_sizes[this_label_id] = (unsigned long) (stop - start + 1);
+                        }
+                        else
+                        {
+                            size_it->second += (unsigned long) (stop - start + 1);
+                        }
+                        chr_it->second->addInterval(start, stop, this_label_id);
+                        if(this_label_id != label_id)
+                        {
+                            // also add to total for this bed file
+                            size_it = _impl->region_sizes.find(label_id);
+                            if(size_it == _impl->region_sizes.end())
+                            {
+                                _impl->region_sizes[label_id] = (unsigned long) (stop - start + 1);
+                            }
+                            else
+                            {
+                                size_it->second += (unsigned long) (stop - start + 1);
+                            }
+                            chr_it->second->addInterval(start, stop, label_id);
+                        }
                         ++icount;
                     }
                     catch (std::invalid_argument const &)
@@ -198,6 +249,7 @@ namespace variant
             std::cerr << "Added region file '" << filename << "' as '" << label << "' (" << icount << " intervals)" <<
             "\n";
         }
+        _impl->label_map = label_map;
     }
 
     /** add Regions annotation to a record
@@ -257,6 +309,26 @@ namespace variant
         {
             bcf_update_info_string(hdr, record, "Regions", nullptr);
         }
+    }
+
+    /**
+     * Get total region sizes in NT
+     * @param region_name
+     * @return  the region size
+     */
+    size_t QuantifyRegions::getRegionSize(std::string const & region_name) const
+    {
+        auto label_it = _impl->label_map.find(region_name);
+        if(label_it == _impl->label_map.cend())
+        {
+            return 0;
+        }
+        auto size_it = _impl->region_sizes.find(label_it->second);
+        if(size_it == _impl->region_sizes.cend())
+        {
+            return 0;
+        }
+        return size_it->second;
     }
 }
 

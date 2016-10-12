@@ -62,14 +62,10 @@ namespace variant
         void load(std::vector<std::string> const & rnames, bool fixchr=false);
 
         /**
-         * Returns true if regions were loaded.
-         *
-         * Note that this will also return true when an empty bed file was loaded.
-         * This is intentional to distinguish the case where we don't have confident
-         * regions (everything unknown is a FP) from the one where the confident
-         * region file is empty (every FP is unknown).
+         * Returns true if confident regions were loaded.
+         * (i.e. if regions named "CONF" are present)
          */
-        bool hasRegions() const;
+        bool hasRegions(std::string const & rname) const;
 
         /** add Regions annotation to a record
          *
@@ -77,6 +73,13 @@ namespace variant
          *
          */
         void annotate(bcf_hdr_t * hdr, bcf1_t * record);
+
+        /**
+         * Get total region sizes in NT
+         * @param region_name
+         * @return  the region size
+         */
+        size_t getRegionSize(std::string const & region_name) const;
     private:
         struct QuantifyRegionsImpl;
         std::unique_ptr<QuantifyRegionsImpl> _impl;

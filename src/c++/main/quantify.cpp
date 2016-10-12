@@ -97,6 +97,7 @@ int main(int argc, char* argv[]) {
 
     int threads = 1;
     int blocksize = 20000;
+    std::vector<std::string> roc_regions = {"*"};
 
     try
     {
@@ -122,6 +123,9 @@ int main(int argc, char* argv[]) {
                 ("location,l", po::value<std::string>(), "Start location.")
                 ("regions,R", po::value< std::vector<std::string> >(),
                     "Region bed file. You can attach a label by prefixing with a colon, e.g. -R FP2:false-positives-type2.bed")
+                ("roc-regions", po::value< std::vector<std::string> >(),
+                    "Regions to compute ROCs in. By default, only the '*' region (total unstratified counts) will produce ROC counts. "
+                    "For example, --roc-regions '*' --roc-regions FP2 also produces a ROC in the FP2 regions.")
                 ("type", po::value<std::string>(), "Quantification method to use. Current choices are xcmp or ga4gh.")
                 ("only,O", po::value< std::string >(), "Bed file of locations (equivalent to -R in bcftools)")
                 ("limit-records", po::value<int64_t>(), "Maximum umber of records to process")
@@ -293,6 +297,10 @@ int main(int argc, char* argv[]) {
                 regions.load(rnames, fixchr);
             }
 
+            if (vm.count("roc-regions"))
+            {
+                roc_regions = vm["roc-regions"].as< std::vector<std::string> >();
+            }
         }
         catch (po::error & e)
         {
@@ -342,7 +350,7 @@ int main(int argc, char* argv[]) {
         {
             qparams += "output_vtc;";
         }
-        if(regions.hasRegions())
+        if(regions.hasRegions("CONF"))
         {
             qparams += "count_unk;";
         }
@@ -517,7 +525,7 @@ int main(int argc, char* argv[]) {
             if(vchr != current_chr)
             {
                 // reset bs on chr switch
-                previous_bs = -1; 
+                previous_bs = -1;
             }
 
             if(apply_filters)
@@ -597,7 +605,7 @@ int main(int argc, char* argv[]) {
         if(roc_map)
         {
             std::ofstream out_roc(output_roc);
-            roc::ROCOutput ro(*roc_map, qq_header, output_rocs, roc_delta);
+            roc::ROCOutput ro(*roc_map, qq_header, output_rocs, roc_delta, regions, roc_regions);
             ro.write(out_roc);
             out_roc.close();
         }

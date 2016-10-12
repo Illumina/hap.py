@@ -88,7 +88,7 @@ namespace roc
             Precision,
             F1_Score,
             Frac_NA,
-            TiTv_ratio,
+            Subset_Size,
             SIZE
         };
     };
@@ -107,7 +107,7 @@ namespace roc
         "METRIC.Precision",
         "METRIC.F1_Score",
         "METRIC.Frac_NA",
-        "METRIC.TiTv_ratio",
+        "Subset.Size",
     };
 
     static const std::list<std::pair<std::string, uint64_t> > SNP_SUBTYPES
@@ -146,6 +146,17 @@ namespace roc
         return SMETRICS[e];
     }
 
+    /** count Ti/Tv and het/hom ratios for these counts */
+    static const std::list<METRICS::_METRICS> SUBTYPED_COUNTS = {
+        METRICS::TP,
+        METRICS::FN,
+        METRICS::FP,
+        METRICS::TP2,
+        METRICS::UNK,
+        METRICS::TRUTH_TOTAL,
+        METRICS::QUERY_TOTAL,
+    };
+
     /** helper to write values from a single level */
     void _addLevel(const std::string & type,
                    const std::string & subtype,
@@ -155,42 +166,98 @@ namespace roc
                    const std::string & qq_field,
                    Level const & l,
                    table::Table & table,
-                   bool counts_only)
+                   bool counts_only,
+                   variant::QuantifyRegions const & regions)
     {
-        std::string prefix;
-        if(std::isnan(l.level))
+        // don't write rows for ti / tv / genotypes, but rather show the counts inline
+        if(subtype != "ti" && subtype != "tv" && genotype == "*")
         {
-            prefix =  type + "\t" + subtype + "\t" + genotype + "\t" + filter + "\t" + subset + "\t*";
-            table.set(prefix, _S(KEYS::QQ), "*");
-        }
-        else
-        {
-            prefix = type + "\t" + subtype + "\t" + genotype + "\t"
-                     + filter + "\t" + subset + "\t" + std::to_string(l.level);
-            table.set(prefix, _S(KEYS::QQ), l.level);
-        }
-        table.set(prefix, _S(KEYS::Type), type);
-        table.set(prefix, _S(KEYS::Subtype), subtype);
-        table.set(prefix, _S(KEYS::Genotype), genotype);
-        table.set(prefix, _S(KEYS::Subset), subset);
-        table.set(prefix, _S(KEYS::Filter), filter);
-        table.set(prefix, _S(KEYS::QQ_Field), qq_field);
+            std::string prefix;
+            if(std::isnan(l.level))
+            {
+                prefix =  type + "\t" + subtype + "\t*\t" + filter + "\t" + subset + "\t*";
+                table.set(prefix, _S(KEYS::QQ), "*");
+            }
+            else
+            {
+                prefix = type + "\t" + subtype + "\t*\t"
+                         + filter + "\t" + subset + "\t" + std::to_string(l.level);
+                table.set(prefix, _S(KEYS::QQ), l.level);
+            }
+            table.set(prefix, _S(KEYS::Type), type);
+            table.set(prefix, _S(KEYS::Subtype), subtype);
+            table.set(prefix, _S(KEYS::Genotype), genotype);
+            table.set(prefix, _S(KEYS::Subset), subset);
+            table.set(prefix, _S(KEYS::Filter), filter);
+            table.set(prefix, _S(KEYS::QQ_Field), qq_field);
 
-        table.set(prefix, _S(METRICS::TP), l.tp());
-        table.set(prefix, _S(METRICS::TP2), l.tp2());
-        table.set(prefix, _S(METRICS::FP), l.fp());
-        table.set(prefix, _S(METRICS::UNK), l.unk());
-        table.set(prefix, _S(METRICS::FP_al), l.fp_al());
-        table.set(prefix, _S(METRICS::FP_gt), l.fp_gt());
-        if(!counts_only)
-        {
-            table.set(prefix, _S(METRICS::FN), l.fn());
-            table.set(prefix, _S(METRICS::Recall), l.recall());
-            table.set(prefix, _S(METRICS::Precision), l.precision());
-            table.set(prefix, _S(METRICS::F1_Score), l.fScore());
-            table.set(prefix, _S(METRICS::Frac_NA), l.na());
-            table.set(prefix, _S(METRICS::TRUTH_TOTAL), l.totalTruth());
-            table.set(prefix, _S(METRICS::QUERY_TOTAL), l.totalQuery());
+            table.set(prefix, _S(METRICS::TP), l.tp());
+            table.set(prefix, _S(METRICS::TP2), l.tp2());
+            table.set(prefix, _S(METRICS::FP), l.fp());
+            table.set(prefix, _S(METRICS::UNK), l.unk());
+            table.set(prefix, _S(METRICS::FP_al), l.fp_al());
+            table.set(prefix, _S(METRICS::FP_gt), l.fp_gt());
+            table.set(prefix, _S(METRICS::Subset_Size), regions.getRegionSize(subset));
+            if(!counts_only)
+            {
+                table.set(prefix, _S(METRICS::FN), l.fn());
+                table.set(prefix, _S(METRICS::Recall), l.recall());
+                table.set(prefix, _S(METRICS::Precision), l.precision());
+                table.set(prefix, _S(METRICS::F1_Score), l.fScore());
+                table.set(prefix, _S(METRICS::Frac_NA), l.na());
+                table.set(prefix, _S(METRICS::TRUTH_TOTAL), l.totalTruth());
+                table.set(prefix, _S(METRICS::QUERY_TOTAL), l.totalQuery());
+            }
+        } else {
+            // save ti and tv counts for computing ratios later
+            if(genotype == "*" && (subtype == "ti" || subtype == "tv"))
+            {
+                std::string subtype_agg_prefix;
+                if(std::isnan(l.level))
+                {
+                    subtype_agg_prefix =  type + "\t*\t*\t" + filter + "\t" + subset + "\t*";
+                }
+                else
+                {
+                    subtype_agg_prefix = type + "\t*\t*\t"
+                             + filter + "\t" + subset + "\t" + std::to_string(l.level);
+                }
+                table.set(subtype_agg_prefix, _S(METRICS::TP) + "." + subtype, l.tp());
+                table.set(subtype_agg_prefix, _S(METRICS::TP2) + "." + subtype, l.tp2());
+                table.set(subtype_agg_prefix, _S(METRICS::FP) + "." + subtype, l.fp());
+                table.set(subtype_agg_prefix, _S(METRICS::UNK) + "." + subtype, l.unk());
+                if(!counts_only)
+                {
+                    table.set(subtype_agg_prefix, _S(METRICS::FN) + "." + subtype, l.fn());
+                    table.set(subtype_agg_prefix, _S(METRICS::TRUTH_TOTAL) + "." + subtype, l.totalTruth());
+                    table.set(subtype_agg_prefix, _S(METRICS::QUERY_TOTAL) + "." + subtype, l.totalQuery());
+                }
+            }
+
+            // save het / hom counts for ratios
+            if(genotype != "*" && subtype != "ti" && subtype != "tv")
+            {
+                std::string genotype_agg_prefix;
+                if(std::isnan(l.level))
+                {
+                    genotype_agg_prefix =  type + "\t" + subtype + "\t*\t" + filter + "\t" + subset + "\t*";
+                }
+                else
+                {
+                    genotype_agg_prefix = type + "\t" + subtype + "\t*\t" + "\t"
+                             + filter + "\t" + subset + "\t" + std::to_string(l.level);
+                }
+                table.set(genotype_agg_prefix, _S(METRICS::TP) + "." + genotype, l.tp());
+                table.set(genotype_agg_prefix, _S(METRICS::TP2) + "." + genotype, l.tp2());
+                table.set(genotype_agg_prefix, _S(METRICS::FP) + "." + genotype, l.fp());
+                table.set(genotype_agg_prefix, _S(METRICS::UNK) + "." + genotype, l.unk());
+                if(!counts_only)
+                {
+                    table.set(genotype_agg_prefix, _S(METRICS::FN) + "." + genotype, l.fn());
+                    table.set(genotype_agg_prefix, _S(METRICS::TRUTH_TOTAL) + "." + genotype, l.totalTruth());
+                    table.set(genotype_agg_prefix, _S(METRICS::QUERY_TOTAL) + "." + genotype, l.totalQuery());
+                }
+            }
         }
     }
 
@@ -199,16 +266,14 @@ namespace roc
         /** populate output table */
         table::Table output_values;
 
-        std::set<std::string> types;
         std::set<std::string> filters;
-        std::set<std::string> subsets {"*"};
-        std::set<std::string> qqs {"*"};
         const std::list<std::pair<std::string, uint64_t> > gts = {
             {"het",    roc::OBS_FLAG_HET},
             {"hetalt", roc::OBS_FLAG_HETALT},
             {"homalt", roc::OBS_FLAG_HOMALT},
             {"*",      0},
         };
+
         for(auto & m : rocs)
         {
             // filter ROCs just give numbers of TPs / FPs / UNKs filtered by
@@ -253,16 +318,15 @@ namespace roc
                     continue;
                 }
             }
-            types.insert(type);
-            subsets.insert(subset);
-            filters.insert(filter);
+
+            counts_only = counts_only &&
+                          (std::find(roc_regions.begin(),
+                                     roc_regions.end(),
+                                     subset) != roc_regions.end());
 
             std::list<std::pair<std::pair<std::string, std::string>, uint64_t> > subtypes;
             std::list<std::pair<std::string, uint64_t> > const * sts = nullptr;
 
-            // all types, all genotypes
-
-            // SNP: TI / TV
             if (type == "SNP")
             {
                 sts = &SNP_SUBTYPES;
@@ -287,7 +351,7 @@ namespace roc
             for (auto const &st : subtypes)
             {
                 const roc::Level l = m.second.getTotals(st.second);
-                _addLevel(type, st.first.first, st.first.second, filter, subset, qq_field, l, output_values, counts_only);
+                _addLevel(type, st.first.first, st.first.second, filter, subset, qq_field, l, output_values, counts_only, regions);
 
                 // don't write ROCs for filters
                 // we could make this optional, but not sure it is really necessary
@@ -297,115 +361,12 @@ namespace roc
                     m.second.getLevels(levels, roc_delta, st.second);
                     for (auto const &l2 : levels)
                     {
-                        _addLevel(type, st.first.first, st.first.second, filter, subset, qq_field, l2, output_values, counts_only);
-                        qqs.insert(std::to_string(l2.level));
+                        _addLevel(type, st.first.first, st.first.second, filter, subset, qq_field, l2, output_values, counts_only, regions);
                     }
                 }
             }
         }
-
-        /** compute Ti/Tv ratios */
-        const std::list<METRICS::_METRICS> counts = {
-            METRICS::TP,
-            METRICS::FN,
-            METRICS::FP,
-            METRICS::TP2,
-            METRICS::UNK,
-            METRICS::TRUTH_TOTAL,
-            METRICS::QUERY_TOTAL,
-        };
-
-        for(auto const & subset : subsets)
-        {
-            for(auto const & filter : filters)
-            {
-                for(auto const & gt : gts)
-                {
-                    for(auto const & qq : qqs)
-                    {
-                        const std::string rowid = std::string("SNP\t*\t") + gt.first + "\t"
-                                                  + filter + "\t" + subset + "\t" + qq;
-                        const std::string rowid_ti = std::string("SNP\tti\t") + gt.first + "\t"
-                                                     + filter + "\t" + subset + "\t" + qq;
-                        const std::string rowid_tv = std::string("SNP\ttv\t") + gt.first + "\t"
-                                                     + filter + "\t" + subset + "\t" + qq;
-                        if(output_values.hasRow(rowid) &&
-                           output_values.hasRow(rowid_ti) &&
-                           output_values.hasRow(rowid_tv))
-                        {
-                            for(auto c : counts)
-                            {
-                                double ti_count = output_values.getDouble(rowid_ti, _S(c), 0);
-                                double tv_count = output_values.getDouble(rowid_tv, _S(c), 0);
-                                if(fabs(tv_count) < std::numeric_limits<double>::epsilon()
-                                    || std::isnan(ti_count) || std::isnan(tv_count))
-                                {
-                                    output_values.set(rowid, _S(c) + ".TiTv_ratio", ".");
-                                }
-                                else
-                                {
-                                    output_values.set(rowid, _S(c) + ".TiTv_ratio", ti_count / tv_count);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        for(auto const & type : types)
-        {
-            for(auto const & subset : subsets)
-            {
-                for(auto const & filter : filters)
-                {
-                    std::list<std::pair<std::string, uint64_t> >const * sts = NULL;
-                    if(type == "SNP")
-                    {
-                        sts = &SNP_SUBTYPES;
-                    }
-                    else if(type == "INDEL")
-                    {
-                        sts = &INDEL_SUBTYPES;
-                    }
-                    else
-                    {
-                        continue;
-                    }
-                    for(auto const & st : *sts)
-                    {
-                        for(auto const & qq : qqs)
-                        {
-                            const std::string rowid = type + "\t" + st.first + "\t*" + "\t"
-                                                      + filter + "\t" + subset + "\t" + qq;
-                            const std::string rowid_het = type + "\t" + st.first + "\thet" + "\t"
-                                                          + filter + "\t" + subset + "\t" + qq;
-                            const std::string rowid_homalt = type + "\t" + st.first + "\thomalt" + "\t"
-                                                          + filter + "\t" + subset + "\t" + qq;
-                            if(output_values.hasRow(rowid) &&
-                               output_values.hasRow(rowid_het) &&
-                               output_values.hasRow(rowid_homalt))
-                            {
-                                for(auto c : counts)
-                                {
-                                    double het_count = output_values.getDouble(rowid_het, _S(c), 0);
-                                    double homalt_count = output_values.getDouble(rowid_homalt, _S(c), 0);
-                                    if(fabs(homalt_count) < std::numeric_limits<double>::epsilon()
-                                       || std::isnan(het_count) || std::isnan(homalt_count))
-                                    {
-                                        output_values.set(rowid, _S(c) + ".het_hom_ratio", ".");
-                                    }
-                                    else
-                                    {
-                                        output_values.set(rowid, _S(c) + ".het_hom_ratio", het_count / homalt_count);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        output_values.dropRowsWithMissing(_S(KEYS::Type));
         out_roc << output_values;
     }
 }

@@ -73,6 +73,7 @@ def run_quantify(filename,
                  roc_header=None,
                  roc_filter=None,
                  roc_delta=None,
+                 roc_regions=None,
                  clean_info=True,
                  strat_fixchr=False):
     """Run quantify and return parsed JSON
@@ -91,6 +92,7 @@ def run_quantify(filename,
     :param roc_header: name of ROC value for tables
     :param roc_filter: ROC filtering settings
     :param roc_delta: ROC minimum spacing between levels
+    :param roc_regions: List of regions to output full ROCs for
     :param clean_info: remove unused INFO fields
     :param strat_fixchr: fix chr naming in stratification regions
     :returns: parsed counts JSON
@@ -151,6 +153,10 @@ def run_quantify(filename,
         for k, v in regions.iteritems():
             run_str += " -R '%s:%s'" % (k, v)
 
+    if roc_regions:
+        for r in roc_regions:
+            run_str += " --roc-regions '%s'" % r
+
     location_file = None
     if locations:
         location_file = _locations_tmp_bed_file(locations)
@@ -197,7 +203,7 @@ def run_quantify(filename,
 
     if write_vcf and write_vcf.endswith(".bcf"):
         runBcftools("index", write_vcf)
-    else:
+    elif write_vcf:
         to_run = "tabix -p vcf '%s'" % write_vcf
         logging.info("Running '%s'" % to_run)
         subprocess.check_call(to_run, shell=True)

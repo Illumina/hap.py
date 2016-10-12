@@ -224,6 +224,29 @@
          return col_it->second;
      }
 
+     void Table::dropRowsWithMissing(std::string const & column)
+     {
+         typedef std::unordered_map<std::string, _tableImpl::Column>::iterator row_iterator;
+         std::list<row_iterator> to_delete;
+         for(auto row_it = _impl->rows.begin(); row_it != _impl->rows.end(); ++row_it)
+         {
+             auto col_it = row_it->second.find(column);
+             if(col_it == row_it->second.end())
+             {
+                 to_delete.push_back(row_it);
+             }
+             else if(col_it->second.status == _tableImpl::OptionalValue::MISSING)
+             {
+                 to_delete.push_back(row_it);
+             }
+         }
+
+         for(auto const & row_it : to_delete)
+         {
+             _impl->rows.erase(row_it);
+         }
+     }
+
      std::ostream & operator<< (std::ostream & o, Table const & t)
      {
          std::set<std::string> columns;

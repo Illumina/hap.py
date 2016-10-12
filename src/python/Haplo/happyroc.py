@@ -23,6 +23,7 @@ import re
 import subprocess
 import logging
 import pandas
+import numpy as np
 import itertools
 
 RESULT_ALLCOLUMNS = ["Type",
@@ -36,29 +37,9 @@ RESULT_ALLCOLUMNS = ["Type",
                      "METRIC.Precision",
                      "METRIC.Frac_NA",
                      "METRIC.F1_Score",
-                     "TRUTH.TOTAL",
-                     "TRUTH.TP",
-                     "TRUTH.FN",
-                     "QUERY.TOTAL",
-                     "QUERY.TP",
-                     "QUERY.FP",
-                     "QUERY.UNK",
                      "FP.gt",
                      "FP.al",
-                     "TRUTH.TOTAL.TiTv_ratio",
-                     "TRUTH.TOTAL.het_hom_ratio",
-                     "TRUTH.FN.TiTv_ratio",
-                     "TRUTH.FN.het_hom_ratio",
-                     "TRUTH.TP.TiTv_ratio",
-                     "TRUTH.TP.het_hom_ratio",
-                     "QUERY.FP.TiTv_ratio",
-                     "QUERY.FP.het_hom_ratio",
-                     "QUERY.TP.TiTv_ratio",
-                     "QUERY.TOTAL.TiTv_ratio",
-                     "QUERY.TOTAL.het_hom_ratio",
-                     "QUERY.TP.het_hom_ratio",
-                     "QUERY.UNK.TiTv_ratio",
-                     "QUERY.UNK.het_hom_ratio"]
+                     "Subset.Size"]
 
 RESULT_ALLDTYPES = [str,
                     str,
@@ -73,27 +54,20 @@ RESULT_ALLDTYPES = [str,
                     float,
                     float,
                     float,
-                    float,
-                    float,
-                    float,
-                    float,
-                    float,
-                    float,
-                    float,
-                    float,
-                    float,
-                    float,
-                    float,
-                    float,
-                    float,
-                    float,
-                    float,
-                    float,
-                    float,
-                    float,
-                    float,
-                    float,
                     float]
+
+for count_type in ["TRUTH.TOTAL", "TRUTH.TP", "TRUTH.FN",
+                   "QUERY.TOTAL", "QUERY.TP", "QUERY.FP",
+                   "QUERY.UNK"]:
+    RESULT_ALLCOLUMNS.append(count_type)
+    RESULT_ALLCOLUMNS.append(count_type + ".ti")
+    RESULT_ALLCOLUMNS.append(count_type + ".tv")
+    RESULT_ALLCOLUMNS.append(count_type + ".het")
+    RESULT_ALLCOLUMNS.append(count_type + ".homalt")
+    RESULT_ALLCOLUMNS.append(count_type + ".TiTv_ratio")
+    RESULT_ALLCOLUMNS.append(count_type + ".het_hom_ratio")
+    RESULT_ALLDTYPES += [float] * 7
+
 
 def _rm(f):
     """ Quietly delete """
@@ -217,6 +191,15 @@ def roc(roc_table, output_path, filter_handling=None):
 
     for k, v in result.items():
         result[k] = _postprocessRocData(pandas.DataFrame(v, columns=RESULT_ALLCOLUMNS))
+
+        # compute ratios
+        for count_type in ["TRUTH.TOTAL", "TRUTH.FN", "TRUTH.TP", "QUERY.FP",
+                           "QUERY.TP", "QUERY.TOTAL", "QUERY.UNK"]:
+            result[k][count_type + ".TiTv_ratio"] = pandas.to_numeric(result[k][count_type + ".ti"], errors="coerce") / pandas.to_numeric(result[k][count_type + ".tv"], errors="coerce")
+            result[k][count_type + ".het_hom_ratio"] = pandas.to_numeric(result[k][count_type + ".het"], errors="coerce") / pandas.to_numeric(result[k][count_type + ".homalt"], errors="coerce")
+            result[k][count_type + ".TiTv_ratio"].replace([np.inf, -np.inf], np.nan, inplace=True)
+            result[k][count_type + ".het_hom_ratio"].replace([np.inf, -np.inf], np.nan, inplace=True)
+
         vt = re.sub("[^A-Za-z0-9\\.\\-_]", "_", k, flags=re.IGNORECASE)
         if output_path:
             result[k].to_csv(output_path + "." + vt + ".csv.gz", index=False,
@@ -267,10 +250,10 @@ def _postprocessRocData(roctable):
                 ("QUERY.UNK.het_hom_ratio", None)]
 
     for col, c in typeconv:
-        roctable[col] = roctable[col].convert_objects(convert_numeric=True)
+        roctable[col] = pandas.to_numeric(roctable[col], errors="coerce")
         if c:
             roctable[col] = roctable[col].apply(c)
 
-    roctable.sort(["Type", "Subtype", "Subset", "Filter", "Genotype", "QQ.Field", "QQ"], inplace=True)
+    roctable.sort_values(["Type", "Subtype", "Subset", "Filter", "Genotype", "QQ.Field", "QQ"], inplace=True)
 
     return roctable[RESULT_ALLCOLUMNS]

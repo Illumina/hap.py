@@ -105,7 +105,7 @@ def preprocess(vcf_input,
             int_suffix = ".bcf"
             int_format = "b"
             if not vcf_input.endswith(".bcf") and vcf_output.endswith(".bcf"):
-                logging.warn("Turning vcf into bcf can cause problems when headers aren't consistent with all "
+                logging.warn("Turning vcf into bcf can cause problems when headers are not consistent with all "
                              "records in the file. I will run vcfcheck to see if we will run into trouble. "
                              "To save time in the future, consider converting your files into bcf using bcftools before"
                              " running pre.py.")

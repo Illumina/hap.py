@@ -64,6 +64,8 @@ namespace table
         void unset(std::string const & row,
                    std::string const & column);
 
+        void dropRowsWithMissing(std::string const & column);
+
         bool hasRow(std::string const & row) const;
 
         std::string getString(std::string const & row,
