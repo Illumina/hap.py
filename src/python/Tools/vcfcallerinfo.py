@@ -61,6 +61,7 @@ class CallerInfo(object):
 
         cp = ['unknown', 'unknown', '']
         gatk_callers = ["haplotypecaller", "unifiedgenotyper", "mutect"]
+        sent_callers = ["haplotyper"]
         source_found = False
 
         for hf in vfh["fields"]:
@@ -111,6 +112,21 @@ class CallerInfo(object):
                         pass
                     if any(g in caller.lower() for g in gatk_callers):
                         self.callers.append([caller, version, options])
+                elif k.startswith("SentieonCommandLine"):
+                    caller = "Sentieon"
+                    try:
+                        caller += "-" + hf["values"]["ID"]
+                    except:
+                        pass
+                    version = "unknown"
+                    try:
+                        version = hf["values"]["Version"]
+                    except:
+                        pass
+                    options = ""
+                    if any(s in caller.lower() for s in sent_callers):
+                        self.callers.append([caller, version])
+
             except:
                 pass
         if source_found:
@@ -142,6 +158,8 @@ class CallerInfo(object):
             except:
                 try:
                     cp[0] = x['ID']
+                    if "-" in cp[0]:
+                        cp[0] = cp[0].split("-")[0]
                 except:
                     pass
             try:
