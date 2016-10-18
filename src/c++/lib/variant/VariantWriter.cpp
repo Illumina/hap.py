@@ -296,7 +296,7 @@ namespace variant
             Call const & c = var.calls[g];
 
             // optionally write other formats
-            for (size_t j = 0; j < var.calls[g].ngt; ++j)
+            for (size_t j = 0; j < std::max(MAX_GT, (int ) var.calls[g].ngt); ++j)
             {
                 if(c.phased)
                 {
@@ -448,7 +448,10 @@ namespace variant
                     if(   var.calls[g].gt[j] > 0
                       || (var.calls[g].gt[j] == 0 && tmp_ad[(var.variation.size() + 1)*g] == bcf_int32_missing))
                     {
-                        tmp_ad[var.calls[g].gt[j] + (var.variation.size() + 1)*g] = this_ad;
+                        if(var.calls[g].gt[j] < var.variation.size() + 1)
+                        {
+                            tmp_ad[var.calls[g].gt[j] + (var.variation.size() + 1)*g] = this_ad;
+                        }
                     }
                     else
                     {

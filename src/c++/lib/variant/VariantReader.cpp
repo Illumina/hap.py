@@ -38,7 +38,7 @@
 #include <htslib/vcf.h>
 #include "VariantImpl.hh"
 
-// #define DEBUG_VARIANT_GTS
+//#define DEBUG_VARIANT_GTS
 
 namespace variant
 {
@@ -392,7 +392,7 @@ bool VariantReader::advance()
         else
         {
             refend = refstart + strlen(line->d.allele[0]) - 1;
-            if (strchr(line->d.allele[0], '.') || strchr(line->d.allele[0], '-'))
+            if (strchr(line->d.allele[0], '.') || strchr(line->d.allele[0], '-') || strchr(line->d.allele[0], '*'))
             {
                 // length might be inaccurate now
                 refend = refstart;
@@ -450,31 +450,32 @@ bool VariantReader::advance()
             {
                 // these are OK to let through.
                 // we might want to add some better matching logic later
-                continue;
+                rv.alt = "*";
             }
-
-            // check alleles
-            for (size_t qq = 0; qq < rv.alt.size(); ++qq)
+            else
             {
-                /* A	A	Adenine */
-                /* C	C	Cytosine */
-                /* G	G	Guanine */
-                /* T	T	Thymine */
-                /* U	U	Uracil */
-                /* R	A or G	puRine */
-                /* Y	C, T or U	pYrimidines */
-                /* K	G, T or U	bases which are Ketones */
-                /* M	A or C	bases with aMino groups */
-                /* S	C or G	Strong interaction */
-                /* W	A, T or U	Weak interaction */
-                /* B	not A (i.e. C, G, T or U)	B comes after A */
-                /* D	not C (i.e. A, G, T or U)	D comes after C */
-                /* H	not G (i.e., A, C, T or U)	H comes after G */
-                /* V	neither T nor U (i.e. A, C or G)	V comes after U */
-                /* N	A C G T U	Nucleic acid */
-                /* X	masked */
-                /* -/.	gap of indeterminate length - not supported */
-                if(rv.alt[qq] != 'A' && \
+                // check alleles
+                for (size_t qq = 0; qq < rv.alt.size(); ++qq)
+                {
+                    /* A	A	Adenine */
+                    /* C	C	Cytosine */
+                    /* G	G	Guanine */
+                    /* T	T	Thymine */
+                    /* U	U	Uracil */
+                    /* R	A or G	puRine */
+                    /* Y	C, T or U	pYrimidines */
+                    /* K	G, T or U	bases which are Ketones */
+                    /* M	A or C	bases with aMino groups */
+                    /* S	C or G	Strong interaction */
+                    /* W	A, T or U	Weak interaction */
+                    /* B	not A (i.e. C, G, T or U)	B comes after A */
+                    /* D	not C (i.e. A, G, T or U)	D comes after C */
+                    /* H	not G (i.e., A, C, T or U)	H comes after G */
+                    /* V	neither T nor U (i.e. A, C or G)	V comes after U */
+                    /* N	A C G T U	Nucleic acid */
+                    /* X	masked */
+                    /* -/.	gap of indeterminate length - not supported */
+                    if(rv.alt[qq] != 'A' && \
                    rv.alt[qq] != 'C' && \
                    rv.alt[qq] != 'G' && \
                    rv.alt[qq] != 'T' && \
@@ -491,9 +492,11 @@ bool VariantReader::advance()
                    rv.alt[qq] != 'V' && \
                    rv.alt[qq] != 'N' && \
                    rv.alt[qq] != 'X')
-                {
-                    std::cerr << "Invalid allele " << rv.alt.c_str() << " at " << refstart << "\n";
-                    vars.setInfo("IMPORT_FAIL", true);
+                    {
+//                    std::cerr << "Invalid allele " << rv.alt.c_str() << " at " << refstart << "\n";
+                        vars.setInfo("IMPORT_FAIL", true);
+                        import_fail = true;
+                    }
                 }
             }
 
@@ -512,16 +515,23 @@ bool VariantReader::advance()
 
             std::string rvr(rv.repr());
 
-            auto al = vl.find(rvr);
-            if(al == vl.end())
+            if(import_fail || rv.alt == "*")
             {
-                vars.variation.push_back(rv);
-                si.allele_map[j-1] = (int) vars.variation.size();
-                vl[rvr] = (int) vars.variation.size();
+                si.allele_map[j-1] = -1;
             }
             else
             {
-                si.allele_map[j-1] = al->second;
+                auto al = vl.find(rvr);
+                if(al == vl.end())
+                {
+                    vars.variation.push_back(rv);
+                    si.allele_map[j-1] = (int) vars.variation.size();
+                    vl[rvr] = (int) vars.variation.size();
+                }
+                else
+                {
+                    si.allele_map[j-1] = al->second;
+                }
             }
         }
     }
@@ -591,13 +601,13 @@ bool VariantReader::advance()
 
         ++ncalls;
         bcf_unpack(line, BCF_UN_ALL);
-        
+
         std::string fmt_strings = bcfhelpers::getFormatString(reader.header, line, "FT", isample, "");
         std::vector<std::string> fmt_filters;
         stringutil::split(fmt_strings, fmt_filters, ";", false);
-        for(auto const & f : fmt_filters) 
+        for(auto const & f : fmt_filters)
         {
-            if(f.empty() || f == "PASS") 
+            if(f.empty() || f == "PASS")
             {
                 continue;
             }
@@ -689,6 +699,7 @@ bool VariantReader::advance()
         }
 
         int ngt = 0;
+        memset(vars.calls[sid].gt, -1, MAX_GT*sizeof(int));
         bcfhelpers::getGT(reader.header, line, isample,
                           vars.calls[sid].gt,
                           ngt,
@@ -711,11 +722,12 @@ bool VariantReader::advance()
 
         vars.calls[sid].ad_ref = ad[0];
         vars.calls[sid].ad_other = 0;
+        memset(vars.calls[sid].ad, 0, sizeof(int)*MAX_GT);
 
         // initialize AD
         for (int j = 0; j < ngt; ++j)
         {
-            if(vars.calls[sid].gt[j] >= 0 && ad[vars.calls[sid].gt[j]] >= 0)
+            if(vars.calls[sid].gt[j] >= 0 && vars.calls[sid].gt[j] < adcount && ad[vars.calls[sid].gt[j]] >= 0)
             {
                 vars.calls[sid].ad[j] = ad[vars.calls[sid].gt[j]];
                 ad[vars.calls[sid].gt[j]] = -1;

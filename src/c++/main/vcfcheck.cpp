@@ -355,12 +355,12 @@ int main(int argc, char *argv[])
                     {
                         if(gt[g] + 1 > line->n_allele)
                         {
-                            error("Call with invalid genotype (non-existent allele) at %s:%i", 
+                            error("Call with invalid genotype (non-existent allele) at %s:%i",
                                   vchr.c_str(), vstart + 1);
                         }
                         const char * alt = line->d.allele[gt[g]];
 
-                        if(strchr(alt, '.') && strlen(alt) > 1)
+                        if(((strchr(alt, '*') || strchr(alt, '.')) && strlen(alt) > 1))
                         {
                             any_uncertain = true;
                         }

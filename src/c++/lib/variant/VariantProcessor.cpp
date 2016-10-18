@@ -37,10 +37,8 @@
 
 #include <boost/range/adaptor/reversed.hpp>
 
-/* #define DEBUG_VARIANTPROCESSOR */
-#ifdef _DEBUG
-/* #define DEBUG_VARIANTPROCESSOR_STEPS */
-#endif
+//#define DEBUG_VARIANTPROCESSOR
+//#define DEBUG_VARIANTPROCESSOR_STEPS
 
 namespace variant {
 
@@ -399,7 +397,7 @@ bool VariantProcessor::advance()
                 while((*previous_step)->advance() == true)
                 {
 #ifdef DEBUG_VARIANTPROCESSOR_STEPS
-                    std::cerr << "Adding " << (*previous_step)->current()  << " INFO: " << (*previous_step)->current().info << "\n";
+                    std::cerr << "Adding " << (*previous_step)->current() << "\n";
 #endif
                     (*pstep)->add((*previous_step)->current());
 #ifdef DEBUG_VARIANTPROCESSOR
