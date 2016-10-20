@@ -316,38 +316,6 @@ namespace variant {
             }
         };
 
-        // merge filters across BS
-        for(auto v_it = _impl->variants.begin(); v_it != _impl->variants.end(); ++v_it)
-        {
-            const std::string vchr = bcfhelpers::getChrom(_impl->hdr, *v_it);
-            const int vbs = bcfhelpers::getInfoInt(_impl->hdr, *v_it, "BS");
-            if(!current_bs_valid)
-            {
-                current_bs = vbs;
-                current_chr = vchr;
-                current_bs_valid = true;
-            }
-
-#ifdef DEBUG_BLOCKQUANTIFY
-            std::cerr << "current BS = " << current_bs << " vbs = " << vbs << "\n";
-#endif
-
-            if(   current_bs_start != v_it
-               && (vbs != current_bs || vbs < 0 || vchr != current_chr))
-            {
-                update_bs_filters(v_it);
-                current_bs = vbs;
-                current_chr = vchr;
-                current_bs_start = v_it;
-            }
-        }
-        update_bs_filters(_impl->variants.end());
-
-        current_bs_start = _impl->variants.begin();
-        current_chr = "";
-        current_bs = -1;
-        current_bs_valid = false;
-
         // function to compute the QQ values for truth variants in the current
         // benchmarking superlocus
         const auto update_bs_qq = [this, &current_bs_start](BlockQuantifyImpl::variantlist_t::iterator to)
@@ -427,14 +395,16 @@ namespace variant {
                && (vbs != current_bs || vbs < 0 || vchr != current_chr))
             {
                 update_bs_qq(v_it);
+                update_bs_filters(v_it);
                 current_bs = vbs;
                 current_chr = vchr;
                 current_bs_start = v_it;
             }
         }
 
-        // write out final superlocus (if any)
+        // do final superlocus (if any)
         update_bs_qq(_impl->variants.end());
+        update_bs_filters(_impl->variants.end());
 
         for(auto & v : _impl->variants)
         {
