@@ -25,7 +25,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /**
- * \brief 
+ * \brief
  *
  * \file test_format_extraction.cpp
  * \author Peter Krusche
@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(variantReadingFormats)
     boost::filesystem::path tp = p.parent_path()
                                    .parent_path()   // test
                                    .parent_path()   // c++
-                                    / boost::filesystem::path("data") 
+                                    / boost::filesystem::path("data")
                                     / boost::filesystem::path("test_formats.vcf.gz");
 
     std::cout << "Reading " << tp << std::endl;
@@ -88,10 +88,10 @@ BOOST_AUTO_TEST_CASE(variantReadingFormats)
     };
 
     float expected_ad[] = {
-    	-1, -1,
+    	0, 0,
 		34, 5,
-    	-1, -1,
-    	-1, -1,
+    	0, 0,
+    	0, 0,
 		38, 7,
     };
 
@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE(variantReadingFormats2)
     boost::filesystem::path tp = p.parent_path()
                                    .parent_path()   // test
                                    .parent_path()   // c++
-                                    / boost::filesystem::path("data") 
+                                    / boost::filesystem::path("data")
                                     / boost::filesystem::path("test_formats.vcf.gz");
 
     std::cout << "Reading " << tp << std::endl;
@@ -204,15 +204,15 @@ BOOST_AUTO_TEST_CASE(variantReadingFormats2)
     };
 
     float expected_ad[] = {
-    	-1, -1,
+    	0, 0,
 		34, 5,
-    	-1, -1,
-    	-1, -1,
+    	0, 0,
+    	0, 0,
 		38, 7,
-    	-1, -1,
+    	0, 0,
 		5, 34,		// GT is the other way around in this one
-    	-1, -1,
-    	-1, -1,
+    	0, 0,
+    	0, 0,
 		8, 39,
     };
 
