@@ -281,6 +281,43 @@ namespace variant {
 
         // function to compute the QQ values for truth variants in the current
         // benchmarking superlocus
+        const auto update_bs_filters = [this, &current_bs_start](BlockQuantifyImpl::variantlist_t::iterator to)
+        {
+            std::set<int> bs_filters;
+            for(auto cur = current_bs_start; cur != to; ++cur)
+            {
+                for(int nf = 0; nf < (*cur)->d.n_flt; ++nf)
+                {
+                    const int f = (*cur)->d.flt[nf];
+                    if(f != bcf_hdr_id2int(_impl->hdr, BCF_DT_ID, "PASS"))
+                    {
+                        bs_filters.insert(f);
+                    }
+                }
+            }
+
+            if(bs_filters.empty())
+            {
+                return;
+            }
+
+            for(auto cur = current_bs_start; cur != to; ++cur)
+            {
+                const std::string bdt = bcfhelpers::getFormatString(_impl->hdr, *cur, "BD", 0);
+                const std::string bvq = bcfhelpers::getFormatString(_impl->hdr, *cur, "BVT", 1);
+                // filter TPs where the query call in NOCALL
+                if(bdt == "TP" && bvq == "NOCALL")
+                {
+                    for(auto f : bs_filters)
+                    {
+                        bcf_add_filter(_impl->hdr, *cur, f);
+                    }
+                }
+            }
+        };
+
+        // function to compute the QQ values for truth variants in the current
+        // benchmarking superlocus
         const auto update_bs_qq = [this, &current_bs_start](BlockQuantifyImpl::variantlist_t::iterator to)
         {
             std::vector<float> tp_qqs;
@@ -335,7 +372,6 @@ namespace variant {
 #endif
         };
 
-
         for(auto v_it = _impl->variants.begin(); v_it != _impl->variants.end(); ++v_it)
         {
             // update fields, must output GA4GH-compliant fields
@@ -359,14 +395,16 @@ namespace variant {
                && (vbs != current_bs || vbs < 0 || vchr != current_chr))
             {
                 update_bs_qq(v_it);
+                update_bs_filters(v_it);
                 current_bs = vbs;
                 current_chr = vchr;
                 current_bs_start = v_it;
             }
         }
 
-        // write out final superlocus (if any)
+        // do final superlocus (if any)
         update_bs_qq(_impl->variants.end());
+        update_bs_filters(_impl->variants.end());
 
         for(auto & v : _impl->variants)
         {

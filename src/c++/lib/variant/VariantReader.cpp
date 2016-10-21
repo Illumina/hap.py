@@ -727,7 +727,8 @@ bool VariantReader::advance()
         // initialize AD
         for (int j = 0; j < ngt; ++j)
         {
-            if(vars.calls[sid].gt[j] >= 0 && vars.calls[sid].gt[j] < adcount && ad[vars.calls[sid].gt[j]] >= 0)
+            if(vars.calls[sid].gt[j] >= 0 && vars.calls[sid].gt[j] < adcount
+               && ad[vars.calls[sid].gt[j]] >= 0)
             {
                 vars.calls[sid].ad[j] = ad[vars.calls[sid].gt[j]];
                 ad[vars.calls[sid].gt[j]] = -1;
@@ -743,7 +744,6 @@ bool VariantReader::advance()
         }
 
         delete [] ad;
-
 
 #ifdef DEBUG_VARIANT_GTS
         std::cerr << "\ts" << sid << ": ";
