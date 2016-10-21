@@ -101,7 +101,7 @@ def extractMutectSNVFeatures(vcfname, tag, avg_depth=None):
                     # list features
                     if q.endswith("AD") or q.endswith("QSS"):
                         if type(rec[q]) is not list:
-                            if not has_warned[q + "_PARSE_FAIL"]:
+                            if not q + "_PARSE_FAIL" in has_warned:
                                 logging.warn("Cannot parse %s: %s" % (q, str(rec[q])))
                                 has_warned[q + "_PARSE_FAIL"] = True
                                 rec[q] = [0] * (1 + len(rec["ALT"]))
@@ -297,7 +297,7 @@ def extractMutectIndelFeatures(vcfname, tag, avg_depth=None):
                     # list features
                     if q.endswith("AD") or q.endswith("QSS") or q.endswith("RPA"):
                         if type(rec[q]) is not list:
-                            if not has_warned[q + "_PARSE_FAIL"]:
+                            if not q + "_PARSE_FAIL" in has_warned:
                                 logging.warn("Cannot parse %s: %s" % (q, str(rec[q])))
                                 has_warned[q + "_PARSE_FAIL"] = True
                                 rec[q] = [0] * (1 + len(rec["ALT"]))
