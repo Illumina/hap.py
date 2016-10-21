@@ -1,4 +1,4 @@
-#!/illumina/development/haplocompare/hc-virtualenv/bin/python
+#!/usr/bin/env python
 # coding=utf-8
 #
 # Copyright (c) 2010-2015 Illumina, Inc.
@@ -726,7 +726,7 @@ def main():
                     if not h2_chrs:
                         logging.warn("nqpath is empty")
                         h2_chrs = []
-                    
+
                     combined_chrs = list(set(h1_chrs + h2_chrs))
                     if len(combined_chrs) > 0:
                         qlocations = " ".join(combined_chrs)

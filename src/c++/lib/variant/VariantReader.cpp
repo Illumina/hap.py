@@ -711,6 +711,13 @@ bool VariantReader::advance()
             ngt = MAX_GT;
         }
 
+        // HAP-254: simple fix: duplicate haploid calls onto other haplotype
+        if(ngt == 1)
+        {
+            ngt = 2;
+            vars.calls[sid].gt[1] = vars.calls[sid].gt[0];
+        }
+
         vars.calls[sid].ngt = (size_t) ngt;
 
         int adcount = std::max((int)(2*vars.calls.size()), int(vars.variation.size() + 1));

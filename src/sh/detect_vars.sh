@@ -45,8 +45,8 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${HCDIR}/lib
 # detect or use python
 export PYTHON=${PYTHON:-python}
 if [[ -z ${PYTHON} ]]; then
-	if [ -d "/illumina/development/haplocompare/hc-virtualenv/bin" ]; then
-	    export PYTHON=/illumina/development/haplocompare/hc-virtualenv/bin/python
+	if [ -f "/illumina/sync/software/groups/hap.py/latest/python-ve/bin/python-wrapper.sh" ]; then
+	    export PYTHON=/illumina/sync/software/groups/hap.py/latest/python-ve/bin/python-wrapper.sh
 	fi
 fi
 

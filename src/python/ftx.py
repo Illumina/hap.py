@@ -1,9 +1,9 @@
-#!/illumina/development/haplocompare/hc-virtualenv/bin/python
+#!/usr/bin/env python
 # coding=utf-8
 #
 # Copyright (c) 2010-2015 Illumina, Inc.
 # All rights reserved.
-# 
+#
 # This file is distributed under the simplified BSD license.
 # The full text can be found here (and in LICENSE.txt in the root folder of
 # this distribution):
@@ -74,15 +74,15 @@ def main():
     parser.add_argument("--bam", dest="bams", default=[], action="append",
                         help="pass one or more BAM files for feature table extraction")
 
-    parser.add_argument("-r", "--reference", dest="ref", default=Tools.defaultReference(), 
+    parser.add_argument("-r", "--reference", dest="ref", default=Tools.defaultReference(),
                         help="Specify a reference file for normalization.")
-   
+
     parser.add_argument("--normalize", dest="normalize", default=False, action="store_true",
                         help="Enable running of bcftools norm on the input file.")
 
     parser.add_argument("--fix-chr", dest="fixchr", default=False, action="store_true",
                         help="Replace numeric chromosome names in the query by chr*-type names")
-    
+
     args = parser.parse_args()
 
     scratch = tempfile.mkdtemp()
@@ -112,7 +112,7 @@ def main():
                       not args.inc_nonpass,  # pass_only
                       args.fixchr,  # chrprefix
                       args.normalize,  # norm,
-                      args.regions_bedfile, 
+                      args.regions_bedfile,
                       args.targets_bedfile,
                       args.ref)
 

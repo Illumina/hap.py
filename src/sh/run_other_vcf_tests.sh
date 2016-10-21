@@ -34,4 +34,35 @@ else
     rm -rf ${TMP_OUT}.*
 fi
 
+####################################
+# haploid variants (chrX/Y handling)
+####################################
+
+echo "Test for handling haploid records: ${HCVERSION} from ${HCDIR}"
+
+TMP_OUT=`mktemp -t happy.XXXXXXXXXX`
+
+# run hap.py
+${PYTHON} ${HCDIR}/hap.py \
+			 	${DIR}/../../example/haploid/truth.vcf \
+			 	${DIR}/../../example/haploid/query.vcf \
+			 	-o ${TMP_OUT} \
+			 	-r ${DIR}/../../example/haploid/test.fa \
+			 	--force-interactive
+
+if [[ $? != 0 ]]; then
+	echo "hap.py failed!"
+	exit 1
+fi
+
+cat ${TMP_OUT}.vcf.gz | gunzip | grep -v ^# > ${TMP_OUT}.vcf
+diff -I '^#' ${TMP_OUT}.vcf ${DIR}/../../example/haploid/expected.vcf
+if [[ $? != 0 ]]; then
+	echo "Variants differ! diff -I '^#' ${TMP_OUT}.vcf ${DIR}/../../example/haploid/expected.vcf"
+	exit 1
+else
+    echo "Haploid test successful"
+    rm -rf ${TMP_OUT}.*
+fi
+
 

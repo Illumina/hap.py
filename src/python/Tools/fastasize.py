@@ -1,4 +1,3 @@
-#!/illumina/development/haplocompare/hc-virtualenv/bin/python
 # coding=utf-8
 #
 # Copyright (c) 2010-2015 Illumina, Inc.
@@ -66,7 +65,7 @@ def calculateLength(fastacontiglengths, locations):
                 length = max(0, fastacontiglengths[contig] - start)
         else:
             length = fastacontiglengths[contig]
- 
+
         total_length += length
 
     return total_length

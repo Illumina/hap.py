@@ -1,4 +1,4 @@
-#!/illumina/development/haplocompare/hc-virtualenv/bin/python
+#!/usr/bin/env python
 # coding=utf-8
 #
 # Copyright (c) 2010-2015 Illumina, Inc.
