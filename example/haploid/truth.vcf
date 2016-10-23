@@ -1,3 +1,6 @@
 ##fileformat=VCFv4.1
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FILTER=<ID=PASS,Description="PASS">
+##contig=<ID=chrX>
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA12878
-chrQ	5	.	A	T	.	PASS	.	GT	1
+chrX	5	.	A	T	.	PASS	.	GT	1

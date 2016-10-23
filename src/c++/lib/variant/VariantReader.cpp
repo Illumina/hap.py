@@ -120,6 +120,15 @@ void VariantReader::setApplyFilters(bool filters, int sample)
     }
 }
 
+/**
+ * @brief change GTs on chrX/Y to be diploid for matching
+ *
+ */
+void VariantReader::setFixChrXGTs(bool fix)
+{
+    _impl->fix_chrX = fix;
+}
+
 bool VariantReader::getApplyFilters(int sample) const
 {
     if(sample < 0)
@@ -711,8 +720,10 @@ bool VariantReader::advance()
             ngt = MAX_GT;
         }
 
-        // HAP-254: simple fix: duplicate haploid calls onto other haplotype
-        if(ngt == 1)
+        // HAP-254: simple fix: duplicate haploid calls onto other haplotype on chrX and Y
+        if(_impl->fix_chrX &&
+           (vars.chr == "chrX" || vars.chr == "X" || vars.chr == "chrY" || vars.chr == "Y") &&
+           ngt == 1)
         {
             ngt = 2;
             vars.calls[sid].gt[1] = vars.calls[sid].gt[0];

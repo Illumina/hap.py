@@ -85,6 +85,7 @@ struct VariantReaderImpl
         applyFilters = false;
         returnHomref = true;
         validateRef = false;
+        fix_chrX = false;
     }
 
     ~VariantReaderImpl()
@@ -119,6 +120,8 @@ struct VariantReaderImpl
 
     // we buffer variant output
     std::list<Variants> buffered_variants;
+
+    bool fix_chrX;
 };
 
 struct VariantWriterImpl

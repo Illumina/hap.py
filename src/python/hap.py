@@ -251,7 +251,8 @@ def main():
                        args.preprocessing_decompose if args.preprocessing_truth else False,
                        args.preprocessing_norm if args.preprocessing_truth else False,
                        args.preprocess_window,
-                       args.threads)
+                       args.threads,
+                       args.gender)
 
         args.vcf1 = ttf.name
         h1 = vcfextract.extractHeadersJSON(args.vcf1)
@@ -301,7 +302,7 @@ def main():
                        args.preprocessing_decompose,
                        args.preprocessing_norm,
                        args.preprocess_window,
-                       args.threads)
+                       args.threads) # gender in query is not changed
 
         args.vcf2 = qtf.name
         h2 = vcfextract.extractHeadersJSON(args.vcf2)

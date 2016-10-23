@@ -50,6 +50,9 @@ def preprocessWrapper(file_and_location, args):
               args["leftshift"],
               args["reference"])
 
+    if args["haploid_x"]:
+        to_run += " --haploid-x 1"
+
     tfe = tempfile.NamedTemporaryFile(delete=False,
                                       prefix="stderr",
                                       suffix=".log")
@@ -140,7 +143,8 @@ def partialCredit(vcfname,
                   threads=1,
                   window=10000,
                   leftshift=True,
-                  decompose=True):
+                  decompose=True,
+                  haploid_x=False):
     """ Partial-credit-process a VCF file according to our args """
 
     pool = getPool(int(threads))
@@ -190,6 +194,7 @@ def partialCredit(vcfname,
                           {"reference": reference,
                            "decompose": decompose,
                            "leftshift": leftshift,
+                           "haploid_x": haploid_x,
                            "bcf": outputname.endswith(".bcf")})
 
         if None in res:
@@ -199,9 +204,9 @@ def partialCredit(vcfname,
 
         concatenateParts(outputname, *res)
         if outputname.endswith(".vcf.gz"):
-            runBcftools("index", "-t", outputname)
+            runBcftools("index", "-f", "-t", outputname)
         else:  # use bcf
-            runBcftools("index", outputname)
+            runBcftools("index", "-f", outputname)
     finally:
         for r in res:
             try:

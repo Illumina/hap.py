@@ -75,6 +75,7 @@ def preprocess(vcf_input,
                bcftools_norm=False,
                windowsize=10000,
                threads=1,
+               gender=None,
                ):
     """ Preprocess a single VCF file
 
@@ -91,6 +92,7 @@ def preprocess(vcf_input,
     :param bcftools_norm: use bcftools_norm
     :param windowsize: normalisation window size
     :param threads: number of threads to for preprcessing
+    :param gender: the gender of the sample ("male" / "female" / "auto" / None)
     """
 
     tempfiles = []
@@ -109,10 +111,21 @@ def preprocess(vcf_input,
                              "records in the file. I will run vcfcheck to see if we will run into trouble. "
                              "To save time in the future, consider converting your files into bcf using bcftools before"
                              " running pre.py.")
-                subprocess.check_call("vcfcheck %s" % vcf_input, shell=True)
         else:
             int_suffix = ".vcf.gz"
             int_format = "z"
+
+        if vcf_output.endswith(".bcf"):
+            mf = subprocess.check_output("vcfcheck %s --check-bcf-errors 1" % vcf_input, shell=True)
+        else:
+            mf = subprocess.check_output("vcfcheck %s --check-bcf-errors 0" % vcf_input, shell=True)
+
+        if gender == "auto":
+            logging.info(mf)
+            if "female" in mf:
+                gender = "female"
+            else:
+                gender = "male"
 
         h = vcfextract.extractHeadersJSON(vcf_input)
         reference_contigs = set(fastaContigLengths(reference).keys())
@@ -175,7 +188,7 @@ def preprocess(vcf_input,
                       reference,
                       required_filters)
 
-        if leftshift or decompose:
+        if leftshift or decompose or gender == "male":
             Haplo.partialcredit.partialCredit(vtf,
                                               vcf_output,
                                               reference,
@@ -183,7 +196,8 @@ def preprocess(vcf_input,
                                               threads=threads,
                                               window=windowsize,
                                               leftshift=leftshift,
-                                              decompose=decompose)
+                                              decompose=decompose,
+                                              haploid_x=gender == "male")
     finally:
         for t in tempfiles:
             try:
@@ -218,7 +232,8 @@ def preprocessWrapper(args):
                args.preprocessing_decompose,
                args.preprocessing_norm,
                args.window,
-               args.threads)
+               args.threads,
+               args.gender)
 
     elapsed = time.time() - starttime
     logging.info("preprocess for %s -- time taken %.2f" % (args.input, elapsed))
@@ -274,6 +289,11 @@ def updateArgs(parser):
                              " is in BCF format already. Using BCF can speed up temp file access, "
                              " but may fail for VCF files that have broken headers or records that "
                              " don't comply with the header.")
+
+    # genotype handling on chrX.
+    parser.add_argument("--gender", dest="gender", choices=["male", "female", "auto", "none"], default="auto",
+                        help="Specify gender. This determines how haploid calls on chrX get treated: for male samples,"
+                             " all non-ref calls (in the truthset only when running through hap.py) are given a 1/1 genotype.")
 
 
 def main():

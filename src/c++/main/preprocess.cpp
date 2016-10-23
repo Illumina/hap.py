@@ -90,6 +90,7 @@ int main(int argc, char* argv[]) {
 
     bool preprocess = false;
     bool leftshift = false;
+    bool haploid_X = false;
 
     try
     {
@@ -105,6 +106,7 @@ int main(int argc, char* argv[]) {
             ("regions,R", po::value<std::string>(), "Use a bed file for getting a subset of regions (traversal via tabix).")
             ("targets,T", po::value<std::string>(), "Use a bed file for getting a subset of targets (streaming the whole file, ignoring things outside the bed regions).")
             ("progress", po::value<bool>(), "Set to true to output progress information.")
+            ("haploid-x", po::value<bool>(), "Expand GTs on chrX: turn 1 into 1/1")
             ("progress-seconds", po::value<int>(), "Output progress information every n seconds.")
             ("limit", po::value<int64_t>(), "Maximum number of records to process.")
             ("preprocess-variants,V", po::value<bool>(), "Apply variant normalisations, trimming, realignment for complex variants (off by default).")
@@ -173,6 +175,11 @@ int main(int argc, char* argv[]) {
             leftshift = vm["leftshift"].as< bool >();
         }
 
+        if (vm.count("haploid-x"))
+        {
+            haploid_X = vm["haploid-x"].as< bool >();
+        }
+
         if (vm.count("location"))
         {
             stringutil::parsePos(vm["location"].as< std::string >(), chr, start, end);
@@ -232,6 +239,10 @@ int main(int argc, char* argv[]) {
     {
         VariantReader vr;
         vr.setReturnHomref(false);
+        if(haploid_X)
+        {
+            vr.setFixChrXGTs(haploid_X);
+        }
 
         if(regions_bed != "")
         {

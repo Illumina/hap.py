@@ -351,7 +351,7 @@ namespace bcfhelpers
             // if there is an end field, don't validate the ref allele
             refend = endfield-1;
         }
-        else
+        else if(rec->d.allele)
         {
             refend = refstart + strlen(rec->d.allele[0]) - 1;
             if (strchr(rec->d.allele[0], '.') || strchr(rec->d.allele[0], '-'))
@@ -887,6 +887,11 @@ namespace bcfhelpers
         if(line->n_allele == 1)
         {
             return 0;
+        }
+
+        if(!line->d.allele)
+        {
+            throw bcfhelpers::importexception("Empty REF allele -- this is probably because parsing this record failed.");
         }
 
         const char * ref = line->d.allele[0];

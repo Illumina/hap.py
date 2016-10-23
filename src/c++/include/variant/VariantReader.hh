@@ -76,6 +76,12 @@ public:
     bool getReturnHomref() const;
 
     /**
+     * @brief change GTs on chrX/Y to be diploid for matching
+     *
+     */
+    void setFixChrXGTs(bool fix=true);
+
+    /**
      * @brief Validate reference alleles
      *
      */

@@ -37,4 +37,21 @@ else
     rm -rf ${TMP_OUT}.*
 fi
 
+# run hap.py
+${PYTHON} ${HCDIR}/hap.py \
+			 	${DIR}/../data/open_indel/test.vcf \
+			 	${DIR}/../data/open_indel/test_q_failure.vcf \
+			 	-o ${TMP_OUT} \
+			 	-X --reference ${DIR}/../data/open_indel/test.fa -l chrQ \
+                -V \
+			 	--force-interactive
+                # --verbose \
+
+if [[ $? != 0 ]]; then
+	echo "SUCCESS: faulty variants made hap.py fail."
+    rm -rf ${TMP_OUT}.*
+else
+    echo "FAILURE: hap.py didn't detect faulty variants."
+	exit 1
+fi
 
