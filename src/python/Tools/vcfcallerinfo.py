@@ -92,6 +92,9 @@ class CallerInfo(object):
                     except:
                         cp[2] = hf["value"]
                     source_found = True
+                elif k == "octopus":
+                    # octopus doesn't add a version
+                    self.callers.append(["octopus", "unknown", str(hf["values"])])
                 elif k.startswith("GATKCommandLine"):
                     caller = "GATK"
                     try:
