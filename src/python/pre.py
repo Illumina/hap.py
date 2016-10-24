@@ -93,6 +93,8 @@ def preprocess(vcf_input,
     :param windowsize: normalisation window size
     :param threads: number of threads to for preprcessing
     :param gender: the gender of the sample ("male" / "female" / "auto" / None)
+
+    :return: the gender if auto-determined (otherwise the same value as gender parameter)
     """
 
     tempfiles = []
@@ -205,6 +207,7 @@ def preprocess(vcf_input,
             except:
                 pass
 
+    return gender
 
 def preprocessWrapper(args):
     """ wrapper for running in parallel """

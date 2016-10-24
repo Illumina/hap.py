@@ -239,20 +239,20 @@ def main():
         tempfiles.append(ttf.name)
         tempfiles.append(ttf.name + ".csi")
         tempfiles.append(ttf.name + ".tbi")
-        pre.preprocess(args.vcf1,
-                       ttf.name,
-                       args.ref,
-                       args.locations,
-                       None if args.usefiltered_truth else "*",  # filters
-                       args.fixchr,
-                       args.regions_bedfile,
-                       args.targets_bedfile,
-                       args.preprocessing_leftshift if args.preprocessing_truth else False,
-                       args.preprocessing_decompose if args.preprocessing_truth else False,
-                       args.preprocessing_norm if args.preprocessing_truth else False,
-                       args.preprocess_window,
-                       args.threads,
-                       args.gender)
+        args.gender = pre.preprocess(args.vcf1,
+                                     ttf.name,
+                                     args.ref,
+                                     args.locations,
+                                     None if args.usefiltered_truth else "*",  # filters
+                                     args.fixchr,
+                                     args.regions_bedfile,
+                                     args.targets_bedfile,
+                                     args.preprocessing_leftshift if args.preprocessing_truth else False,
+                                     args.preprocessing_decompose if args.preprocessing_truth else False,
+                                     args.preprocessing_norm if args.preprocessing_truth else False,
+                                     args.preprocess_window,
+                                     args.threads,
+                                     args.gender)
 
         args.vcf1 = ttf.name
         h1 = vcfextract.extractHeadersJSON(args.vcf1)
@@ -270,7 +270,7 @@ def main():
             if not args.locations:
                 raise Exception("Truth and reference have no chromosomes in common!")
         elif type(args.locations) is not list:
-            args.locations = [args.locations]
+            args.locations = args.locations.split(",")
 
         args.locations = sorted(args.locations)
 
@@ -302,7 +302,8 @@ def main():
                        args.preprocessing_decompose,
                        args.preprocessing_norm,
                        args.preprocess_window,
-                       args.threads) # gender in query is not changed
+                       args.threads,
+                       args.gender)  # same gender as truth above
 
         args.vcf2 = qtf.name
         h2 = vcfextract.extractHeadersJSON(args.vcf2)

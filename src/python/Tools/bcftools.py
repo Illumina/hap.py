@@ -166,6 +166,9 @@ def preprocessVCF(input, output, location="",
     :param filters_only: require a set of filters (overridden by pass_only)
     """
     vargs = ["view", input]
+    
+    if type(location) is list:
+        location = ",".join(location)
 
     if pass_only:
         vargs += ["-f", "PASS,."]

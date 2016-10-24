@@ -1,5 +1,17 @@
 # Hap.py Release Notes / Change Log
 
+## v0.3.5
+
+| Ticket  | Description                                                                        |
+|---------|------------------------------------------------------------------------------------|
+| HAP-248 | qfy.py fails when -V is not on                                                     |
+| HAP-249 | stratification regions: include length of stratification region in *extended.csv   |
+| HAP-250 | stratification regions: allow to summarise performance by ID (4th column)          |
+| HAP-254 | Fix haploid GTs on chrX for male samples.                                          |
+| HAP-255 | support * alleles (and alleles that contain "*") to support octopus VCFs           |
+| HAP-256 | Sentieon caller extraction                                                         |
+| HAP-257 | Fix PASS recall for complex matches                                                |
+
 ## v0.3.4
 
 | Ticket  | Description                                                                        |
