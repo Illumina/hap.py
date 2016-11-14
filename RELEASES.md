@@ -1,5 +1,11 @@
 # Hap.py Release Notes / Change Log
 
+## v0.3.6
+
+| Ticket  | Description                                                                        |
+|---------|------------------------------------------------------------------------------------|
+| HAP-260 | Add Dockerfile based on Centos 6                                                   |
+
 ## v0.3.5
 
 | Ticket  | Description                                                                        |
