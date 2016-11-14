@@ -674,9 +674,9 @@ def main():
                         current_binsize = args.af_strat_binsize[next_binsize]
 
         # remove things where we haven't seen any variants in truth and query
-        res = res[(res["total.truth"] > 0) & (res["total.query"] > 0)]
         # summary metrics with confidence intervals
         ci_alpha = 1.0 - args.ci_level
+
         recall = binomialCI(res["tp"], res["tp"]+res["fn"], ci_alpha)
         precision = binomialCI(res["tp"], res["tp"]+res["fp"], ci_alpha)
         res["recall"], res["recall_lower"], res["recall_upper"] = recall
@@ -684,6 +684,8 @@ def main():
         res["precision"], res["precision_lower"], res["precision_upper"] = precision
         res["na"] = res["unk"] / (res["total.query"])
         res["ambiguous"] = res["ambi"] / res["total.query"]
+
+        res = res[(res["total.truth"] > 0)]
 
         any_fp = fpclasses.countbases(label="FP")
 
