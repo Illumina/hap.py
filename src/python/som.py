@@ -717,19 +717,13 @@ def main():
                     # use all locations we saw calls on
                     h1 = Tools.vcfextract.extractHeadersJSON(ntpath)
                     h1_chrs = h1["tabix"]["chromosomes"]
+
                     if not h1_chrs:
-                        logging.warn("ntpath is empty")
+                        logging.warn("No contigs in truth file")
                         h1_chrs = []
 
-                    h2 = Tools.vcfextract.extractHeadersJSON(nqpath)
-                    h2_chrs = h2["tabix"]["chromosomes"]
-                    if not h2_chrs:
-                        logging.warn("nqpath is empty")
-                        h2_chrs = []
-
-                    combined_chrs = list(set(h1_chrs + h2_chrs))
-                    if len(combined_chrs) > 0:
-                        qlocations = " ".join(combined_chrs)
+                    if len(h1_chrs) > 0:
+                        qlocations = " ".join(h1_chrs)
                         fp_region_count = calculateLength(cs, qlocations)
                     else:
                         fp_region_count = 0
