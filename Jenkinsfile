@@ -1,4 +1,8 @@
 node {
+	stage 'Checkout'
+
+	checkout scm
+
     stage 'Build / Install'
 
     sh 'cd ${WORKSPACE} && /illumina/sync/software/groups/hap.py/latest/python-ve/bin/python-wrapper.sh install.py ${WORKSPACE}/install --setup illumina --python system --python-interpreter /illumina/sync/software/groups/hap.py/latest/python-ve/bin/python-wrapper.sh'
