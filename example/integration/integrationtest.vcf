@@ -22,7 +22,7 @@ chr21	21176518	.	T	TGA	686	.	BS=21176518;XCMP=TP:match:gt_het:gt_het:hap:mismatc
 chr21	21176520	.	T	TGA	0	.	BS=21176518;XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	1|0:FN:lm:i1_5:INDEL:het:.	./.:.:.:.:NOCALL:nocall:0
 chr21	21176520	.	T	A	151	.	BS=21176518;XCMP=FP:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:.	0/1:FP:lm:tv:SNP:het:151
 chr21	21295542	.	AAT	A	1699	.	BS=21295542;XCMP=TP:match:gt_homalt:gt_homalt:hap:mismatch;VTC=nuc__d,al__d,homalt__d	GT:BD:BK:BI:BVT:BLT:QQ	1|1:TP:gm:d1_5:INDEL:homalt:1699	1/1:TP:gm:d1_5:INDEL:homalt:1699
-chr21	21295571	.	G	GTGTATTTT	439	.	BS=21295542;XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__i,al__i,het__ri	GT:BD:BK:BI:BVT:BLT:QQ	0|1:TP:gm:i6_15:INDEL:het:1699	0/1:TP:gm:i6_15:INDEL:het:439
+chr21	21295571	.	G	GTGTATTTT	439	.	BS=21295542;XCMP=TP:match:gt_het:gt_het:hap:mismatch;VTC=nuc__i,al__i,het__ri	GT:BD:BK:BI:BVT:BLT:QQ	0|1:TP:gm:i6_15:INDEL:het:439	0/1:TP:gm:i6_15:INDEL:het:439
 chr21	21295573	.	G	GTATTTT	0	.	BS=21295542;XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0|1:FN:lm:i6_15:INDEL:het:.	./.:.:.:.:NOCALL:nocall:0
 chr21	21295576	.	T	TGA	0	.	BS=21295542;XCMP=FN:missing:gt_het:.:hap:mismatch;VTC=nuc__i,al__i,het__ri,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	0|1:FN:lm:i1_5:INDEL:het:.	./.:.:.:.:NOCALL:nocall:0
 chr21	21295576	.	T	A	56	.	BS=21295542;XCMP=FP:missing:.:gt_het:hap:mismatch;VTC=nuc__s,al__s,het__rs,nocall__nc	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:.	0/1:FP:lm:tv:SNP:het:56

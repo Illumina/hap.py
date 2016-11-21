@@ -21,7 +21,8 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
     :param avg_depth: average chromosome depths from BAM file
     """
     features = ["CHROM", "POS", "REF", "ALT", "FILTER",
-                "I.NT", "I.SOMATIC", "I.QSS_NT", "I.VQSR", "I.EVS", "I.EVSF",
+                "I.NT", "I.SOMATIC", "I.QSS_NT",
+                "I.VQSR", "I.EVS", "I.EVSF", "I.SomaticEVS",
                 "I.SGT", "I.MQ", "I.MQ0",
                 "I.SNVSB", "I.ReadPosRankSum",
                 "S.1.SDP", "S.2.SDP",
@@ -33,7 +34,7 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
                 "S.1.TU", "S.2.TU"]
 
     cols = ["CHROM", "POS", "REF", "ALT",
-            "NT", "NT_REF", "QSS_NT", "FILTER", "EVS", "VQSR",
+            "NT", "NT_REF", "QSS_NT", "FILTER", "SomaticEVS", "EVS", "VQSR",
             "N_FDP_RATE", "T_FDP_RATE", "N_SDP_RATE", "T_SDP_RATE",
             "N_DP", "T_DP", "N_DP_RATE", "T_DP_RATE",
             "N_AF", "T_AF",
@@ -86,10 +87,16 @@ def extractStrelkaSNVFeatures(vcfname, tag, avg_depth=None):
             rec["I.VQSR"] = -1.0
 
         # read EVS value, if it's not present, set to -1 (old versions of Strelka)
-        try:
-            rec["I.EVS"] = float(rec["I.EVS"])
-        except:
-            rec["I.EVS"] = -1.0
+        if "I.SomaticEVS" in rec:
+            try:
+                rec["I.EVS"] = float(rec["I.SomaticEVS"])
+            except:
+                rec["I.EVS"] = -1.0
+        else:
+            try:
+                rec["I.EVS"] = float(rec["I.EVS"])
+            except:
+                rec["I.EVS"] = -1.0
 
         # fix missing features
         for q in ["I.QSS_NT", "I.MQ", "I.MQ0",
@@ -264,7 +271,7 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
     :param avg_depth: average chromosome depths from BAM file
     """
     features = ["CHROM", "POS", "REF", "ALT", "FILTER",
-                "I.NT", "I.SOMATIC", "I.QSI_NT", "I.EVS", "I.EVSF",
+                "I.NT", "I.SOMATIC", "I.QSI_NT", "I.EVS", "I.EVSF", "I.SomaticEVS",
                 "I.SGT", "I.RC", "I.RU",
                 "I.IC", "I.IHP",
                 "I.MQ", "I.MQ0",
@@ -346,9 +353,19 @@ def extractStrelkaIndelFeatures(vcfname, tag, avg_depth=None):
             rec[ff] = vr[i]
         rec["tag"] = tag
 
+        if "I.SomaticEVS" in rec:
+            try:
+                rec["I.EVS"] = float(rec["I.SomaticEVS"])
+            except:
+                rec["I.EVS"] = -1.0
+        else:
+            try:
+                rec["I.EVS"] = float(rec["I.EVS"])
+            except:
+                rec["I.EVS"] = -1.0
+
         # fix missing features
         for q in ["I.QSI_NT", "I.RC", "I.IC", "I.IHP",
-                  "I.EVS",
                   "S.1.DP", "S.2.DP",
                   "S.1.BCN50", "S.2.BCN50",
                   "S.1.FDP50", "S.2.FDP50"]:

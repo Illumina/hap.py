@@ -339,13 +339,13 @@ namespace variant {
             float t_qq = bcfhelpers::missing_float();
             if(!tp_qqs.empty())
             {
-                t_qq = *(std::max_element(tp_qqs.begin(), tp_qqs.end()));
+                t_qq = *(std::min_element(tp_qqs.begin(), tp_qqs.end()));
             }
 
             /** compute the median over all variants */
             int fsize = bcf_hdr_nsamples(_impl->hdr);
             float * fmt = (float*)calloc((size_t) fsize, sizeof(float));
-            for(auto cur = current_bs_start; cur != to; ++cur)
+           for(auto cur = current_bs_start; cur != to; ++cur)
             {
                 const std::string bd = bcfhelpers::getFormatString(_impl->hdr, *cur, "BD", 0);
                 bcf_get_format_float(_impl->hdr, *cur, "QQ", &fmt, &fsize);
@@ -355,7 +355,17 @@ namespace variant {
                 }
                 else
                 {
-                    fmt[0] = t_qq;
+                    const float qqq = bcfhelpers::getFormatFloat(_impl->hdr, *cur, "QQ", 1);
+                    const std::string bd = bcfhelpers::getFormatString(_impl->hdr, *cur, "BD", 1);
+                    if(bd == "TP" && !std::isnan(qqq))
+                    {
+                        fmt[0] = qqq;
+                    }
+                    else
+                    {
+                        fmt[0] = t_qq;
+                    }
+
                 }
                 bcf_update_format_float(_impl->hdr, *cur, "QQ", fmt, fsize);
             }
