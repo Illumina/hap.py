@@ -340,6 +340,11 @@ sudo docker run -it -v `pwd`:/data pkrusche/hap.py /opt/hap.py/bin/hap.py /data/
 The `-v` argument mounts the current directory as `/data` in the Docker image. The output should also
 appear in the current directory.
 
+The default Docker image is based on Ubuntu. To use a Centos6 image as a base, use [Dockerfile.centos6](Dockerfile.centos6).
+
+```
+docker build -f Dockerfile.centos6 .
+```
 
 ### Compiling from source with CMake
 

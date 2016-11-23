@@ -625,11 +625,16 @@ def main():
 
                 if args.af_strat:
                     start = 0.0
+                    end = 1.0
                     current_binsize = args.af_strat_binsize[0]
                     next_binsize = 0
                     while start < 1.0:
                         # include 1 in last interval
-                        end = min(1.000000001, start + current_binsize)
+                        end = start + current_binsize
+                        if end >= 1:
+                            end = 1.00000001
+                        if start >= end:
+                             break
                         n_tp = featuretable_this_type[(featuretable_this_type["tag"] == "TP") &
                                                       (featuretable_this_type[af_t_feature] >= start) &
                                                       (featuretable_this_type[af_t_feature] < end)]
@@ -667,16 +672,16 @@ def main():
                             roc_table_strat = args.roc.from_table(pandas.concat([n_tp, n_fp, n_fn]))
                             rtname = "%s.%s.%f-%f.roc.csv" % (args.output, vtype, start, end)
                             roc_table_strat.to_csv(rtname, float_format='%.8f')
-                        start += current_binsize
+                        start = end
                         next_binsize += 1
                         if next_binsize >= len(args.af_strat_binsize):
                             next_binsize = 0
                         current_binsize = args.af_strat_binsize[next_binsize]
 
         # remove things where we haven't seen any variants in truth and query
-        res = res[(res["total.truth"] > 0) & (res["total.query"] > 0)]
         # summary metrics with confidence intervals
         ci_alpha = 1.0 - args.ci_level
+
         recall = binomialCI(res["tp"], res["tp"]+res["fn"], ci_alpha)
         precision = binomialCI(res["tp"], res["tp"]+res["fp"], ci_alpha)
         res["recall"], res["recall_lower"], res["recall_upper"] = recall
@@ -684,6 +689,8 @@ def main():
         res["precision"], res["precision_lower"], res["precision_upper"] = precision
         res["na"] = res["unk"] / (res["total.query"])
         res["ambiguous"] = res["ambi"] / res["total.query"]
+
+        res = res[(res["total.truth"] > 0)]
 
         any_fp = fpclasses.countbases(label="FP")
 
@@ -717,19 +724,13 @@ def main():
                     # use all locations we saw calls on
                     h1 = Tools.vcfextract.extractHeadersJSON(ntpath)
                     h1_chrs = h1["tabix"]["chromosomes"]
+
                     if not h1_chrs:
-                        logging.warn("ntpath is empty")
+                        logging.warn("No contigs in truth file")
                         h1_chrs = []
 
-                    h2 = Tools.vcfextract.extractHeadersJSON(nqpath)
-                    h2_chrs = h2["tabix"]["chromosomes"]
-                    if not h2_chrs:
-                        logging.warn("nqpath is empty")
-                        h2_chrs = []
-
-                    combined_chrs = list(set(h1_chrs + h2_chrs))
-                    if len(combined_chrs) > 0:
-                        qlocations = " ".join(combined_chrs)
+                    if len(h1_chrs) > 0:
+                        qlocations = " ".join(h1_chrs)
                         fp_region_count = calculateLength(cs, qlocations)
                     else:
                         fp_region_count = 0

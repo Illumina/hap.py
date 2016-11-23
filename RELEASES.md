@@ -1,5 +1,16 @@
 # Hap.py Release Notes / Change Log
 
+## v0.3.6
+
+| Ticket  | Description                                                                        |
+|---------|------------------------------------------------------------------------------------|
+| HAP-258 | Som.py avoid CI failure for empty subsets                                          |
+| HAP-260 | Add Dockerfile based on Centos 6                                                   |
+| HAP-261 | Som.py FP rate calculation only uses truth contig sizes                            |
+| HAP-263 | Som.py fix AF binning (final bin now complete)                                     |
+| HAP-264 | Som.py support SomaticEVS feature for Strelka somatic                              |
+| HAP-265 | Hap.py haplotype-matched TPs now assigned min qual from across the superlocus      |
+
 ## v0.3.5
 
 | Ticket  | Description                                                                        |
