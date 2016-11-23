@@ -1,5 +1,10 @@
 # Hap.py Release Notes / Change Log   
    
+## 0.2.12
+
+HAP-214 fix Docker build error
+HAP-238 fix escaping of spaces
+
 ## 0.2.11   
    
 HAP-205 fix EVS feature support in som.py   
