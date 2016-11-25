@@ -12,6 +12,7 @@
 import pysam
 import pandas
 import numpy as np
+import logging
 
 
 def bamStats(bamfile):
@@ -20,7 +21,7 @@ def bamStats(bamfile):
     result = []
     samfile = pysam.Samfile(bamfile, "rb")
 
-    for x in istats:
+    for x in istats.split("\n"):
         xs = x.replace("\n", "").split("\t")
         if len(xs) < 4:
             logging.warn("Ignoring invalid stats line: %s" % x)
