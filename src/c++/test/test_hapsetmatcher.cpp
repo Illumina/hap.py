@@ -1,6 +1,5 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -26,67 +25,57 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-
 /**
- * Simple Variant-to-file writer
+ *  \brief Test cases for haplotype set matcher
  *
- * \file VariantWriter.hh
+ *
+ * \file test_hapsetmatcher.cpp
  * \author Peter Krusche
  * \email pkrusche@illumina.com
  *
  */
 
-#include "Variant.hh"
+#define BOOST_TEST_NO_MAIN
+#include <boost/test/unit_test.hpp>
+#include <boost/test/test_tools.hpp>
 
-namespace variant
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/path.hpp>
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <cstdlib>
+#include <bitset>
+
+#include "HapSetMatcher.hh"
+
+
+using namespace variant;
+
+BOOST_AUTO_TEST_CASE(testHapSetMatcher)
 {
+    boost::filesystem::path p(__FILE__);
+    boost::filesystem::path tp = p.parent_path()
+                                     .parent_path()   // test
+                                     .parent_path()   // c++
+                                 / boost::filesystem::path("data")
+                                 / boost::filesystem::path("chrQ.fa");
 
-/**
- * @brief Write variants to file
- */
-struct VariantWriterImpl;
-class VariantWriter {
-public:
-    VariantWriter(const char * filename, const char * reference);
+    HapSetMatcher hsm(tp.string(), "chrQ");
 
-    VariantWriter(VariantWriter const &);
-    ~VariantWriter();
-    VariantWriter & operator=(VariantWriter const &);
+    hsm.addLeft(RefVar(6, 5, "AAACCC"), 1);
+    hsm.addRight(RefVar(0, -1, "AAACCC"), 1);
 
-    /** write format fields apart from GT */
-    void setWriteFormats(bool write_fmts=false);
-    bool getWriteFormats() const;
+    HapAssignment assignment;
+    hsm.reset(assignment);
 
-    /**
-     * @brief Get header from VariantReader
-     *
-     * Optionally add only contig names, but not format and ID fields
-     */
-    void addHeader(VariantReader &, bool drop_formats_info=false);
+    BOOST_CHECK_EQUAL(assignment.variant_assignments.size(), (unsigned)2l);
 
-    /**
-     * @brief Add line to VCF header
-     *
-     * @param headerline the line to add
-     */
-    void addHeader(const char * headerline);
+    auto pass_and_score = hsm.checkAndScore(assignment);
+    BOOST_CHECK_EQUAL(pass_and_score.first, true);
+    BOOST_CHECK_EQUAL(pass_and_score.second, (unsigned)2l);
 
-    /**
-     * @brief Add a sample to the header
-     * @param sname  name of sample to write
-     * @return sample number to retrieve records in get()
-     */
-    int addSample(const char * sname);
-
-    /**
-     * @brief write a variant to a file
-     *
-     * @param var the variant records to write
-     */
-    void put(Variants const & var);
-
-private:
-    VariantWriterImpl * _impl;
-};
-
+//    BOOST_CHECK_EQUAL(popcount64(-1), 64);
 }
+

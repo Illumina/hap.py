@@ -54,8 +54,8 @@ namespace variant {
 /** short variation record */
 typedef struct _RefVar
 {
-    _RefVar() : flags(0) {}
-    _RefVar(int64_t _start, int64_t _end, std::string _alt, int64_t _flags=0) :
+    _RefVar() : start(-1), end(-1), flags(0) {}
+    _RefVar(int64_t _start, int64_t _end, std::string const & _alt, int64_t _flags=0) :
         start(_start), end(_end), alt(_alt), flags(_flags) {
         if(alt == "<DEL>")
         {

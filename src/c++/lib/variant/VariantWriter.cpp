@@ -70,7 +70,7 @@ namespace variant
         delete _impl;
     }
 
-    VariantWriter const & VariantWriter::operator=(VariantWriter const & rhs)
+    VariantWriter & VariantWriter::operator=(VariantWriter const & rhs)
     {
         if(&rhs == this)
         {

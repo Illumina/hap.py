@@ -123,10 +123,11 @@ namespace variant {
         std::list< allele_list::iterator > truth_unmatched;
         std::list< allele_list::iterator > query_unmatched;
 
-        auto compare_and_update = [&_impl,
+        auto compare_and_update = [this,
                                    &truth_alleles,
                                    &query_alleles,
                                    &direct_matches,
+                                   &truth_mapped,
                                    &truth_unmatched,
                                    &query_unmatched](bool finish)
         {
@@ -211,7 +212,7 @@ namespace variant {
             int gt[MAX_GT];
             const std::string vchr = bcfhelpers::getChrom(_impl->hdr.get(), v.get());
 
-            auto makeRefVar = [&_impl, &vchr, &v](int allele) -> RefVar
+            auto makeRefVar = [this, &vchr, &v](int allele) -> RefVar
             {
                 assert(allele < v->n_allele);
                 RefVar rv;
@@ -266,7 +267,6 @@ namespace variant {
             }
             bcfhelpers::setFormatFloats(_impl->hdr.get(), v.get(), "QQ", QQ);
 
-            to_update.push_back(v.get());
             compare_and_update(false);
         }
 
