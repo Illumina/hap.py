@@ -66,7 +66,12 @@ namespace variant
             auto const & v = _impl->variants[v_id];
             if(v.side == HapSetMatcherImpl::Variant::LEFT)
             {
-                left_mapped.insert(std::make_pair(v.data.repr(), v_id));
+                RefVar rv = v.data;
+                // optional: left-shift
+                leftShift(_impl->ref, _impl->chr.c_str(), rv);
+                trimLeft(_impl->ref, _impl->chr.c_str(), rv, false);
+                trimRight(_impl->ref, _impl->chr.c_str(), rv, false);
+                left_mapped.insert(std::make_pair(rv.repr(), v_id));
             }
         }
 
@@ -75,7 +80,11 @@ namespace variant
             auto const & v = _impl->variants[v_id];
             if(v.side == HapSetMatcherImpl::Variant::RIGHT)
             {
-                auto it = left_mapped.find(v.data.repr());
+                RefVar rv = v.data;
+                leftShift(_impl->ref, _impl->chr.c_str(), rv);
+                trimLeft(_impl->ref, _impl->chr.c_str(), rv, false);
+                trimRight(_impl->ref, _impl->chr.c_str(), rv, false);
+                auto it = left_mapped.find(rv.repr());
                 if(it != left_mapped.end())
                 {
                     assignment.variant_assignments[it->second] = 1;

@@ -224,10 +224,6 @@ namespace variant {
                     error("unsupported symbolic ALT at %s:%i : %S", vchr.c_str(), v->pos, rv.alt.c_str());
                 }
                 rv.end = rv.start + rv.alt.size() - 1;
-                // optional: left-shift
-//                leftShift(_impl->ref_fasta, vchr.c_str(), rv);
-                trimLeft(_impl->ref_fasta, vchr.c_str(), rv, false);
-                trimRight(_impl->ref_fasta, vchr.c_str(), rv, false);
                 return rv;
             };
 

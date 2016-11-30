@@ -49,6 +49,7 @@
 #include <bitset>
 
 #include "HapSetMatcher.hh"
+#include "AlleleMatcher.hh"
 
 
 using namespace variant;
@@ -78,3 +79,29 @@ BOOST_AUTO_TEST_CASE(testHapSetMatcher)
     BOOST_CHECK_EQUAL(hsm.numberOfPossibleAssignments(), (unsigned)(3l*3l));
 }
 
+BOOST_AUTO_TEST_CASE(testAlleleMatcher)
+{
+    boost::filesystem::path p(__FILE__);
+    boost::filesystem::path tp = p.parent_path()
+                                     .parent_path()   // test
+                                     .parent_path()   // c++
+                                 / boost::filesystem::path("data")
+                                 / boost::filesystem::path("chrQ.fa");
+
+    AlleleMatcher am(tp.string(), "chrQ");
+
+    am.addLeft(RefVar(6, 5, "AAACCC"), 1);
+
+    // untrimmed allele -- we can trim this to be the same
+    am.addRight(RefVar(6, 8, "AAACCCAAA"), 1);
+
+    HapAssignment assignment;
+    am.reset(assignment);
+    BOOST_CHECK_EQUAL(am.optimize(assignment), (unsigned)2l);
+    BOOST_CHECK_EQUAL(assignment.variant_assignments.size(), (unsigned)2l);
+
+    auto pass_and_score = am.checkAndScore(assignment);
+    BOOST_CHECK_EQUAL(pass_and_score.first, true);
+    BOOST_CHECK_EQUAL(pass_and_score.second, (unsigned)2l);
+    BOOST_CHECK_EQUAL(am.numberOfPossibleAssignments(), (unsigned)(2l*2l));
+}
