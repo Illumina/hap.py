@@ -1,5 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -25,56 +26,46 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+
 /**
- *  \brief Test cases for haplotype set matcher
+ *  \brief Match alleles via normalisation + hashing
  *
- *
- * \file test_hapsetmatcher.cpp
+ * \file AlleleMatcher.hh
  * \author Peter Krusche
  * \email pkrusche@illumina.com
  *
  */
 
-#define BOOST_TEST_NO_MAIN
-#include <boost/test/unit_test.hpp>
-#include <boost/test/test_tools.hpp>
+#pragma once
 
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/path.hpp>
 
 #include <iostream>
-#include <fstream>
-#include <sstream>
-#include <cstdlib>
-#include <bitset>
+#include <vector>
+#include <memory>
+#include <unordered_map>
 
 #include "HapSetMatcher.hh"
 
 
-using namespace variant;
-
-BOOST_AUTO_TEST_CASE(testHapSetMatcher)
+namespace variant
 {
-    boost::filesystem::path p(__FILE__);
-    boost::filesystem::path tp = p.parent_path()
-                                     .parent_path()   // test
-                                     .parent_path()   // c++
-                                 / boost::filesystem::path("data")
-                                 / boost::filesystem::path("chrQ.fa");
+    /**
+     * Exact matcher for sets of variants assigned to haplotypes
+     *
+     * Exponential time with cutoff
+     */
+    class AlleleMatcher : public HapSetMatcher
+    {
+    public:
+        AlleleMatcher(std::string const & reference,
+                      std::string const & chr,
+                      int n_enum=1 << 20);
+        ~AlleleMatcher();
 
-    HapSetMatcher hsm(tp.string(), "chrQ");
-
-    hsm.addLeft(RefVar(6, 5, "AAACCC"), 1);
-    hsm.addRight(RefVar(0, -1, "AAACCC"), 1);
-
-    HapAssignment assignment;
-    hsm.reset(assignment);
-    BOOST_CHECK_EQUAL(hsm.optimize(assignment), (unsigned)2l);
-    BOOST_CHECK_EQUAL(assignment.variant_assignments.size(), (unsigned)2l);
-
-    auto pass_and_score = hsm.checkAndScore(assignment);
-    BOOST_CHECK_EQUAL(pass_and_score.first, true);
-    BOOST_CHECK_EQUAL(pass_and_score.second, (unsigned)2l);
-    BOOST_CHECK_EQUAL(hsm.numberOfPossibleAssignments(), (unsigned)(3l*3l));
+        /**
+         * update / optimize assignments
+         */
+        virtual size_t optimize(HapAssignment & assignment);
+    };
 }
 

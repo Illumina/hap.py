@@ -72,7 +72,7 @@ namespace variant
         // 0x01 (= 0 * 0x02 + 1* 0x01)
         // variant assignment 0x03 (both on hap1 / hap 2) ... becomes with this PS
         // 0x03 (= 1 * 0x02 + 1* 0x01)
-        std::unordered_map<int64_t, int64_t> ps_assignments[2];
+        std::unordered_map<int64_t, uint64_t> ps_assignments[2];
     };
 
     /**
@@ -86,12 +86,13 @@ namespace variant
         HapSetMatcher(std::string const & reference,
                       std::string const & chr,
                       int n_haps = 2, int n_enum=1 << 20);
-        ~HapSetMatcher();
+        virtual ~HapSetMatcher();
 
         /**
          * Add variants to left / right side
          * @param var RefVar allele
-         * @param copies  number of copies / haplotypes this needs to be assigned to
+         * @param copies number of copies / haplotypes this needs to be assigned to if ps == -1,
+         *               otherwise the phased assignment
          * @param ps phase set
          * @return identifier for the variant to recover it in the HapAssignment objects
          */
@@ -101,7 +102,12 @@ namespace variant
         /**
          * update / optimize assignments
          */
-        virtual void optimize(HapAssignment & assignment);
+        virtual size_t optimize(HapAssignment & assignment);
+
+        /**
+         * @return the number of possible assignments
+         */
+        uint64_t numberOfPossibleAssignments() const;
 
         /**
          * update / optimize assignments
@@ -116,7 +122,7 @@ namespace variant
          */
         void reset(HapAssignment & assignment);
 
-    private:
+    protected:
         struct HapSetMatcherImpl;
         std::unique_ptr<HapSetMatcherImpl> _impl;
     };

@@ -216,7 +216,8 @@ std::string Haplotype::seq(int64_t start, int64_t end) const
         end = _impl->end;
     }
     // is there no overlap?
-    if(start > _impl->end || end < _impl->start || _impl->v.size() == 0)
+    if(   start > std::max(_impl->start, _impl->end)
+       || end < _impl->start || _impl->v.size() == 0)
     {
         // => return reference sequence
         return _impl->refsq->query(_impl->chr.c_str(), start, end);

@@ -38,6 +38,7 @@
  */
 
 #include "HapSetMatcher.hh"
+#include "HapSetMatcherImpl.hh"
 #include "Haplotype.hh"
 #include "helpers/Popcount.hh"
 
@@ -46,200 +47,6 @@
 
 namespace variant {
 
-    static const int MAX_ACCEPTABLE_ASSIGNMENTS = 2;
-
-    struct HapSetMatcher::HapSetMatcherImpl
-    {
-        HapSetMatcherImpl(std::string const & ref) : ref(ref.c_str()) {}
-        struct Variant
-        {
-            RefVar data;
-            enum {LEFT=0, RIGHT=1} side;
-            int64_t ps = -1;
-            std::set<int8_t> acceptable_assignments;
-
-            /** initialize acceptable assignments based on number of copies and haps */
-            void setCopies(int8_t copies, int n_haps) {
-                uint64_t current = 0;
-                uint64_t cm = 1;
-                assert(copies <= n_haps);
-                for(int c = 0; c < copies; ++c)
-                {
-                    current |= cm;
-                    cm <<= 1;
-                }
-                if(copies < n_haps)
-                {
-                    cm <<= n_haps - copies;
-                }
-                while(current < cm)
-                {
-                    acceptable_assignments.insert((int8_t)current);
-                    current = next_permutation(current);
-                }
-            }
-
-            static std::vector< std::set<int8_t> > precomputed_assignments;
-        };
-
-
-        void resetAssignment(HapAssignment & a)
-        {
-            a.ps_assignments[0].clear();
-            a.ps_assignments[1].clear();
-            a.variant_assignments.resize(variants.size());
-
-            uint64_t default_ps_assignment = 0;
-            uint64_t current_assignment = 1;
-            for(int hap = 0; hap < n_haps; ++hap)
-            {
-                default_ps_assignment |= current_assignment;
-                current_assignment <<= 9; // 8 -> next slot, 1 => move mask
-            }
-
-            for(size_t vid = 0; vid < variants.size(); ++vid)
-            {
-                auto const & v = variants[vid];
-                if(v.ps >= 0)
-                {
-                    a.ps_assignments[v.side][v.ps] = default_ps_assignment;
-                }
-                if(v.acceptable_assignments.empty())
-                {
-                    a.variant_assignments[vid] = 0;
-                }
-                else
-                {
-                    a.variant_assignments[vid] = *(v.acceptable_assignments.cbegin());
-                }
-            }
-        }
-
-        /**
-         * Test if an assignment produces matching haplotypes
-         * @param a assignment of variants to haplotypes
-         * @return match status -- true when all haplotype pairs match
-         */
-        bool isValidAssignment(HapAssignment const & a)
-        {
-            std::vector<haplotypes::Haplotype> haps;
-            haplotypes::Haplotype hap(chr.c_str(), ref.getFilename().c_str());
-            haps.resize((unsigned long) (2 * n_haps), hap);
-
-            if(sorted_variants.size() != variants.size())
-            {
-                sorted_variants.clear();
-                size_t vid = 0;
-                for(auto const & v : variants)
-                {
-                    sorted_variants.insert(std::make_pair(v.data.start, vid));
-                    ++vid;
-                }
-            }
-
-            int64_t min_pos = std::numeric_limits<int64_t>::max();
-            int64_t max_pos = 0;
-
-            for(auto const & v_id : sorted_variants)
-            {
-                const auto & v = variants[v_id.second];
-
-                min_pos = std::min(min_pos, v.data.start);
-                min_pos = std::min(min_pos, v.data.end);
-                max_pos = std::max(max_pos, v.data.start);
-                max_pos = std::max(max_pos, v.data.end);
-
-                assert(a.variant_assignments.size() > v_id.second);
-                int8_t assignment = a.variant_assignments[v_id.second];
-                if (v.ps >= 0)
-                {
-                    auto const &ps_assignment = a.ps_assignments[(int) v.side];
-                    auto ps_it = ps_assignment.find(v.ps);
-                    if (ps_it == ps_assignment.end())
-                    {
-                        // unassigned PS
-                        return false;
-                    }
-
-                    // reassign according to ps
-                    int64_t new_assignments = ps_it->second;
-                    int8_t updated_assignment = 0;
-                    while(assignment > 0)
-                    {
-                        updated_assignment |= (int8_t )new_assignments;
-                        new_assignments >>= 8;
-                        assignment >>= 1;
-                    }
-                    assignment = updated_assignment;
-                }
-
-                int assigned_hap = 0;
-                while(assignment && assigned_hap < n_haps)
-                {
-                    if(assignment & 1)
-                    {
-                        const size_t hpos = (size_t) ((assigned_hap << 1) | v.side);
-                        try
-                        {
-                            haps[hpos].addVar(v.data.start, v.data.end, v.data.alt);
-                        }
-                        catch(std::runtime_error const & )
-                        {
-                            // out of order? => this assignment doesn't work.
-                            return false;
-                        }
-                    }
-                    assignment >>= 1;
-                    ++assigned_hap;
-                }
-            }
-
-            min_pos = std::max(min_pos - 1, (int64_t)0);
-            max_pos = std::max(max_pos + 1, (int64_t)0);
-
-            if(!variants.empty() && min_pos > max_pos)
-            {
-                return false;
-            }
-
-            for(int h = 0; h < n_haps; ++h)
-            {
-                const std::string h1 = haps[h << 1].seq(min_pos, max_pos);
-                const std::string h2 = haps[(h << 1) + 1].seq(min_pos, max_pos);
-                if(h1 != h2)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        size_t scoreAssignment(HapAssignment const & a)
-        {
-            size_t score = 0;
-            size_t vid = 0;
-            for(auto const & v : variants)
-            {
-                assert(a.variant_assignments.size() > vid);
-                auto assignment = a.variant_assignments[vid];
-                if(v.acceptable_assignments.count(assignment))
-                {
-                    score++;
-                }
-                ++vid;
-            }
-            return score;
-        }
-
-        std::multimap<int64_t, size_t> sorted_variants;
-        std::vector<Variant> variants;
-        FastaFile ref;
-        std::string chr;
-        int n_haps = 2;
-        int n_enum = 1000;
-    };
-
     HapSetMatcher::HapSetMatcher(std::string const & ref,
                                  std::string const & chr,
                                  int n_haps,
@@ -247,7 +54,7 @@ namespace variant {
     ) : _impl(new HapSetMatcherImpl(ref))
     {
         _impl->chr = chr;
-        assert(n_haps <= 8);
+        assert(n_haps > 0 && n_haps <= 8);
         _impl->n_haps = n_haps;
         _impl->n_enum = n_enum;
     }
@@ -259,10 +66,18 @@ namespace variant {
         HapSetMatcherImpl::Variant av;
         av.data = var;
         av.side = HapSetMatcherImpl::Variant::LEFT;
-        av.setCopies(copies, _impl->n_haps);
+        if(ps < 0)
+        {
+            av.setCopies(copies, _impl->n_haps);
+        }
+        else
+        {
+            // one acceptable assignment which gets permuted through PS updates
+            av.acceptable_assignments.insert(copies);
+        }
         av.ps = ps;
         _impl->variants.push_back(av);
-        return _impl->sorted_variants.size() - 1;
+        return _impl->variants.size() - 1;
     }
 
     size_t HapSetMatcher::addRight(RefVar const & var, int8_t copies, int64_t ps)
@@ -270,20 +85,113 @@ namespace variant {
         HapSetMatcherImpl::Variant av;
         av.data = var;
         av.side = HapSetMatcherImpl::Variant::RIGHT;
-        av.setCopies(copies, _impl->n_haps);
+        if(ps < 0)
+        {
+            av.setCopies(copies, _impl->n_haps);
+        }
+        else
+        {
+            // one acceptable assignment which gets permuted through PS updates
+            av.acceptable_assignments.insert(copies);
+        }
         av.ps = ps;
         _impl->variants.push_back(av);
-        return _impl->sorted_variants.size() - 1;
+        return _impl->variants.size() - 1;
     }
 
 
     /**
      * update / optimise assignments
      */
-    void HapSetMatcher::optimize(HapAssignment & assignment)
+    size_t HapSetMatcher::optimize(HapAssignment & assignment)
     {
+        if(assignment.variant_assignments.size() != _impl->variants.size())
+        {
+            reset(assignment);
+        }
 
+        int n_enum = _impl->n_enum;
+
+        HapAssignment best_assignment = assignment;
+        int64_t best_score = -1;
+
+        struct MaxEnumException {};
+
+        try
+        {
+            bool ps_left = true;
+            while(ps_left)
+            {
+                bool vars_left = true;
+                while(vars_left)
+                {
+                    if(_impl->isValidAssignment(assignment))
+                    {
+                        size_t current_score = _impl->scoreAssignment(assignment);
+                        if((signed)current_score > best_score)
+                        {
+                            best_assignment = assignment;
+                            best_score = (signed)current_score;
+                        }
+                    }
+                    vars_left = _impl->nextVarAssignment(assignment);
+                    if(n_enum-- <= 0)
+                    {
+                        throw MaxEnumException();
+                    }
+                }
+                ps_left = _impl->nextPSAssignment(assignment);
+            }
+        }
+        catch (MaxEnumException const & )
+        {
+            // enumeration terminated early?
+            best_score = 0;
+        }
+
+        assignment = best_assignment;
+        return (size_t)best_score;
     }
+
+    /**
+     * @return the number of possible assignments
+     */
+    uint64_t HapSetMatcher::numberOfPossibleAssignments() const
+    {
+        uint64_t current_count = 1;
+        uint64_t ps_count = 0;
+        for(auto const & v : _impl->variants)
+        {
+            uint64_t this_count = v.acceptable_assignments.size();
+            if(!v.acceptable_assignments.count(0))
+            {
+                ++this_count;
+            }
+
+            uint64_t next_count = current_count * this_count;
+            if(next_count < current_count)
+            {
+                return std::numeric_limits<uint64_t>::max();
+            }
+            current_count = next_count;
+            if(v.ps >= 0)
+            {
+                ++ps_count;
+            }
+        }
+
+        while(ps_count--)
+        {
+            uint64_t next_count = current_count << 1;
+            if(next_count < current_count)
+            {
+                return std::numeric_limits<uint64_t>::max();
+            }
+            current_count = next_count;
+        }
+        return current_count;
+    }
+
 
     /**
      * reset/initialize an assignment

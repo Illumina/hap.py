@@ -35,6 +35,7 @@
 
 #include <htslib/vcf.h>
 #include "BlockAlleleCompare.hh"
+#include "AlleleMatcher.hh"
 
 #include "helpers/BCFHelpers.hh"
 
@@ -118,90 +119,78 @@ namespace variant {
         allele_list query_alleles;
 
         std::multimap<std::string, allele_list::iterator > truth_mapped;
-        std::list< std::pair<bcf1_t*, bcf1_t*> > direct_matches;
 
-        std::list< allele_list::iterator > truth_unmatched;
-        std::list< allele_list::iterator > query_unmatched;
+        std::string current_chr;
 
         auto compare_and_update = [this,
+                                   &current_chr,
                                    &truth_alleles,
                                    &query_alleles,
-                                   &direct_matches,
-                                   &truth_mapped,
-                                   &truth_unmatched,
-                                   &query_unmatched](bool finish)
+                                   &truth_mapped]()
         {
+            AlleleMatcher allele_matcher(_impl->ref_fasta.getFilename(), current_chr);
+
+            std::unordered_map<size_t, bcf1_t*> comparison_mapping;
+            std::unordered_map<size_t, int>     comparison_mapping_side;
 
             for(auto x = truth_alleles.begin(); x != truth_alleles.end(); ++x)
             {
-                truth_mapped.insert(std::make_pair(x->first.repr(), x));
+                const size_t v_id = allele_matcher.addLeft(x->first, 1);
+                comparison_mapping[v_id] = x->second;
+                comparison_mapping_side[v_id] = 0;
             }
 
             for(auto x = query_alleles.begin(); x != query_alleles.end(); ++x)
             {
-                auto it = truth_mapped.find(x->first.repr());
-                if(it != truth_mapped.end())
+                const size_t v_id = allele_matcher.addRight(x->first, 1);
+                comparison_mapping[v_id] = x->second;
+                comparison_mapping_side[v_id] = 1;
+            }
+
+            HapAssignment assignment;
+            allele_matcher.optimize(assignment);
+
+            struct Updates {
+                std::vector<std::string> bd = {".", "."};
+            };
+
+            std::map<bcf1_t*, Updates> update_list;
+            auto u = [&update_list](bcf1_t* v) -> std::map<bcf1_t*, Updates>::iterator
+            {
+                auto it = update_list.find(v);
+                if(it == update_list.end())
                 {
-                    direct_matches.emplace_back(std::make_pair(it->second->second, x->second));
-                    truth_mapped.erase(it);
+                    it = update_list.emplace(std::make_pair(v, Updates())).first;
+                }
+                return it;
+            };
+
+            for(size_t v_id = 0; v_id < assignment.variant_assignments.size(); ++v_id)
+            {
+                if(assignment.variant_assignments[v_id] != 0)
+                {
+                    u(comparison_mapping[v_id])->second.bd[comparison_mapping_side[v_id]] = "TP";
+                }
+                else if(comparison_mapping_side[v_id] == 0)
+                {
+                    u(comparison_mapping[v_id])->second.bd[0] = "FN";
                 }
                 else
                 {
-                    query_unmatched.push_back(x);
+                    u(comparison_mapping[v_id])->second.bd[1] = "FP";
                 }
             }
-            for(auto & x : truth_mapped)
+
+            for(auto & update : update_list)
             {
-                truth_unmatched.push_back(x.second);
+                bcfhelpers::setFormatStrings(_impl->hdr.get(), update.first, "BD", update.second.bd);
             }
 
-            if(finish || (truth_unmatched.empty() && query_unmatched.empty()))
-            {
-                struct Updates {
-                    std::vector<std::string> bd = {".", "."};
-                };
-
-                std::map<bcf1_t*, Updates> update_list;
-
-                auto u = [&update_list](bcf1_t* v) -> std::map<bcf1_t*, Updates>::iterator
-                {
-                    auto it = update_list.find(v);
-                    if(it == update_list.end())
-                    {
-                        it = update_list.emplace(std::make_pair(v, Updates())).first;
-                    }
-                    return it;
-                };
-
-                for(auto & match : direct_matches)
-                {
-                    u(match.first)->second.bd[0] = "TP";
-                    u(match.second)->second.bd[1] = "TP";
-                }
-
-                for(auto & fn : truth_unmatched)
-                {
-                    u(fn->second)->second.bd[0] = "FN";
-                }
-
-                for(auto & fp : query_unmatched)
-                {
-                    u(fp->second)->second.bd[1] = "FP";
-                }
-
-                for(auto & update : update_list)
-                {
-                    bcfhelpers::setFormatStrings(_impl->hdr.get(), update.first, "BD", update.second.bd);
-                }
-
-                query_alleles.clear();
-                truth_alleles.clear();
-                truth_unmatched.clear();
-                query_unmatched.clear();
-                direct_matches.clear();
-            }
+            query_alleles.clear();
+            truth_alleles.clear();
         };
 
+        int64_t current_block_end = -1;
 
         for(auto & v : _impl->buffered)
         {
@@ -211,6 +200,14 @@ namespace variant {
             int ngt = 0;
             int gt[MAX_GT];
             const std::string vchr = bcfhelpers::getChrom(_impl->hdr.get(), v.get());
+
+            // make sure all variants in block are on same chr
+            if(!current_chr.empty() && current_chr != vchr)
+            {
+                compare_and_update();
+                current_block_end = -1;
+            }
+            current_chr = vchr;
 
             auto makeRefVar = [this, &vchr, &v](int allele) -> RefVar
             {
@@ -227,6 +224,8 @@ namespace variant {
                     error("unsupported symbolic ALT at %s:%i : %S", vchr.c_str(), v->pos, rv.alt.c_str());
                 }
                 rv.end = rv.start + rv.alt.size() - 1;
+                // optional: left-shift
+//                leftShift(_impl->ref_fasta, vchr.c_str(), rv);
                 trimLeft(_impl->ref_fasta, vchr.c_str(), rv, false);
                 trimRight(_impl->ref_fasta, vchr.c_str(), rv, false);
                 return rv;
@@ -267,10 +266,19 @@ namespace variant {
             }
             bcfhelpers::setFormatFloats(_impl->hdr.get(), v.get(), "QQ", QQ);
 
-            compare_and_update(false);
+            if(  (current_block_end >= 0 && v->pos > current_block_end + 100000)
+               || truth_alleles.size() + query_alleles.size() > 1024)
+            {
+                compare_and_update();
+                current_block_end = -1;
+            }
+            int64_t vstart, vend;
+            bcfhelpers::getLocation(_impl->hdr.get(), v.get(), vstart, vend);
+            current_block_end = std::max(vstart, current_block_end);
+            current_block_end = std::max(vend, current_block_end);
         }
 
-        compare_and_update(true);
+        compare_and_update();
     }
 
     /**
