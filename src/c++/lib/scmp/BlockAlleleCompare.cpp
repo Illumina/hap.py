@@ -51,6 +51,10 @@ namespace variant {
         bool qq_name_is_qual;
 
         std::list<bcfhelpers::p_bcf1> buffered;
+
+        // track chrom / pos
+        int current_rid = -1;
+        int start_pos = -1;
     };
 
     /**
@@ -60,17 +64,17 @@ namespace variant {
      * @param hdr a bcf header
      * @param ref_fasta reference fasta file for trimming and counting
      */
-    BlockAlleleCompare::BlockAlleleCompare(bcf_hdr_t * hdr,
+    BlockAlleleCompare::BlockAlleleCompare(bcfhelpers::p_bcf_hdr hdr,
                                            FastaFile const & ref_fasta,
                                            std::string const & qq_name) : _impl(new BlockAlleleCompareImpl())
     {
-        _impl->hdr = bcfhelpers::ph(bcf_hdr_dup(hdr));
+        _impl->hdr = hdr;
         _impl->ref_fasta = ref_fasta;
         _impl->qq_name = qq_name;
 
         if(!qq_name.empty())
         {
-            _impl->qq_hdr_id = bcf_hdr_id2int(hdr, BCF_DT_ID, qq_name.c_str());
+            _impl->qq_hdr_id = bcf_hdr_id2int(hdr.get(), BCF_DT_ID, qq_name.c_str());
             if(bcf_hdr_idinfo_exists(hdr, BCF_HL_INFO, _impl->qq_hdr_id))
             {
                 _impl->qq_name_is_qual = false;
@@ -101,12 +105,39 @@ namespace variant {
     }
 
     /**
+     * operators so we can sort blocks
+     */
+    bool BlockAlleleCompare::operator==(BlockAlleleCompare const & rhs) const
+    {
+        return _impl.get() == rhs._impl.get();
+    }
+
+    bool BlockAlleleCompare::operator<(BlockAlleleCompare const & rhs) const
+    {
+        return _impl->current_rid < rhs._impl->current_rid ||
+               (_impl->current_rid == rhs._impl->current_rid && _impl->start_pos < rhs._impl->start_pos);
+    }
+
+    /**
      * Add a BCF record. Will duplicate the record and keep the copy
      * @param v bcf record
      */
     void BlockAlleleCompare::add(bcf1_t * v)
     {
+        // make sure we don't change chromosome within a block
+        if(_impl->current_rid < 0)
+        {
+            _impl->current_rid = v->rid;
+        }
+        else
+        {
+            assert(_impl->current_rid == v->rid);
+        }
         _impl->buffered.emplace_back(bcfhelpers::pb(bcf_dup(v)));
+        if(_impl->start_pos < 0 || v->pos < _impl->start_pos)
+        {
+            _impl->start_pos = v->pos;
+        }
     }
 
     /**
@@ -274,7 +305,10 @@ namespace variant {
             current_block_end = std::max(vend, current_block_end);
         }
 
-        compare_and_update();
+        if(!current_chr.empty() && !(truth_alleles.empty() && query_alleles.empty()))
+        {
+            compare_and_update();
+        }
     }
 
     /**

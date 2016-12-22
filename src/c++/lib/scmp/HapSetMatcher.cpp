@@ -51,8 +51,9 @@ namespace variant {
                                  std::string const & chr,
                                  int n_haps,
                                  int n_enum
-    ) : _impl(new HapSetMatcherImpl(ref))
+    ) : _impl(new HapSetMatcherImpl())
     {
+        _impl->ref = ref;
         _impl->chr = chr;
         assert(n_haps > 0 && n_haps <= 8);
         _impl->n_haps = n_haps;

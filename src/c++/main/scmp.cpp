@@ -57,11 +57,13 @@
 #include <htslib/vcf.h>
 
 #include "Error.hh"
+#include "helpers/Timing.hh"
 
 #include "BlockAlleleCompare.hh"
 
 using namespace variant;
 
+/* #define DEBUG_SCMP_THREADING */
 
 int main(int argc, char* argv[]) {
     namespace po = boost::program_options;
@@ -251,7 +253,9 @@ int main(int argc, char* argv[]) {
             else
             {
                 success = bcf_sr_seek(reader, chr.c_str(), start);
+#ifdef DEBUG_SCMP
                 std::cerr << "starting at " << chr << ":" << start << "\n";
+#endif
             }
             if(success <= -2)
             {
@@ -259,15 +263,15 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        bcf_hdr_t * hdr = reader->readers[0].header;
+        auto hdr = bcfhelpers::ph(bcf_hdr_dup(reader->readers[0].header));
 
-        BlockAlleleCompare::updateHeader(hdr);
+        BlockAlleleCompare::updateHeader(hdr.get());
 
         // rename the samples in the output header
         bcfhelpers::p_bcf_hdr output_header(bcfhelpers::ph(bcf_hdr_init("w")));
         {
             int len = 0;
-            char * hdr_text = bcf_hdr_fmt_text(hdr, 0, &len);
+            char * hdr_text = bcf_hdr_fmt_text(hdr.get(), 0, &len);
             if(!hdr_text)
             {
                 error("Failed to process input VCF header.");
@@ -313,31 +317,82 @@ int main(int argc, char* argv[]) {
         std::string current_chr = "";
         int vars_in_block = 0;
 
-        /** async stuff. each block can be counted in parallel, but we need to
-         *  write out the variants sequentially.
-         *  Therefore, we keep a future for each block to be able to join
-         *  when it's processed
+        /*
+         * we keep a list of jobs as futures which get processed by a pool of
+         * workers
          */
-        std::queue<std::pair <
-        std::future<void>,
-            std::unique_ptr<BlockAlleleCompare>
-        >> blocks;
-        std::list<std::unique_ptr<BlockAlleleCompare>> processed_blocks;
+        std::queue<std::unique_ptr<BlockAlleleCompare> > blocks;
+        std::mutex blocks_mutex;
 
-        /** this is where things actually get written to files */
-        auto run_comparison = [&blocks, &processed_blocks](int min_size) {
-            while(blocks.size() > (unsigned )min_size)
+        /*
+         * once a worker completes a comparison, the result goes into the list of
+         * processed blocks.
+         */
+        std::list<std::unique_ptr<BlockAlleleCompare>> processed_blocks;
+        std::mutex processed_blocks_mutex;
+
+
+        /**
+         * gets set to true by main thread
+         */
+        bool all_blocks_added = false;
+
+        std::vector<std::thread> workers;
+
+        auto worker = [&blocks,
+                       &blocks_mutex,
+                       &processed_blocks,
+                       &processed_blocks_mutex,
+                       &all_blocks_added]
+        {
+            bool work_left = true;
+            while(work_left)
             {
-                blocks.front().first.get();
-                processed_blocks.emplace_back(std::move(blocks.front().second));
-                blocks.pop();
+                std::unique_ptr<BlockAlleleCompare> current_block;
+#ifdef DEBUG_SCMP_THREADING
+                std::cerr << "Worker " << std::thread::id() << " waiting." << std::endl;
+#endif
+                {
+                    std::lock_guard<std::mutex> lk(blocks_mutex);
+                    /* std::unique_lock<std::mutex> lk(blocks_mutex); */
+                    /* lk.wait([&blocks]() { !blocks.empty(); }); */
+                    if (!blocks.empty())
+                    {
+                        current_block = std::move(blocks.front());
+                        blocks.pop();
+                    }
+                }
+                if(current_block)
+                {
+#ifdef DEBUG_SCMP_THREADING
+                    std::cerr << "Worker " << std::thread::id() << " has a job." << std::endl;
+#endif
+                    current_block->run();
+#ifdef DEBUG_SCMP_THREADING
+                    std::cerr << "Worker " << std::thread::id() << " finished a job." << std::endl;
+#endif
+                    {
+                        std::lock_guard<std::mutex> lock(processed_blocks_mutex);
+                        processed_blocks.emplace_back(std::move(current_block));
+#ifdef DEBUG_SCMP_THREADING
+                        std::cerr << "Worker " << std::thread::id() << " done." << std::endl;
+#endif
+                    }
+                }
+                work_left = !all_blocks_added || !blocks.empty();
             }
         };
+
+        for(int j = 0; j < std::max(1, threads); ++j)
+        {
+            workers.emplace_back(worker);
+        }
 
         std::unique_ptr<BlockAlleleCompare> p_bac(new BlockAlleleCompare(hdr, ref_fasta, qq_field));
 
         int nl = 1;
         int previous_pos = -1;
+        auto t0 = CPUClock::now();
         while(nl)
         {
             nl = bcf_sr_next_line(reader);
@@ -358,17 +413,23 @@ int main(int argc, char* argv[]) {
                     break;
                 }
             }
-            const std::string vchr = bcfhelpers::getChrom(hdr, line);
+            const std::string vchr = bcfhelpers::getChrom(hdr.get(), line);
             if(end != -1 && ((!current_chr.empty() && vchr != current_chr) || line->pos > end))
             {
                 break;
             }
 
-            if(vchr != current_chr)
+            if(!current_chr.empty() && vchr != current_chr)
             {
                 // reset bs on chr switch
                 previous_pos = -1;
+                if(vars_in_block > 0)
+                {
+                    // make sure we create a new block
+                    vars_in_block = blocksize + 1;
+                }
             }
+            current_chr = vchr;
 
             if(apply_filters)
             {
@@ -382,7 +443,7 @@ int main(int argc, char* argv[]) {
 
                     if(k >= 0)
                     {
-                        filter = bcf_hdr_int2id(hdr, BCF_DT_ID, line->d.flt[j]);
+                        filter = bcf_hdr_int2id(hdr.get(), BCF_DT_ID, line->d.flt[j]);
                     }
                     if(filter != "PASS")
                     {
@@ -398,16 +459,15 @@ int main(int argc, char* argv[]) {
                 }
             }
 
-            current_chr = vchr;
             const int dist_to_previous = (previous_pos < 0) ? std::numeric_limits<int>::max() : line->pos - previous_pos;
             previous_pos = line->pos;
 
-            if(vars_in_block > blocksize && dist_to_previous < min_var_distance)
+            if(vars_in_block > blocksize || dist_to_previous > min_var_distance)
             {
-                std::future<void> f = std::async(std::launch::async, &BlockAlleleCompare::run, p_bac.get());
-                // clear / write out some blocks (make sure we have at least 2xthreads tasks left)
-                run_comparison(threads);
-                blocks.emplace(std::move(f), std::move(p_bac));
+                {
+                    std::lock_guard<std::mutex> lock(blocks_mutex);
+                    blocks.emplace(std::move(p_bac));
+                }
                 p_bac = std::move(std::unique_ptr<BlockAlleleCompare>(new BlockAlleleCompare(hdr, ref_fasta, qq_field)));
                 vars_in_block = 0;
                 previous_pos = -1;
@@ -418,20 +478,36 @@ int main(int argc, char* argv[]) {
 
             if (message > 0 && (rcount % message) == 0)
             {
-                std::cout << stringutil::formatPos(vchr.c_str(), line->pos) << "\n";
+                auto t1 = CPUClock::now();
+                typedef std::chrono::duration<double, typename CPUClock::period> Cycle;
+                std::cout << stringutil::formatPos(vchr.c_str(), line->pos) << " cycles/record: " <<
+                             (Cycle(t1 - t0).count() / rcount) << "\n";
             }
             // count variants here
             ++rcount;
         }
 
         {
-            std::future<void> f = std::async(std::launch::async, &BlockAlleleCompare::run, p_bac.get());
-            // clear / write out some blocks (make sure we have at least 2xthreads tasks left)
-            blocks.emplace(std::move(f), std::move(p_bac));
+            std::lock_guard<std::mutex> lock(blocks_mutex);
+            blocks.emplace(std::move(p_bac));
+            all_blocks_added = true;
         }
 
-        // run remaining
-        run_comparison(0);
+        if(message > 0)
+        {
+            std::cout << "All records read. Waiting for workers to complete" << std::endl;
+        }
+
+        for(auto & t : workers)
+        {
+            t.join();
+        }
+
+        // make sure we write in the correct order
+        processed_blocks.sort([](std::unique_ptr<BlockAlleleCompare> const & b1,
+                                 std::unique_ptr<BlockAlleleCompare> const & b2) {
+            return *b1 < *b2;
+        });
 
         for(auto & result : processed_blocks)
         {

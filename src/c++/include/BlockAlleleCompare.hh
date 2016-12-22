@@ -56,7 +56,7 @@ namespace variant {
          * @param ref_fasta reference fasta file for trimming and counting
          * @param qq_name name of feature to use for QQ. Can be QUAL, an INFO or a FORMAT field
          */
-        explicit BlockAlleleCompare(bcf_hdr_t * hdr,
+        explicit BlockAlleleCompare(bcfhelpers::p_bcf_hdr hdr,
                                     FastaFile const & ref_fasta,
                                     std::string const & qq_name);
         virtual ~BlockAlleleCompare();
@@ -68,6 +68,12 @@ namespace variant {
         BlockAlleleCompare & operator=(BlockAlleleCompare const& rhs) = delete;
 
         /**
+         * operators so we can sort blocks
+         */
+        bool operator==(BlockAlleleCompare const & rhs) const;
+        bool operator<(BlockAlleleCompare const & rhs) const;
+
+        /**
          * Add a BCF record. Will duplicate the record and keep the copy
          * @param v bcf record
          */
@@ -76,7 +82,7 @@ namespace variant {
         /**
          * Compare all buffered variants
          */
-        void run();
+        virtual void run();
 
         /**
          * Output all buffered variants into a file

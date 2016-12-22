@@ -41,10 +41,16 @@
 
 #include <boost/filesystem.hpp>
 #include <iostream>
+#include <cstdio>
 #include <limits>
 #include <map>
 #include <fstream>
 #include <mutex>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include <boost/algorithm/string.hpp>
 
@@ -59,52 +65,163 @@ extern "C" {
 #pragma GCC diagnostic pop
 }
 
-struct FastaFileImpl
-{
-    FastaFileImpl(const char * _filename) :
+//#define DEBUG_FASTAFILE
+
+class MMappedFastaFile {
+public:
+    explicit MMappedFastaFile(std::string const & _filename) :
         filename(_filename)
     {
-        boost::filesystem::path iname(_filename);
-        iname += ".fai";
-        if(!boost::filesystem::exists(iname))
+        struct stat st;
+        stat(_filename.c_str(), &st);
+        filesize = st.st_size;
+        fd = open(_filename.c_str(), O_RDONLY, 0);
+        assert(fd != -1);
+        base = (uint8_t *) mmap(NULL, filesize, PROT_READ, MAP_PRIVATE | MAP_POPULATE, fd, 0);
+        assert(base != MAP_FAILED);
+
+        auto fai_fp = fopen((filename + ".fai").c_str(), "r");
+        if(!fai_fp)
         {
-            if(fai_build(_filename) < 0)
-            {
-                error("Cannot index %s", _filename);
-            }
+            assert(fai_build(filename.c_str()) == 0);
         }
-        idx = fai_load(_filename);
-        if(!idx)
+        else
         {
-            error("Cannot load index for %s", _filename);
+            fclose(fai_fp);
         }
 
-        // read contig lengths from fai since htslib doesn't expose this
-        std::ifstream fai(iname.c_str());
-        while(fai.good())
+        std::ifstream index_in(filename + ".fai");
+        while(index_in.good())
         {
             std::string line;
-            std::vector<std::string> v;
-            std::getline(fai, line);
-            stringutil::split(line, v, "\t");
-            // fai entries have 5 columns
-            if(v.size() == 5)
+            std::getline(index_in, line);
+            std::vector<std::string> parts;
+            stringutil::split(line, parts, "\n\t", false);
+            if(parts.size() == 5)
             {
-                contig_lengths[v[0]] = std::stol(v[1]);
-                // std::cerr << v[0] << ":" << std::stol(v[1]) << "\n";
+                const std::string contig = parts[0];
+                index_entry ientry;
+                sscanf(parts[1].c_str(), "%zu", &ientry.length);
+                sscanf(parts[2].c_str(), "%zu", &ientry.start_offset);
+                sscanf(parts[3].c_str(), "%zu", &ientry.chars_per_line);
+                sscanf(parts[4].c_str(), "%zu", &ientry.bytes_per_line);
+                fai[contig] = ientry;
+            }
+            else if(parts.size() > 0)
+            {
+                error("invalid fai line %s in %s", line.c_str(), (filename + ".fai").c_str());
             }
         }
     }
 
-    ~FastaFileImpl()
+    ~MMappedFastaFile()
     {
-        fai_destroy(idx);
+        const int rc = munmap(base, filesize);
+        assert(rc == 0);
+        close(fd);
     }
 
-    faidx_t * idx;
+
+    std::string get(std::string const & contig, const size_t start, size_t len)
+    {
+        auto ientry = fai.find(contig);
+        if(ientry == fai.end())
+        {
+            error("Contig %s is not known", contig.c_str());
+        }
+
+        if(start >= ientry->second.length)
+        {
+            return "";
+            /* TODO: handle downstream */
+            /* error("Position %zu is past the end of contig %s", start, contig.c_str()); */
+        }
+
+        const size_t line = start / ientry->second.chars_per_line;
+        size_t offset_in_line = start % ientry->second.chars_per_line;
+        size_t chars_in_line = ientry->second.chars_per_line - offset_in_line;
+        size_t line_offset = ientry->second.start_offset + line*ientry->second.bytes_per_line;
+
+        std::string result;
+        while(len > 0)
+        {
+            const size_t to_read = std::min(len, chars_in_line);
+            result += std::string((const char *)(base + line_offset + offset_in_line), to_read);
+            len -= to_read;
+            offset_in_line = 0;
+            line_offset += ientry->second.bytes_per_line;
+            if(line_offset - ientry->second.start_offset >= ientry->second.length)
+            {
+                break;
+            }
+            chars_in_line = std::min(ientry->second.chars_per_line, ientry->second.length - line_offset);
+        }
+        return result;
+    }
+
+private:
+    typedef struct _index_entry
+    {
+        size_t length;
+        size_t start_offset;
+        size_t chars_per_line;
+        size_t bytes_per_line;
+    } index_entry;
+
     std::string filename;
-    std::map<std::string, int64_t> contig_lengths;
-    std::mutex mutex;
+    int fd;
+    size_t filesize;
+    uint8_t * base;
+
+    std::map<std::string, index_entry> fai;
+};
+
+
+class FastaFileCache
+{
+public:
+    std::shared_ptr<MMappedFastaFile> operator() (std::string const & filename)
+    {
+        std::lock_guard<std::mutex> write_lock(write_mutex);
+        auto it = cache.find(filename);
+        if(it == cache.end())
+        {
+#ifdef DEBUG_FASTAFILE
+            std::cerr << "fastafile: adding " << filename << std::endl;
+#endif
+            it = cache.emplace(filename, std::make_shared<MMappedFastaFile>(filename)).first;
+
+#ifdef DEBUG_FASTAFILE
+            std::cerr << "fastafile: added " << filename << std::endl;
+        }
+        else
+        {
+            std::cerr << "fastafile: reused " << filename << std::endl;
+#endif
+        }
+        return it->second;
+    }
+private:
+    static std::map<std::string, std::shared_ptr<MMappedFastaFile>> cache;
+    static std::mutex write_mutex;
+};
+
+std::map<std::string, std::shared_ptr<MMappedFastaFile>> FastaFileCache::cache;
+std::mutex FastaFileCache::write_mutex;
+
+struct FastaFileImpl
+{
+    explicit FastaFileImpl(const char * _filename) :
+        filename(_filename)
+    {
+        FastaFileCache cache;
+        contigs = cache(filename);
+    }
+
+    ~FastaFileImpl() {}
+
+    std::string filename;
+    std::shared_ptr<MMappedFastaFile> contigs;
 };
 
 FastaFile::FastaFile() {
@@ -158,55 +275,20 @@ std::string FastaFile::query(std::string const & location) const
 
 std::string FastaFile::query(const char * chr, int64_t start, int64_t end) const
 {
-    if(!_impl) {
-        error("FastaFile object not initialized before use");
-    }
-    int64_t requested_length = end-start+1;
-
-    auto clen = _impl->contig_lengths.find(chr);
-    if(clen != _impl->contig_lengths.end())
+    if(end < start)
     {
-        if(start+1 > clen->second)
-        {
-            return "";
-        }
-    }
-    else
-    {
-        std::cerr << "[W] FastaFile::query:  Unknown contig length for " << chr << " --  we might read over the end." << "\n";
+        return "";
     }
 
-    if(end < 0 || start < 0)
-    {
-        requested_length = std::numeric_limits<int64_t>::max();
-    }
+    assert(start >= 0);
 
+    const int64_t requested_length = end - start + 1;
     if(requested_length <= 0)
     {
         return "";
     }
-    int len = 0;
-    // faidx_fetch_seq (..., start, end) gets [start, end]
-    char * data = nullptr;
-    {
-        // TODO -- this is sub-optimal. for proper thread-safe Fasta support, we should
-        // TODO memory-map the file, which means we can read without blocking
-        std::lock_guard<std::mutex> l(_impl->mutex);
-        data = faidx_fetch_seq(_impl->idx, chr, (int) start, (int) end, &len);
-    }
 
-    if(len == 0)
-    {
-        return "";
-    }
-
-    if(len < 0)
-    {
-        error("Fasta retrieval failed with return code %i at %s:%i-%i", len, chr, start, end);
-    }
-
-    std::string result(data, (unsigned long) std::min(requested_length, (int64_t)len));
-    free(data);
+    std::string result = _impl->contigs->get(chr, start, requested_length);
     boost::to_upper(result);
     return result;
 }

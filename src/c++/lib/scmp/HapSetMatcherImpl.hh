@@ -52,9 +52,6 @@ namespace variant
 
     struct HapSetMatcher::HapSetMatcherImpl
     {
-        explicit HapSetMatcherImpl(std::string const &ref) : ref(ref.c_str())
-        {}
-
         struct Variant
         {
             RefVar data;
@@ -131,7 +128,7 @@ namespace variant
         bool isValidAssignment(HapAssignment const &a)
         {
             std::vector<haplotypes::Haplotype> haps;
-            haplotypes::Haplotype hap(chr.c_str(), ref.getFilename().c_str());
+            haplotypes::Haplotype hap(chr.c_str(), ref.c_str());
             haps.resize((unsigned long) (2 * n_haps), hap);
 
             _updateSortedVariants();
@@ -363,7 +360,7 @@ namespace variant
 
         std::multimap<int64_t, size_t> sorted_variants;
         std::vector<Variant> variants;
-        FastaFile ref;
+        std::string ref;
         std::string chr;
         int n_haps = 2;
         int n_enum = 1000;

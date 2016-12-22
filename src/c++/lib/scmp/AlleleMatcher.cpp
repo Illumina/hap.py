@@ -60,6 +60,7 @@ namespace variant
         std::multimap<std::string, size_t > left_mapped;
 
         reset(assignment);
+        FastaFile ref(_impl->ref.c_str());
 
         for(size_t v_id = 0; v_id < _impl->variants.size(); ++v_id)
         {
@@ -68,9 +69,9 @@ namespace variant
             {
                 RefVar rv = v.data;
                 // optional: left-shift
-                leftShift(_impl->ref, _impl->chr.c_str(), rv);
-                trimLeft(_impl->ref, _impl->chr.c_str(), rv, false);
-                trimRight(_impl->ref, _impl->chr.c_str(), rv, false);
+                leftShift(ref, _impl->chr.c_str(), rv);
+                trimLeft(ref, _impl->chr.c_str(), rv, false);
+                trimRight(ref, _impl->chr.c_str(), rv, false);
                 left_mapped.insert(std::make_pair(rv.repr(), v_id));
             }
         }
@@ -81,9 +82,9 @@ namespace variant
             if(v.side == HapSetMatcherImpl::Variant::RIGHT)
             {
                 RefVar rv = v.data;
-                leftShift(_impl->ref, _impl->chr.c_str(), rv);
-                trimLeft(_impl->ref, _impl->chr.c_str(), rv, false);
-                trimRight(_impl->ref, _impl->chr.c_str(), rv, false);
+                leftShift(ref, _impl->chr.c_str(), rv);
+                trimLeft(ref, _impl->chr.c_str(), rv, false);
+                trimRight(ref, _impl->chr.c_str(), rv, false);
                 auto it = left_mapped.find(rv.repr());
                 if(it != left_mapped.end())
                 {
