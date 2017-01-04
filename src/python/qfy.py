@@ -155,8 +155,7 @@ def quantify(args):
                               "QUERY.TOTAL.TiTv_ratio",
                               "TRUTH.TOTAL.het_hom_ratio",
                               "QUERY.TOTAL.het_hom_ratio"]:
-        if not df[additional_column].isnull().values.all():
-            summary_columns.append(additional_column)
+        summary_columns.append(additional_column)
 
     # Remove subtype
     summary_df = df[(df["Subtype"] == "*") & (df["Genotype"] == "*") & (df["Subset"] == "*")]
