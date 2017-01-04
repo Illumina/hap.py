@@ -379,6 +379,9 @@ int main(int argc, char* argv[]) {
                 }
             };
 
+            // dup here so we can replace the GT without segfault
+            line = bcf_dup(line);
+            bcf_unpack(line, BCF_UN_ALL);
             // no ALTS
             if(line->n_allele == 1)
             {
@@ -408,11 +411,7 @@ int main(int argc, char* argv[]) {
             {
                 std::cerr << "Ignoring record with no alleles at " << vchr << ":" << line->pos << std::endl;
             }
-
-            int gts[2] = {bcf_gt_missing, bcf_gt_unphased(1)};
-            bcf_update_genotypes(output_header.get(), line, gts, 2);
-
-            // count variants here
+            bcf_destroy(line);
         }
 
         hts_close(writer);
