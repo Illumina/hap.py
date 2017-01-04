@@ -122,7 +122,7 @@ public:
     }
 
 
-    std::string get(std::string const & contig, const size_t start, size_t len)
+    std::string get(std::string const & contig, size_t start, size_t len)
     {
         auto ientry = fai.find(contig);
         if(ientry == fai.end())
@@ -142,19 +142,22 @@ public:
         size_t chars_in_line = ientry->second.chars_per_line - offset_in_line;
         size_t line_offset = ientry->second.start_offset + line*ientry->second.bytes_per_line;
 
+        chars_in_line = std::min(chars_in_line, ientry->second.length - start);
+
         std::string result;
         while(len > 0)
         {
             const size_t to_read = std::min(len, chars_in_line);
             result += std::string((const char *)(base + line_offset + offset_in_line), to_read);
             len -= to_read;
+            start += to_read;
             offset_in_line = 0;
             line_offset += ientry->second.bytes_per_line;
-            if(line_offset - ientry->second.start_offset >= ientry->second.length)
+            if(start >= ientry->second.length)
             {
                 break;
             }
-            chars_in_line = std::min(ientry->second.chars_per_line, ientry->second.length - line_offset);
+            chars_in_line = std::min(ientry->second.chars_per_line, ientry->second.length - start);
         }
         return result;
     }
