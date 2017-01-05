@@ -35,3 +35,4 @@ Thumbs.db
 /lib
 /include
 /nbproject
+/cmake-build-debug

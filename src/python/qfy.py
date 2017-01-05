@@ -139,18 +139,19 @@ def quantify(args):
 
     summary_columns = ["Type",
                        "Filter",
-                       "TRUTH.TOTAL",
-                       "TRUTH.TP",
-                       "TRUTH.FN",
-                       "QUERY.TOTAL",
-                       "QUERY.FP",
-                       "QUERY.UNK",
-                       "FP.gt",
-                       "METRIC.Recall",
-                       "METRIC.Precision",
-                       "METRIC.Frac_NA"]
+                      ]
 
-    for additional_column in ["TRUTH.TOTAL.TiTv_ratio",
+    for additional_column in ["TRUTH.TOTAL",
+                              "TRUTH.TP",
+                              "TRUTH.FN",
+                              "QUERY.TOTAL",
+                              "QUERY.FP",
+                              "QUERY.UNK",
+                              "FP.gt",
+                              "METRIC.Recall",
+                              "METRIC.Precision",
+                              "METRIC.Frac_NA",
+                              "TRUTH.TOTAL.TiTv_ratio",
                               "QUERY.TOTAL.TiTv_ratio",
                               "TRUTH.TOTAL.het_hom_ratio",
                               "QUERY.TOTAL.het_hom_ratio"]:

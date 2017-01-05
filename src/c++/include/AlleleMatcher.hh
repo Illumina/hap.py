@@ -1,6 +1,6 @@
 // -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// 
+//
 // Copyright (c) 2010-2015 Illumina, Inc.
 // All rights reserved.
 
@@ -28,9 +28,9 @@
 
 
 /**
- * VariantProcessor to find denovo alleles in a block
+ *  \brief Match alleles via normalisation + hashing
  *
- * \file MarkDenovo.hh
+ * \file AlleleMatcher.hh
  * \author Peter Krusche
  * \email pkrusche@illumina.com
  *
@@ -38,41 +38,34 @@
 
 #pragma once
 
-#include "Variant.hh"
+
+#include <iostream>
+#include <vector>
+#include <memory>
+#include <unordered_map>
+
+#include "HapSetMatcher.hh"
+
 
 namespace variant
 {
-
-class MarkDenovo : public AbstractVariantProcessingStep
-{
-public:
-    MarkDenovo();
-    ~MarkDenovo();
-    MarkDenovo(MarkDenovo const & rhs);
-    MarkDenovo const & operator=(MarkDenovo const & rhs);
-
-    /** Variant input **/
-    /** enqueue a set of variants */
-    void add(Variants const & vs);
-    
-    /** Variant output **/
     /**
-     * @brief Return variant block at current position
-     **/
-    Variants & current();
-
-    /**
-     * @brief Advance one line
-     * @return true if a variant was retrieved, false otherwise
+     * Exact matcher for sets of variants assigned to haplotypes
+     *
+     * Exponential time with cutoff
      */
-    bool advance();
+    class AlleleMatcher : public HapSetMatcher
+    {
+    public:
+        AlleleMatcher(std::string const & reference,
+                      std::string const & chr,
+                      int n_enum=1 << 20);
+        ~AlleleMatcher();
 
-    /** empty internal buffer */
-    void flush();
-
-private:
-    struct MarkDenovoImpl; 
-    MarkDenovoImpl * _impl;
-};
-
+        /**
+         * update / optimize assignments
+         */
+        virtual size_t optimize(HapAssignment & assignment);
+    };
 }
+

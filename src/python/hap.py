@@ -46,6 +46,7 @@ from Tools.fastasize import fastaContigLengths
 import Haplo.blocksplit
 import Haplo.xcmp
 import Haplo.vcfeval
+import Haplo.scmp
 import Haplo.quantify
 import Haplo.partialcredit
 
@@ -108,7 +109,7 @@ def main():
                         help="Number of threads to use.")
 
     parser.add_argument("--engine", dest="engine",
-                        default="xcmp", choices=["xcmp", "vcfeval"],
+                        default="xcmp", choices=["xcmp", "vcfeval", "scmp-somatic"],
                         help="Comparison engine to use.")
 
     parser.add_argument("--engine-vcfeval-path", dest="engine_vcfeval", required=False,
@@ -236,6 +237,13 @@ def main():
                                           prefix="truth.pp",
                                           suffix=internal_format_suffix)
         ttf.close()
+
+        if args.engine.endswith("somatic") and \
+           args.preprocessing_truth and \
+           (args.preprocessing_leftshift or args.preprocessing_norm or args.preprocessing_decompose):
+            args.preprocessing_truth = False
+            logging.info("Turning off pre.py preprocessing for somatic comparisons")
+
         tempfiles.append(ttf.name)
         tempfiles.append(ttf.name + ".csi")
         tempfiles.append(ttf.name + ".tbi")
@@ -290,6 +298,14 @@ def main():
         tempfiles.append(qtf.name)
         tempfiles.append(qtf.name + ".csi")
         tempfiles.append(qtf.name + ".tbi")
+
+        if args.engine.endswith("somatic") and \
+           (args.preprocessing_leftshift or args.preprocessing_norm or args.preprocessing_decompose):
+            args.preprocessing_leftshift = False
+            args.preprocessing_norm = False
+            args.preprocessing_decompose = False
+            logging.info("Turning off pre.py preprocessing (query) for somatic comparisons")
+
         pre.preprocess(args.vcf2,
                        qtf.name,
                        args.ref,
@@ -394,6 +410,10 @@ def main():
             args.roc = "IQQ"
         elif args.engine == "vcfeval":
             tempfiles += Haplo.vcfeval.runVCFEval(args.vcf1, args.vcf2, output_name, args)
+            # passed to quantify
+            args.type = "ga4gh"
+        elif args.engine == "scmp-somatic":
+            tempfiles += Haplo.scmp.runSCmp(args.vcf1, args.vcf2, output_name, args)
             # passed to quantify
             args.type = "ga4gh"
         else:

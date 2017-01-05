@@ -45,7 +45,7 @@ class FastaFile
 {
 public:
     FastaFile();
-	FastaFile(const char * filename);
+	explicit FastaFile(const char * filename);
 
 	~FastaFile();
 	FastaFile(FastaFile const &);
