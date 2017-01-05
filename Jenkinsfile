@@ -3,7 +3,7 @@ node {
 
     dir('${WORKSPACE}') { deleteDir() }
 
-    checkout([$class: 'GitSCM', extensions: [[$class: 'WipeWorkspace']], gitTool: 'jgit')
+    checkout([$class: 'GitSCM', extensions: [[$class: 'WipeWorkspace']], gitTool: 'jgit'])
 
     stage 'Build / Install'
 
