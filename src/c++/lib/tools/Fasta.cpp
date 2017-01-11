@@ -77,7 +77,11 @@ public:
         filesize = st.st_size;
         fd = open(_filename.c_str(), O_RDONLY, 0);
         assert(fd != -1);
+#if __APPLE__
+        base = (uint8_t *) mmap(NULL, filesize, PROT_READ, MAP_PRIVATE, fd, 0);
+#else
         base = (uint8_t *) mmap(NULL, filesize, PROT_READ, MAP_PRIVATE | MAP_POPULATE, fd, 0);
+#endif
         assert(base != MAP_FAILED);
 
         auto fai_fp = fopen((filename + ".fai").c_str(), "r");
@@ -283,7 +287,7 @@ std::string FastaFile::query(const char * chr, int64_t start, int64_t end) const
         return "";
     }
 
-    start = std::max(start, 0l);
+    start = std::max(start, (int64_t )0l);
 
     const int64_t requested_length = end - start + 1;
     if(requested_length <= 0)
