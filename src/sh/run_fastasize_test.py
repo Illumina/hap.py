@@ -3,7 +3,7 @@ import os
 import logging
 logging.getLogger().setLevel(logging.INFO)
 
-scriptDir = os.path.abspath(os.path.dirname(__file__))
+scriptDir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'python', 'Tools')))
 
 from fastasize import fastaContigLengths, calculateLength
@@ -16,7 +16,7 @@ def main():
         logging.info("fastasize test SUCCEEDED!")
     else:
         logging.error("fastasize test FAILED!")
-        
+
 
 if __name__ == "__main__":
     main()

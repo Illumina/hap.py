@@ -1,5 +1,12 @@
 # Hap.py Release Notes / Change Log
 
+## v0.3.7
+
+| Ticket  | Description                                                                        |
+|---------|------------------------------------------------------------------------------------|
+| HAP-259 | Som.py alternative GA4GH-based workflow: hap.py --engine scmp                      |
+| HAP-274 | Issue #10 allow hap.py to be symlinked                                             |
+
 ## v0.3.6
 
 | Ticket  | Description                                                                        |
