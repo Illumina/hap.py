@@ -51,6 +51,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
 
 #include <boost/algorithm/string.hpp>
 
@@ -74,7 +76,7 @@ public:
     {
         struct stat st;
         stat(_filename.c_str(), &st);
-        filesize = st.st_size;
+        filesize = (size_t) st.st_size;
         fd = open(_filename.c_str(), O_RDONLY, 0);
         assert(fd != -1);
 #if __APPLE__
@@ -82,7 +84,12 @@ public:
 #else
         base = (uint8_t *) mmap(NULL, filesize, PROT_READ, MAP_PRIVATE | MAP_POPULATE, fd, 0);
 #endif
-        assert(base != MAP_FAILED);
+        if(base == MAP_FAILED)
+        {
+            const int err = errno;
+            error("Cannot mmap %s (errno=%i / %s) -- do you have enough memory available?",
+                  _filename.c_str(), err, strerror(err));
+        }
 
         auto fai_fp = fopen((filename + ".fai").c_str(), "r");
         if(!fai_fp)
