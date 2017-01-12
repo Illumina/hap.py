@@ -1,7 +1,7 @@
 node {
     stage 'Checkout'
 
-    dir('${WORKSPACE}') { deleteDir() }
+    deleteDir()
 
     checkout scm
 

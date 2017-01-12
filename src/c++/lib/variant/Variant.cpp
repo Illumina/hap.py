@@ -229,7 +229,7 @@ namespace variant
         {
             return infos[id].asInt();
         }
-        catch(std::runtime_error const & e)
+        catch(std::runtime_error const & )
         {
             return bcf_int32_missing;
         }
@@ -245,7 +245,7 @@ namespace variant
         {
             return infos[id].asFloat();
         }
-        catch(std::runtime_error const & e)
+        catch(std::runtime_error const & )
         {
             return bcfhelpers::missing_float();
         }

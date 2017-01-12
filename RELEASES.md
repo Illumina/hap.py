@@ -4,7 +4,9 @@
 
 | Ticket  | Description                                                                        |
 |---------|------------------------------------------------------------------------------------|
+| HAP-259 | Som.py alternative GA4GH-based workflow: hap.py --engine scmp                      |
 | HAP-270 | Handle special chars in input filenames better                                     |
+| HAP-274 | Issue #10 allow hap.py to be symlinked                                             |
 
 ## v0.3.6
 

@@ -35,7 +35,7 @@ import tempfile
 import time
 import pipes
 
-scriptDir = os.path.abspath(os.path.dirname(__file__))
+scriptDir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'lib', 'python27')))
 
 import Tools

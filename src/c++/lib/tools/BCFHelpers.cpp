@@ -293,6 +293,7 @@ namespace bcfhelpers
                     {
                         return std::string((const char *)field->vptr, (unsigned long) field->len);
                     }
+                    break;
                 default:break;
             }
             return std::string();
