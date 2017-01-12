@@ -38,6 +38,7 @@
 #include <set>
 #include <map>
 #include <limits>
+#include <array>
 
 #include "helpers/RocOutput.hh"
 #include "helpers/Table.hh"
