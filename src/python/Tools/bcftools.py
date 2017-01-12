@@ -15,6 +15,7 @@ import logging
 import pandas
 import tempfile
 import gzip
+import pipes
 
 import Tools
 
@@ -22,7 +23,15 @@ import Tools
 def runBcftools(*args):
     """ Run bcftools, return output
     """
-    runme = "bcftools %s" % " ".join([a.replace(" ", "\\ ") for a in args])
+
+    qargs = []
+    for a in args:
+        if a.strip() != "|":
+            qargs.append(pipes.quote(a))
+        else:
+            qargs.append(" | ")
+
+    runme = "bcftools %s" % " ".join(qargs)
     logging.info(runme)
     po = subprocess.Popen(runme,
                           shell=True,
@@ -72,30 +81,6 @@ def countVCFRows(filename):
         if not s.startswith("#"):
             count += 1
     return count
-
-
-def makeIndex(inputfile, output_name=None):
-    """ Create bgzipped copy and make sure we have an up-to-date index for the given VCF file.
-
-    Will re-write the given VCF and return a new filename (or output_name if given)
-
-    :inputfile: input file name
-    :output_name: output file name
-    :returns: name of file that was written,
-              inputfile if no file was written, and output_name if not None
-    """
-    if not output_name:
-        of = tempfile.NamedTemporaryFile(suffix=".vcf.gz", delete=False)
-        of.close()
-        output_name = of.name
-
-    runBcftools("view",
-                "-o", output_name,
-                "-O", "z",
-                inputfile)
-    runBcftools("index", "-t", output_name)
-
-    return output_name
 
 
 def concatenateParts(output, *args):
@@ -151,7 +136,8 @@ def preprocessVCF(input, output, location="",
                   chrprefix=True, norm=False,
                   regions=None, targets=None,
                   reference=Tools.defaultReference(),
-                  filters_only=None):
+                  filters_only=None,
+                  somatic_allele_conversion=False):
     """ Preprocess a VCF + create index
 
     :param input: the input VCF / BCF / ...
@@ -164,9 +150,16 @@ def preprocessVCF(input, output, location="",
     :param targets: specify a subset of target regions (streaming traversal)
     :param reference: reference fasta file to use
     :param filters_only: require a set of filters (overridden by pass_only)
+    :param somatic_allele_conversion: assume the input file is a somatic call file and squash
+                                      all columns into one, putting all FORMATs into INFO
+                                      This is used to treat Strelka somatic files
+                                      Possible values for this parameter:
+                                      True [="half"] / "hemi" / "het" / "hom" / "half"
+                                      to assign one of the following genotypes to the
+                                      resulting sample:  1 | 0/1 | 1/1 | ./1
     """
     vargs = ["view", input]
-    
+
     if type(location) is list:
         location = ",".join(location)
 
@@ -176,7 +169,7 @@ def preprocessVCF(input, output, location="",
         vargs += ["-f", filters_only]
 
     if chrprefix:
-        vargs += ["|", "perl", "-pe", "'s/^([0-9XYM])/chr$1/'", "|", "perl", "-pe", "'s/chrMT/chrM/'", "|", "bcftools", "view"]
+        vargs += ["|", "perl", "-pe", "s/^([0-9XYM])/chr$1/", "|", "perl", "-pe", "s/chrMT/chrM/", "|", "bcftools", "view"]
 
     if targets:
         vargs += ["-T", targets, "|", "bcftools", "view"]
@@ -202,6 +195,13 @@ def preprocessVCF(input, output, location="",
                 runBcftools(*vargs)
                 runBcftools("index", tff.name)
             vargs = ["view", tff.name, "-R", regions]
+
+        if somatic_allele_conversion:
+            if type(somatic_allele_conversion) is not str:
+                somatic_allele_conversion = "half"
+            vargs += ["|", "alleles", "-", "-o", "-.vcf", "--gt", somatic_allele_conversion,
+                      "|", "bcftools", "view"]
+
 
         if norm:
             vargs += ["|", "bcftools", "norm", "-f",  reference, "-c", "x", "-D"]

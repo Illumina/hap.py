@@ -20,6 +20,7 @@ import copy
 import json
 import logging
 import Tools
+import pipes
 
 from Tools.bcftools import runBcftools
 
@@ -100,8 +101,10 @@ def run_quantify(filename,
     if not output_file:
         output_file = tempfile.NamedTemporaryFile().name
 
-    run_str = "quantify '%s' -o '%s'" % (filename.replace(" ", "\\ "), output_file)
-    run_str += " -r '%s'" % reference.replace(" ", "\\ ")
+    run_str = "quantify %s -o %s" % (
+            pipes.quote(filename),
+            pipes.quote(output_file))
+    run_str += " -r %s" % pipes.quote(reference)
     run_str += " --threads %i" % threads
 
     if output_vtc:
@@ -118,17 +121,17 @@ def run_quantify(filename,
         run_str += " --type %s" % qtype
 
     if roc_file:
-        run_str += " --output-roc %s" % roc_file
+        run_str += " --output-roc %s" % pipes.quote(roc_file)
 
     if roc_val:
-        run_str += " --qq %s" % roc_val
+        run_str += " --qq %s" % pipes.quote(roc_val)
         if roc_header != roc_val:
             # for xcmp, we extract the QQ value into the IQQ INFO field
             # we pass the original name along here
-            run_str += " --qq-header %s" % roc_header
+            run_str += " --qq-header %s" % pipes.quote(roc_header)
 
     if roc_filter:
-        run_str += " --roc-filter '%s'" % roc_filter
+        run_str += " --roc-filter '%s'" % pipes.quote(roc_filter)
 
     if roc_delta:
         run_str += " --roc-delta %f" % roc_delta
@@ -146,7 +149,7 @@ def run_quantify(filename,
     if write_vcf:
         if not write_vcf.endswith(".vcf.gz") and not write_vcf.endswith(".bcf"):
             write_vcf += ".vcf.gz"
-        run_str += " -v '%s'" % write_vcf
+        run_str += " -v %s" % pipes.quote(write_vcf)
 
     if regions:
         for k, v in regions.iteritems():
@@ -203,7 +206,7 @@ def run_quantify(filename,
     if write_vcf and write_vcf.endswith(".bcf"):
         runBcftools("index", write_vcf)
     elif write_vcf:
-        to_run = "tabix -p vcf '%s'" % write_vcf
+        to_run = "tabix -p vcf %s" % pipes.quote(write_vcf)
         logging.info("Running '%s'" % to_run)
         subprocess.check_call(to_run, shell=True)
 

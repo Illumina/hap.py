@@ -33,6 +33,7 @@ import multiprocessing
 import gzip
 import tempfile
 import time
+import pipes
 
 scriptDir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'lib', 'python27')))
@@ -76,6 +77,7 @@ def preprocess(vcf_input,
                windowsize=10000,
                threads=1,
                gender=None,
+               somatic_allele_conversion=False
                ):
     """ Preprocess a single VCF file
 
@@ -93,6 +95,7 @@ def preprocess(vcf_input,
     :param windowsize: normalisation window size
     :param threads: number of threads to for preprcessing
     :param gender: the gender of the sample ("male" / "female" / "auto" / None)
+    :param somatic_allele_conversion: convert somatic alleles -- False / half / het / hemi / hom
 
     :return: the gender if auto-determined (otherwise the same value as gender parameter)
     """
@@ -118,9 +121,9 @@ def preprocess(vcf_input,
             int_format = "z"
 
         if vcf_output.endswith(".bcf"):
-            mf = subprocess.check_output("vcfcheck %s --check-bcf-errors 1" % vcf_input, shell=True)
+            mf = subprocess.check_output("vcfcheck %s --check-bcf-errors 1" % pipes.quote(vcf_input), shell=True)
         else:
-            mf = subprocess.check_output("vcfcheck %s --check-bcf-errors 0" % vcf_input, shell=True)
+            mf = subprocess.check_output("vcfcheck %s --check-bcf-errors 0" % pipes.quote(vcf_input), shell=True)
 
         if gender == "auto":
             logging.info(mf)
@@ -188,7 +191,8 @@ def preprocess(vcf_input,
                       regions,
                       targets,
                       reference,
-                      required_filters)
+                      required_filters,
+                      somatic_allele_conversion=somatic_allele_conversion)
 
         if leftshift or decompose or gender == "male":
             Haplo.partialcredit.partialCredit(vtf,
@@ -236,7 +240,8 @@ def preprocessWrapper(args):
                args.preprocessing_norm,
                args.window,
                args.threads,
-               args.gender)
+               args.gender,
+               args.somatic_allele_conversion)
 
     elapsed = time.time() - starttime
     logging.info("preprocess for %s -- time taken %.2f" % (args.input, elapsed))
@@ -292,6 +297,20 @@ def updateArgs(parser):
                              " is in BCF format already. Using BCF can speed up temp file access, "
                              " but may fail for VCF files that have broken headers or records that "
                              " don't comply with the header.")
+
+    parser.add_argument("--somatic", dest="somatic_allele_conversion", action="store_true", default=False,
+                        help="Assume the input file is a somatic call file and squash "
+                             "all columns into one, putting all FORMATs into INFO + use "
+                             " half genotypes (see also --set-gt). This will replace all sample "
+                             "columns and replace them with a single one.")
+
+    parser.add_argument("--set-gt", dest="somatic_allele_conversion", choices=["half", "hemi", "het", "hom"],
+                        help="This is used to treat Strelka somatic files "
+                             "Possible values for this parameter: "
+                             "half / hemi / het / hom / half "
+                             "to assign one of the following genotypes to the "
+                             "resulting sample:  1 | 0/1 | 1/1 | ./1. This will replace all sample "
+                             "columns and replace them with a single one.")
 
     # genotype handling on chrX.
     parser.add_argument("--gender", dest="gender", choices=["male", "female", "auto", "none"], default="auto",
