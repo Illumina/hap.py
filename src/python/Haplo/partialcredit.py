@@ -23,6 +23,7 @@ import tempfile
 import time
 import itertools
 import multiprocessing
+import pipes
 
 from Tools.parallel import runParallel, getPool
 from Tools.bcftools import runBcftools, concatenateParts
@@ -43,12 +44,12 @@ def preprocessWrapper(file_and_location, args):
     tf.close()
 
     to_run = "preprocess %s:* %s-o %s -V %i -L %i -r %s" % \
-             (filename.replace(" ", "\\ "),
-              ("-l %s " % location_str) if location_str else "",
+             (pipes.quote(filename),
+              ("-l %s " % pipes.quote(location_str)) if location_str else "",
               tf.name,
               args["decompose"],
               args["leftshift"],
-              args["reference"])
+              pipes.quote(args["reference"]))
 
     if args["haploid_x"]:
         to_run += " --haploid-x 1"
@@ -91,8 +92,8 @@ def blocksplitWrapper(location_str, bargs):
         tf.close()
 
         to_run = "blocksplit %s -l %s -o %s --window %i --nblocks %i -f 0" % \
-                 (bargs["vcf"],
-                  location_str,
+                 (pipes.quote(bargs["vcf"]),
+                  pipes.quote(location_str),
                   tf.name,
                   bargs["dist"],
                   bargs["pieces"])

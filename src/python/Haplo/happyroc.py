@@ -19,7 +19,6 @@
 
 import os
 import re
-import subprocess
 import logging
 import pandas
 import numpy as np
@@ -68,38 +67,6 @@ for count_type in ["TRUTH.TOTAL", "TRUTH.TP", "TRUTH.FN",
     RESULT_ALLCOLUMNS.append(count_type + ".TiTv_ratio")
     RESULT_ALLCOLUMNS.append(count_type + ".het_hom_ratio")
     RESULT_ALLDTYPES += [float] * 7
-
-
-def _rm(f):
-    """ Quietly delete """
-    try:
-        os.unlink(f)
-    except:
-        pass
-
-
-def _run(cmd):
-    """ Run something, log output
-    """
-    logging.info(cmd)
-    po = subprocess.Popen(cmd,
-                          shell=True,
-                          stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE)
-
-    o, e = po.communicate()
-
-    po.wait()
-
-    rc = po.returncode
-
-    if rc != 0:
-        raise Exception("Error running ROC. Return code was %i\n" % rc)
-
-    logging.info(o)
-    logging.info(e)
-
-    return o
 
 
 def roc(roc_table, output_path,

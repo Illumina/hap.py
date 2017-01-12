@@ -24,6 +24,7 @@ import time
 import shutil
 import logging
 import Tools.bcftools
+import pipes
 
 import Haplo.version
 
@@ -67,21 +68,12 @@ def runVCFEval(vcf1, vcf2, target, args):
                                       suffix=".dir")
     vtf.close()
 
-    del_vcf1 = False
-    del_vcf2 = False
     del_sdf = False
 
     try:
-        if not os.path.exists(vcf1 + ".tbi"):
-            vcf1 = Tools.bcftools.makeIndex(vcf1)
-            del_vcf1 = True
-        if not os.path.exists(vcf2 + ".tbi"):
-            vcf2 = Tools.bcftools.makeIndex(vcf2)
-            del_vcf2 = True
-
         if not args.engine_vcfeval_template or not os.path.exists(args.engine_vcfeval_template):
-            logging.warn("Creating template for vcfeval. "
-                         "You can speed this up in the future by doing this in advance.")
+            logging.warn("Creating template for vcfeval. " +
+                         ("You can speed this up by supplying a SDF template that corresponds to %s" % args.ref))
             del_sdf = True
             stf = tempfile.NamedTemporaryFile(dir=args.scratch_prefix,
                                               prefix="vcfeval.sdf",
@@ -89,9 +81,9 @@ def runVCFEval(vcf1, vcf2, target, args):
             stf.close()
             args.engine_vcfeval_template = stf.name
             runme = "%s format -o %s %s" % (
-                args.engine_vcfeval,
-                args.engine_vcfeval_template.replace(" ", "\\ "),
-                args.ref.replace(" ", "\\ "))
+                pipes.quote(args.engine_vcfeval),
+                pipes.quote(args.engine_vcfeval_template),
+                pipes.quote(args.ref))
             logging.info(runme)
             po = subprocess.Popen(runme,
                                   shell=True,
@@ -101,15 +93,15 @@ def runVCFEval(vcf1, vcf2, target, args):
             po.wait()
             rc = po.returncode
             if rc != 0:
-                raise Exception("Error running rtg tools / vcfeval. Return code was %i, output: %s / %s \n" % (rc, o, e))
+                raise Exception("Error running rtg tools. Return code was %i, output: %s / %s \n" % (rc, o, e))
             elif o.strip() or e.strip():
-                logging.info("vcfeval output: \n%s\n / \n%s\n" % (o, e))
+                logging.info("RTG output: \n%s\n / \n%s\n" % (o, e))
 
         runme = "%s vcfeval -b %s -c %s -t %s -o %s -T %i -m ga4gh --ref-overlap" % (
-            args.engine_vcfeval,
-            vcf1.replace(" ", "\\ "),
-            vcf2.replace(" ", "\\ "),
-            args.engine_vcfeval_template.replace(" ", "\\ "),
+            pipes.quote(args.engine_vcfeval),
+            pipes.quote(vcf1),
+            pipes.quote(vcf2),
+            pipes.quote(args.engine_vcfeval_template),
             vtf.name,
             args.threads)
 
@@ -117,7 +109,7 @@ def runVCFEval(vcf1, vcf2, target, args):
             runme += " --all-records"
 
         if args.roc:
-            runme += " -f %s" % args.roc
+            runme += " -f %s" % pipes.quote(args.roc)
 
         logging.info(runme)
         po = subprocess.Popen(runme,
@@ -140,18 +132,6 @@ def runVCFEval(vcf1, vcf2, target, args):
         shutil.copy(os.path.join(vtf.name, "output.vcf.gz"), target)
         shutil.copy(os.path.join(vtf.name, "output.vcf.gz.tbi"), target + ".tbi")
     finally:
-        if del_vcf1:
-            try:
-                os.unlink(vcf1)
-                os.unlink(vcf1 + ".tbi")
-            except:
-                pass
-        if del_vcf2:
-            try:
-                os.unlink(vcf2)
-                os.unlink(vcf2 + ".tbi")
-            except:
-                pass
         # remove temp path
         try:
             shutil.rmtree(vtf.name)

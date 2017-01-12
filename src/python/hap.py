@@ -220,8 +220,16 @@ def main():
 
     tempfiles = []
 
-    # xcmp supports bcf; others don't
-    if args.engine == "xcmp" and (args.bcf or (args.vcf1.endswith(".bcf") and args.vcf2.endswith(".bcf"))):
+    # turn on allele conversion
+    if args.engine == "scmp-somatic" and args.somatic_allele_conversion == False:
+        args.somatic_allele_conversion = True
+
+    # somatic allele conversion should also switch off decomposition
+    if args.somatic_allele_conversion == True and "--decompose" not in sys.argv:
+        args.preprocessing_decompose = False
+
+    # xcmp/scmp support bcf; others don't
+    if args.engine in ["xcmp", "scmp-somatic"] and (args.bcf or (args.vcf1.endswith(".bcf") and args.vcf2.endswith(".bcf"))):
         internal_format_suffix = ".bcf"
     else:
         internal_format_suffix = ".vcf.gz"
@@ -260,7 +268,8 @@ def main():
                                      args.preprocessing_norm if args.preprocessing_truth else False,
                                      args.preprocess_window,
                                      args.threads,
-                                     args.gender)
+                                     args.gender,
+                                     args.somatic_allele_conversion)
 
         args.vcf1 = ttf.name
         h1 = vcfextract.extractHeadersJSON(args.vcf1)
@@ -319,7 +328,8 @@ def main():
                        args.preprocessing_norm,
                        args.preprocess_window,
                        args.threads,
-                       args.gender)  # same gender as truth above
+                       args.gender,
+                       args.somatic_allele_conversion)  # same gender as truth above
 
         args.vcf2 = qtf.name
         h2 = vcfextract.extractHeadersJSON(args.vcf2)

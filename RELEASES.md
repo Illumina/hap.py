@@ -1,5 +1,11 @@
 # Hap.py Release Notes / Change Log
 
+## v0.3.7
+
+| Ticket  | Description                                                                        |
+|---------|------------------------------------------------------------------------------------|
+| HAP-270 | Handle special chars in input filenames better                                     |
+
 ## v0.3.6
 
 | Ticket  | Description                                                                        |
