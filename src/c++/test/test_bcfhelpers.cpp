@@ -24,66 +24,41 @@
 // OR TORT INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
 /**
- * Track named regions
+ *  \brief Test cases for bcfhelpers
  *
- * \file QuantifyRegions.hh
+ *
+ * \file test_bcfhelpers.cpp
  * \author Peter Krusche
  * \email pkrusche@illumina.com
  *
  */
 
-#ifndef HAPLOTYPES_QUANTIFYREGIONS_HH
-#define HAPLOTYPES_QUANTIFYREGIONS_HH
+#define BOOST_TEST_NO_MAIN
+#include <boost/test/unit_test.hpp>
+#include <boost/test/test_tools.hpp>
 
-#include <memory>
-#include <map>
-#include <string>
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/path.hpp>
 
-#include <htslib/vcf.h>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <cstdlib>
+#include <vector>
 
-#include "Variant.hh"
+#include "helpers/BCFHelpers.hh"
 
-namespace variant
+using namespace bcfhelpers;
+
+BOOST_AUTO_TEST_CASE(testClassifyAlleleString)
 {
-    /** store regions for quantification in a file */
-    class QuantifyRegions
-    {
-    public:
-        explicit QuantifyRegions(std::string const & reference);
-        ~QuantifyRegions();
-        /** load named regions
-         *
-         *  Each name must give a region name and a bed file:
-         *
-         *  FP:fp.bed
-         *
-         */
-        void load(std::vector<std::string> const & rnames, bool fixchr=false);
-
-        /**
-         * Returns true if confident regions were loaded.
-         * (i.e. if regions named "CONF" are present)
-         */
-        bool hasRegions(std::string const & rname) const;
-
-        /** add Regions annotation to a record
-         *
-         * Records must be passed in sorted order.
-         *
-         */
-        void annotate(bcf_hdr_t * hdr, bcf1_t * record);
-
-        /**
-         * Get total region sizes in NT
-         * @param region_name
-         * @return  the region size
-         */
-        size_t getRegionSize(std::string const & region_name) const;
-    private:
-        struct QuantifyRegionsImpl;
-        std::unique_ptr<QuantifyRegionsImpl> _impl;
-    };
+    BOOST_CHECK_EQUAL(classifyAlleleString("").first, AlleleType::MISSING);
+    BOOST_CHECK_EQUAL(classifyAlleleString("ACgT").first, AlleleType::NUC);
+    BOOST_CHECK_EQUAL(classifyAlleleString("*").first, AlleleType::SYMBOLIC_DEL);
+    BOOST_CHECK_EQUAL(classifyAlleleString("<DEL>").first, AlleleType::SYMBOLIC_DEL);
+    BOOST_CHECK_EQUAL(classifyAlleleString("<M>").first, AlleleType::SYMBOLIC_OTHER);
+    BOOST_CHECK_EQUAL(classifyAlleleString("aj0213").first, AlleleType::UNKNOWN);
+    BOOST_CHECK_EQUAL(classifyAlleleString(".").first, AlleleType::MISSING);
 }
-
-#endif //HAPLOTYPES_QUANTIFYREGIONS_HH_HH

@@ -99,10 +99,11 @@ int main(int argc, char* argv[]) {
     int blocksize = 20000;
     std::vector<std::string> roc_regions = {"*"};
 
+    // quantify region file names
+    std::vector<std::string> rnames;
+
     try
     {
-        QuantifyRegions regions;
-
         try
         {
             // Declare the supported options.
@@ -293,8 +294,7 @@ int main(int argc, char* argv[]) {
 
             if (vm.count("regions"))
             {
-                std::vector<std::string> rnames = vm["regions"].as< std::vector<std::string> >();
-                regions.load(rnames, fixchr);
+                rnames = vm["regions"].as< std::vector<std::string> >();
             }
 
             if (vm.count("roc-regions"))
@@ -309,6 +309,10 @@ int main(int argc, char* argv[]) {
         }
 
         FastaFile ref_fasta(ref.c_str());
+
+        QuantifyRegions regions(ref);
+        regions.load(rnames, fixchr);
+
         bcf_srs_t * reader = bcf_sr_init();
         reader->require_index = 1;
         reader->collapse = COLLAPSE_NONE;

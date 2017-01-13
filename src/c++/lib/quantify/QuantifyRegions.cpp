@@ -45,22 +45,27 @@
 
 #include <map>
 #include <unordered_map>
+#include <htslib/vcf.h>
 
+#include "Fasta.hh"
+#include "RefVar.hh"
 #include "Error.hh"
 
 namespace variant
 {
     struct QuantifyRegions::QuantifyRegionsImpl
     {
+        QuantifyRegionsImpl(std::string const & _ref) : ref(_ref.c_str()) {}
         std::vector<std::string> names;
         std::unordered_map<std::string, size_t> label_map;
         std::unordered_map<std::string, std::unique_ptr<intervals::IntervalBuffer>> ib;
         std::unordered_map<std::string, std::unique_ptr<intervals::IntervalBuffer>>::iterator current_chr = ib.end();
         std::unordered_map<size_t, size_t> region_sizes;
         int64_t current_pos = -1;
+        FastaFile ref;
     };
 
-    QuantifyRegions::QuantifyRegions() : _impl(new QuantifyRegionsImpl())
+    QuantifyRegions::QuantifyRegions(std::string const & ref) : _impl(new QuantifyRegionsImpl(ref))
     { }
 
     QuantifyRegions::~QuantifyRegions()
@@ -259,9 +264,64 @@ namespace variant
      */
     void QuantifyRegions::annotate(bcf_hdr_t * hdr, bcf1_t *record)
     {
-        std::string chr = bcfhelpers::getChrom(hdr, record);
+        const std::string chr = bcfhelpers::getChrom(hdr, record);
         int64_t refstart = 0, refend = 0;
         bcfhelpers::getLocation(hdr, record, refstart, refend);
+
+        // check if this record is a pure insertion. If so,
+        // we need to use slightly different refstart and refend for
+        // the overlaps since an insertion is between two ref bases
+        bool is_insertion = false;
+
+        const std::string ref_allele = record->d.allele[0];
+        if(bcfhelpers::classifyAlleleString(ref_allele).first == bcfhelpers::AlleleType::NUC)
+        {
+            int64_t updated_ref_start = std::numeric_limits<int64_t>::max();
+            int64_t updated_ref_end = std::numeric_limits<int64_t>::min();
+            bool nuc_alleles = false;
+
+            is_insertion = record->n_allele > 1;
+            for(int al = 1; al < record->n_allele; ++al)
+            {
+                RefVar al_rv;
+                al_rv.start = record->pos;
+                al_rv.end = record->pos;
+                auto ca = bcfhelpers::classifyAlleleString(record->d.allele[al]);
+                if(ca.first == bcfhelpers::AlleleType::MISSING)
+                {
+                    ca.second = "";
+                }
+                else if(ca.first != bcfhelpers::AlleleType::NUC)
+                {
+                    is_insertion = false;
+                    break;
+                }
+                nuc_alleles = true;
+                al_rv.alt = ca.second;
+
+                variant::trimRight(_impl->ref, chr.c_str(), al_rv, false);
+                variant::trimLeft(_impl->ref, chr.c_str(), al_rv, false);
+
+                if(al_rv.end >= al_rv.start)
+                {
+                    is_insertion = false;
+                    updated_ref_start = std::max(updated_ref_start, al_rv.start);
+                    updated_ref_end = std::min(updated_ref_end, al_rv.end);
+                }
+                else
+                {
+                    // this is an insertion *before* start, it will have end < start
+                    updated_ref_start = std::max(updated_ref_start, al_rv.start - 1);
+                    updated_ref_end = std::min(updated_ref_end, al_rv.start);
+                }
+            }
+
+            if(nuc_alleles)
+            {
+                refstart = updated_ref_start;
+                refend = updated_ref_end;
+            }
+        }
 
         std::string tag_string = "";
         std::set<std::string> regions;
@@ -281,7 +341,8 @@ namespace variant
             }
             for(size_t i = 0; i < _impl->names.size(); ++i)
             {
-                if(p_chr->second->hasOverlap(refstart, refend, i))
+                if(   (!is_insertion && p_chr->second->hasOverlap(refstart, refend, i))
+                   || (is_insertion && p_chr->second->isCovered(refstart, refend, i)))
                 {
                     regions.insert(_impl->names[i]);
                 }

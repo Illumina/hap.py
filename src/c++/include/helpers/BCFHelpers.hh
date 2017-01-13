@@ -173,4 +173,22 @@ namespace bcfhelpers {
     static inline p_bcf_hdr ph(bcf_hdr_t * h) { return std::shared_ptr<bcf_hdr_t>(h, bcf_hdr_destroy); }
     static inline p_bcf1 pb(bcf1_t * b) { return std::shared_ptr<bcf1_t>(b, bcf_destroy); }
 
+    enum class AlleleType {
+        NUC,
+        MISSING,
+        SYMBOLIC_DEL,
+        SYMBOLIC_OTHER,
+        UNKNOWN
+    };
+
+    std::ostream & operator<<(std::ostream &, const AlleleType);
+
+    /**
+     * Classify an allele string from VCF and transform / canonicalize some
+     * representational differences ("" becomes ".", deletions become "", ...)
+     * @param al the allele string as it comes from the BCF record
+     * @return allele type and transformed / standardised / uppercased allele string
+     */
+    std::pair<AlleleType, std::string> classifyAlleleString(std::string al);
+
 } // namespace bcfhelpers
