@@ -285,7 +285,7 @@ namespace variant
             {
                 RefVar al_rv;
                 al_rv.start = record->pos;
-                al_rv.end = record->pos;
+                al_rv.end = (int64_t) (record->pos + ref_allele.size() - 1);
                 auto ca = bcfhelpers::classifyAlleleString(record->d.allele[al]);
                 if(ca.first == bcfhelpers::AlleleType::MISSING)
                 {
@@ -305,14 +305,14 @@ namespace variant
                 if(al_rv.end >= al_rv.start)
                 {
                     is_insertion = false;
-                    updated_ref_start = std::max(updated_ref_start, al_rv.start);
-                    updated_ref_end = std::min(updated_ref_end, al_rv.end);
+                    updated_ref_start = std::min(updated_ref_start, al_rv.start);
+                    updated_ref_end = std::max(updated_ref_end, al_rv.end);
                 }
                 else
                 {
                     // this is an insertion *before* start, it will have end < start
-                    updated_ref_start = std::max(updated_ref_start, al_rv.start - 1);
-                    updated_ref_end = std::min(updated_ref_end, al_rv.start);
+                    updated_ref_start = std::min(updated_ref_start, al_rv.start - 1);
+                    updated_ref_end = std::max(updated_ref_end, al_rv.start);
                 }
             }
 
@@ -370,6 +370,8 @@ namespace variant
         {
             bcf_update_info_string(hdr, record, "Regions", nullptr);
         }
+        bcf_update_info_string(hdr, record, "RegionsExtent", (std::to_string(refstart+1) + "-" +
+            std::to_string(refend + 1)).c_str());
     }
 
     /**

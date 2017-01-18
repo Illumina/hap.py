@@ -3,3 +3,4 @@ chrQ	4	5	tp
 chrQ	5	6	fp
 chrQ	99	100	ins-not-covered
 chrQ	109	111	ins-covered
+chrQ	519	520	ins-not-covered-but-snp-covered

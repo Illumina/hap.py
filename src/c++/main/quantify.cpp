@@ -376,6 +376,14 @@ int main(int argc, char* argv[]) {
         p_bq->rocFiltering(roc_filter);
 
         // update the header
+        // this is added by QuantifyRegions
+        bcf_hdr_append(hdr, "##INFO=<ID=Regions,Number=.,Type=String,Description=\"Tags for regions.\">");
+        if(!clean_info)
+        {
+            bcf_hdr_append(hdr, "##INFO=<ID=RegionsExtent,Number=.,Type=String,Description=\"Trimmed reference coordinates matched to regions for this record.\">");
+        }
+
+        // this adds fields for BlockQuantify (GA4GH formats and INFO fields)
         p_bq->updateHeader(hdr);
 
         htsFile * writer = nullptr;
