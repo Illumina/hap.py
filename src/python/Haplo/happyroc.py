@@ -39,7 +39,8 @@ RESULT_ALLCOLUMNS = ["Type",
                      "METRIC.F1_Score",
                      "FP.gt",
                      "FP.al",
-                     "Subset.Size"]
+                     "Subset.Size",
+                     "Subset.IS_CONF.Size"]
 
 RESULT_ALLDTYPES = [str,
                     str,

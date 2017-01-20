@@ -357,6 +357,8 @@ int main(int argc, char* argv[]) {
         if(regions.hasRegions("CONF"))
         {
             qparams += "count_unk;";
+            // output intersection counts with CONF
+            regions.setIntersectRegion("CONF");
         }
         if(count_homref)
         {
