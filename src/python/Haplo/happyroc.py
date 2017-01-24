@@ -55,6 +55,7 @@ RESULT_ALLDTYPES = [str,
                     float,
                     float,
                     float,
+                    float,
                     float]
 
 for count_type in ["TRUTH.TOTAL", "TRUTH.TP", "TRUTH.FN",
