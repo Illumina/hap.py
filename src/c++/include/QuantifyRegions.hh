@@ -51,7 +51,8 @@ namespace variant
     class QuantifyRegions
     {
     public:
-        explicit QuantifyRegions(std::string const & reference);
+        explicit QuantifyRegions(std::string const & reference,
+                                 bool ins_surround_match=false);
         ~QuantifyRegions();
         /** load named regions
          *

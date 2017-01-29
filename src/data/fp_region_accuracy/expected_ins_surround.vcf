@@ -3,9 +3,9 @@ chrQ	4	.	A	T	0	.	BS=2;Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocal
 chrQ	5	.	A	T	0	.	BS=2;Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:tv:SNP:het:0	0/1:TP:gm:tv:SNP:het:0
 chrQ	6	.	A	T	0	.	BS=2;Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:.	0/1:FP:.:tv:SNP:het:0
 chrQ	7	.	A	T	0	.	BS=2	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:.	0/1:UNK:.:tv:SNP:het:0
-chrQ	100	.	A	ATT	0	.	BS=100;Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	0|1:TP:gm:i1_5:INDEL:het:0	0/1:TP:gm:i1_5:INDEL:het:0
+chrQ	100	.	A	ATT	0	.	BS=100	GT:BD:BK:BI:BVT:BLT:QQ	0|1:UNK:.:i1_5:INDEL:het:.	0/1:UNK:.:i1_5:INDEL:het:0
 chrQ	105	.	AAAAAA	AAAAAATC	0	.	BS=100;Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chrQ	110	.	A	ATT	0	.	BS=100;Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	0/1:TP:gm:i1_5:INDEL:het:0	./.:.:.:.:NOCALL:nocall:0
 chrQ	110	.	A	ATC,ATT	0	.	BS=100;Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:.	2/1:TP:gm:i1_5:INDEL:hetalt:0
 chrQ	520	.	A	T	0	.	BS=520;Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:.	0/1:FP:.:tv:SNP:het:0
-chrQ	520	.	A	ATT	0	.	BS=520;Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:.	0/1:FP:.:i1_5:INDEL:het:0
+chrQ	520	.	A	ATT	0	.	BS=520	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:.	0/1:UNK:.:i1_5:INDEL:het:0

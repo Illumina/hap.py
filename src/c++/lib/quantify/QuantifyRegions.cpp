@@ -69,10 +69,13 @@ namespace variant
 
         int64_t current_pos = -1;
         FastaFile ref;
+        bool ins_surround_match = false;
     };
 
-    QuantifyRegions::QuantifyRegions(std::string const &ref) : _impl(new QuantifyRegionsImpl(ref))
-    {}
+    QuantifyRegions::QuantifyRegions(std::string const &ref, bool ins_surround_match) : _impl(new QuantifyRegionsImpl(ref))
+    {
+        _impl->ins_surround_match = ins_surround_match;
+    }
 
     QuantifyRegions::~QuantifyRegions()
     {}
@@ -318,11 +321,17 @@ namespace variant
                     updated_ref_start = std::min(updated_ref_start, al_rv.start);
                     updated_ref_end = std::max(updated_ref_end, al_rv.end);
                 }
-                else
+                else if(_impl->ins_surround_match)
                 {
                     // this is an insertion *before* start, it will have end < start
                     updated_ref_start = std::min(updated_ref_start, al_rv.start - 1);
                     updated_ref_end = std::max(updated_ref_end, al_rv.start);
+                }
+                else // traditional insertion handling: only match ref padding base
+                {
+                    // this is an insertion *before* start, it will have end < start
+                    updated_ref_start = std::min(updated_ref_start, al_rv.start - 1);
+                    updated_ref_end = std::max(updated_ref_end, al_rv.start - 1);
                 }
             }
 
