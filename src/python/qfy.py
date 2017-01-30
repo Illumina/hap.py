@@ -117,7 +117,8 @@ def quantify(args):
                                 roc_delta=args.roc_delta,
                                 roc_regions=args.roc_regions,
                                 clean_info=not args.preserve_info,
-                                strat_fixchr=args.strat_fixchr)
+                                strat_fixchr=args.strat_fixchr,
+                                ins_surround_match=args.ins_surround_match)
 
     metrics_output = makeMetricsObject("%s.comparison" % args.runner)
 
@@ -254,6 +255,9 @@ def updateArgs(parser):
 
     parser.add_argument("--ci-alpha", dest="ci_alpha", default=0.0, type=float,
                         help="Confidence level for Jeffrey's CI for recall, precision and fraction of non-assessed calls.")
+
+    parser.add_argument("--ins-surround-match", dest="ins_surround_match", default=False, action="store_true",
+                        help="Match insertions as confident (or for stratification) only if both surrounding bases are matched.")
 
     parser.add_argument("--no-json", dest="write_json", default=True, action="store_false",
                         help="Disable JSON file output.")

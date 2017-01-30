@@ -81,6 +81,12 @@ public:
      */
     bool hasOverlap(int64_t start, int64_t end, size_t lane) const;
 
+    /**
+     * Intersect two lanes and return the size of the intersection
+     * @return the number of positions shared by l1 and l2
+     */
+    size_t intersectLanes(const size_t l1, const size_t l2) const;
+
 private:
     struct IntervalBufferImpl;
     IntervalBufferImpl * _impl;

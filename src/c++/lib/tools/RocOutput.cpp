@@ -89,7 +89,6 @@ namespace roc
             Precision,
             F1_Score,
             Frac_NA,
-            Subset_Size,
             SIZE
         };
     };
@@ -108,7 +107,6 @@ namespace roc
         "METRIC.Precision",
         "METRIC.F1_Score",
         "METRIC.Frac_NA",
-        "Subset.Size",
     };
 
     static const std::list<std::pair<std::string, uint64_t> > SNP_SUBTYPES
@@ -198,7 +196,14 @@ namespace roc
             table.set(prefix, _S(METRICS::UNK), l.unk());
             table.set(prefix, _S(METRICS::FP_al), l.fp_al());
             table.set(prefix, _S(METRICS::FP_gt), l.fp_gt());
-            table.set(prefix, _S(METRICS::Subset_Size), regions.getRegionSize(subset));
+
+            const auto extra_counts = regions.getRegionExtraCounts(subset);
+
+            for(auto const & ec : extra_counts)
+            {
+                table.set(prefix, ec.first, ec.second);
+            }
+
             if(!counts_only)
             {
                 table.set(prefix, _S(METRICS::FN), l.fn());

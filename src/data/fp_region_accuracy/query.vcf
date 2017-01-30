@@ -5,3 +5,6 @@ chrQ	4	fp	A	T	.	PASS	.	GT	0/1
 chrQ	5	tp	A	T	.	PASS	.	GT	0/1
 chrQ	6	fp	A	T	.	PASS	.	GT	0/1
 chrQ	7	unk	A	T	.	PASS	.	GT	0/1
+chrQ	100	unk	A	ATT	.	PASS	.	GT	0/1
+chrQ	110	tp	A	ATT,ATC	.	PASS	.	GT	2/1
+chrQ	520	fp	A	ATT,T	.	PASS	.	GT	2/1

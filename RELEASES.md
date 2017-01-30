@@ -5,9 +5,11 @@
 | Ticket  | Description                                                                        |
 |---------|------------------------------------------------------------------------------------|
 | HAP-259 | Som.py alternative GA4GH-based workflow: hap.py --engine scmp                      |
+| HAP-266 | Optional new insertion handling: both surrounding bases must be covered to capture |
+| HAP-267 | Add confident region overlap counts to stratification regions                      |
 | HAP-270 | Handle special chars in input filenames better                                     |
 | HAP-274 | Issue #10 allow hap.py to be symlinked                                             |
-| HAP-276 | List-of-float INFO fields were getting rounded to int                             |
+| HAP-276 | List-of-float INFO fields were getting rounded to int                              |
 
 ## v0.3.6
 

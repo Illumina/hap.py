@@ -94,15 +94,17 @@ int main(int argc, char* argv[]) {
     bool clean_info = true;
     bool fixchr = false;
     bool output_rocs = true;
+    bool ins_surround_match = false;
 
     int threads = 1;
     int blocksize = 20000;
     std::vector<std::string> roc_regions = {"*"};
 
+    // quantify region file names
+    std::vector<std::string> rnames;
+
     try
     {
-        QuantifyRegions regions;
-
         try
         {
             // Declare the supported options.
@@ -135,6 +137,8 @@ int main(int argc, char* argv[]) {
                 ("output-vtc", po::value<bool>(), "Output variant types counted (debugging).")
                 ("clean-info", po::value<bool>(), "Set to zero to preserve INFO fields (default is 1)")
                 ("output-rocs", po::value<bool>(), "Output ROCs with full set of levels of QQ values (default is 1, disable for more concise output)")
+                ("ins-surround-match", po::value<bool>(), "Insertions are matched to confident (and other) regions only if both surrounding bases are captured. "
+                    "Default behavior is to match ref-padding base only.")
                 ("fix-chr-regions", po::value<bool>(), "Add chr prefix to regions if necessary (default is off).")
                 ("threads", po::value<int>(), "Number of threads to use.")
                 ("blocksize", po::value<int>(), "Number of variants per block.")
@@ -264,6 +268,11 @@ int main(int argc, char* argv[]) {
                 output_rocs = vm["output-rocs"].as< bool >();
             }
 
+            if (vm.count("ins-surround-match"))
+            {
+                ins_surround_match = vm["ins-surround-match"].as< bool >();
+            }
+
             if (vm.count("fix-chr-regions"))
             {
                 fixchr = vm["fix-chr-regions"].as< bool >();
@@ -293,8 +302,7 @@ int main(int argc, char* argv[]) {
 
             if (vm.count("regions"))
             {
-                std::vector<std::string> rnames = vm["regions"].as< std::vector<std::string> >();
-                regions.load(rnames, fixchr);
+                rnames = vm["regions"].as< std::vector<std::string> >();
             }
 
             if (vm.count("roc-regions"))
@@ -309,6 +317,10 @@ int main(int argc, char* argv[]) {
         }
 
         FastaFile ref_fasta(ref.c_str());
+
+        QuantifyRegions regions(ref, ins_surround_match);
+        regions.load(rnames, fixchr);
+
         bcf_srs_t * reader = bcf_sr_init();
         reader->require_index = 1;
         reader->collapse = COLLAPSE_NONE;
@@ -353,6 +365,8 @@ int main(int argc, char* argv[]) {
         if(regions.hasRegions("CONF"))
         {
             qparams += "count_unk;";
+            // output intersection counts with CONF
+            regions.setIntersectRegion("CONF");
         }
         if(count_homref)
         {
@@ -372,6 +386,14 @@ int main(int argc, char* argv[]) {
         p_bq->rocFiltering(roc_filter);
 
         // update the header
+        // this is added by QuantifyRegions
+        bcf_hdr_append(hdr, "##INFO=<ID=Regions,Number=.,Type=String,Description=\"Tags for regions.\">");
+        if(!clean_info)
+        {
+            bcf_hdr_append(hdr, "##INFO=<ID=RegionsExtent,Number=.,Type=String,Description=\"Trimmed reference coordinates matched to regions for this record.\">");
+        }
+
+        // this adds fields for BlockQuantify (GA4GH formats and INFO fields)
         p_bq->updateHeader(hdr);
 
         htsFile * writer = nullptr;
