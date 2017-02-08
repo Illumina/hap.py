@@ -281,11 +281,6 @@ namespace variant
         int64_t refstart = 0, refend = 0;
         bcfhelpers::getLocation(hdr, record, refstart, refend);
 
-        // check if this record is a pure insertion. If so,
-        // we need to use slightly different refstart and refend for
-        // the overlaps since an insertion is between two ref bases
-        bool is_insertion = false;
-
         const std::string ref_allele = record->d.allele[0];
         if (bcfhelpers::classifyAlleleString(ref_allele).first == bcfhelpers::AlleleType::NUC)
         {
@@ -293,7 +288,6 @@ namespace variant
             int64_t updated_ref_end = std::numeric_limits<int64_t>::min();
             bool nuc_alleles = false;
 
-            is_insertion = record->n_allele > 1;
             for (int al = 1; al < record->n_allele; ++al)
             {
                 RefVar al_rv;
@@ -306,7 +300,6 @@ namespace variant
                 }
                 else if (ca.first != bcfhelpers::AlleleType::NUC)
                 {
-                    is_insertion = false;
                     break;
                 }
                 nuc_alleles = true;
@@ -317,7 +310,6 @@ namespace variant
 
                 if (al_rv.end >= al_rv.start)
                 {
-                    is_insertion = false;
                     updated_ref_start = std::min(updated_ref_start, al_rv.start);
                     updated_ref_end = std::max(updated_ref_end, al_rv.end);
                 }
@@ -360,10 +352,13 @@ namespace variant
             }
             for (size_t i = 0; i < _impl->names.size(); ++i)
             {
-                if ((!is_insertion && p_chr->second->hasOverlap(refstart, refend, i))
-                    || (is_insertion && p_chr->second->isCovered(refstart, refend, i)))
+                if (p_chr->second->hasOverlap(refstart, refend, i))
                 {
                     regions.insert(_impl->names[i]);
+                    if (!p_chr->second->isCovered(refstart, refend, i))
+                    {
+                        regions.insert(_impl->names[i] + ".boundary");
+                    }
                 }
             }
             if (refstart > 1)
