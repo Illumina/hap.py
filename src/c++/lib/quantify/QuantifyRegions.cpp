@@ -400,6 +400,10 @@ namespace variant
      */
     size_t QuantifyRegions::getRegionSize(std::string const &region_name) const
     {
+        if(region_name == "*")
+        {
+            return _impl->ref.contigNonNSize();
+        }
         auto label_it = _impl->label_map.find(region_name);
         if (label_it == _impl->label_map.cend())
         {

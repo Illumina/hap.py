@@ -24,6 +24,10 @@
 
 import os
 import logging
+import tempfile
+import subprocess
+import pipes
+import json
 
 
 def fastaContigLengths(fastafile):
@@ -38,6 +42,31 @@ def fastaContigLengths(fastafile):
         for l in fai:
             row = l.strip().split("\t")
             fastacontiglengths[row[0]] = int(row[1])
+
+    return fastacontiglengths
+
+
+def fastaNonNContigLengths(fastafile):
+    """ Return contig lengths in a fasta file excluding
+        Ns in the beginning or end
+    """
+    if not os.path.exists(fastafile + ".fai"):
+        raise Exception("Fasta file %s is not indexed" % fastafile)
+
+    fastacontiglengths = {}
+
+    tf = tempfile.NamedTemporaryFile(delete=False)
+    tf.close()
+
+    try:
+        subprocess.check_call("fastainfo %s %s" % (pipes.quote(fastafile), pipes.quote(tf.name)), shell=True)
+        with open(tf.name) as f:
+            fasta_info = json.load(f)
+
+        for k, v in fasta_info.iteritems():
+            fastacontiglengths[k] = int(v["n_trimmed_length"])
+    finally:
+        os.unlink(tf.name)
 
     return fastacontiglengths
 

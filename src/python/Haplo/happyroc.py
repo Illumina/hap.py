@@ -73,15 +73,17 @@ for count_type in ["TRUTH.TOTAL", "TRUTH.TP", "TRUTH.FN",
 
 def roc(roc_table, output_path,
         filter_handling=None,
-        ci_alpha=0.05):
+        ci_alpha=0.05,
+        total_region_size=None):
     """ Calculate SNP and indel ROC.
 
     Return a dictionary of variant types and corresponding files.
 
     :param filter_handling: can be None, "PASS" or "ALL" to filter rows based on the "Filter" column.
                             this is necessary because vcfeval doesn't preserve filter information
-                            in GA4GH output mode, so we need to remve the corresponding rows here
+                            in GA4GH output mode, so we need to remove the corresponding rows here
     :param ci_alpha: Jeffrey's CI confidence level for recall, precision, na
+    :param total_region_size: correct Subset.Size for "*" region if a subset was selected in hap.py
 
     """
     result = {}
@@ -173,7 +175,6 @@ def roc(roc_table, output_path,
             result[k][count_type + ".TiTv_ratio"].replace([np.inf, -np.inf], np.nan, inplace=True)
             result[k][count_type + ".het_hom_ratio"].replace([np.inf, -np.inf], np.nan, inplace=True)
 
-
         if 0 < ci_alpha < 1:
             logging.info("Computing recall CIs for %s" % k)
             rc, rc_min, rc_max = ci.binomialCI( result[k]["TRUTH.TP"].values,
@@ -195,6 +196,10 @@ def roc(roc_table, output_path,
                                                   ci_alpha)
             result[k]["METRIC.Frac_NA.Lower"] = fna_min
             result[k]["METRIC.Frac_NA.Upper"] = fna_max
+
+        # write correct subset.size
+        if total_region_size is not None:
+            result[k].loc[result[k]["Subset"] == "*", "Subset.Size"] = total_region_size
 
         vt = re.sub("[^A-Za-z0-9\\.\\-_]", "_", k, flags=re.IGNORECASE)
         if output_path:

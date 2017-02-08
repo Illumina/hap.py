@@ -117,6 +117,77 @@ public:
                 sscanf(parts[3].c_str(), "%zu", &ientry.chars_per_line);
                 sscanf(parts[4].c_str(), "%zu", &ientry.bytes_per_line);
                 fai[contig] = ientry;
+
+                // determine non-N length; we don't do this because it's pretty slow.
+//                size_t offset = ientry.start_offset;
+//                const size_t line_number = (ientry.length - 1) / ientry.chars_per_line;
+//                size_t offset_in_line = (ientry.length - 1) % ientry.chars_per_line;
+//                size_t offset_end = ientry.start_offset + line_number*ientry.bytes_per_line + offset_in_line + 1;
+//                size_t ns = 0;
+//
+//                while(offset < offset_end)
+//                {
+//                    if(std::tolower(base[offset - 1]) == 'n')
+//                    {
+//                        ++ns;
+//                    }
+//                    ++offset;
+//                }
+//                fai[contig].non_n_length = fai[contig].length - ns;
+
+                // length trimming off N's at start and end
+                size_t pos = 0;
+                size_t ns_at_start = 0;
+                bool done = false;
+
+                // start of contig
+                while(pos < ientry.length && !done)
+                {
+                    const std::string s = get(contig, pos, 10000);
+
+                    for(size_t j = 0; j < s.size(); ++j)
+                    {
+                        if(std::tolower(s.at(j)) == 'n')
+                        {
+                            ++ns_at_start;
+                        }
+                        else
+                        {
+                            done = true;
+                            break;
+                        }
+                    }
+
+                    pos += s.size();
+                }
+
+                size_t ns_at_end = 0;
+                // check if we had all Ns
+                if(ns_at_start < ientry.length)
+                {
+                    const size_t line_number = (ientry.length - 1) / ientry.chars_per_line;
+                    size_t offset_in_line = (ientry.length - 1) % ientry.chars_per_line;
+                    size_t offset = ientry.start_offset + line_number*ientry.bytes_per_line + offset_in_line + 1;
+
+                    // end of contig
+                    while(offset > ientry.start_offset)
+                    {
+                        if (base[offset - 1] == '\n' || base[offset - 1] == '\r')
+                        {
+                            // skip newlines
+                        }
+                        else if(std::tolower(base[offset - 1]) == 'n')
+                        {
+                            ++ns_at_end;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        --offset;
+                    }
+                }
+                fai[contig].non_n_length = fai[contig].length - (ns_at_start + ns_at_end);
             }
             else if(parts.size() > 0)
             {
@@ -173,6 +244,75 @@ public:
         return result;
     }
 
+
+    /**
+     * return the size of a contig. Sum of all contig sizes if contig == 0
+     * @param contig name of contig, or empty
+     * @return number of bases in the contig
+     */
+    size_t contigSize(std::string const & contig) const
+    {
+        size_t result = 0;
+        if(contig.empty())
+        {
+            for(const auto & ix : fai)
+            {
+                result += ix.second.length;
+            }
+        }
+        else
+        {
+            auto k = fai.find(contig);
+            if(k != fai.end())
+            {
+                result += k->second.length;
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * return the non-N padded size of a contig. This is calculated
+     * as the size of the contig minus any N's at the beginning or
+     * at the end.
+     *
+     * Returns the sum of all contig sizes if contig == 0
+     * @param contig name of contig, or empty
+     * @return number of bases in the contig
+     */
+    size_t contigNonNSize(std::string const & contig) const
+    {
+        size_t result = 0;
+        if(contig.empty())
+        {
+            for(const auto & ix : fai)
+            {
+                result += ix.second.non_n_length;
+            }
+        }
+        else
+        {
+            auto k = fai.find(contig);
+            if(k != fai.end())
+            {
+                result += k->second.non_n_length;
+            }
+        }
+
+        return result;
+    }
+
+    std::list<std::string> getContigNames() const
+    {
+        std::list<std::string> names;
+        for(auto const & c : fai)
+        {
+            names.push_back(c.first);
+        }
+        return names;
+    }
+
 private:
     typedef struct _index_entry
     {
@@ -180,6 +320,7 @@ private:
         size_t start_offset;
         size_t chars_per_line;
         size_t bytes_per_line;
+        size_t non_n_length;
     } index_entry;
 
     std::string filename;
@@ -302,7 +443,39 @@ std::string FastaFile::query(const char * chr, int64_t start, int64_t end) const
         return "";
     }
 
-    std::string result = _impl->contigs->get(chr, start, requested_length);
+    std::string result = _impl->contigs->get(chr, (size_t) start, (size_t) requested_length);
     boost::to_upper(result);
     return result;
+}
+
+/**
+ * return the size of a contig. Sum of all contig sizes if contig == 0
+ * @param contig name of contig, or empty
+ * @return number of bases in the contig
+ */
+size_t FastaFile::contigSize(std::string const & contig) const
+{
+    return _impl->contigs->contigSize(contig);
+}
+
+/**
+ * return the non-N padded size of a contig. This is calculated
+ * as the size of the contig minus any N's at the beginning or
+ * at the end.
+ *
+ * Returns the sum of all contig sizes if contig == 0
+ * @param contig name of contig, or empty
+ * @return number of bases in the contig
+ */
+size_t FastaFile::contigNonNSize(std::string const & contig) const
+{
+    return _impl->contigs->contigNonNSize(contig);
+}
+
+/**
+ * @return all contig names
+ */
+std::list<std::string> FastaFile::getContigNames() const
+{
+    return _impl->contigs->getContigNames();
 }
