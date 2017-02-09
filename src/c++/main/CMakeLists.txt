@@ -56,3 +56,7 @@ target_link_libraries(vcfcheck ${HAPLOTYPES_ALL_LIBS})
 # preprocess does variant decomposition and leftshifting
 add_executable(preprocess preprocess.cpp)
 target_link_libraries(preprocess ${HAPLOTYPES_ALL_LIBS})
+
+# fastainfo returns contig lengths and non-n lengths in JSON format
+add_executable(fastainfo fastainfo.cpp)
+target_link_libraries(fastainfo ${HAPLOTYPES_ALL_LIBS})

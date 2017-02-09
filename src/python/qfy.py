@@ -42,6 +42,7 @@ import Tools.vcfextract
 from Tools.metric import makeMetricsObject, dataframeToMetricsTable
 import Haplo.quantify
 import Haplo.happyroc
+from Tools import fastasize
 
 
 def quantify(args):
@@ -130,9 +131,20 @@ def quantify(args):
         # if we run this through qfy, these arguments are not present
         pass
 
+    total_region_size = None
+    headers = Tools.vcfextract.extractHeadersJSON(vcf_name)
+    try:
+        contigs_to_use = ",".join(headers["tabix"]["chromosomes"])
+        contig_lengths = fastasize.fastaNonNContigLengths(args.ref)
+        total_region_size = fastasize.calculateLength(contig_lengths, contigs_to_use)
+        logging.info("Subset.Size for * is %i, based on these contigs: %s " % (total_region_size, str(contigs_to_use)))
+    except:
+        pass
+
     res = Haplo.happyroc.roc(roc_table, args.reports_prefix + ".roc",
                              filter_handling=filter_handling,
-                             ci_alpha=args.ci_alpha)
+                             ci_alpha=args.ci_alpha,
+                             total_region_size=total_region_size)
     df = res["all"]
 
     # only use summary numbers

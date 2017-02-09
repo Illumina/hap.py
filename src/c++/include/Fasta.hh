@@ -38,6 +38,7 @@
 
 #pragma once
 
+#include <list>
 #include <string>
 
 struct FastaFileImpl;
@@ -55,6 +56,29 @@ public:
 
 	std::string query(std::string const & location) const;
 	std::string query(const char * chr, int64_t start, int64_t end) const;
+
+	/**
+	 * return the size of a contig. Sum of all contig sizes if contig == 0
+	 * @param contig name of contig, or empty
+	 * @return number of bases in the contig
+	 */
+	size_t contigSize(std::string const & contig = "") const;
+
+	/**
+	 * return the non-N padded size of a contig. This is calculated
+	 * as the size of the contig minus any N's at the beginning or
+	 * at the end.
+	 *
+	 * Returns the sum of all contig sizes if contig == 0
+	 * @param contig name of contig, or empty
+	 * @return number of bases in the contig
+	 */
+	size_t contigNonNSize(std::string const & contig = "") const;
+
+	/**
+	 * @return all contig names
+	 */
+	std::list<std::string> getContigNames() const;
 private:
 	FastaFileImpl * _impl;
 };
