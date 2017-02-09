@@ -40,7 +40,8 @@ RESULT_ALLCOLUMNS = ["Type",
                      "FP.gt",
                      "FP.al",
                      "Subset.Size",
-                     "Subset.IS_CONF.Size"]
+                     "Subset.IS_CONF.Size",
+                     "Subset.Level"]
 
 RESULT_ALLDTYPES = [str,
                     str,
@@ -56,7 +57,8 @@ RESULT_ALLDTYPES = [str,
                     float,
                     float,
                     float,
-                    float]
+                    float,
+                    int]
 
 for count_type in ["TRUTH.TOTAL", "TRUTH.TP", "TRUTH.FN",
                    "QUERY.TOTAL", "QUERY.TP", "QUERY.FP",

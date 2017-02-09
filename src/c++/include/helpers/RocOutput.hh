@@ -70,9 +70,9 @@ namespace roc
         {}
 
         /** compute metrics and write output */
-        void write(std::ostream & o) const;
+        void write(std::ostream & o);
     private:
-        RocMap const & rocs;
+        RocMap rocs;
         std::string qq_field;
         bool output_rocs;
         double roc_delta;
