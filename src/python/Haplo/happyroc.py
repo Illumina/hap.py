@@ -164,7 +164,7 @@ def roc(roc_table, output_path,
         minidata[1]["Type"] = "INDEL"
         result["all"] = pandas.DataFrame(minidata, columns=RESULT_ALLCOLUMNS)
         for i, c in enumerate(RESULT_ALLCOLUMNS):
-            result["all"][c] = result["all"][c].astype(RESULT_ALLDTYPES[i])
+            result["all"][c] = result["all"][c].astype(RESULT_ALLDTYPES[i], raise_on_error=False)
 
     for k, v in result.items():
         result[k] = _postprocessRocData(pandas.DataFrame(v, columns=RESULT_ALLCOLUMNS))
