@@ -94,6 +94,13 @@ def quantify(args):
                     raise Exception("Quantification region file %s not found" % f)
                 qfyregions[n] = f
 
+    if args.strat_regions:
+        for r in args.strat_regions:
+            n, _, f = r.partition(":")
+            if not os.path.exists(f):
+                raise Exception("Quantification region file %s not found" % f)
+            qfyregions[n] = f
+
     if vcf_name == output_vcf or vcf_name == output_vcf + internal_format_suffix:
         raise Exception("Cannot overwrite input VCF: %s would overwritten with output name %s." % (vcf_name, output_vcf))
 
@@ -118,8 +125,7 @@ def quantify(args):
                                 roc_delta=args.roc_delta,
                                 roc_regions=args.roc_regions,
                                 clean_info=not args.preserve_info,
-                                strat_fixchr=args.strat_fixchr,
-                                ins_surround_match=args.ins_surround_match)
+                                strat_fixchr=args.strat_fixchr)
 
     metrics_output = makeMetricsObject("%s.comparison" % args.runner)
 
@@ -226,6 +232,10 @@ def updateArgs(parser):
                         default=None, type=str,
                         help="Stratification file list (TSV format -- first column is region name, second column is file name).")
 
+    parser.add_argument("--stratification-region", dest="strat_regions",
+                        default=[], action="append",
+                        help="Add single stratification region, e.g. --stratification-region TEST:test.bed")
+
     parser.add_argument("--stratification-fixchr", dest="strat_fixchr",
                         default=None, action="store_true",
                         help="Add chr prefix to stratification files if necessary")
@@ -267,9 +277,6 @@ def updateArgs(parser):
 
     parser.add_argument("--ci-alpha", dest="ci_alpha", default=0.0, type=float,
                         help="Confidence level for Jeffrey's CI for recall, precision and fraction of non-assessed calls.")
-
-    parser.add_argument("--ins-surround-match", dest="ins_surround_match", default=False, action="store_true",
-                        help="Match insertions as confident (or for stratification) only if both surrounding bases are matched.")
 
     parser.add_argument("--no-json", dest="write_json", default=True, action="store_false",
                         help="Disable JSON file output.")

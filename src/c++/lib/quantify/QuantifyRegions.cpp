@@ -68,12 +68,10 @@ namespace variant
 
         int64_t current_pos = -1;
         FastaFile ref;
-        bool ins_surround_match = false;
     };
 
-    QuantifyRegions::QuantifyRegions(std::string const &ref, bool ins_surround_match) : _impl(new QuantifyRegionsImpl(ref))
+    QuantifyRegions::QuantifyRegions(std::string const &ref) : _impl(new QuantifyRegionsImpl(ref))
     {
-        _impl->ins_surround_match = ins_surround_match;
     }
 
     QuantifyRegions::~QuantifyRegions()
@@ -128,8 +126,10 @@ namespace variant
                     label = label.substr(1);
                     fixed_label = true;
                 }
-                if (label == "CONF")
+                if (label.find("CONF") == 0)
                 {
+                    // squash all CONF regions into one
+                    label = "CONF";
                     fixed_label = true;
                 }
             }
@@ -304,8 +304,13 @@ namespace variant
         bcfhelpers::getLocation(hdr, record, refstart, refend);
 
         const std::string ref_allele = record->d.allele[0];
+
+        // pure insertion records must be fully contained in CONF to match
+        bool is_pure_insertion = false;
+
         if (bcfhelpers::classifyAlleleString(ref_allele).first == bcfhelpers::AlleleType::NUC)
         {
+            is_pure_insertion = record->n_allele > 1;
             int64_t updated_ref_start = std::numeric_limits<int64_t>::max();
             int64_t updated_ref_end = std::numeric_limits<int64_t>::min();
             bool nuc_alleles = false;
@@ -334,18 +339,14 @@ namespace variant
                 {
                     updated_ref_start = std::min(updated_ref_start, al_rv.start);
                     updated_ref_end = std::max(updated_ref_end, al_rv.end);
+                    is_pure_insertion = false;
                 }
-                else if(_impl->ins_surround_match)
+                else
                 {
                     // this is an insertion *before* start, it will have end < start
+                    // insertions are captured by the reference bases before and after
                     updated_ref_start = std::min(updated_ref_start, al_rv.start - 1);
                     updated_ref_end = std::max(updated_ref_end, al_rv.start);
-                }
-                else // traditional insertion handling: only match ref padding base
-                {
-                    // this is an insertion *before* start, it will have end < start
-                    updated_ref_start = std::min(updated_ref_start, al_rv.start - 1);
-                    updated_ref_end = std::max(updated_ref_end, al_rv.start - 1);
                 }
             }
 
@@ -358,6 +359,18 @@ namespace variant
 
         std::string tag_string = "";
         std::set<std::string> regions;
+
+        const std::string regions_already_in_place = bcfhelpers::getInfoString(hdr, record, "Regions", "");
+        std::vector<std::string> regions_split;
+        stringutil::split(regions_already_in_place, regions_split, ",");
+        for(const auto & r : regions_split)
+        {
+            // these we replace here
+            if(r != "CONF" && r != "TS_boundary")
+            {
+                regions.insert(r);
+            }
+        }
 
         auto p_chr = _impl->current_chr;
         if (p_chr == _impl->ib.end() || p_chr->first != chr)
@@ -376,10 +389,14 @@ namespace variant
             {
                 if (p_chr->second->hasOverlap(refstart, refend, i))
                 {
-                    regions.insert(_impl->names[i]);
-                    if (!p_chr->second->isCovered(refstart, refend, i))
+                    const bool fully_covered = p_chr->second->isCovered(refstart, refend, i);
+                    if(!is_pure_insertion || fully_covered)
                     {
-                        regions.insert(_impl->names[i] + ".boundary");
+                        regions.insert(_impl->names[i]);
+                        if (_impl->names[i] != "CONF" && !fully_covered)
+                        {
+                            regions.insert("TS_boundary");
+                        }
                     }
                 }
             }

@@ -60,3 +60,7 @@ target_link_libraries(preprocess ${HAPLOTYPES_ALL_LIBS})
 # fastainfo returns contig lengths and non-n lengths in JSON format
 add_executable(fastainfo fastainfo.cpp)
 target_link_libraries(fastainfo ${HAPLOTYPES_ALL_LIBS})
+
+# gVCF2bed converts a gVCF file to bed, indicating regions of pass/fail homref/variants
+add_executable(gvcf2bed gvcf2bed.cpp)
+target_link_libraries(gvcf2bed ${HAPLOTYPES_ALL_LIBS})

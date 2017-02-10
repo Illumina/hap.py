@@ -68,17 +68,30 @@
 ##Method=<ID=cgi,Description="Method=CompleteGenomics">
 ##Method=<ID=cortex,Description="Method=cortex-1.0.5.11">
 ##Method=<ID=isaac2,Description="Aligner=isaac_aligner-02.14.10.23;VariantCaller=isaac_variant_caller-2.1.4.1">
+##bcftools_concatCommand=concat -a -O z -o /tmp/query.pp5D83yU.vcf.gz /tmp/input.chr1:1-2147483647F9gdqe.prep.vcf.gz
+##bcftools_concatCommand=concat -a -O z -o /tmp/truth.ppdp5cPy.vcf.gz /tmp/input.chr1:1-21474836476ZG31u.prep.vcf.gz
 ##bcftools_concatVersion=1.3.1+htslib-1.3.1
-##bcftools_concatCommand=concat -a -O z -o /tmp/hap.py.result.S9tXEZ.vcf.gz /tmp/result.chr1:2-2147483647gsN2XW.bcf
+##bcftools_viewCommand=view -f PASS,. -o /tmp/tmp6emmZd.vcf.gz -O z /home/peter/workspace/hap.py/src/sh/../../example/decomp/decomp_test.truth.vcf.gz
+##bcftools_viewCommand=view -o /tmp/tmpAYqtbm.vcf.gz -O z
+##bcftools_viewCommand=view -o decomp_test.truth.vcf.gz -O z /illumina/development/PlatinumGenomes/hg19/8.0.1/NA12878/NA12878.vcf.gz chr1:237600000-247600000
+##bcftools_viewCommand=view -t chr1 /home/peter/workspace/hap.py/src/sh/../../example/decomp/decomp_test.query.vcf.gz
+##bcftools_viewCommand=view example/decomp/decomp_test.truth.vcf.gz chr1:237636190-237636320
+##bcftools_viewVersion=1.2+htslib-1.2.1
+##bcftools_viewVersion=1.2-108-gd4d42ca+htslib-1.2.1-176-gf790455
+##bcftools_viewVersion=1.3.1+htslib-1.3.1
+##fileDate=2015-08-04
+##fileDate=20151016
+##source=IlluminaPlatinumGenomes, version: hg19_8.0.1
+##bcftools_concatCommand=concat -a -O z -o /tmp/hap.py.result.Wrgca3.vcf.gz /tmp/result.chr1:1-2147483647FplRtT.bcf
+##INFO=<ID=Regions,Number=.,Type=String,Description="Tags for regions.">
 ##FORMAT=<ID=BD,Number=1,Type=String,Description="Decision for call (TP/FP/FN/N)">
 ##FORMAT=<ID=BK,Number=1,Type=String,Description="Sub-type for decision (match/mismatch type)">
 ##FORMAT=<ID=BI,Number=1,Type=String,Description="Additional comparison information">
 ##FORMAT=<ID=QQ,Number=1,Type=Float,Description="Variant quality for ROC creation.">
-##INFO=<ID=Regions,Number=.,Type=String,Description="Tags for regions.">
 ##FORMAT=<ID=BVT,Number=1,Type=String,Description="High-level variant type (SNP|INDEL).">
 ##FORMAT=<ID=BLT,Number=1,Type=String,Description="High-level location type (het|homref|hetalt|homalt|nocall).">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	TRUTH	QUERY
-chr1	237636277	.	AT	A	0	.	BS=237636277;Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:d1_5:INDEL:homalt:100	./.:.:.:.:NOCALL:nocall:0
-chr1	237636282	.	TT	T	100	.	BS=237636277;Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:.	1/1:TP:gm:d1_5:INDEL:homalt:100
-chr1	237636291	.	G	C	100	.	BS=237636277;Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:100	1/1:TP:gm:tv:SNP:homalt:100
-chr1	237636309	.	A	T	100	.	BS=237636277;Regions=CONF	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:100	1/1:TP:gm:tv:SNP:homalt:100
+chr1	237636277	.	AT	A	0	.	BS=237636277;Regions=CONF,TS_contained	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:d1_5:INDEL:homalt:100	./.:.:.:.:NOCALL:nocall:0
+chr1	237636282	.	TT	T	100	.	BS=237636277;Regions=CONF,TS_contained	GT:BD:BK:BI:BVT:BLT:QQ	./.:.:.:.:NOCALL:nocall:.	1/1:TP:gm:d1_5:INDEL:homalt:100
+chr1	237636291	.	G	C	100	.	BS=237636277;Regions=CONF,TS_contained	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:100	1/1:TP:gm:tv:SNP:homalt:100
+chr1	237636309	.	A	T	100	.	BS=237636277;Regions=CONF,TS_contained	GT:BD:BK:BI:BVT:BLT:QQ	1/1:TP:gm:tv:SNP:homalt:100	1/1:TP:gm:tv:SNP:homalt:100
