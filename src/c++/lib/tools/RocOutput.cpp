@@ -267,7 +267,7 @@ namespace roc
         }
     }
 
-    void ROCOutput::write(std::ostream &out_roc) const
+    void ROCOutput::write(std::ostream &out_roc)
     {
         /** populate output table */
         table::Table output_values;
@@ -279,6 +279,38 @@ namespace roc
             {"homalt", roc::OBS_FLAG_HOMALT},
             {"*",      0},
         };
+
+        const auto region_names = regions.getRegionNames();
+
+        // create dummy entries for regions we don't have data for
+        for(auto & m : rocs)
+        {
+            std::vector<std::string> subs;
+            stringutil::split(m.first, subs, ":");
+            if (subs.empty())
+            {
+                // only happens when an empty string is passed
+                continue;
+            }
+            std::string type = "unknown";
+            std::string subset = "unknown";
+            std::string filter = "unknown";
+
+            if (subs.size() == 3 && subs[0] == "a")
+            {
+                type = subs[1];
+                filter = subs[2];
+                for(auto const & region : region_names)
+                {
+                    const std::string rname = std::string("s|") + region + ":" + type + ":" + filter;
+                    auto it = rocs.find(rname);
+                    if(it == rocs.end())
+                    {
+                        rocs[rname] = Roc();
+                    }
+                }
+            }
+        }
 
         for(auto & m : rocs)
         {
