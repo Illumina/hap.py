@@ -285,15 +285,57 @@ int main(int argc, char* argv[]) {
         if(out_fasta != "")
         {
             std::vector<Haplotype> haps;
+            std::vector<uint64_t> nodes_used;
             std::ofstream fout(out_fasta.c_str());
 
-            gr.enumeratePaths(chr.c_str(), start, end, nodes, edges, haps, 0, (size_t)-1, max_n_haplotypes);
+            gr.enumeratePaths(chr.c_str(), start, end, 
+                              nodes, edges, 
+                              haps, 0, (size_t)-1, max_n_haplotypes,
+                              &nodes_used);
 
             int i = 0;
             for(auto const & hap : haps)
             {
+                std::string nodes_string = "[";
+
+                int het_mask = 1;
+
+                for(size_t n_id = 0; n_id < nodes.size(); ++n_id)
+                {
+                    // nodes_used[i] gives a bit-mask of which het nodes where used 
+                    auto & n = nodes[n_id];
+                    // debug-print all nodes
+                    // std::cerr << n << "\n";
+                    if(n.type != ReferenceNode::alternative)
+                    {
+                        continue;
+                    }
+
+                    bool node_was_used = false;
+                    if(n.color == ReferenceNode::black)
+                    {
+                        node_was_used = true;
+                    } 
+                    else
+                    {
+                        node_was_used = (nodes_used[i] & het_mask) != 0;
+                        het_mask <<= 1;
+                    }
+
+                    if(node_was_used)
+                    {
+                        if(nodes_string != "[")
+                        {
+                            nodes_string += " ";
+                        }
+                        nodes_string += std::to_string(n_id) + ":" + n.repr();                        
+                    }
+                }
+                nodes_string += "]";
+
                 fout << ">hap_" << i++ << ":" << stringutil::formatPos(chr, start, end)
                      << ":hb=" << stringutil::formatPos(hap.chr(), hap.start(), hap.end())
+                     << " " + nodes_string
                      << "\n";
                 fout << hap.seq(start, end) << "\n";
             }
