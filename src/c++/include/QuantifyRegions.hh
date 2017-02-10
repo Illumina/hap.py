@@ -69,6 +69,11 @@ namespace variant
          */
         bool hasRegions(std::string const & rname) const;
 
+        /**
+         * @return all region names
+         */
+        std::list<std::string> getRegionNames() const;
+
         /** add Regions annotation to a record
          *
          * Records must be passed in sorted order.
@@ -82,6 +87,13 @@ namespace variant
          * @return  the region size
          */
         size_t getRegionSize(std::string const & region_name) const;
+
+        /**
+         * Get level for a region (0 for top-level, 1 for regions specified in a bed file)
+         * @param region_name
+         * @return level for the given region
+         */
+        size_t getRegionLevel(std::string const & region_name) const;
 
         /**
          * Mark one region to intersect with all others. This will

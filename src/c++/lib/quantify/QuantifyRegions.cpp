@@ -34,9 +34,6 @@
  */
 
 #include <boost/filesystem.hpp>
-#include <boost/iostreams/filtering_streambuf.hpp>
-#include <boost/iostreams/copy.hpp>
-#include <boost/iostreams/filter/gzip.hpp>
 
 #include "QuantifyRegions.hh"
 
@@ -44,6 +41,7 @@
 #include "helpers/BCFHelpers.hh"
 
 #include <map>
+#include <regex>
 #include <unordered_map>
 #include <htslib/vcf.h>
 
@@ -59,6 +57,7 @@ namespace variant
         {}
 
         std::vector<std::string> names;
+        std::vector<size_t> levels;
         std::unordered_map<std::string, size_t> label_map;
         std::unordered_map<std::string, std::unique_ptr<intervals::IntervalBuffer>> ib;
         std::unordered_map<std::string, std::unique_ptr<intervals::IntervalBuffer>>::iterator current_chr = ib.end();
@@ -93,9 +92,19 @@ namespace variant
         return _impl->label_map.find(rname) != _impl->label_map.cend();
     }
 
+    /**
+     * @return all region names
+     */
+    std::list<std::string> QuantifyRegions::getRegionNames() const
+    {
+        std::list<std::string> names {_impl->names.begin(), _impl->names.end()};
+        return names;
+    }
+
     void QuantifyRegions::load(std::vector<std::string> const &rnames, bool fixchr)
     {
         std::unordered_map<std::string, size_t> label_map;
+        const std::regex trailing_number_regex ("(.+)_([0-9]+)$");
         for (std::string const &f : rnames)
         {
             std::vector<std::string> v;
@@ -151,6 +160,7 @@ namespace variant
             {
                 label_id = _impl->names.size();
                 _impl->names.push_back(label);
+                _impl->levels.push_back(0);
                 label_map[label] = label_id;
             }
             else
@@ -203,46 +213,58 @@ namespace variant
                             continue;
                         }
 
-                        size_t this_label_id = label_id;
-                        if (!fixed_label && v.size() > 3)
+                        /*
+                         * create or get label id
+                         */
+                        auto getLabelId = [&label_map, this](std::string const & label_name, size_t level) -> size_t
                         {
-                            const std::string entry_label = label + "_" + v[3];
-                            auto li_it2 = label_map.find(entry_label);
+                            auto li_it2 = label_map.find(label_name);
+                            size_t this_label_id = 0;
                             if (li_it2 == label_map.end())
                             {
                                 this_label_id = _impl->names.size();
-                                _impl->names.push_back(entry_label);
-                                label_map[entry_label] = this_label_id;
+                                _impl->names.push_back(label_name);
+                                _impl->levels.push_back(level);
+                                label_map[label_name] = this_label_id;
                             }
                             else
                             {
                                 this_label_id = li_it2->second;
                             }
-                        }
-                        auto size_it = _impl->region_sizes.find(this_label_id);
-                        if (size_it == _impl->region_sizes.end())
+                            return this_label_id;
+                        };
+
+                        std::set<size_t> label_ids = {label_id};
+
+                        if (!fixed_label && v.size() > 3)
                         {
-                            _impl->region_sizes[this_label_id] = (unsigned long) (stop - start + 1);
+                            std::smatch string_matches;
+                            if(std::regex_match(v[3], string_matches, trailing_number_regex))
+                            {
+                                label_ids.insert(getLabelId(label + "_" + string_matches.str(1), 1));
+                                label_ids.insert(getLabelId(label + "_" + v[3], 2));
+                            }
+                            else
+                            {
+                                label_ids.insert(getLabelId(label + "_" + v[3], 1));
+                            }
                         }
-                        else
+
+                        for(const auto this_label_id : label_ids)
                         {
-                            size_it->second += (unsigned long) (stop - start + 1);
-                        }
-                        chr_it->second->addInterval(start, stop, this_label_id);
-                        if (this_label_id != label_id)
-                        {
-                            // also add to total for this bed file
-                            size_it = _impl->region_sizes.find(label_id);
+                            auto size_it = _impl->region_sizes.find(this_label_id);
                             if (size_it == _impl->region_sizes.end())
                             {
-                                _impl->region_sizes[label_id] = (unsigned long) (stop - start + 1);
+                                _impl->region_sizes[this_label_id] = (unsigned long) (stop - start + 1);
                             }
                             else
                             {
                                 size_it->second += (unsigned long) (stop - start + 1);
                             }
-                            chr_it->second->addInterval(start, stop, label_id);
+                            chr_it->second->addInterval(start, stop, this_label_id);
+
                         }
+
                         ++icount;
                     }
                     catch (std::invalid_argument const &)
@@ -395,6 +417,10 @@ namespace variant
      */
     size_t QuantifyRegions::getRegionSize(std::string const &region_name) const
     {
+        if(region_name == "*")
+        {
+            return _impl->ref.contigNonNSize();
+        }
         auto label_it = _impl->label_map.find(region_name);
         if (label_it == _impl->label_map.cend())
         {
@@ -406,6 +432,23 @@ namespace variant
             return 0;
         }
         return size_it->second;
+    }
+
+    /**
+     * Get level for a region (0 for top-level, 1 for regions specified in a bed file)
+     * @param region_name
+     * @return level for the given region
+     */
+    size_t QuantifyRegions::getRegionLevel(std::string const & region_name) const
+    {
+        auto label = _impl->label_map.find(region_name);
+
+        if(label == _impl->label_map.end())
+        {
+            return 0;
+        }
+
+        return _impl->levels[label->second];
     }
 
     /**
@@ -445,6 +488,8 @@ namespace variant
                 result.emplace_back(ec.first, val->second);
             }
         }
+
+        result.emplace_back("Subset.Level", getRegionLevel(r));
 
         return result;
     }

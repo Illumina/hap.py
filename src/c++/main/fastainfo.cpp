@@ -25,9 +25,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /**
- * \brief use HTSLib to turn a VCF header into JSON
+ * \brief Retrieve contig lengths for a FASTA file
  *
- * \file vcfhdr2json.cpp
+ * \file fastainfo.cpp
  * \author Peter Krusche
  * \email pkrusche@illumina.com
  *
@@ -39,8 +39,7 @@
 
 #include "json/json.h"
 
-#include "htslib/tbx.h"
-#include "htslib/vcf.h"
+#include "Fasta.hh"
 
 #include "Version.hh"
 #include "Error.hh"
@@ -57,10 +56,10 @@ int main(int argc, char* argv[]) {
         po::options_description desc("Allowed options");
         desc.add_options()
             ("help,h", "produce help message")
-            ("version", "Show version")            
+            ("version", "Show version")
             ("input-file", po::value< std::string >(), "The input files")
             ("output-file", po::value<std::string>(), "The output file name.")
-        ;
+            ;
 
         po::positional_options_description popts;
         popts.add("input-file", 1);
@@ -69,21 +68,21 @@ int main(int argc, char* argv[]) {
         po::options_description cmdline_options;
         cmdline_options
             .add(desc)
-        ;
+            ;
 
         po::variables_map vm;
-        
-        po::store(po::command_line_parser(argc, argv).
-                  options(cmdline_options).positional(popts).run(), vm);
-        po::notify(vm); 
 
-        if (vm.count("version")) 
+        po::store(po::command_line_parser(argc, argv).
+            options(cmdline_options).positional(popts).run(), vm);
+        po::notify(vm);
+
+        if (vm.count("version"))
         {
-            std::cout << "vcfhdr2json version " << HAPLOTYPES_VERSION << "\n";
+            std::cout << "fastainfo version " << HAPLOTYPES_VERSION << "\n";
             return 0;
         }
 
-        if (vm.count("help")) 
+        if (vm.count("help"))
         {
             std::cout << desc << "\n";
             return 1;
@@ -108,9 +107,9 @@ int main(int argc, char* argv[]) {
         if (output == "")
         {
             std::cerr << "Please specify an output file.\n";
-            return 1; 
+            return 1;
         }
-    } 
+    }
     catch (po::error & e)
     {
         std::cerr << e.what() << "\n";
@@ -120,88 +119,25 @@ int main(int argc, char* argv[]) {
     try
     {
         Json::StyledWriter writer;
-        htsFile * fp = bcf_open(file.c_str(), "r");
-        bcf_hdr_t * hdr = bcf_hdr_read(fp);
+
+        FastaFile f(file.c_str());
 
         Json::Value root;
-        Json::Value a;
-        for (int i = 0; i < bcf_hdr_nsamples(hdr); ++i)
-        {
-            a.append(hdr->samples[i]);
-        }
-        root["samples"] = a;
-
-        Json::Value fields;
-        for (int i = 0; i < hdr->nhrec; i++)
+        for (auto const & contig : f.getContigNames())
         {
             Json::Value field;
-            field["key"] = hdr->hrec[i]->key;
-            if (!hdr->hrec[i]->value)
-            {
-                Json::Value values;
-
-                for (int j = 0; j < hdr->hrec[i]->nkeys; j++)
-                {
-                    values[hdr->hrec[i]->keys[j]] = hdr->hrec[i]->vals[j];
-                }
-                field["values"] = values;
-            }
-            else
-            {
-                field["value"] = hdr->hrec[i]->value;
-            }
-            fields.append(field);
-        }
-        root["fields"] = fields;
-
-        tbx_t * tbx_idx = tbx_index_load(file.c_str());
-        if ( !tbx_idx )
-        {
-            hts_idx_t * csi_idx = bcf_index_load(file.c_str());
-            if(!csi_idx)
-            {
-                root["tabix"] = Json::Value::null;
-            }
-            else
-            {
-                root["tabix"] = Json::Value();
-                root["tabix"]["chromosomes"] = Json::Value();
-
-                int count = 0;
-                const char ** tbx_names = bcf_index_seqnames(csi_idx, hdr, &count);
-
-                for (int i = 0; i < count; ++i)
-                {
-                    root["tabix"]["chromosomes"].append(tbx_names[i]);
-                }
-                free(tbx_names);
-                hts_idx_destroy(csi_idx);
-            }
-        }
-        else
-        {
-            root["tabix"] = Json::Value();
-            root["tabix"]["chromosomes"] = Json::Value();
-
-            int count = 0;
-            const char ** tbx_names = tbx_seqnames(tbx_idx, &count);
-
-            for (int i = 0; i < count; ++i)
-            {
-                root["tabix"]["chromosomes"].append(tbx_names[i]);
-            }
-
-            free(tbx_names);
-            tbx_destroy(tbx_idx);
+            field["length"] = (Json::UInt64 )f.contigSize(contig);
+            field["n_trimmed_length"] = (Json::UInt64 )f.contigNonNSize(contig);
+            root[contig] = field;
         }
 
+        root["*"] = Json::Value();
+        root["*"]["length"] = (Json::UInt64 )f.contigSize();
+        root["*"]["n_trimmed_length"] = (Json::UInt64 )f.contigNonNSize();
 
         std::ofstream out(output.c_str());
         out << writer.write(root);
-
-        bcf_close(fp);
-        bcf_hdr_destroy(hdr);
-    } 
+    }
     catch(std::runtime_error & e)
     {
         std::cerr << e.what() << std::endl;
