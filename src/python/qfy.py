@@ -42,6 +42,7 @@ import Tools.vcfextract
 from Tools.metric import makeMetricsObject, dataframeToMetricsTable
 import Haplo.quantify
 import Haplo.happyroc
+import Haplo.gvcf2bed
 from Tools import fastasize
 
 
@@ -289,7 +290,12 @@ def main():
     parser.add_argument("-v", "--version", dest="version", action="store_true",
                         help="Show version number and exit.")
 
-    parser.add_argument("in_vcf", help="VCF file to quantify", nargs=1)
+    parser.add_argument("in_vcf", help="Comparison intermediate VCF file to quantify (two column TRUTH/QUERY format)", nargs=1)
+
+    parser.add_argument("--adjust-conf-regions", dest="preprocessing_truth_confregions", default=None,
+                        help="When hap.py was run with --adjust-conf-regions, on the original VCF, "
+                             "then quantify needs the truthset VCF in order to correctly reproduce "
+                             " the results. This switch allows us to pass the truth VCF into quantify.")
 
     updateArgs(parser)
 
@@ -355,6 +361,13 @@ def main():
     if args.version:
         print "qfy.py %s" % Tools.version
         exit(0)
+
+    if args.fp_bedfile and args.preprocessing_truth_confregions:
+        conf_temp = Haplo.gvcf2bed.gvcf2bed(args.preprocessing_truth_confregions,
+                                            args.ref,
+                                            args.fp_bedfile, args.scratch_prefix)
+        args.strat_regions.append("CONF_VARS:" + conf_temp)
+        args.preprocessing_truth_confregions = None
 
     quantify(args)
 

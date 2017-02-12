@@ -93,10 +93,6 @@ def main():
     parser.add_argument("--no-adjust-conf-regions", dest="preprocessing_truth_confregions", action="store_false",
                         help="Adjust confident regions to include variant locations.")
 
-    parser.add_argument("--quantify-homref-calls", dest="quantify_homref_calls", action="store_true", default=False,
-                        help="When a confident region file is given we can also quantify the homref calls "
-                             "(i.e. \"true negatives\") on a gVCF query file.")
-
     # detailed control of comparison
     parser.add_argument("--unhappy", "--no-haplotype-comparison", dest="no_hc", action="store_true", default=False,
                         help="Disable haplotype comparison (only count direct GT matches as TP).")
@@ -348,11 +344,6 @@ def main():
 
         args.vcf2 = qtf.name
         h2 = vcfextract.extractHeadersJSON(args.vcf2)
-
-        if args.quantify_homref_calls:
-            conf_temp = Haplo.gvcf2bed.gvcf2bed(args.vcf2, args.ref, None, args.scratch_prefix)
-            tempfiles.append(conf_temp)
-            args.strat_regions.append("QUERY_HOMREF:" + conf_temp)
 
         elapsed = time.time() - starttime
         logging.info("preprocess for %s -- time taken %.2f" % (args.vcf2, elapsed))
