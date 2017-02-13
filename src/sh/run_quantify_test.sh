@@ -33,9 +33,9 @@ if [[ $? != 0 ]]; then
 fi
 
 # This script checks if the summary precision / recall figures have changed significantly
-${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.summary.csv ${DIR}/../../example/happy/expected.summary.csv
+${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.summary.csv ${DIR}/../../example/happy/expected-qfy.summary.csv
 if [[ $? != 0 ]]; then
-	echo "All summary differs! -- diff ${TMP_OUT}.summary.csv ${DIR}/../../example/happy/expected.summary.csv"
+	echo "All summary differs! -- diff ${TMP_OUT}.summary.csv ${DIR}/../../example/happy/expected-qfy.summary.csv"
 	exit 1
 fi
 
@@ -68,9 +68,9 @@ if [[ $? != 0 ]] || [[ ! -s ${TMP_OUT}.qfy.m.json ]]; then
 fi
 
 # This script checks if the summary precision / recall figures have changed significantly
-${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.qfy.summary.csv ${DIR}/../../example/happy/expected.summary.csv
+${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.qfy.summary.csv ${DIR}/../../example/happy/expected-qfy.summary.csv
 if [[ $? != 0 ]]; then
-	echo "All summary differs! -- diff ${TMP_OUT}.qfy.summary.csv ${DIR}/../../example/happy/expected.summary.csv"
+	echo "All summary differs! -- diff ${TMP_OUT}.qfy.summary.csv ${DIR}/../../example/happy/expected-qfy.summary.csv"
 	exit 1
 fi
 
