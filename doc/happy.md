@@ -67,12 +67,12 @@ where the truth dataset does not expect variant calls, or selects a subset
 of truth variants that are high-confidence.
 Hap.py uses these regions to count truth or query variant calls outside these
 regions as unknown (UNK), query variant calls inside these regions either as
-TP or FP. 
+TP or FP.
 
-Note that some special rules for variant capture by confident regions apply. 
+Note that some special rules for variant capture by confident regions apply.
 In particular, we trim variant alleles to determine their exact reference locations,
 and we use these for computing confident region overlap. For more information,
-see [Stratification via Bed Regions](#stratification-via-bed-regions). 
+see [Stratification via Bed Regions](#stratification-via-bed-regions).
 
 Counts and statistics will be calculated for the following subsets of
 variants:
@@ -313,8 +313,8 @@ INDEL,*,exons,ALL,*,QUAL,*,0.96729,0.962791,0.12601600000000002,0.48251700000000
 ...
 ```
 
-By default, only aggregate results will be returned for stratification regions. 
-We can also obtain full ROC data for selected regions using the `--roc-regions` 
+By default, only aggregate results will be returned for stratification regions.
+We can also obtain full ROC data for selected regions using the `--roc-regions`
 command line option.
 
 ```
@@ -324,9 +324,9 @@ command line option.
                         (aggregate variant counts).
 ```
 
-Note that variant calls are captured by their effective reference position, which is 
+Note that variant calls are captured by their effective reference position, which is
 determined by trimming all alleles to their shortest representation. When running
-hap.py with the `--preserve-info` command line option will add an INFO field to each 
+hap.py with the `--preserve-info` command line option will add an INFO field to each
 record detailing these locations. The insertion below is captured by its
 padding base, as indicated by the `RegionsExtent=110-110` INFO field.
 
@@ -335,22 +335,15 @@ chrQ    110     .       A       ATT     0       .       BS=100;HapMatch;IQQ=0;ct
 ```
 
 Note that matching insertions to confident or other regions requires special treatment.
-Insertions normally include a reference padding base. 
+Insertions normally include a reference padding base.
 
 ```
 chrQ	110	tp	A	ATT	.	PASS	.	GT	0/1
 ```
 
-By default, hap.py will capture an insertion in a region if its reference padding base is 
-contained. The following bed record would capture the insertion above.
-
-```
-chrQ	109	110	ins-ref-base-only
-```
-
-However, we might argue that in order to capture the insertion, both surrounding 
-bases should be included in the bed file (i.e. capture insertions only if the two 
-surrounding bases are in the bed file). This behavior can be enabled using the 
+In order to fully capture the insertion, both surrounding bases should be included in
+the bed file (i.e. capture insertions only if the two
+surrounding bases are in the bed file). This behavior can be enabled using the
 following command line option:
 
 ```
@@ -358,15 +351,15 @@ following command line option:
                         only if both surrounding bases are matched.
 ```
 
-When run with `--ins-surround-match`, hap.py will only capture the insertion above
-in a region if it at least contains the following positions:
+Hap.py will capture the insertion above in a region if the region at least contains one
+of the two following positions:
 
 ```
 chrQ	109	111	ins-ref-base-and-following-base
 ```
 
 This behavior will apply to all stratification regions, and to confident regions (supplied by the
-`-f` command line option). Note that it will not apply to region the subsetting operations 
+`-f` command line option). Note that it will not apply to region the subsetting operations
 implemented in `-T` and `-R`, which use the default behavior of bcftools (REF position
 match).
 

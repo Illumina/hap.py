@@ -345,7 +345,7 @@ namespace variant {
             /** compute the median over all variants */
             int fsize = bcf_hdr_nsamples(_impl->hdr);
             float * fmt = (float*)calloc((size_t) fsize, sizeof(float));
-           for(auto cur = current_bs_start; cur != to; ++cur)
+            for(auto cur = current_bs_start; cur != to; ++cur)
             {
                 const std::string bd = bcfhelpers::getFormatString(_impl->hdr, *cur, "BD", 0);
                 bcf_get_format_float(_impl->hdr, *cur, "QQ", &fmt, &fsize);
@@ -382,6 +382,58 @@ namespace variant {
 #endif
         };
 
+        const auto update_bs_conf_boundary_flag = [this, &current_bs_start](BlockQuantifyImpl::variantlist_t::iterator to)
+        {
+            static const int has_conf = 1;
+            static const int has_non_conf = 2;
+            int conf_non_conf = 0;
+            for(auto cur = current_bs_start; cur != to; ++cur)
+            {
+                const std::string regions = bcfhelpers::getInfoString(_impl->hdr, *cur, "Regions", "");
+
+                if(regions.find("CONF") == std::string::npos)
+                {
+                    conf_non_conf |= has_non_conf;
+                }
+                else
+                {
+                    conf_non_conf |= has_conf;
+                }
+                if(regions.find("TS_boundary") != std::string::npos)
+                {
+                    conf_non_conf |= has_non_conf | has_conf;
+                }
+            }
+
+            for(auto cur = current_bs_start; cur != to; ++cur)
+            {
+                const std::string regions = bcfhelpers::getInfoString(_impl->hdr, *cur, "Regions", "");
+
+                if(conf_non_conf == (has_conf | has_non_conf))
+                {
+                    if(regions.find("TS_boundary") == std::string::npos)
+                    {
+                        bcf_update_info_string(_impl->hdr,
+                                               *cur, "Regions",
+                                               (regions.empty() ? "TS_boundary" :
+                                                regions + ",TS_boundary").c_str());
+                    }
+                }
+                else if(conf_non_conf == has_conf)
+                {
+                    if(regions.find("TS_contained") == std::string::npos)
+                    {
+                        // also flag fully confident superloci
+                        bcf_update_info_string(_impl->hdr,
+                                               *cur, "Regions",
+                                               (regions.empty() ? "TS_contained" :
+                                                regions + ",TS_contained").c_str());
+                    }
+                }
+            }
+        };
+
+
         for(auto v_it = _impl->variants.begin(); v_it != _impl->variants.end(); ++v_it)
         {
             // update fields, must output GA4GH-compliant fields
@@ -404,8 +456,12 @@ namespace variant {
             if(   current_bs_start != v_it
                && (vbs != current_bs || vbs < 0 || vchr != current_chr))
             {
+#ifdef DEBUG_BLOCKQUANTIFY
+                std::cerr << "finishing BS = " << current_bs << " vbs = " << vbs << "\n";
+#endif
                 update_bs_qq(v_it);
                 update_bs_filters(v_it);
+                update_bs_conf_boundary_flag(v_it);
                 current_bs = vbs;
                 current_chr = vchr;
                 current_bs_start = v_it;
@@ -415,6 +471,7 @@ namespace variant {
         // do final superlocus (if any)
         update_bs_qq(_impl->variants.end());
         update_bs_filters(_impl->variants.end());
+        update_bs_conf_boundary_flag(_impl->variants.end());
 
         for(auto & v : _impl->variants)
         {

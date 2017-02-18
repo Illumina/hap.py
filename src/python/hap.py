@@ -49,6 +49,7 @@ import Haplo.vcfeval
 import Haplo.scmp
 import Haplo.quantify
 import Haplo.partialcredit
+import Haplo.gvcf2bed
 
 import qfy
 import pre
@@ -87,6 +88,10 @@ def main():
     parser.add_argument("--preprocessing-window-size", dest="preprocess_window",
                         default=10000, type=int,
                         help="Preprocessing window size (variants further apart than that size are not expected to interfere).")
+    parser.add_argument("--adjust-conf-regions", dest="preprocessing_truth_confregions", action="store_true", default=True,
+                        help="Adjust confident regions to include variant locations.")
+    parser.add_argument("--no-adjust-conf-regions", dest="preprocessing_truth_confregions", action="store_false",
+                        help="Adjust confident regions to include variant locations.")
 
     # detailed control of comparison
     parser.add_argument("--unhappy", "--no-haplotype-comparison", dest="no_hc", action="store_true", default=False,
@@ -272,6 +277,12 @@ def main():
                                      args.somatic_allele_conversion)
 
         args.vcf1 = ttf.name
+
+        if args.fp_bedfile and args.preprocessing_truth_confregions:
+            conf_temp = Haplo.gvcf2bed.gvcf2bed(args.vcf1, args.ref, args.fp_bedfile, args.scratch_prefix)
+            tempfiles.append(conf_temp)
+            args.strat_regions.append("CONF_VARS:" + conf_temp)
+
         h1 = vcfextract.extractHeadersJSON(args.vcf1)
 
         elapsed = time.time() - starttime

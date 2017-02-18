@@ -43,39 +43,3 @@ else
     rm -rf ${TMP_OUT}.*
 fi
 
-echo "Testing FP region matching with updated insertion behavior: ${HCVERSION} from ${HCDIR}"
-
-TMP_OUT=`mktemp -t happy.XXXXXXXXXX`
-
-# run hap.py
-${PYTHON} ${HCDIR}/hap.py \
-			 	${DIR}/../data/fp_region_accuracy/truth.vcf \
-			 	${DIR}/../data/fp_region_accuracy/query.vcf \
-                -f ${DIR}/../data/fp_region_accuracy/fp.bed \
-			 	-o ${TMP_OUT} \
-			 	-X --reference ${DIR}/../data/fp_region_accuracy/test.fa -l chrQ \
-                -V \
-                --ins-surround-match \
-			 	--force-interactive
-
-if [[ $? != 0 ]]; then
-	echo "hap.py failed!"
-	exit 1
-fi
-
-${PYTHON} ${DIR}/compare_summaries.py ${TMP_OUT}.summary.csv  ${DIR}/../data/fp_region_accuracy/expected.summary_ins_surround.csv
-if [[ $? != 0 ]]; then
-	echo "Summary differs! ${TMP_OUT}.summary.csv ${DIR}/../data/fp_region_accuracy/expected.summary_ins_surround.csv"
-	exit 1
-fi
-
-gunzip -c ${TMP_OUT}.vcf.gz | grep -v ^# > ${TMP_OUT}.vcf
-diff ${TMP_OUT}.vcf ${DIR}/../data/fp_region_accuracy/expected_ins_surround.vcf
-if [[ $? != 0 ]]; then
-	echo "Variants differ! diff ${TMP_OUT}.vcf ${DIR}/../data/fp_region_accuracy/expected_ins_surround.vcf"
-	exit 1
-else
-    echo "FP region test successful"
-    rm -rf ${TMP_OUT}.*
-fi
-

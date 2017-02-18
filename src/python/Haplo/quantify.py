@@ -75,8 +75,7 @@ def run_quantify(filename,
                  roc_delta=None,
                  roc_regions=None,
                  clean_info=True,
-                 strat_fixchr=False,
-                 ins_surround_match=False):
+                 strat_fixchr=False):
     """Run quantify and return parsed JSON
 
     :param filename: the VCF file name
@@ -96,7 +95,6 @@ def run_quantify(filename,
     :param roc_regions: List of regions to output full ROCs for
     :param clean_info: remove unused INFO fields
     :param strat_fixchr: fix chr naming in stratification regions
-    :param ins_surround_match: match insertions to regions only when both surrounding bases are covered
     :returns: parsed counts JSON
     """
 
@@ -165,11 +163,6 @@ def run_quantify(filename,
     if locations:
         location_file = _locations_tmp_bed_file(locations)
         run_str += " --only '%s'" % location_file
-
-    if ins_surround_match:
-        run_str += " --ins-surround-match 1"
-    else:
-        run_str += " --ins-surround-match 0"
 
     tfe = tempfile.NamedTemporaryFile(delete=False,
                                       prefix="stderr",

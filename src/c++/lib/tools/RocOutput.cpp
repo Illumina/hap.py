@@ -302,6 +302,11 @@ namespace roc
                 filter = subs[2];
                 for(auto const & region : region_names)
                 {
+                    // don't include CONF regions
+                    if(region.find("CONF") == 0)
+                    {
+                        continue;
+                    }
                     const std::string rname = std::string("s|") + region + ":" + type + ":" + filter;
                     auto it = rocs.find(rname);
                     if(it == rocs.end())
