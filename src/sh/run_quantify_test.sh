@@ -39,6 +39,14 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
+# This script checks if the extended precision / recall figures have changed significantly
+${PYTHON} ${DIR}/compare_extended.py ${TMP_OUT}.extended.csv ${DIR}/../../example/happy/expected-qfy.extended.csv
+if [[ $? != 0 ]]; then
+	echo "All extended differs! -- diff ${TMP_OUT}.extended.csv ${DIR}/../../example/happy/expected-qfy.extended.csv"
+	exit 1
+fi
+
+
 # hap.py writes GA4GH-compliant output VCFs
 # we should be able to re-quantify using the GA4GH
 # spec and get the same result

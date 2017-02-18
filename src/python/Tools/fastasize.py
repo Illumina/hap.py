@@ -28,6 +28,7 @@ import tempfile
 import subprocess
 import pipes
 import json
+import re
 
 
 def fastaContigLengths(fastafile):
@@ -77,7 +78,7 @@ def calculateLength(fastacontiglengths, locations):
         return sum([fastacontiglengths[x] for x in fastacontiglengths.keys()])
 
     total_length = 0
-    for l in locations.split(" "):
+    for l in re.split("[ ,]", locations):
         contig, _, pos = l.partition(":")
         if contig not in fastacontiglengths:
             logging.warn("Contig %s is not present in input set %s; setting length to 0" %

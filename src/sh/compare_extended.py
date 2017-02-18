@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Compare two summary csv files
+# Compare two extended csv files
 
 import sys
 
