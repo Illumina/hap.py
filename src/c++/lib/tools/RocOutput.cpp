@@ -34,6 +34,7 @@
  */
 
 #include <list>
+#include <array>
 #include <cmath>
 #include <set>
 #include <map>
