@@ -171,6 +171,7 @@ def quantify(args):
                               "METRIC.Recall",
                               "METRIC.Precision",
                               "METRIC.Frac_NA",
+                              "METRIC.F1_Score",
                               "TRUTH.TOTAL.TiTv_ratio",
                               "QUERY.TOTAL.TiTv_ratio",
                               "TRUTH.TOTAL.het_hom_ratio",

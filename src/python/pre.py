@@ -43,6 +43,7 @@ from Tools import vcfextract
 from Tools.bcftools import preprocessVCF, bedOverlapCheck
 from Tools.parallel import runParallel, getPool
 from Tools.fastasize import fastaContigLengths
+from Tools.bcftools import runBcftools
 
 import Haplo.partialcredit
 
