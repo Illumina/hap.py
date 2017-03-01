@@ -68,12 +68,12 @@ def main():
         print >> sys.stderr, "-------------------------"
         sys.exit(1)
 
+    print "Comparing %i labels and %i metrics..." % (len(all_labels_1), len(all_keys_1))
+
     different_metrics = []
 
     for label in all_labels_1:
         for metric in all_keys_1:
-            print label + "/" + metric
-
             v1 = data1[label][metric]
             v2 = data2[label][metric]
 

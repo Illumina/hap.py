@@ -8,8 +8,8 @@
 ##contig=<ID=21,length=48129895>
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA12877	NA12878	NA12882
 chr21	20000000	.	N	.	.	PASS	END=20000100	GT:DP:GQ	./.:.:.	./.:.:.	0/0:20:10
-chr21	20000020	.	N	.	.	PASS	END=20000050	GT:DP:GQ	./.:.:.	0/0:30:20	./.:.:.
 chr21	20000020	.	A	T	.	PASS	.	GT:DP:GQ:AD	0/1:10:15:4,6	./.:.:.:.	./.:.:.:.
+chr21	20000021	.	N	.	.	PASS	END=20000050	GT:DP:GQ	./.:.:.	0/0:30:20	./.:.:.
 chr21	20000048	.	ATGG	A	.	PASS	.	GT:DP:GQ:AD	0/1:10:15:4,6	./.:.:.:.	./.:.:.:.
 chr21	20000051	.	N	.	.	PASS	END=20000060	GT:DP:GQ	./.:.:.	0/0:40:20	./.:.:.
 chr21	20000098	.	N	.	.	PASS	END=20000110	GT:DP:GQ	./.:.:.	0/0:70:21	./.:.:.
