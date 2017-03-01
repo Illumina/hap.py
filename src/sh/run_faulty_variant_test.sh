@@ -55,3 +55,20 @@ else
 	exit 1
 fi
 
+# this trips up pre.py (variant beyond the end of chrQ)
+${PYTHON} ${HCDIR}/pre.py \
+			 	${DIR}/../data/faulty.vcf \
+			 	${TMP_OUT} \
+			 	--reference ${DIR}/../data/chrQ.fa -l chrQ \
+                --decompose \
+			 	--force-interactive
+                # --verbose \
+
+if [[ $? != 0 ]]; then
+	echo "SUCCESS: faulty variants made pre.py fail."
+    rm -rf ${TMP_OUT}.*
+else
+    echo "FAILURE: pre.py didn't detect faulty variants."
+	exit 1
+fi
+
