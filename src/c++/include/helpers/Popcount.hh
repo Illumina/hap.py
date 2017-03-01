@@ -25,7 +25,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /**
- * Store and process observations for ROCs
+ * Some bit helpers
  *
  * \file Popcount.hh
  * \author Peter Krusche

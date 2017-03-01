@@ -28,10 +28,6 @@ if [[ ! -f "${HCDIR}/hap.py" ]]; then
 fi
 
 if [[ ! -f "${HCDIR}/hap.py" ]]; then
-	export HCDIR="/illumina/development/haplocompare/haplocompare-devel/bin"
-fi
-
-if [[ ! -f "${HCDIR}/hap.py" ]]; then
 	echo "Cannot find HC binaries. Set HCDIR to the bin directory."
 	exit 1
 fi
@@ -43,11 +39,26 @@ export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:${HCDIR}/lib
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${HCDIR}/lib
 
 # detect or use python
-export PYTHON=${PYTHON:-python}
 if [[ -z ${PYTHON} ]]; then
+	DEFAULT_PYTHON=1
 	if [ -f "/illumina/sync/software/groups/hap.py/latest/python-ve/bin/python-wrapper.sh" ]; then
 	    export PYTHON=/illumina/sync/software/groups/hap.py/latest/python-ve/bin/python-wrapper.sh
 	fi
+else
+	DEFAULT_PYTHON=0
+fi
+
+export PYTHON=${PYTHON:-python}
+
+PYVERSION=$(${PYTHON} --version 2>&1)
+if [[ "$PYVERSION" != "Python 2.7."* ]] && [[ $DEFAULT_PYTHON == 1 ]]; then
+	PYTHON=python2.7
+fi
+
+PYVERSION=$(${PYTHON} --version 2>&1)
+if [[ "$PYVERSION" != "Python 2.7."* ]]; then
+    echo "Hap.py requires Python 2.7.x. $PYTHON is $PYVERSION"
+    exit 1
 fi
 
 export HCVERSION=`${PYTHON} ${HCDIR}/hap.py --version`

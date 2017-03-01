@@ -434,11 +434,16 @@ namespace variant
      */
     size_t QuantifyRegions::getRegionSize(std::string const &region_name) const
     {
-        if(region_name == "*")
+        if(region_name == "*" || region_name == "TS_boundary")
         {
             return _impl->ref.contigNonNSize();
         }
         auto label_it = _impl->label_map.find(region_name);
+        if(region_name == "TS_contained")
+        {
+            label_it = _impl->label_map.find("CONF");
+        }
+
         if (label_it == _impl->label_map.cend())
         {
             return 0;
@@ -543,6 +548,9 @@ namespace variant
                 result[l.first] = total;
             }
         }
+
+        result["TS_boundary"] = result["CONF"];
+        result["TS_contained"] = result["CONF"];
 
         return result;
     }
