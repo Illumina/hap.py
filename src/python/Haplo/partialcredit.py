@@ -60,20 +60,31 @@ def preprocessWrapper(file_and_location, args):
     tfo = tempfile.NamedTemporaryFile(delete=False,
                                       prefix="stdout",
                                       suffix=".log")
+    finished = False
     try:
         logging.info("Running '%s'" % to_run)
         subprocess.check_call(to_run, shell=True, stdout=tfo, stderr=tfe)
+        finished = True
     finally:
-        tfo.close()
-        tfe.close()
-        with open(tfo.name) as f:
-            for l in f:
-                logging.info(l.replace("\n", ""))
-        os.unlink(tfo.name)
-        with open(tfe.name) as f:
-            for l in f:
-                logging.warn(l.replace("\n", ""))
-        os.unlink(tfe.name)
+        if finished:
+            tfo.close()
+            tfe.close()
+            with open(tfo.name) as f:
+                for l in f:
+                    logging.info(l.replace("\n", ""))
+            os.unlink(tfo.name)
+            with open(tfe.name) as f:
+                for l in f:
+                    logging.warn(l.replace("\n", ""))
+            os.unlink(tfe.name)
+        else:
+            logging.error("Preprocess command %s failed. Outputs are here %s / %s" % (to_run, tfo.name, tfe.name))
+            with open(tfo.name) as f:
+                for l in f:
+                    logging.error(l.replace("\n", ""))
+            with open(tfe.name) as f:
+                for l in f:
+                    logging.error(l.replace("\n", ""))
 
     elapsed = time.time() - starttime
     logging.info("preprocess for %s -- time taken %.2f" % (location_str, elapsed))

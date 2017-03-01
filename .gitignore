@@ -36,3 +36,5 @@ Thumbs.db
 /include
 /nbproject
 /cmake-build-debug
+/build
+/.vscode
