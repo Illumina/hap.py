@@ -47,6 +47,7 @@ if [[ -z ${PYTHON} ]]; then
 else
 	DEFAULT_PYTHON=0
 fi
+
 export PYTHON=${PYTHON:-python}
 
 PYVERSION=$(${PYTHON} --version 2>&1)
@@ -56,7 +57,7 @@ fi
 
 PYVERSION=$(${PYTHON} --version 2>&1)
 if [[ "$PYVERSION" != "Python 2.7."* ]]; then
-    echo "Hap.py requires Python 2.7.x."
+    echo "Hap.py requires Python 2.7.x. $PYTHON is $PYVERSION"
     exit 1
 fi
 
