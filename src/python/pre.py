@@ -27,10 +27,8 @@ import sys
 import os
 import argparse
 import logging
-import traceback
 import subprocess
 import multiprocessing
-import gzip
 import tempfile
 import time
 import pipes
@@ -40,11 +38,9 @@ sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'lib', 'python27')
 
 import Tools
 from Tools import vcfextract
-from Tools.bcftools import preprocessVCF, bedOverlapCheck
-from Tools.parallel import runParallel, getPool
+from Tools.bcftools import preprocessVCF
 from Tools.fastasize import fastaContigLengths
 from Tools.bcftools import runBcftools
-
 import Haplo.partialcredit
 
 
@@ -78,8 +74,7 @@ def preprocess(vcf_input,
                windowsize=10000,
                threads=1,
                gender=None,
-               somatic_allele_conversion=False
-               ):
+               somatic_allele_conversion=False):
     """ Preprocess a single VCF file
 
     :param vcf_input: input file name
@@ -164,7 +159,7 @@ def preprocess(vcf_input,
                     chrlist = h2["tabix"]["chromosomes"]
                 else:
                     chrlist = h["tabix"]["chromosomes"]
-                vcf_has_chr_prefix = hasChrPrefix(h["tabix"]["chromosomes"])
+                vcf_has_chr_prefix = hasChrPrefix(chrlist)
 
                 if reference_has_chr_prefix and not vcf_has_chr_prefix:
                     fixchr = True
@@ -272,7 +267,7 @@ def updateArgs(parser):
 
     # preprocessing steps
     parser.add_argument("-L", "--leftshift", dest="preprocessing_leftshift", action="store_true",
-                        default=False,
+                        default=True,
                         help="Left-shift variants safely.")
     parser.add_argument("--no-leftshift", dest="preprocessing_leftshift", action="store_false",
                         help="Do not left-shift variants safely.")
@@ -386,7 +381,7 @@ def main():
         exit(0)
 
     if args.version:
-        print "pre.py %s" % Tools.version
+        print "pre.py %s" % Tools.version  # noqa:E999
         exit(0)
 
     args.input = args.input[0]

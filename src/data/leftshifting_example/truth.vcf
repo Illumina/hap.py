@@ -1,0 +1,21 @@
+##fileformat=VCFv4.1
+##FILTER=<ID=PASS,Description="All filters passed">
+##contig=<ID=chrT,length=6651>
+##INFO=<ID=END,Number=1,Type=Integer,Description="Variant end">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##bcftools_viewVersion=1.3.1+htslib-1.3.1
+##bcftools_viewCommand=view -O z -o ../hap.py/src/data/leftshifting_example/truth.vcf.gz ../hap.py/src/data/leftshifting_example/truth.vcf
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	TRUTH
+chrT	3	.	CTC	C	100	.	.	GT	0/1
+chrT	5	.	CTC	C	100	.	.	GT	0/1
+chrT	69	.	ATTAAGAGAA	A	100	.	.	GT	0/1
+chrT	83	.	CATCTCCGAAAGCCAACAAGGAAAT	C	100	.	.	GT	0/1
+chrT	2223	.	ATA	A	100	.	.	GT	0/1
+chrT	2225	.	ATA	A	100	.	.	GT	0/1
+chrT	2240	.	AAT	A,AATAT	100	.	.	GT	2/1
+chrT	3677	.	T	TGT	100	.	.	GT	0/1
+chrT	3679	.	T	TGT	100	.	.	GT	0/1
+chrT	6593	.	T	TTCCAGGAAGCCT	100	.	.	GT	0/1
+chrT	6606	.	G	T	100	.	.	GT	0/1
+chrT	6610	.	G	GGCCAGCGTG	100	.	.	GT	0/1
+chrT	6614	.	A	AGCGTGGACA	100	.	.	GT	0/1
