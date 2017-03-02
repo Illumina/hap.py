@@ -4,6 +4,7 @@
 
 | Ticket  | Description                                                                        |
 |---------|------------------------------------------------------------------------------------|
+| HAP-195 | Safer left-shifting and test for leftshifting-related issues added                 |
 | HAP-259 | Som.py alternative GA4GH-based workflow: hap.py --engine scmp                      |
 | HAP-266 | Optional new insertion handling: both surrounding bases must be covered to capture |
 | HAP-267 | Add confident region overlap counts to stratification regions                      |
