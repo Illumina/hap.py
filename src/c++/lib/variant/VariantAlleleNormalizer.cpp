@@ -39,7 +39,7 @@
 #include <queue>
 #include <memory>
 
-/* #define DEBUG_VARIANTNORMALIZER */
+ // #define DEBUG_VARIANTNORMALIZER
 
 namespace variant
 {
@@ -223,7 +223,7 @@ void VariantAlleleNormalizer::add(Variants const & vs)
 #ifdef DEBUG_VARIANTNORMALIZER
             std::cerr << "leftshift limit for " << nv.variation[rvc] << " is " << this_leftshift_limit << "\n";
 #endif
-            leftShift(*(_impl->ref_fasta), nv.chr.c_str(), nv.variation[rvc], this_leftshift_limit);
+            leftShift(*(_impl->ref_fasta), nv.chr.c_str(), nv.variation[rvc], this_leftshift_limit, true);
 
             trimLeft(*(_impl->ref_fasta), nv.chr.c_str(), nv.variation[rvc], _impl->refpadding);
             trimRight(*(_impl->ref_fasta), nv.chr.c_str(), nv.variation[rvc], _impl->refpadding);
@@ -237,14 +237,17 @@ void VariantAlleleNormalizer::add(Variants const & vs)
             }
         }
 
-        if (new_start > 0 && new_end > 0)
+        if (new_start >= 0 && new_end >= 0)
         {
             nv.pos = new_start;
             nv.len = new_end - new_start + 1;
-            // handle insertions
+            // handle insertions + corner case at start of chr
             if (nv.len == 0)
             {
-                --nv.pos;
+                if(nv.pos > 0)
+                {
+                    --nv.pos;
+                }
                 nv.len = 1;
             }
         }

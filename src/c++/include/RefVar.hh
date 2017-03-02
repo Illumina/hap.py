@@ -140,7 +140,7 @@ void trimRight(FastaFile const & f, const char * chr, RefVar & rv, bool refpaddi
  * Left/right boundary position can be given to prevent overlap with other variation
  *
  */
-extern void leftShift(FastaFile const & f, const char * chr, RefVar & rv, int64_t pos_min=-1);
+extern void leftShift(FastaFile const & f, const char * chr, RefVar & rv, int64_t pos_min=-1, bool refpadding = false);
 extern void rightShift(FastaFile const & f, const char * chr, RefVar & rv, int64_t pos_max=std::numeric_limits<int64_t>::max());
 
 /**

@@ -100,6 +100,19 @@ else
 fi
 
 ##############################################################
+# Test Hap.py safe leftshifting
+##############################################################
+
+/bin/bash ${DIR}/run_leftshift_test.sh
+
+if [[ $? -ne 0 ]]; then
+	echo "Leftshift test FAILED!"
+	exit 1
+else
+	echo "Leftshift test SUCCEEDED!"
+fi
+
+##############################################################
 # Test Hap.py + other VCF items
 ##############################################################
 

@@ -105,7 +105,7 @@ void trimRight(FastaFile const & f, const char * chr, RefVar & rv, bool refpaddi
     }
 }
 
-void leftShift(FastaFile const & f, const char * chr, RefVar & rv, int64_t pos_min)
+void leftShift(FastaFile const & f, const char * chr, RefVar & rv, int64_t pos_min, bool refpadding)
 {
     int64_t rstart = -1, rend = -1, reflen;
 
@@ -114,12 +114,28 @@ void leftShift(FastaFile const & f, const char * chr, RefVar & rv, int64_t pos_m
     bool done = false;
     std::string ref;
 
-    pos_min = std::max(pos_min, (int64_t)0);
+    pos_min = std::max(pos_min, (int64_t) 0);
 
     trimLeft(f, chr, rv);
     trimRight(f, chr, rv);
 
     reflen = rv.end - rv.start + 1;
+
+    // for insertions, leave space to the left
+    if(refpadding && reflen <= 1 && rv.alt.size() > (size_t)reflen)
+    {
+        bool pad_left = true;
+        if(reflen == 1l)
+        {
+            const std::string ref_fb = f.query(chr, rv.start, rv.start);
+            pad_left = rv.alt[0] == ref_fb[0];
+        }
+        if(pad_left)
+        {
+            pos_min++;
+        }
+    }
+
     // check for all ref match (HAP-64)
     if (reflen < 0 && rv.alt.size() == 0)
     {
@@ -129,8 +145,8 @@ void leftShift(FastaFile const & f, const char * chr, RefVar & rv, int64_t pos_m
 
     if (reflen >= 0 && reflen == (signed)rv.alt.size())
     {
-        std::string ref = f.query(chr, rv.start, rv.end);
-        if(ref == rv.alt)
+        const std::string ref_al = f.query(chr, rv.start, rv.end);
+        if(ref_al == rv.alt)
         {
             return;
         }
@@ -152,7 +168,6 @@ void leftShift(FastaFile const & f, const char * chr, RefVar & rv, int64_t pos_m
             {
                 rend = rv.end;
             }
-
             if(rstart < 0)
             {
                 rstart = 0;
@@ -188,7 +203,7 @@ void leftShift(FastaFile const & f, const char * chr, RefVar & rv, int64_t pos_m
         {
             reflen++;
             rv.start--;
-            rv.alt = ref.substr(rel_start-1, 1) + rv.alt;
+            rv.alt = ref.substr((unsigned long) (rel_start - 1), 1) + rv.alt;
             done = false;
         }
     }

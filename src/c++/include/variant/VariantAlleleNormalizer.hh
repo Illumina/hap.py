@@ -65,9 +65,7 @@ namespace variant {
         void setEnableRefPadding(bool padding=false);
 
         /**
-         * @brief Enable / disable returning of homref intervals
-         *
-         * TODO : output homref as intervals
+         * @brief Limit / left-most coordinate for shifting
          */
         int64_t getLeftshiftLimit() const;
         void setLeftshiftLimit(int64_t limit=-1);
