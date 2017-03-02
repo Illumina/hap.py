@@ -22,11 +22,9 @@ import subprocess
 import tempfile
 import time
 import shutil
-import logging
-import Tools.bcftools
 import pipes
 
-import Haplo.version
+import Haplo.version  # pylint: disable=E0611,E0401
 
 
 def findVCFEval():
@@ -71,6 +69,9 @@ def runVCFEval(vcf1, vcf2, target, args):
     del_sdf = False
 
     try:
+        if not args.engine_vcfeval_template and os.path.isdir(args.ref[:-3] + ".sdf"):
+            logging.info("Using vcfeval template from %s" % (args.ref[:-3] + ".sdf"))
+            args.engine_vcfeval_template = args.ref[:-3] + ".sdf"
         if not args.engine_vcfeval_template or not os.path.exists(args.engine_vcfeval_template):
             logging.warn("Creating template for vcfeval. " +
                          ("You can speed this up by supplying a SDF template that corresponds to %s" % args.ref))
