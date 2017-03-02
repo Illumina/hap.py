@@ -11,15 +11,12 @@
 
 import os
 import errno
-# noinspection PyUnresolvedReferences
-import sys
-# noinspection PyUnresolvedReferences
 import logging
 import subprocess
 from datetime import date
 
 # noinspection PyUnresolvedReferences
-import Haplo.version as vs
+import Haplo.version as vs  # pylint: disable=E0401,E0611
 version = vs.__version__
 has_sge = vs.has_sge
 
@@ -52,7 +49,7 @@ def which(program):
     def is_exe(xfpath):
         return os.path.isfile(xfpath) and os.access(xfpath, os.X_OK)
 
-    fpath, fname = os.path.split(program)
+    fpath, _ = os.path.split(program)
     if fpath:
         if is_exe(program):
             return program
@@ -94,13 +91,14 @@ def init():
     os.environ['DYLD_LIBRARY_PATH'] = os.path.join(base, "lib")
     os.environ['LD_LIBRARY_PATH'] = os.path.join(base, "lib")
 
+
 init()
 
 # safely import here
 # noinspection PyUnresolvedReferences
-import pysam
+import pysam  # noqa: F401
 # noinspection PyUnresolvedReferences
-import pandas
+import pandas  # noqa: F401
 
 
 class LoggingWriter(object):
@@ -139,7 +137,6 @@ def writeVCFHeader(filelike, extrainfo="", chrprefix="chr"):
         else:
             infos += extrainfo.split("\n")
 
-    # TODO we (sh/c)ould actually use the numbers from the database here
     contigs = [["1", "249250621"], ["2", "243199373"], ["3", "198022430"], ["4", "191154276"],
                ["5", "180915260"], ["6", "171115067"], ["7", "159138663"], ["8", "146364022"],
                ["9", "141213431"], ["10", "135534747"], ["11", "135006516"],
@@ -186,14 +183,12 @@ class BGZipFile(object):
         if os.path.exists(filename) and not force:
             raise Exception("File %s exists, use force=True to overwrite" % filename)
 
-        self.write_file = file(filename, "wb")
-        zip_pipe = subprocess.Popen([
-            "bgzip",
-            "-f"],
-            stdin=subprocess.PIPE,
-            stdout=self.write_file,
-            stderr=subprocess.PIPE,
-            shell=True)
+        self.write_file = open(filename, "wb")
+        zip_pipe = subprocess.Popen(["bgzip", "-f"],
+                                    stdin=subprocess.PIPE,
+                                    stdout=self.write_file,
+                                    stderr=subprocess.PIPE,
+                                    shell=True)
         self.zip_pipe = zip_pipe
         self.name = filename
 
