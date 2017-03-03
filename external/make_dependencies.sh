@@ -93,9 +93,9 @@ if [[ ! -z $BUILD_VCFEVAL ]]; then
         echo "Building rtg-tools"
         mkdir -p rtg-tools
         cd rtg-tools
-        wget http://github.com/RealTimeGenomics/rtg-tools/archive/296c61ed18e363574fdbc982bbe73c0b86c796ce.tar.gz -O rtg-tools.tar.gz
+        wget http://github.com/RealTimeGenomics/rtg-tools/archive/3.7.1.tar.gz -O rtg-tools.tar.gz
         tar xvf rtg-tools.tar.gz
-        cd rtg-tools-296c61ed18e363574fdbc982bbe73c0b86c796ce
+        cd rtg-tools-3.7.1
 
         if [[ ! -z ${ANT_HOME} ]]; then
             $ANT_HOME/bin/ant zip-nojre
@@ -104,7 +104,7 @@ if [[ ! -z $BUILD_VCFEVAL ]]; then
         fi
         cd ..
 
-        RTG_ZIPFILE=$(ls rtg-tools-296c61ed18e363574fdbc982bbe73c0b86c796ce/dist/*-nojre.zip | head -1)
+        RTG_ZIPFILE=$(ls rtg-tools-3.7.1/dist/*-nojre.zip | head -1)
         RTG_BASE=$(basename $RTG_ZIPFILE -nojre.zip)
         jar xvf $RTG_ZIPFILE
         mv $RTG_BASE rtg-tools-install
