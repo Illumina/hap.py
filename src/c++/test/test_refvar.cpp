@@ -798,3 +798,35 @@ BOOST_AUTO_TEST_CASE(testRefVarPrimitiveAlign2)
     delete aln;
 }
 
+BOOST_AUTO_TEST_CASE(testRefVarLeftShiftStartOfChr)
+{
+    boost::filesystem::path p(__FILE__);
+    boost::filesystem::path tp = p.parent_path()
+                                         .parent_path()   // test
+                                         .parent_path()   // c++
+                                 / boost::filesystem::path("data")
+                                 / boost::filesystem::path("leftshifting_example")
+                                 / boost::filesystem::path("ref.fa");
+
+    FastaFile f(tp.c_str());
+
+    RefVar r;
+    r.start = 2;
+    r.end = 3;
+    r.alt = "";
+
+    leftShift(f, "chrT", r);
+    BOOST_CHECK_EQUAL(r.start, 0);
+    BOOST_CHECK_EQUAL(r.end, 2);
+    BOOST_CHECK_EQUAL(r.alt, "C");
+
+    r.start = 2;
+    r.end = 3;
+    r.alt = "";
+
+    leftShift(f, "chrT", r, -1000, true);
+    BOOST_CHECK_EQUAL(r.start, 0);
+    BOOST_CHECK_EQUAL(r.end, 2);
+    BOOST_CHECK_EQUAL(r.alt, "C");
+}
+

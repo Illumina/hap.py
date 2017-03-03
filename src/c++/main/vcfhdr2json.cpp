@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
 
         if (vm.count("version")) 
         {
-            std::cout << "multimerge version " << HAPLOTYPES_VERSION << "\n";
+            std::cout << "vcfhdr2json version " << HAPLOTYPES_VERSION << "\n";
             return 0;
         }
 

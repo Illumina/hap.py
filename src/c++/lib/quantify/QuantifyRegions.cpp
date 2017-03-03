@@ -34,9 +34,6 @@
  */
 
 #include <boost/filesystem.hpp>
-#include <boost/iostreams/filtering_streambuf.hpp>
-#include <boost/iostreams/copy.hpp>
-#include <boost/iostreams/filter/gzip.hpp>
 
 #include "QuantifyRegions.hh"
 
@@ -44,27 +41,41 @@
 #include "helpers/BCFHelpers.hh"
 
 #include <map>
+#include <regex>
 #include <unordered_map>
+#include <htslib/vcf.h>
 
+#include "Fasta.hh"
+#include "RefVar.hh"
 #include "Error.hh"
 
 namespace variant
 {
     struct QuantifyRegions::QuantifyRegionsImpl
     {
+        QuantifyRegionsImpl(std::string const &_ref) : ref(_ref.c_str())
+        {}
+
         std::vector<std::string> names;
+        std::vector<size_t> levels;
         std::unordered_map<std::string, size_t> label_map;
         std::unordered_map<std::string, std::unique_ptr<intervals::IntervalBuffer>> ib;
         std::unordered_map<std::string, std::unique_ptr<intervals::IntervalBuffer>>::iterator current_chr = ib.end();
+
         std::unordered_map<size_t, size_t> region_sizes;
+
+        std::map< std::string, std::unordered_map<std::string, size_t> > extra_counts;
+
         int64_t current_pos = -1;
+        FastaFile ref;
     };
 
-    QuantifyRegions::QuantifyRegions() : _impl(new QuantifyRegionsImpl())
-    { }
+    QuantifyRegions::QuantifyRegions(std::string const &ref) : _impl(new QuantifyRegionsImpl(ref))
+    {
+    }
 
     QuantifyRegions::~QuantifyRegions()
-    { }
+    {}
 
     /**
      * Returns true if regions were loaded.
@@ -74,14 +85,24 @@ namespace variant
      * regions (everything unknown is a FP) from the one where the confident
      * region file is empty (every FP is unknown).
      */
-    bool QuantifyRegions::hasRegions(std::string const & rname) const
+    bool QuantifyRegions::hasRegions(std::string const &rname) const
     {
         return _impl->label_map.find(rname) != _impl->label_map.cend();
+    }
+
+    /**
+     * @return all region names
+     */
+    std::list<std::string> QuantifyRegions::getRegionNames() const
+    {
+        std::list<std::string> names {_impl->names.begin(), _impl->names.end()};
+        return names;
     }
 
     void QuantifyRegions::load(std::vector<std::string> const &rnames, bool fixchr)
     {
         std::unordered_map<std::string, size_t> label_map;
+        const std::regex trailing_number_regex ("(.+)_([0-9]+)$");
         for (std::string const &f : rnames)
         {
             std::vector<std::string> v;
@@ -100,13 +121,15 @@ namespace variant
             {
                 label = v[0];
                 filename = v[1];
-                if(label[0] == '=')
+                if (label[0] == '=')
                 {
                     label = label.substr(1);
                     fixed_label = true;
                 }
-                if(label == "CONF")
+                if (label.find("CONF") == 0)
                 {
+                    // squash all CONF regions into one
+                    label = "CONF";
                     fixed_label = true;
                 }
             }
@@ -137,6 +160,7 @@ namespace variant
             {
                 label_id = _impl->names.size();
                 _impl->names.push_back(label);
+                _impl->levels.push_back(0);
                 label_map[label] = label_id;
             }
             else
@@ -153,7 +177,7 @@ namespace variant
                 {
                     if (fixchr)
                     {
-                        if(v[0].size() > 0 && (
+                        if (v[0].size() > 0 && (
                             v[0].at(0) == '1' ||
                             v[0].at(0) == '2' ||
                             v[0].at(0) == '3' ||
@@ -165,7 +189,7 @@ namespace variant
                             v[0].at(0) == '9' ||
                             v[0].at(0) == 'X' ||
                             v[0].at(0) == 'Y' ||
-                            v[0].at(0) == 'M' ))
+                            v[0].at(0) == 'M'))
                         {
                             v[0] = std::string("chr") + v[0];
                         }
@@ -189,45 +213,58 @@ namespace variant
                             continue;
                         }
 
-                        size_t this_label_id = label_id;
-                        if(!fixed_label && v.size() > 3) {
-                            const std::string entry_label = label + "_" + v[3];
-                            auto li_it2 = label_map.find(entry_label);
+                        /*
+                         * create or get label id
+                         */
+                        auto getLabelId = [&label_map, this](std::string const & label_name, size_t level) -> size_t
+                        {
+                            auto li_it2 = label_map.find(label_name);
+                            size_t this_label_id = 0;
                             if (li_it2 == label_map.end())
                             {
                                 this_label_id = _impl->names.size();
-                                _impl->names.push_back(entry_label);
-                                label_map[entry_label] = this_label_id;
+                                _impl->names.push_back(label_name);
+                                _impl->levels.push_back(level);
+                                label_map[label_name] = this_label_id;
                             }
                             else
                             {
                                 this_label_id = li_it2->second;
                             }
-                        }
-                        auto size_it = _impl->region_sizes.find(this_label_id);
-                        if(size_it == _impl->region_sizes.end())
+                            return this_label_id;
+                        };
+
+                        std::set<size_t> label_ids = {label_id};
+
+                        if (!fixed_label && v.size() > 3)
                         {
-                            _impl->region_sizes[this_label_id] = (unsigned long) (stop - start + 1);
-                        }
-                        else
-                        {
-                            size_it->second += (unsigned long) (stop - start + 1);
-                        }
-                        chr_it->second->addInterval(start, stop, this_label_id);
-                        if(this_label_id != label_id)
-                        {
-                            // also add to total for this bed file
-                            size_it = _impl->region_sizes.find(label_id);
-                            if(size_it == _impl->region_sizes.end())
+                            std::smatch string_matches;
+                            if(std::regex_match(v[3], string_matches, trailing_number_regex))
                             {
-                                _impl->region_sizes[label_id] = (unsigned long) (stop - start + 1);
+                                label_ids.insert(getLabelId(label + "_" + string_matches.str(1), 1));
+                                label_ids.insert(getLabelId(label + "_" + v[3], 2));
+                            }
+                            else
+                            {
+                                label_ids.insert(getLabelId(label + "_" + v[3], 1));
+                            }
+                        }
+
+                        for(const auto this_label_id : label_ids)
+                        {
+                            auto size_it = _impl->region_sizes.find(this_label_id);
+                            if (size_it == _impl->region_sizes.end())
+                            {
+                                _impl->region_sizes[this_label_id] = (unsigned long) (stop - start + 1);
                             }
                             else
                             {
                                 size_it->second += (unsigned long) (stop - start + 1);
                             }
-                            chr_it->second->addInterval(start, stop, label_id);
+                            chr_it->second->addInterval(start, stop, this_label_id);
+
                         }
+
                         ++icount;
                     }
                     catch (std::invalid_argument const &)
@@ -247,8 +284,11 @@ namespace variant
             free(l.s);
             hts_close(bedfile);
             std::cerr << "Added region file '" << filename << "' as '" << label << "' (" << icount << " intervals)" <<
-            "\n";
+                      "\n";
         }
+
+
+
         _impl->label_map = label_map;
     }
 
@@ -257,51 +297,125 @@ namespace variant
      * Records must be passed in sorted order.
      *
      */
-    void QuantifyRegions::annotate(bcf_hdr_t * hdr, bcf1_t *record)
+    void QuantifyRegions::annotate(bcf_hdr_t *hdr, bcf1_t *record)
     {
-        std::string chr = bcfhelpers::getChrom(hdr, record);
+        const std::string chr = bcfhelpers::getChrom(hdr, record);
         int64_t refstart = 0, refend = 0;
         bcfhelpers::getLocation(hdr, record, refstart, refend);
+
+        const std::string ref_allele = record->d.allele[0];
+
+        // pure insertion records must be fully contained in CONF to match
+        bool is_pure_insertion = false;
+
+        if (bcfhelpers::classifyAlleleString(ref_allele).first == bcfhelpers::AlleleType::NUC)
+        {
+            is_pure_insertion = record->n_allele > 1;
+            int64_t updated_ref_start = std::numeric_limits<int64_t>::max();
+            int64_t updated_ref_end = std::numeric_limits<int64_t>::min();
+            bool nuc_alleles = false;
+
+            for (int al = 1; al < record->n_allele; ++al)
+            {
+                RefVar al_rv;
+                al_rv.start = record->pos;
+                al_rv.end = (int64_t) (record->pos + ref_allele.size() - 1);
+                auto ca = bcfhelpers::classifyAlleleString(record->d.allele[al]);
+                if (ca.first == bcfhelpers::AlleleType::MISSING)
+                {
+                    ca.second = "";
+                }
+                else if (ca.first != bcfhelpers::AlleleType::NUC)
+                {
+                    break;
+                }
+                nuc_alleles = true;
+                al_rv.alt = ca.second;
+
+                variant::trimRight(_impl->ref, chr.c_str(), al_rv, false);
+                variant::trimLeft(_impl->ref, chr.c_str(), al_rv, false);
+
+                if (al_rv.end >= al_rv.start)
+                {
+                    updated_ref_start = std::min(updated_ref_start, al_rv.start);
+                    updated_ref_end = std::max(updated_ref_end, al_rv.end);
+                    is_pure_insertion = false;
+                }
+                else
+                {
+                    // this is an insertion *before* start, it will have end < start
+                    // insertions are captured by the reference bases before and after
+                    updated_ref_start = std::min(updated_ref_start, al_rv.start - 1);
+                    updated_ref_end = std::max(updated_ref_end, al_rv.start);
+                }
+            }
+
+            if (nuc_alleles)
+            {
+                refstart = updated_ref_start;
+                refend = updated_ref_end;
+            }
+        }
 
         std::string tag_string = "";
         std::set<std::string> regions;
 
+        const std::string regions_already_in_place = bcfhelpers::getInfoString(hdr, record, "Regions", "");
+        std::vector<std::string> regions_split;
+        stringutil::split(regions_already_in_place, regions_split, ",");
+        for(const auto & r : regions_split)
+        {
+            // these we replace here
+            if(r != "CONF" && r != "TS_boundary")
+            {
+                regions.insert(r);
+            }
+        }
+
         auto p_chr = _impl->current_chr;
-        if(p_chr == _impl->ib.end() || p_chr->first != chr)
+        if (p_chr == _impl->ib.end() || p_chr->first != chr)
         {
             _impl->current_pos = -1;
             p_chr = _impl->ib.find(chr);
         }
 
-        if(p_chr != _impl->ib.end())
+        if (p_chr != _impl->ib.end())
         {
-            if(refstart < _impl->current_pos)
+            if (refstart < _impl->current_pos)
             {
                 error("Variants out of order at %s:%i", chr.c_str(), refstart);
             }
-            for(size_t i = 0; i < _impl->names.size(); ++i)
+            for (size_t i = 0; i < _impl->names.size(); ++i)
             {
-                if(p_chr->second->hasOverlap(refstart, refend, i))
+                if (p_chr->second->hasOverlap(refstart, refend, i))
                 {
-                    regions.insert(_impl->names[i]);
+                    const bool fully_covered = p_chr->second->isCovered(refstart, refend, i);
+                    if(!is_pure_insertion || fully_covered)
+                    {
+                        regions.insert(_impl->names[i]);
+                        if (_impl->names[i] != "CONF" && !fully_covered)
+                        {
+                            regions.insert("TS_boundary");
+                        }
+                    }
                 }
             }
-            if(refstart > 1)
+            if (refstart > 1)
             {
                 _impl->current_pos = refstart - 1;
-                p_chr->second->advance(refstart-1);
+                p_chr->second->advance(refstart - 1);
             }
         }
         // regions set is sorted, make sure Regions is sorted also
-        for(auto const & r : regions)
+        for (auto const &r : regions)
         {
-            if(!tag_string.empty())
+            if (!tag_string.empty())
             {
                 tag_string += ",";
             }
             tag_string += r;
         }
-        if(!tag_string.empty())
+        if (!tag_string.empty())
         {
             bcf_update_info_string(hdr, record, "Regions", tag_string.c_str());
         }
@@ -309,6 +423,8 @@ namespace variant
         {
             bcf_update_info_string(hdr, record, "Regions", nullptr);
         }
+        bcf_update_info_string(hdr, record, "RegionsExtent", (std::to_string(refstart + 1) + "-" +
+                                                              std::to_string(refend + 1)).c_str());
     }
 
     /**
@@ -316,19 +432,127 @@ namespace variant
      * @param region_name
      * @return  the region size
      */
-    size_t QuantifyRegions::getRegionSize(std::string const & region_name) const
+    size_t QuantifyRegions::getRegionSize(std::string const &region_name) const
     {
+        if(region_name == "*" || region_name == "TS_boundary")
+        {
+            return _impl->ref.contigNonNSize();
+        }
         auto label_it = _impl->label_map.find(region_name);
-        if(label_it == _impl->label_map.cend())
+        if(region_name == "TS_contained")
+        {
+            label_it = _impl->label_map.find("CONF");
+        }
+
+        if (label_it == _impl->label_map.cend())
         {
             return 0;
         }
         auto size_it = _impl->region_sizes.find(label_it->second);
-        if(size_it == _impl->region_sizes.cend())
+        if (size_it == _impl->region_sizes.cend())
         {
             return 0;
         }
         return size_it->second;
+    }
+
+    /**
+     * Get level for a region (0 for top-level, 1 for regions specified in a bed file)
+     * @param region_name
+     * @return level for the given region
+     */
+    size_t QuantifyRegions::getRegionLevel(std::string const & region_name) const
+    {
+        auto label = _impl->label_map.find(region_name);
+
+        if(label == _impl->label_map.end())
+        {
+            return 0;
+        }
+
+        return _impl->levels[label->second];
+    }
+
+    /**
+     * Mark one region to intersect with all others. This will
+     * @param base base region (e.g. "CONF")
+     */
+    void QuantifyRegions::setIntersectRegion(std::string const & base)
+    {
+        auto base_label = _impl->label_map.find(base);
+
+        if(base_label == _impl->label_map.end())
+        {
+            error("Unknown region label %s", base.c_str());
+        }
+
+        _impl->extra_counts[std::string("Subset.IS_") + base + ".Size"] = getRegionIntersectionSize(base);
+        _impl->extra_counts[std::string("Subset.IS_") + base + ".Size"]["*"] = getRegionSize("CONF");
+    }
+
+    /**
+     * Get all intersection / extra counts for a given region. By default, will return one
+     * pair with <"Subset.Size", size of the region>
+     * @param r the region to query counts for
+     * @return a list of counts and names
+     */
+    std::list< std::pair<std::string, size_t> > QuantifyRegions::getRegionExtraCounts(std::string const & r) const
+    {
+        std::list< std::pair<std::string, size_t> > result;
+
+        result.emplace_back("Subset.Size", getRegionSize(r));
+
+        for(auto const & ec : _impl->extra_counts)
+        {
+            auto val = ec.second.find(r);
+            if(val != ec.second.end())
+            {
+                result.emplace_back(ec.first, val->second);
+            }
+        }
+
+        result.emplace_back("Subset.Level", getRegionLevel(r));
+
+        return result;
+    }
+
+    /**
+     * Get region intersection sizes in NT
+     * @param region_name base region to intersect all others with (e.g. "CONF")
+     * @return  mapping of sizes and overlaps by region name
+     */
+    std::unordered_map<std::string, size_t> QuantifyRegions::getRegionIntersectionSize(std::string const & region_name) const
+    {
+        std::unordered_map<std::string, size_t> result;
+
+        auto this_label = _impl->label_map.find(region_name);
+        if(this_label == _impl->label_map.end())
+        {
+            return result;
+        }
+
+        for(auto const & l : _impl->label_map)
+        {
+            if(l.first == region_name)
+            {
+                result[l.first] = _impl->region_sizes[l.second];
+            }
+            else
+            {
+                size_t total = 0;
+
+                for(auto const & chr : _impl->ib)
+                {
+                    total += chr.second->intersectLanes(this_label->second, l.second);
+                }
+                result[l.first] = total;
+            }
+        }
+
+        result["TS_boundary"] = result["CONF"];
+        result["TS_contained"] = result["CONF"];
+
+        return result;
     }
 }
 

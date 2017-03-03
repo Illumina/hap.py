@@ -100,6 +100,19 @@ else
 fi
 
 ##############################################################
+# Test Hap.py safe leftshifting
+##############################################################
+
+/bin/bash ${DIR}/run_leftshift_test.sh
+
+if [[ $? -ne 0 ]]; then
+	echo "Leftshift test FAILED!"
+	exit 1
+else
+	echo "Leftshift test SUCCEEDED!"
+fi
+
+##############################################################
 # Test Hap.py + other VCF items
 ##############################################################
 
@@ -214,6 +227,20 @@ if [[ $? -ne 0 ]]; then
 else
 	echo "Quantify integration test SUCCEEDED!"
 fi
+
+##############################################################
+# Test GA4GH stratified quantification
+##############################################################
+
+/bin/bash ${DIR}/run_quantify_stratification_test.sh
+
+if [[ $? -ne 0 ]]; then
+	echo "Quantify stratification test FAILED!"
+	exit 1
+else
+	echo "Quantify stratification test SUCCEEDED!"
+fi
+
 
 ##############################################################
 # Test PG Counting

@@ -38,7 +38,7 @@ ${HCDIR}/multimerge ${DIR}/../../example/homref/homref.vcf.gz \
 diff -I ^# ${TF} ${DIR}/../../example/homref/expected_merge.vcf
 
 if [ $? -ne 0 ]; then
-	echo "GVCF homref test FAILED. You can inspect ${TF} for the failed result."
+	echo "GVCF homref test FAILED. You can inspect ${TF} for the failed result. //  diff -I ^# ${TF} ${DIR}/../../example/homref/expected_merge.vcf"
 	exit 1
 else
 	echo "GVCF homref test SUCCEEDED."
@@ -67,7 +67,7 @@ ${HCDIR}/multimerge ${DIR}/../../example/callsonly/call_merge.vcf.gz:* \
 diff ${TF} ${DIR}/../../example/callsonly/expected_callsonly.vcf
 
 if [ $? -ne 0 ]; then
-	echo "GVCF homref + Variants test FAILED. You can inspect ${TF} for the failed result."
+	echo "GVCF homref + Variants test FAILED. You can inspect ${TF} for the failed result. // diff ${TF} ${DIR}/../../example/callsonly/expected_callsonly.vcf"
 	exit 1
 else
 	echo "GVCF homref + Variants test SUCCEEDED."

@@ -51,7 +51,7 @@ public:
 
     VariantWriter(VariantWriter const &);
     ~VariantWriter();
-    VariantWriter const & operator=(VariantWriter const &);
+    VariantWriter & operator=(VariantWriter const &);
 
     /** write format fields apart from GT */
     void setWriteFormats(bool write_fmts=false);

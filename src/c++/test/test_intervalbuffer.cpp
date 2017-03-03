@@ -110,25 +110,14 @@ BOOST_AUTO_TEST_CASE(testIntervalBufferRandom)
             }
         }
 
-        struct random_end_less {
+        struct iv_less {
             inline bool operator()(const std::pair<int64_t, int64_t> &p,
                                    const std::pair<int64_t, int64_t> &q) {
-                if (p.first < q.first) {
-                    return true;
-                }
-                else if (p.first > q.first) {
-                    return false;
-                }
-                else {
-                    // matching first elements -> random orderi
-                    // this actually causes segfaults.
-                    // return (rand() & 1) == 0;
-                    return false;
-                }
+                return p.first < q.first;
             }
         };
 
-        std::sort(ivlist.begin(), ivlist.end(), random_end_less());
+        std::sort(ivlist.begin(), ivlist.end(), iv_less());
 
         IntervalBuffer ib;
 
@@ -226,6 +215,76 @@ BOOST_AUTO_TEST_CASE(testIntervalBufferRandom)
             }
 
             BOOST_CHECK_EQUAL(is_covered, ib.hasOverlap(start, end, 2));
+        }
+    }
+}
+
+BOOST_AUTO_TEST_CASE(testIntervalBufferOverlap)
+{
+    IntervalBuffer ib;
+
+    // overlap: 20 - 11 + 1 = 10
+    ib.addInterval(10, 20, 0);
+    ib.addInterval(11, 30, 1);
+
+    // overlap:   1
+    ib.addInterval(110, 110, 0);
+    ib.addInterval(100, 110, 1);
+
+    // overlap:   6
+    ib.addInterval(120, 125, 0);
+    ib.addInterval(120, 125, 1);
+
+    BOOST_CHECK_EQUAL((size_t)17, ib.intersectLanes(0, 1));
+}
+
+BOOST_AUTO_TEST_CASE(testIntervalBufferOverlapRandom)
+{
+    static const int64_t SIZE = 1024;
+    srand(100);
+
+    for (int IVL = 1; IVL <= 64; IVL += 3)
+    {
+        int IVS = SIZE / IVL * 2 / 3;
+        for(int trial = 0; trial < 100; ++trial)
+        {
+            IntervalBuffer ib;
+            uint8_t covered[SIZE];
+
+            memset(covered, 0, SIZE);
+
+            for(int q = 0; q < IVS; ++q)
+            {
+                int mask = 1;
+                for(size_t lane = 0; lane < 2; ++lane)
+                {
+                    const int64_t start = rand() % SIZE;
+                    const int64_t end = std::min(SIZE - 1, start + (rand() % IVL) - 1);
+
+                    for(int64_t s = start; s <= end; ++s)
+                    {
+                        covered[s] |= mask;
+                    }
+
+                    ib.addInterval(start, end, lane);
+                    mask <<= 1;
+                }
+            }
+
+            size_t expected = 0;
+            for(int64_t p = 0; p < SIZE; ++p)
+            {
+                if(covered[p] == 3)
+                {
+                    ++expected;
+                }
+            }
+
+            const size_t observed1 = ib.intersectLanes(0, 1);
+            BOOST_CHECK_EQUAL(expected, observed1);
+
+            const size_t observed2 = ib.intersectLanes(1, 0);
+            BOOST_CHECK_EQUAL(expected, observed2);
         }
     }
 }

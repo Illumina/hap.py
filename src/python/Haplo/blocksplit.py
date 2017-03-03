@@ -21,6 +21,7 @@ import logging
 import subprocess
 import tempfile
 import time
+import pipes
 
 
 def blocksplitWrapper(location_str, args):
@@ -32,12 +33,12 @@ def blocksplitWrapper(location_str, args):
     tf.close()
 
     if location_str:
-        loc = " -l %s" % location_str
+        loc = " -l %s" % pipes.quote(location_str)
     else:
         loc = ""
     to_run = "blocksplit %s %s%s -o %s --window %i --nblocks %i -f 0" % \
-             (args.vcf1.replace(" ", "\\ "),
-              args.vcf2.replace(" ", "\\ "),
+             (pipes.quote(args.vcf1),
+              pipes.quote(args.vcf2),
               loc,
               tf.name,
               args.window*2,

@@ -34,7 +34,7 @@ import json
 import tempfile
 import gzip
 
-scriptDir = os.path.abspath(os.path.dirname(__file__))
+scriptDir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'lib', 'python27')))
 
 import Tools
@@ -42,6 +42,8 @@ import Tools.vcfextract
 from Tools.metric import makeMetricsObject, dataframeToMetricsTable
 import Haplo.quantify
 import Haplo.happyroc
+import Haplo.gvcf2bed
+from Tools import fastasize
 
 
 def quantify(args):
@@ -93,6 +95,13 @@ def quantify(args):
                     raise Exception("Quantification region file %s not found" % f)
                 qfyregions[n] = f
 
+    if args.strat_regions:
+        for r in args.strat_regions:
+            n, _, f = r.partition(":")
+            if not os.path.exists(f):
+                raise Exception("Quantification region file %s not found" % f)
+            qfyregions[n] = f
+
     if vcf_name == output_vcf or vcf_name == output_vcf + internal_format_suffix:
         raise Exception("Cannot overwrite input VCF: %s would overwritten with output name %s." % (vcf_name, output_vcf))
 
@@ -129,9 +138,20 @@ def quantify(args):
         # if we run this through qfy, these arguments are not present
         pass
 
+    total_region_size = None
+    headers = Tools.vcfextract.extractHeadersJSON(vcf_name)
+    try:
+        contigs_to_use = ",".join(headers["tabix"]["chromosomes"])
+        contig_lengths = fastasize.fastaNonNContigLengths(args.ref)
+        total_region_size = fastasize.calculateLength(contig_lengths, contigs_to_use)
+        logging.info("Subset.Size for * is %i, based on these contigs: %s " % (total_region_size, str(contigs_to_use)))
+    except:
+        pass
+
     res = Haplo.happyroc.roc(roc_table, args.reports_prefix + ".roc",
                              filter_handling=filter_handling,
-                             ci_alpha=args.ci_alpha)
+                             ci_alpha=args.ci_alpha,
+                             total_region_size=total_region_size)
     df = res["all"]
 
     # only use summary numbers
@@ -139,18 +159,20 @@ def quantify(args):
 
     summary_columns = ["Type",
                        "Filter",
-                       "TRUTH.TOTAL",
-                       "TRUTH.TP",
-                       "TRUTH.FN",
-                       "QUERY.TOTAL",
-                       "QUERY.FP",
-                       "QUERY.UNK",
-                       "FP.gt",
-                       "METRIC.Recall",
-                       "METRIC.Precision",
-                       "METRIC.Frac_NA"]
+                      ]
 
-    for additional_column in ["TRUTH.TOTAL.TiTv_ratio",
+    for additional_column in ["TRUTH.TOTAL",
+                              "TRUTH.TP",
+                              "TRUTH.FN",
+                              "QUERY.TOTAL",
+                              "QUERY.FP",
+                              "QUERY.UNK",
+                              "FP.gt",
+                              "METRIC.Recall",
+                              "METRIC.Precision",
+                              "METRIC.Frac_NA",
+                              "METRIC.F1_Score",
+                              "TRUTH.TOTAL.TiTv_ratio",
                               "QUERY.TOTAL.TiTv_ratio",
                               "TRUTH.TOTAL.het_hom_ratio",
                               "QUERY.TOTAL.het_hom_ratio"]:
@@ -212,6 +234,10 @@ def updateArgs(parser):
                         default=None, type=str,
                         help="Stratification file list (TSV format -- first column is region name, second column is file name).")
 
+    parser.add_argument("--stratification-region", dest="strat_regions",
+                        default=[], action="append",
+                        help="Add single stratification region, e.g. --stratification-region TEST:test.bed")
+
     parser.add_argument("--stratification-fixchr", dest="strat_fixchr",
                         default=None, action="store_true",
                         help="Add chr prefix to stratification files if necessary")
@@ -265,7 +291,12 @@ def main():
     parser.add_argument("-v", "--version", dest="version", action="store_true",
                         help="Show version number and exit.")
 
-    parser.add_argument("in_vcf", help="VCF file to quantify", nargs=1)
+    parser.add_argument("in_vcf", help="Comparison intermediate VCF file to quantify (two column TRUTH/QUERY format)", nargs=1)
+
+    parser.add_argument("--adjust-conf-regions", dest="preprocessing_truth_confregions", default=None,
+                        help="When hap.py was run with --adjust-conf-regions, on the original VCF, "
+                             "then quantify needs the truthset VCF in order to correctly reproduce "
+                             " the results. This switch allows us to pass the truth VCF into quantify.")
 
     updateArgs(parser)
 
@@ -331,6 +362,13 @@ def main():
     if args.version:
         print "qfy.py %s" % Tools.version
         exit(0)
+
+    if args.fp_bedfile and args.preprocessing_truth_confregions:
+        conf_temp = Haplo.gvcf2bed.gvcf2bed(args.preprocessing_truth_confregions,
+                                            args.ref,
+                                            args.fp_bedfile, args.scratch_prefix)
+        args.strat_regions.append("CONF_VARS:" + conf_temp)
+        args.preprocessing_truth_confregions = None
 
     quantify(args)
 

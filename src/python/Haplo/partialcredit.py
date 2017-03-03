@@ -23,6 +23,7 @@ import tempfile
 import time
 import itertools
 import multiprocessing
+import pipes
 
 from Tools.parallel import runParallel, getPool
 from Tools.bcftools import runBcftools, concatenateParts
@@ -43,12 +44,12 @@ def preprocessWrapper(file_and_location, args):
     tf.close()
 
     to_run = "preprocess %s:* %s-o %s -V %i -L %i -r %s" % \
-             (filename.replace(" ", "\\ "),
-              ("-l %s " % location_str) if location_str else "",
+             (pipes.quote(filename),
+              ("-l %s " % pipes.quote(location_str)) if location_str else "",
               tf.name,
               args["decompose"],
               args["leftshift"],
-              args["reference"])
+              pipes.quote(args["reference"]))
 
     if args["haploid_x"]:
         to_run += " --haploid-x 1"
@@ -59,20 +60,31 @@ def preprocessWrapper(file_and_location, args):
     tfo = tempfile.NamedTemporaryFile(delete=False,
                                       prefix="stdout",
                                       suffix=".log")
+    finished = False
     try:
         logging.info("Running '%s'" % to_run)
         subprocess.check_call(to_run, shell=True, stdout=tfo, stderr=tfe)
+        finished = True
     finally:
-        tfo.close()
-        tfe.close()
-        with open(tfo.name) as f:
-            for l in f:
-                logging.info(l.replace("\n", ""))
-        os.unlink(tfo.name)
-        with open(tfe.name) as f:
-            for l in f:
-                logging.warn(l.replace("\n", ""))
-        os.unlink(tfe.name)
+        if finished:
+            tfo.close()
+            tfe.close()
+            with open(tfo.name) as f:
+                for l in f:
+                    logging.info(l.replace("\n", ""))
+            os.unlink(tfo.name)
+            with open(tfe.name) as f:
+                for l in f:
+                    logging.warn(l.replace("\n", ""))
+            os.unlink(tfe.name)
+        else:
+            logging.error("Preprocess command %s failed. Outputs are here %s / %s" % (to_run, tfo.name, tfe.name))
+            with open(tfo.name) as f:
+                for l in f:
+                    logging.error(l.replace("\n", ""))
+            with open(tfe.name) as f:
+                for l in f:
+                    logging.error(l.replace("\n", ""))
 
     elapsed = time.time() - starttime
     logging.info("preprocess for %s -- time taken %.2f" % (location_str, elapsed))
@@ -91,8 +103,8 @@ def blocksplitWrapper(location_str, bargs):
         tf.close()
 
         to_run = "blocksplit %s -l %s -o %s --window %i --nblocks %i -f 0" % \
-                 (bargs["vcf"],
-                  location_str,
+                 (pipes.quote(bargs["vcf"]),
+                  pipes.quote(location_str),
                   tf.name,
                   bargs["dist"],
                   bargs["pieces"])

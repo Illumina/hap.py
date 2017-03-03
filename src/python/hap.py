@@ -34,7 +34,7 @@ import gzip
 import tempfile
 import time
 
-scriptDir = os.path.abspath(os.path.dirname(__file__))
+scriptDir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'lib', 'python27')))
 
 import Tools
@@ -46,8 +46,10 @@ from Tools.fastasize import fastaContigLengths
 import Haplo.blocksplit
 import Haplo.xcmp
 import Haplo.vcfeval
+import Haplo.scmp
 import Haplo.quantify
 import Haplo.partialcredit
+import Haplo.gvcf2bed
 
 import qfy
 import pre
@@ -86,6 +88,10 @@ def main():
     parser.add_argument("--preprocessing-window-size", dest="preprocess_window",
                         default=10000, type=int,
                         help="Preprocessing window size (variants further apart than that size are not expected to interfere).")
+    parser.add_argument("--adjust-conf-regions", dest="preprocessing_truth_confregions", action="store_true", default=True,
+                        help="Adjust confident regions to include variant locations.")
+    parser.add_argument("--no-adjust-conf-regions", dest="preprocessing_truth_confregions", action="store_false",
+                        help="Adjust confident regions to include variant locations.")
 
     # detailed control of comparison
     parser.add_argument("--unhappy", "--no-haplotype-comparison", dest="no_hc", action="store_true", default=False,
@@ -108,7 +114,7 @@ def main():
                         help="Number of threads to use.")
 
     parser.add_argument("--engine", dest="engine",
-                        default="xcmp", choices=["xcmp", "vcfeval"],
+                        default="xcmp", choices=["xcmp", "vcfeval", "scmp-somatic"],
                         help="Comparison engine to use.")
 
     parser.add_argument("--engine-vcfeval-path", dest="engine_vcfeval", required=False,
@@ -219,8 +225,16 @@ def main():
 
     tempfiles = []
 
-    # xcmp supports bcf; others don't
-    if args.engine == "xcmp" and (args.bcf or (args.vcf1.endswith(".bcf") and args.vcf2.endswith(".bcf"))):
+    # turn on allele conversion
+    if args.engine == "scmp-somatic" and args.somatic_allele_conversion == False:
+        args.somatic_allele_conversion = True
+
+    # somatic allele conversion should also switch off decomposition
+    if args.somatic_allele_conversion == True and "--decompose" not in sys.argv:
+        args.preprocessing_decompose = False
+
+    # xcmp/scmp support bcf; others don't
+    if args.engine in ["xcmp", "scmp-somatic"] and (args.bcf or (args.vcf1.endswith(".bcf") and args.vcf2.endswith(".bcf"))):
         internal_format_suffix = ".bcf"
     else:
         internal_format_suffix = ".vcf.gz"
@@ -236,6 +250,13 @@ def main():
                                           prefix="truth.pp",
                                           suffix=internal_format_suffix)
         ttf.close()
+
+        if args.engine.endswith("somatic") and \
+           args.preprocessing_truth and \
+           (args.preprocessing_leftshift or args.preprocessing_norm or args.preprocessing_decompose):
+            args.preprocessing_truth = False
+            logging.info("Turning off pre.py preprocessing for somatic comparisons")
+
         tempfiles.append(ttf.name)
         tempfiles.append(ttf.name + ".csi")
         tempfiles.append(ttf.name + ".tbi")
@@ -252,9 +273,16 @@ def main():
                                      args.preprocessing_norm if args.preprocessing_truth else False,
                                      args.preprocess_window,
                                      args.threads,
-                                     args.gender)
+                                     args.gender,
+                                     args.somatic_allele_conversion)
 
         args.vcf1 = ttf.name
+
+        if args.fp_bedfile and args.preprocessing_truth_confregions:
+            conf_temp = Haplo.gvcf2bed.gvcf2bed(args.vcf1, args.ref, args.fp_bedfile, args.scratch_prefix)
+            tempfiles.append(conf_temp)
+            args.strat_regions.append("CONF_VARS:" + conf_temp)
+
         h1 = vcfextract.extractHeadersJSON(args.vcf1)
 
         elapsed = time.time() - starttime
@@ -290,6 +318,14 @@ def main():
         tempfiles.append(qtf.name)
         tempfiles.append(qtf.name + ".csi")
         tempfiles.append(qtf.name + ".tbi")
+
+        if args.engine.endswith("somatic") and \
+           (args.preprocessing_leftshift or args.preprocessing_norm or args.preprocessing_decompose):
+            args.preprocessing_leftshift = False
+            args.preprocessing_norm = False
+            args.preprocessing_decompose = False
+            logging.info("Turning off pre.py preprocessing (query) for somatic comparisons")
+
         pre.preprocess(args.vcf2,
                        qtf.name,
                        args.ref,
@@ -303,7 +339,8 @@ def main():
                        args.preprocessing_norm,
                        args.preprocess_window,
                        args.threads,
-                       args.gender)  # same gender as truth above
+                       args.gender,
+                       args.somatic_allele_conversion)  # same gender as truth above
 
         args.vcf2 = qtf.name
         h2 = vcfextract.extractHeadersJSON(args.vcf2)
@@ -394,6 +431,10 @@ def main():
             args.roc = "IQQ"
         elif args.engine == "vcfeval":
             tempfiles += Haplo.vcfeval.runVCFEval(args.vcf1, args.vcf2, output_name, args)
+            # passed to quantify
+            args.type = "ga4gh"
+        elif args.engine == "scmp-somatic":
+            tempfiles += Haplo.scmp.runSCmp(args.vcf1, args.vcf2, output_name, args)
             # passed to quantify
             args.type = "ga4gh"
         else:

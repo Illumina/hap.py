@@ -18,9 +18,18 @@ target_link_libraries(blocksplit ${HAPLOTYPES_ALL_LIBS})
 add_executable(hapcmp hapcmp.cpp)
 target_link_libraries(hapcmp ${HAPLOTYPES_ALL_LIBS})
 
-# xcmp takes a pair of VCFs and outputs an annotated comparison VCF
+# xcmp takes a pair of VCFs and outputs an annotated comparison VCF (by genotypes)
 add_executable(xcmp xcmp.cpp)
 target_link_libraries(xcmp ${HAPLOTYPES_ALL_LIBS})
+
+# scmp takes a pair of VCFs and outputs an annotated comparison VCF (by alleles)
+add_executable(scmp scmp.cpp)
+target_link_libraries(scmp ${HAPLOTYPES_ALL_LIBS})
+
+# alleles is a pre-processor for scmp. It takes all samples, writes one record per allele
+# collects FORMATs into INFO and GT.
+add_executable(alleles alleles.cpp)
+target_link_libraries(alleles ${HAPLOTYPES_ALL_LIBS})
 
 # quantify counts variants in VCFs
 add_executable(quantify quantify.cpp)
@@ -47,3 +56,11 @@ target_link_libraries(vcfcheck ${HAPLOTYPES_ALL_LIBS})
 # preprocess does variant decomposition and leftshifting
 add_executable(preprocess preprocess.cpp)
 target_link_libraries(preprocess ${HAPLOTYPES_ALL_LIBS})
+
+# fastainfo returns contig lengths and non-n lengths in JSON format
+add_executable(fastainfo fastainfo.cpp)
+target_link_libraries(fastainfo ${HAPLOTYPES_ALL_LIBS})
+
+# gVCF2bed converts a gVCF file to bed, indicating regions of pass/fail homref/variants
+add_executable(gvcf2bed gvcf2bed.cpp)
+target_link_libraries(gvcf2bed ${HAPLOTYPES_ALL_LIBS})

@@ -8,7 +8,7 @@ set +e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . ${DIR}/detect_vars.sh
 
-echo "Test for path traversals: ${HCVERSION} from ${HCDIR}"
+echo "Testing FP region matching with default behavior: ${HCVERSION} from ${HCDIR}"
 
 TMP_OUT=`mktemp -t happy.XXXXXXXXXX`
 

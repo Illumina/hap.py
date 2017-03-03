@@ -49,13 +49,14 @@ BOOST_AUTO_TEST_CASE(fastaRead)
     boost::filesystem::path tp = p.parent_path()
                                    .parent_path()   // test
                                    .parent_path()   // c++
-                                    / boost::filesystem::path("data") 
+                                    / boost::filesystem::path("data")
                                     / boost::filesystem::path("chrQ.fa");
 
     std::cerr << "Reading " << tp << std::endl;
-    
+
     FastaFile f(tp.string().c_str());
     BOOST_CHECK_EQUAL(f.query("chrQ:5-9"), "CCAAA");
+    BOOST_CHECK_EQUAL(f.query("chrT:10-33"), "TACAGGTCGTGTCGCGCAGAAGAA");
 }
 
 
@@ -65,11 +66,49 @@ BOOST_AUTO_TEST_CASE(fastaReadEnd)
     boost::filesystem::path tp = p.parent_path()
                                    .parent_path()   // test
                                    .parent_path()   // c++
-                                    / boost::filesystem::path("data") 
+                                    / boost::filesystem::path("data")
                                     / boost::filesystem::path("chrQ.fa");
 
     std::cerr << "Reading " << tp << std::endl;
-    
+
     FastaFile f(tp.string().c_str());
     BOOST_CHECK_EQUAL(f.query("chrS:151"), "");
+}
+
+BOOST_AUTO_TEST_CASE(fastaReadMultiline)
+{
+    boost::filesystem::path p(__FILE__);
+    boost::filesystem::path tp = p.parent_path()
+                                   .parent_path()   // test
+                                   .parent_path()   // c++
+                                    / boost::filesystem::path("data")
+                                    / boost::filesystem::path("chrQ.fa");
+
+    std::cerr << "Reading " << tp << std::endl;
+
+    FastaFile f(tp.string().c_str());
+    BOOST_CHECK_EQUAL(f.query("chrS:20-147"), "CATACACCTGCGCCTAATCACTTCAGAGGTGTTGTAGACGGGAAATAAGGATCTACCCTTACTTTGTGTCACTACTAGTGAAGCTGGCTCATGTGGGGACTAGGAAGAGCTGCCTCTCGTGGGAGCGA");
+}
+
+BOOST_AUTO_TEST_CASE(fastaContigSizes)
+{
+    boost::filesystem::path p(__FILE__);
+    boost::filesystem::path tp = p.parent_path()
+                                     .parent_path()   // test
+                                     .parent_path()   // c++
+                                 / boost::filesystem::path("data")
+                                 / boost::filesystem::path("chrQ.fa");
+
+    FastaFile f(tp.string().c_str());
+    BOOST_CHECK_EQUAL(f.contigSize("chrT"), (size_t) 149);
+    BOOST_CHECK_EQUAL(f.contigNonNSize("chrT"), (size_t) 149);
+    BOOST_CHECK_EQUAL(f.contigSize("chrS"), (size_t) 150);
+    BOOST_CHECK_EQUAL(f.contigNonNSize("chrS"), (size_t) 150);
+    BOOST_CHECK_EQUAL(f.contigSize("chrU"), (size_t) 76);
+    BOOST_CHECK_EQUAL(f.contigNonNSize("chrU"), (size_t) 36);
+    BOOST_CHECK_EQUAL(f.contigSize("chrN"), (size_t) 76);
+    BOOST_CHECK_EQUAL(f.contigNonNSize("chrN"), (size_t) 36);
+
+    BOOST_CHECK_EQUAL(f.contigSize(), (size_t) 538);
+    BOOST_CHECK_EQUAL(f.contigNonNSize(), (size_t) 458);
 }

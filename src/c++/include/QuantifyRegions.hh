@@ -38,6 +38,7 @@
 
 #include <memory>
 #include <map>
+#include <unordered_map>
 #include <string>
 
 #include <htslib/vcf.h>
@@ -50,7 +51,7 @@ namespace variant
     class QuantifyRegions
     {
     public:
-        QuantifyRegions();
+        explicit QuantifyRegions(std::string const & reference);
         ~QuantifyRegions();
         /** load named regions
          *
@@ -67,6 +68,11 @@ namespace variant
          */
         bool hasRegions(std::string const & rname) const;
 
+        /**
+         * @return all region names
+         */
+        std::list<std::string> getRegionNames() const;
+
         /** add Regions annotation to a record
          *
          * Records must be passed in sorted order.
@@ -80,7 +86,37 @@ namespace variant
          * @return  the region size
          */
         size_t getRegionSize(std::string const & region_name) const;
+
+        /**
+         * Get level for a region (0 for top-level, 1 for regions specified in a bed file)
+         * @param region_name
+         * @return level for the given region
+         */
+        size_t getRegionLevel(std::string const & region_name) const;
+
+        /**
+         * Mark one region to intersect with all others. This will
+         * @param base base region (e.g. "CONF")
+         */
+        void setIntersectRegion(std::string const & base);
+
+        /**
+         * Get all intersection / extra counts for a given region. By default, will return one
+         * pair with <"Subset.Size", size of the region>
+         * @param r the region to query counts for
+         * @return a list of counts and names
+         */
+        std::list< std::pair<std::string, size_t> > getRegionExtraCounts(std::string const & r) const;
+
     private:
+
+        /**
+         * Get region intersection sizes in NT
+         * @param region_name base region to intersect all others with (e.g. "CONF")
+         * @return  mapping of sizes and overlaps by region name
+         */
+        std::unordered_map<std::string, size_t> getRegionIntersectionSize(std::string const & region_name) const;
+
         struct QuantifyRegionsImpl;
         std::unique_ptr<QuantifyRegionsImpl> _impl;
     };

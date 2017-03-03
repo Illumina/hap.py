@@ -41,12 +41,24 @@ else
     CONFIGTYPE="$2"
 fi
 
+PLATFORM='unknown'
+UNAMESTR=`uname`
+if [[ "$UNAMESTR" == 'Linux' ]]; then
+   PLATFORM='linux'
+elif [[ "$UNAMESTR" == 'FreeBSD' ]]; then
+   PLATFORM='freebsd'
+fi
+
 if [[ -z $CONFIGTYPE ]]; then
-	if [[ "$(hostname)" == *chuk.illumina.com ]] || [[ "$(hostname)" == ukch-* ]] || [[ "$(hostname)" == ussd-prd-lndt* ]]; then
-	    echo "using Illumina configuration."
-	    SPECIALCONFIG="${DIR}/src/sh/illumina-setup.sh"
-	    . ${DIR}/src/sh/illumina-setup.sh
-	fi
+    if [[ "$PLATFORM" == "linux" ]] && [[ -d /illumina ]]; then
+        if [[ "$(hostname)" == *.illumina.com ]] || \
+           [[ "$(hostname)" == ukch-* ]] || \
+           [[ "$(hostname)" == ussd-prd-lndt* ]]; then
+            echo "using Illumina configuration."
+            SPECIALCONFIG="${DIR}/src/sh/illumina-setup.sh"
+            . ${DIR}/src/sh/illumina-setup.sh
+        fi        
+    fi
 else
     echo "using $CONFIGTYPE configuration."
     SPECIALCONFIG="${DIR}/src/sh/$CONFIGTYPE-setup.sh"

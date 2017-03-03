@@ -48,7 +48,10 @@ def main():
                    "QUERY.FP", "QUERY.UNK",
                    "TRUTH.TOTAL.TiTv_ratio", "QUERY.TOTAL.TiTv_ratio",
                    "TRUTH.TOTAL.het_hom_ratio", "QUERY.TOTAL.het_hom_ratio",
-                   "METRIC.Recall", "METRIC.Precision", "METRIC.Frac_NA"]:
+                   "METRIC.Recall", "METRIC.Precision", "METRIC.Frac_NA",
+                   "Subset.Size", "Subset.IS_CONF.Size"]:
+        if metric not in data1 and metric not in data2:
+            continue
         for field in ["Locations.SNP",
                       "Locations.INDEL"
                       ]:

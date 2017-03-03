@@ -70,7 +70,7 @@ namespace variant
         delete _impl;
     }
 
-    VariantWriter const & VariantWriter::operator=(VariantWriter const & rhs)
+    VariantWriter & VariantWriter::operator=(VariantWriter const & rhs)
     {
         if(&rhs == this)
         {
@@ -331,7 +331,7 @@ namespace variant
 
                 if(v.isArray() && !v.empty())
                 {
-                    if(v[0].isInt())
+                    if(v[0].type() == Json::ValueType::intValue)
                     {
                         std::unique_ptr<int[]> p_values(new int[v.size()]);
                         for(int s = 0; s < (int)v.size(); ++s)
@@ -365,7 +365,16 @@ namespace variant
                     }
                     else
                     {
-                        error("VariantWriter: unknown array type in info field at %s:i", var.chr.c_str(), var.pos);
+                        std::string value;
+                        for(int s = 0; s < (int)v.size(); ++s)
+                        {
+                            if(s > 0)
+                            {
+                                value += ",";
+                            }
+                            value += v[s].asString();
+                        }
+                        bcf_update_info_string(hdr, rec, id.c_str(), value.c_str());
                     }
                 }
                 else if(v.isInt())

@@ -43,6 +43,7 @@
 #include <memory>
 #include <limits>
 #include <set>
+#include <boost/algorithm/string.hpp>
 
 /**
  * @brief Helper to get out GT fields
@@ -293,6 +294,7 @@ namespace bcfhelpers
                     {
                         return std::string((const char *)field->vptr, (unsigned long) field->len);
                     }
+                    break;
                 default:break;
             }
             return std::string();
@@ -919,5 +921,92 @@ namespace bcfhelpers
             max_match = std::min(rpos, max_match);
         }
         return max_match;
+    }
+
+    std::pair<AlleleType, std::string> classifyAlleleString(std::string allele_string)
+    {
+        boost::to_upper(allele_string);
+
+        if (allele_string == "<DEL>" || allele_string == "*")
+        {
+            return std::make_pair(AlleleType::SYMBOLIC_DEL, std::string());
+        }
+        else if (allele_string == "" || allele_string == ".")
+        {
+            return std::make_pair(AlleleType::MISSING, std::string("."));
+        }
+        else if(allele_string.find('<') != std::string::npos || allele_string.find('>') != std::string::npos)
+        {
+            return std::make_pair(AlleleType::SYMBOLIC_OTHER, allele_string);
+        }
+        else
+        {
+            // check alleles
+            for (size_t qq = 0; qq < allele_string.size(); ++qq)
+            {
+                /* A	A	Adenine */
+                /* C	C	Cytosine */
+                /* G	G	Guanine */
+                /* T	T	Thymine */
+                /* U	U	Uracil */
+                /* R	A or G	puRine */
+                /* Y	C, T or U	pYrimidines */
+                /* K	G, T or U	bases which are Ketones */
+                /* M	A or C	bases with aMino groups */
+                /* S	C or G	Strong interaction */
+                /* W	A, T or U	Weak interaction */
+                /* B	not A (i.e. C, G, T or U)	B comes after A */
+                /* D	not C (i.e. A, G, T or U)	D comes after C */
+                /* H	not G (i.e., A, C, T or U)	H comes after G */
+                /* V	neither T nor U (i.e. A, C or G)	V comes after U */
+                /* N	A C G T U	Nucleic acid */
+                /* X	masked */
+                /* -/.	gap of indeterminate length - not supported */
+                if (allele_string[qq] != 'A' && \
+                   allele_string[qq] != 'C' && \
+                   allele_string[qq] != 'G' && \
+                   allele_string[qq] != 'T' && \
+                   allele_string[qq] != 'U' && \
+                   allele_string[qq] != 'R' && \
+                   allele_string[qq] != 'Y' && \
+                   allele_string[qq] != 'K' && \
+                   allele_string[qq] != 'M' && \
+                   allele_string[qq] != 'S' && \
+                   allele_string[qq] != 'W' && \
+                   allele_string[qq] != 'B' && \
+                   allele_string[qq] != 'D' && \
+                   allele_string[qq] != 'H' && \
+                   allele_string[qq] != 'V' && \
+                   allele_string[qq] != 'N' && \
+                   allele_string[qq] != 'X')
+                {
+                    return std::make_pair(AlleleType::UNKNOWN, allele_string);
+                }
+            }
+            return std::make_pair(AlleleType::NUC, allele_string);
+        }
+    }
+
+    std::ostream & operator<<(std::ostream & o, const AlleleType at)
+    {
+        switch(at)
+        {
+            case AlleleType::NUC:
+                o << "NUC";
+                break;
+            case AlleleType::MISSING:
+                o << "MISSING";
+                break;
+            case AlleleType::SYMBOLIC_DEL:
+                o << "SYMBOLIC_DEL";
+                break;
+            case AlleleType::SYMBOLIC_OTHER:
+                o << "SYMBOLIC_OTHER";
+                break;
+            case AlleleType::UNKNOWN:
+                o << "UNKNOWN";
+                break;
+        }
+        return o;
     }
 } // namespace bcfhelpers

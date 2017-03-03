@@ -54,8 +54,8 @@ namespace variant {
 /** short variation record */
 typedef struct _RefVar
 {
-    _RefVar() : flags(0) {}
-    _RefVar(int64_t _start, int64_t _end, std::string _alt, int64_t _flags=0) :
+    _RefVar() : start(-1), end(-1), flags(0) {}
+    _RefVar(int64_t _start, int64_t _end, std::string const & _alt, int64_t _flags=0) :
         start(_start), end(_end), alt(_alt), flags(_flags) {
         if(alt == "<DEL>")
         {
@@ -140,7 +140,7 @@ void trimRight(FastaFile const & f, const char * chr, RefVar & rv, bool refpaddi
  * Left/right boundary position can be given to prevent overlap with other variation
  *
  */
-extern void leftShift(FastaFile const & f, const char * chr, RefVar & rv, int64_t pos_min=-1);
+extern void leftShift(FastaFile const & f, const char * chr, RefVar & rv, int64_t pos_min=-1, bool refpadding = false);
 extern void rightShift(FastaFile const & f, const char * chr, RefVar & rv, int64_t pos_max=std::numeric_limits<int64_t>::max());
 
 /**

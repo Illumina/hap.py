@@ -1,5 +1,27 @@
 # Hap.py Release Notes / Change Log
 
+## v0.3.7
+
+| Ticket  | Description                                                                        |
+|---------|------------------------------------------------------------------------------------|
+| HAP-195 | Safer left-shifting and test for leftshifting-related issues added                 |
+| HAP-259 | Som.py alternative GA4GH-based workflow: hap.py --engine scmp                      |
+| HAP-266 | Optional new insertion handling: both surrounding bases must be covered to capture |
+| HAP-267 | Add confident region overlap counts to stratification regions                      |
+| HAP-268 | Fix bamstats.py (missing imports, now working)                                     |
+| HAP-270 | Handle special chars in input filenames better                                     |
+| HAP-274 | Issue #10 allow hap.py to be symlinked                                             |
+| HAP-275 | Somatic mode for hap.py comparisons added: --somatic switch squashes ploidy        |
+| HAP-276 | List-of-float INFO fields were getting rounded to int                              |
+| HAP-279 | Issue #11 Output error message when preprocess fails                               |
+| HAP-280 | Add Subset.Level column to stratified output, stratify into exons and genes        |
+| HAP-281 | Quantify precision and recall separately at truthset boundaries                    |
+| HAP-282 | Output stratified counts also when regions are empty                               |
+| HAP-285 | Hapenum outputs individual variants used in haplotype construction                 |
+| HAP-286 | MacOS X build failure fixed                                                        |
+| HAP-287 | Report F-score in summary CSV and also in summary output                           |
+| HAP-288 | Read vcfeval SDF file from same path as fasta file if present                      |
+
 ## v0.3.6
 
 | Ticket  | Description                                                                        |
