@@ -3,8 +3,6 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-set -e
-
 if [[ -d /illumina ]]; then
     if [[ "$(grep '6\.5' /etc/centos-release)" ]]; then
         . /etc/profile.d/modules.sh
@@ -13,8 +11,7 @@ if [[ -d /illumina ]]; then
     is_lua_modules=$(module --version 2>&1 | grep Lua)
     if [[ -z $is_lua_modules ]]; then
         unset MODULEPATH
-        module use /illumina/sync/software/thirdparty/HPCBIOS/modules/all &> /dev/null
-        module use /illumina/sync/software/unofficial/HPCBIOS/2015q2/modules/all &> /dev/null
+        module use /illumina/sync/software/thirdparty/HPCBIOS/modules/all
         module load Java/1.8.0_40
     else
         ml purge  &> /dev/null
