@@ -381,7 +381,7 @@ If this is successful, the bin subdirectory of your build folder will contain bi
 
 ```bash
 $ python bin/hap.py --version
-Hap.py v0.3.1
+Hap.py v0.3.7
 ```
 
 Note that hap.py will copy all Python source files to the build folder, so when making changes to
@@ -434,7 +434,7 @@ for a list of required packages):
 
 ### OS X
 
-Hap.py builds and passes basic tests on OS X 10.9, but full WGS analyses are not tested for this platform.
+Hap.py builds and passes basic tests on OS X 10.9+, but full WGS analyses are not tested for this platform.
 
 ### Windows
 
