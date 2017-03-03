@@ -23,7 +23,7 @@ no-decompose are two options for pre-processing. Decomposing query variants
 into primitives allows for more granular counting of TPs and FPs. However,
 this pre-processing step also removes phasing information that might have
 been implicit in the blocked variants (when using decomposition, phased SNPs
- / MNPs are allowed to match regardless of phase.
+ / MNPs are allowed to match regardless of phase).
 
 A first observation is that the methods all produce fairly similar results on GATK,
 but as different callers introduce different variant representations, differences
@@ -31,23 +31,24 @@ start to appear. Hap.py's default comparison engine "xcmp" was developed to use
 decomposed variant representations and struggles when variants are not decomposed
 into primitives. Another major difference between xcmp and vcfeval is that xcmp
 can only match complex variants on a per-superlocus granularity (i.e. it corrects
-incorrect benchmarking decision labels for matching superloci). Vcfeval computes
+incorrect benchmarking decision labels for matching superloci only). Vcfeval computes
 an optimal matching subset of variants by minimizing the differences between the
-truth/query haplotype pairs.
+truth/query haplotype pairs and ignores phase, this leads to a larger set of matches
+compared to xcmp, and therefore higher precision and recall.
 
 | SNPs                                                          | Indels                                                        |
 |---------------------------------------------------------------|---------------------------------------------------------------|
-| ![microbench_GATK.SNP.png](microbench_GATK.SNP.png)           | ![microbench_GATK.SNP.png](microbench_GATK.SNP.png)           |
-| ![microbench_Platypus.SNP.png](microbench_Platypus.SNP.png)   | ![microbench_Platypus.SNP.png](microbench_Platypus.SNP.png)   |
-| ![microbench_Freebayes.SNP.png](microbench_Freebayes.SNP.png) | ![microbench_Freebayes.SNP.png](microbench_Freebayes.SNP.png) |
+| ![microbench_GATK.SNP.png](microbench_GATK.SNP.png)           | ![microbench_GATK.INDEL.png](microbench_GATK.INDEL.png)           |
+| ![microbench_Platypus.SNP.png](microbench_Platypus.SNP.png)   | ![microbench_Platypus.INDEL.png](microbench_Platypus.INDEL.png)   |
+| ![microbench_Freebayes.SNP.png](microbench_Freebayes.SNP.png) | ![microbench_Freebayes.INDEL.png](microbench_Freebayes.INDEL.png) |
 
 We can also compare our three methods with and without variant decomposition, using
 vcfeval.
 
 |                    | SNPs                                                              | Indels                                                            |
 |--------------------|-------------------------------------------------------------------|-------------------------------------------------------------------|
-| No decomposition   | ![microbench_callers_nve.SNP.png](microbench_callers_nve.SNP.png) | ![microbench_callers_nve.SNP.png](microbench_callers_nve.SNP.png) |
-| With decomposition | ![microbench_callers_ve.SNP.png](microbench_callers_ve.SNP.png)   | ![microbench_callers_ve.SNP.png](microbench_callers_ve.SNP.png)   |
+| No decomposition   | ![microbench_callers_nve.SNP.png](microbench_callers_nve.SNP.png) | ![microbench_callers_nve.SNP.png](microbench_callers_nve.INDEL.png) |
+| With decomposition | ![microbench_callers_ve.SNP.png](microbench_callers_ve.SNP.png)   | ![microbench_callers_ve.SNP.png](microbench_callers_ve.INDEL.png)   |
 
 Any set of hap.py runs can be plotted like this using the script
 [../src/R/rocplot.Rscript](../src/R/rocplot.Rscript).

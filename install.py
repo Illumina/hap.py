@@ -38,8 +38,8 @@ def create_python_environment(source_dir, args):
     :return: shebang with path to the python executable
     """
     interp = args.python_interp
-    pyver = subprocess.check_output(interp +" -c \"import sys; print ','.join(map(str, list(sys.version_info["
-                                            "0:3])))\"", shell=True).strip().split(",")
+    pyver = subprocess.check_output(interp + " -c \"import sys; print ','.join(map(str, list(sys.version_info["
+                                    "0:3])))\"", shell=True).strip().split(",")
     pyver = tuple(map(int, pyver))
 
     if pyver < (2, 7, 3):
@@ -244,8 +244,8 @@ def main():
                              " which have an outdated certificate file which makes pip fail.")
 
     # C++ compile options
-    setups = map(lambda x: os.path.basename(x).replace("-setup.sh", ""),
-                 glob.glob(os.path.join(source_dir, "src", "sh", "*-setup.sh")))
+    setups = [os.path.basename(x).replace("-setup.sh", "")
+              for x in glob.glob(os.path.join(source_dir, "src", "sh", "*-setup.sh"))]
 
     setups.insert(0, "auto")
 
@@ -288,6 +288,8 @@ def main():
 
     args = parser.parse_args()
 
+    args.targetdir = os.path.abspath(args.targetdir)
+
     if args.python == "virtualenv" and not args.python_venv_dir:
         raise Exception("Please specify a virtualenv target installation directory.")
 
@@ -320,7 +322,7 @@ def main():
             shutil.rmtree(build_dir)
 
     # reheader Python files
-    for root, dirnames, filenames in os.walk(args.targetdir):
+    for root, _, filenames in os.walk(args.targetdir):
         for filename in fnmatch.filter(filenames, '*.py'):
             replace_shebang(os.path.join(root, filename), python_shebang)
 
