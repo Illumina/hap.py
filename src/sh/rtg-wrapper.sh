@@ -10,19 +10,18 @@ if [[ -d /illumina ]]; then
         . /etc/profile.d/modules.sh
     fi
 
-    module purge --force &> /dev/null
-
     is_lua_modules=$(module --version 2>&1 | grep Lua)
     if [[ -z $is_lua_modules ]]; then
         unset MODULEPATH
-        module use /illumina/sync/software/unofficial/HPCBIOS/2016q2/modules/all &> /dev/null
+        module use /illumina/sync/software/thirdparty/HPCBIOS/modules/all &> /dev/null
+        module use /illumina/sync/software/unofficial/HPCBIOS/2015q2/modules/all &> /dev/null
+        module load Java/1.8.0_40
     else
-        module purge  &> /dev/null
-        module load --force HPCBIOS/2016q2 &> /dev/null
-        module load sge/2011.11p1
+        ml purge  &> /dev/null
+        ml HPCBIOS/2015q2
+        ml sge/2011.11p1
+        ml Java/1.8.0_40
     fi
-
-    module load Java/1.8.0_40
 fi
 
 ${DIR}/rtg RTG_MEM=50g $@
