@@ -5,95 +5,115 @@ set -e
 # Find python
 PYTHON=python
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+TLD=$(pwd)/scratch
+ISD=$(pwd)
 
-if [ "$1" == "clean" ]; then
-    rm -rf zlib-1.2.8
-    rm -rf boost_subset_1_58_0
-    rm -rf boost_install
-    rm -rf htslib
-    rm -rf samtools
-    rm -rf bcftools
-    rm -rf rtg-tools
-    exit 0
+if [ "$1" == "rebuild" ];
+then
+    rm -rf ${TLD}
+    rm -rf ${ISD}/include/boost
+    rm -rf ${ISD}/include/htslib
+    rm -rf ${ISD}/bin/bcftools
+    rm -rf ${ISD}/bin/samtools
+    rm -rf ${ISD}/libexec/rtg-tools-install
 fi
 
-if [ ! -f zlib-1.2.8/libz.a ];
+mkdir -p ${TLD}
+if [ ! -f ${TLD}/zlib-1.2.8/libz.a ];
 then
-    tar xzf zlib-1.2.8.tar.gz
+    cd ${TLD}
+    rm -rf ${TLD}/zlib-1.2.8
+    tar xzf ${DIR}/zlib-1.2.8.tar.gz
     cd zlib-1.2.8
-    ./configure
-    cd ..
-    make -j4 -C zlib-1.2.8
+    ./configure --prefix ${ISD}
+    make -j4
+    make -j4 install
 else
-    echo "Zlib already built. To rebuild, delete external/zlib-1.2.8"
+    echo "Zlib already built. To rebuild, delete ${TLD}/zlib-1.2.8"
 fi
 
 if [ -z "$BOOST_ROOT" ];
 then
-    if [ ! -d boost_install ];
+    if [ ! -d ${ISD}/include/boost ]; 
     then
-        tar xjf boost_subset_1_58_0.tar.bz2
+        cd ${TLD}
+        rm -rf ${TLD}/boost_subset_1_58_0
+        tar xjf ${DIR}/boost_subset_1_58_0.tar.bz2
         cd boost_subset_1_58_0
         ./bootstrap.sh
-        ./b2 link=static -j4 --prefix=$DIR/boost_install -sZLIB_SOURCE=$DIR/zlib-1.2.8
-        ./b2 link=static -j4 --prefix=$DIR/boost_install install -sZLIB_SOURCE=$DIR/zlib-1.2.8
-        cd ..
+        ./b2 link=static -j4 --prefix=$ISD -sZLIB_SOURCE=$TLD
+        ./b2 link=static -j4 --prefix=$ISD install -sZLIB_SOURCE=$TLD/zlib-1.2.8
     else
-        echo "Boost already built. To rebuild, delete external/boost_install"
+        echo "Boost already built. To rebuild, delete ${ISD}/include/boost"
     fi
 else
     echo "BOOST_ROOT is set, not building boost."
 fi
 
-# Get from git
-#
-# git clone git@github.com:samtools/htslib.git
-# git clone git@github.com:samtools/bcftools.git
-# git clone git@github.com:samtools/samtools.git
-
-if [ ! -f htslib/libhts.so ] || [ -f htslib/libhts.dyld ] ;
+if [ ! -d ${ISD}/include/htslib ] ;
 then
-    tar xzf htslib.tar.gz
-    make -j4 -C htslib
+    cd ${TLD}
+    rm -rf ${TLD}/htslib
+    tar xzf ${DIR}/htslib.tar.gz
+    cd htslib
+    autoconf
+    ./configure --prefix=${ISD} \
+        CFLAGS=-I${ISD}/include \
+        CXXFLAGS=-I${ISD}/include \
+        LDFLAGS=-L${ISD}/lib \
+        --disable-plugins \
+        --disable-libcurl
+    make -j4
+    make -j4 install
 
     # windows shared folder workaround
-    if [ -e "htslib/libhts.so" ] && [ ! -e "htslib/libhts.so.1" ] ;
+    if [ -e "${ISD}/lib/libhts.so" ] && [ ! -e "${ISD}/lib/libhts.so.1" ] ;
     then
-        cp htslib/libhts.so htslib/libhts.so.1
+        cp ${ISD}/lib/libhts.so ${ISD}/lib/libhts.so.1
     fi
 else
-    echo "HTSLIB already built. To rebuild, delete external/htslib"
+    echo "HTSLIB already built. To rebuild, delete ${ISD}/include/htslib"
 fi
 
-if [ ! -f bcftools/bcftools ];
+if [ ! -f ${ISD}/bin/bcftools ];
 then
-    tar xzf bcftools.tar.gz
-    make -j4 -C bcftools
+    cd ${TLD}
+    rm -rf ${TLD}/bcftools
+    tar xzf ${DIR}/bcftools.tar.gz
+    cd bcftools
+    make -j4 prefix=${ISD}
+    make -j4 prefix=${ISD} install
 else
-    echo "bcftools already built. To rebuild, delete external/bcftools"
+    echo "bcftools already built. To rebuild, delete ${ISD}/bin/bcftools"
 fi
 
-if [ ! -f samtools/samtools ];
+if [ ! -f ${ISD}/bin/samtools ];
 then
-    tar xzf samtools.tar.gz
-    # Samtools 1.3 seems to work out of the box
-    # if [[ "$HAPPY_PATCH_SAMTOOLS" == "yes" ]]; then
-    #     echo "Patching Samtools for compatibility with EasyBuild"
-    #     patch -p0 samtools/Makefile < SAMtools_Makefile.patch
-    # fi
-    make -j4 -C samtools
+    cd ${TLD}
+    rm -rf ${TLD}/samtools
+    tar xzf ${DIR}/samtools.tar.gz
+    cd samtools
+    ./configure --prefix=${ISD} \
+        --with-htslib=${TLD}/htslib \
+        --without-curses \
+        CFLAGS=-I${ISD}/include \
+        CPPFLAGS=-I${ISD}/include \
+        LDFLAGS=-L${ISD}/lib 
+    make -j4 
+    make -j4 install
 else
-    echo "samtools already built. To rebuild, delete external/samtools"
+    echo "samtools already built. To rebuild, delete ${ISD}/bin/samtools"
 fi
 
 # get vcfeval
 # https://github.com/RealTimeGenomics/rtg-tools/archive/ga4gh-test.zip
 if [[ ! -z $BUILD_VCFEVAL ]]; then
-    if [[ ! -d rtg-tools/rtg-tools-install ]]; then
+    if [[ ! -d ${ISD}/libexec/rtg-tools-install ]]; then
         echo "Building rtg-tools"
-        mkdir -p rtg-tools
+        cd ${TLD}
+        mkdir -p ${TLD}/rtg-tools
         cd rtg-tools
-        wget http://github.com/RealTimeGenomics/rtg-tools/archive/3.7.1.tar.gz -O rtg-tools.tar.gz
+        wget http://github.com/RealTimeGenomics/rtg-tools/archive/3.7.1.tar.gz -O ${TLD}/rtg-tools/rtg-tools.tar.gz
         tar xvf rtg-tools.tar.gz
         cd rtg-tools-3.7.1
 
@@ -107,17 +127,15 @@ if [[ ! -z $BUILD_VCFEVAL ]]; then
         RTG_ZIPFILE=$(ls rtg-tools-3.7.1/dist/*-nojre.zip | head -1)
         RTG_BASE=$(basename $RTG_ZIPFILE -nojre.zip)
         jar xvf $RTG_ZIPFILE
-        mv $RTG_BASE rtg-tools-install
-        cp ../rtg.cfg rtg-tools-install
-        chmod +x rtg-tools-install/rtg
-        cd ..
+        mv $RTG_BASE ${ISD}/libexec/rtg-tools-install
+        cp ${DIR}/rtg.cfg ${ISD}/libexec/rtg-tools-install
+        chmod +x ${ISD}/libexec/rtg-tools-install/rtg
     else
-        echo "rtg-tools is already built. To rebuild, delete external/rtg-tools"
+        echo "rtg-tools is already built. To rebuild, delete ${ISD}/libexec/rtg-tools-install"
     fi
     if [[ -f ${VCFEVAL_WRAPPER} ]]; then
-        cd rtg-tools
         echo "using wrapper for rtg-tools: ${VCFEVAL_WRAPPER}"
-        cp ${VCFEVAL_WRAPPER} rtg-tools-install/rtg-wrapper.sh
-        chmod +x rtg-tools-install/rtg
+        cp ${VCFEVAL_WRAPPER} ${ISD}/libexec/rtg-tools-install/rtg-wrapper.sh
+        chmod +x ${ISD}/libexec/rtg-tools-install/rtg-wrapper.sh 
     fi
 fi

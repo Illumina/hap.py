@@ -138,17 +138,8 @@ def build_external(source_dir, args):
 
     setupscript += boost_prefix
 
-    # remove builds
-    if args.external_build:
-        for x in ["zlib-1.2.8", "htslib", "bcftools", "samtools", "boost_subset_1_58_0", "boost_install", "rtg-tools"]:
-            try:
-                shutil.rmtree(os.path.join(source_dir, "external", x))
-                print >>sys.stderr, "Deleted " + os.path.join(source_dir, "external", x)
-            except:
-                pass
-
-    to_run = "cd %s && %s ./make_dependencies.sh" % (os.path.join(source_dir, "external"),
-                                                     setupscript)
+    to_run = "cd %s && %s ./make_dependencies.sh rebuild" % (os.path.join(source_dir, "external"),
+                                                             setupscript)
     print >>sys.stderr, to_run
     subprocess.check_call(to_run, shell=True)
 
