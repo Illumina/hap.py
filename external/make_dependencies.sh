@@ -56,7 +56,6 @@ then
     rm -rf ${TLD}/htslib
     tar xzf ${DIR}/htslib.tar.gz
     cd htslib
-    autoconf
     ./configure --prefix=${ISD} \
         CFLAGS=-I${ISD}/include \
         CXXFLAGS=-I${ISD}/include \
