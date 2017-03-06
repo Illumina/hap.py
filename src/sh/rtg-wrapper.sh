@@ -3,14 +3,22 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-set -e
+if [[ -d /illumina ]]; then
+    if [[ "$(grep '6\.5' /etc/centos-release)" ]]; then
+        . /etc/profile.d/modules.sh
+    fi
 
-module purge
-unset MODULEPATH
-module use /illumina/sync/software/thirdparty/HPCBIOS/modules/all
-module use /illumina/sync/software/thirdparty/HPCBIOS.2015q4/modules/all
-module use ~/.local/easybuild/modules/all
-
-module load Java/1.8.0_40
+    is_lua_modules=$(module --version 2>&1 | grep Lua)
+    if [[ -z $is_lua_modules ]]; then
+        unset MODULEPATH
+        module use /illumina/sync/software/thirdparty/HPCBIOS/modules/all
+        module load Java/1.8.0_40
+    else
+        ml purge  &> /dev/null
+        ml HPCBIOS/2015q2
+        ml sge/2011.11p1
+        ml Java/1.8.0_40
+    fi
+fi
 
 ${DIR}/rtg RTG_MEM=50g $@

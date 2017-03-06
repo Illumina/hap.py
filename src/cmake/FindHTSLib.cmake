@@ -40,10 +40,10 @@ if( DEFINED ENV{HTSLIB_ROOT} )
     set(HTSLIB_FOUND TRUE)
 else()
     find_path(HTSLIB_INCLUDE_DIR htslib/hts.h
-              HINTS "${CMAKE_SOURCE_DIR}/external/htslib")
+              HINTS "${CMAKE_BINARY_DIR}/include")
 
 	  find_library(HTSLIB_LIBRARY NAMES libhts.a
-                 HINTS "${CMAKE_SOURCE_DIR}/external/htslib")
+                 HINTS "${CMAKE_BINARY_DIR}/lib")
 
     set(HTSLIB_LIBRARIES ${HTSLIB_LIBRARY} )
     set(HTSLIB_INCLUDE_DIRS ${HTSLIB_INCLUDE_DIR} )
