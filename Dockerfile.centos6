@@ -13,12 +13,13 @@ RUN  mkdir -p /opt/illumina/haplocompare && \
 
 ENV PATH /opt/miniconda2/bin:${PATH}
 
-RUN  conda config --add channels bioconda && \
-     conda install -y cython numpy scipy biopython matplotlib pandas pysam bx-python pyvcf cyvcf2 nose && \
-     wget http://people.centos.org/tru/devtools-2/devtools-2.repo -O /etc/yum.repos.d/devtools-2.repo && \
-     yum install -y devtoolset-2-gcc devtoolset-2-binutils && \
-     yum install -y devtoolset-2-gcc-c++ devtoolset-2-gcc-gfortran && \
+RUN  yum install -y centos-release-scl && \
+     yum install -y devtoolset-3-gcc devtoolset-3-binutils && \
+     yum install -y devtoolset-3-gcc-c++ devtoolset-3-gcc-gfortran && \
      yum install -y cmake bzip2-devel ncurses-devel zlib-devel
+
+RUN  conda config --add channels bioconda && \
+     conda install -y cython numpy scipy biopython matplotlib pandas pysam bx-python pyvcf cyvcf2 nose
 
 RUN yum upgrade -y && yum update -y && yum clean all
 
@@ -47,4 +48,4 @@ RUN  mkdir -p /opt/illumina/haplocompare/data && \
 
 ENV HG19 /opt/illumina/haplocompare/data/hg19.fa
 
-RUN scl enable devtoolset-2 'python install.py /opt/illumina/haplocompare/hap.py'
+RUN scl enable devtoolset-3 'python install.py /opt/illumina/haplocompare/hap.py --with-rtgtools'
