@@ -16,7 +16,7 @@ ENV PATH /opt/miniconda2/bin:${PATH}
 RUN  yum install -y centos-release-scl && \
      yum install -y devtoolset-3-gcc devtoolset-3-binutils && \
      yum install -y devtoolset-3-gcc-c++ devtoolset-3-gcc-gfortran && \
-     yum install -y cmake bzip2-devel ncurses-devel zlib-devel
+     yum install -y cmake bzip2-devel ncurses-devel zlib-devel git
 
 RUN  conda config --add channels bioconda && \
      conda install -y cython numpy scipy biopython matplotlib pandas pysam bx-python pyvcf cyvcf2 nose
@@ -39,8 +39,15 @@ RUN  cd external && \
 
 ENV JDK_VERSION 8u11
 ENV JDK_BUILD_VERSION b12
-RUN curl -LO "http://download.oracle.com/otn-pub/java/jdk/$JDK_VERSION-$JDK_BUILD_VERSION/jdk-$JDK_VERSION-linux-x64.rpm" -H 'Cookie: oraclelicense=accept-securebackup-cookie' && rpm -i jdk-$JDK_VERSION-linux-x64.rpm; rm -f jdk-$JDK_VERSION-linux-x64.rpm; yum clean all
+RUN curl -LO "http://download.oracle.com/otn-pub/java/jdk/$JDK_VERSION-$JDK_BUILD_VERSION/jdk-$JDK_VERSION-linux-x64.rpm" -H 'Cookie: oraclelicense=accept-securebackup-cookie' && rpm -i jdk-$JDK_VERSION-linux-x64.rpm && rm -f jdk-$JDK_VERSION-linux-x64.rpm && yum clean all
 ENV JAVA_HOME /usr/java/default
+
+# get + install ant
+WORKDIR /opt
+RUN wget http://archive.apache.org/dist/ant/binaries/apache-ant-1.9.7-bin.tar.gz && \
+    tar xzf apache-ant-1.9.7-bin.tar.gz && \
+    rm apache-ant-1.9.7-bin.tar.gz
+ENV PATH $PATH:/opt/apache-ant-1.9.7/bin
 
 RUN  mkdir -p /opt/illumina/haplocompare/data && \
      cd /opt/illumina/haplocompare/data && \
@@ -48,4 +55,5 @@ RUN  mkdir -p /opt/illumina/haplocompare/data && \
 
 ENV HG19 /opt/illumina/haplocompare/data/hg19.fa
 
+WORKDIR /opt/illumina/haplocompare/hap.py-source
 RUN scl enable devtoolset-3 'python install.py /opt/illumina/haplocompare/hap.py --with-rtgtools'
