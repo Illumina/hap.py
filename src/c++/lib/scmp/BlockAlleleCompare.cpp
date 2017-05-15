@@ -50,6 +50,8 @@ namespace variant {
         bool qq_name_is_info;
         bool qq_name_is_qual;
 
+        ComparisonMode comparison_mode = ALLELES;
+
         std::list<bcfhelpers::p_bcf1> buffered;
 
         // track chrom / pos
@@ -119,6 +121,14 @@ namespace variant {
     }
 
     /**
+     * Set the comparison mode
+     */
+    void BlockAlleleCompare::setComparisonMode(ComparisonMode mode)
+    {
+        _impl->comparison_mode = mode;
+    }
+
+    /**
      * Add a BCF record. Will duplicate the record and keep the copy
      * @param v bcf record
      */
@@ -159,27 +169,42 @@ namespace variant {
                                    &query_alleles,
                                    &truth_mapped]()
         {
-            AlleleMatcher allele_matcher(_impl->ref_fasta.getFilename(), current_chr);
+            std::unique_ptr<HapSetMatcher> p_matcher;
+
+            switch(_impl->comparison_mode)
+            {
+                case ALLELES:
+                    p_matcher.reset(new AlleleMatcher (_impl->ref_fasta.getFilename(), current_chr));
+                    break;
+                case DISTANCE:
+                    p_matcher.reset(new AlleleMatcher (_impl->ref_fasta.getFilename(),
+                                                       current_chr,
+                                                       30  // TODO add parameter
+                    ));
+                    break;
+                default:
+                    error("Invalid comparison mode: %i", _impl->comparison_mode);
+            }
 
             std::unordered_map<size_t, bcf1_t*> comparison_mapping;
             std::unordered_map<size_t, int>     comparison_mapping_side;
 
             for(auto x = truth_alleles.begin(); x != truth_alleles.end(); ++x)
             {
-                const size_t v_id = allele_matcher.addLeft(x->first, 1);
+                const size_t v_id = matcher.addLeft(x->first, 1);
                 comparison_mapping[v_id] = x->second;
                 comparison_mapping_side[v_id] = 0;
             }
 
             for(auto x = query_alleles.begin(); x != query_alleles.end(); ++x)
             {
-                const size_t v_id = allele_matcher.addRight(x->first, 1);
+                const size_t v_id = matcher.addRight(x->first, 1);
                 comparison_mapping[v_id] = x->second;
                 comparison_mapping_side[v_id] = 1;
             }
 
             HapAssignment assignment;
-            allele_matcher.optimize(assignment);
+            matcher.optimize(assignment);
 
             struct Updates {
                 std::vector<std::string> bd = {".", "."};

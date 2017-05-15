@@ -73,6 +73,12 @@ namespace variant {
         bool operator==(BlockAlleleCompare const & rhs) const;
         bool operator<(BlockAlleleCompare const & rhs) const;
 
+        enum ComparisonMode {ALLELES, DISTANCE};
+        /**
+         * Set the comparison mode
+         */
+        void setComparisonMode(ComparisonMode mode);
+
         /**
          * Add a BCF record. Will duplicate the record and keep the copy
          * @param v bcf record
