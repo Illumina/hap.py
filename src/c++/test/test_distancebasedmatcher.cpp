@@ -45,12 +45,9 @@
 
 #include <iostream>
 #include <fstream>
-#include <sstream>
-#include <cstdlib>
 #include <bitset>
 
-#include "HapSetMatcher.hh"
-#include "AlleleMatcher.hh"
+#include "DistanceBasedMatcher.hh"
 
 
 using namespace variant;
@@ -64,21 +61,28 @@ BOOST_AUTO_TEST_CASE(testDistanceBasedMatcher)
                                  / boost::filesystem::path("data")
                                  / boost::filesystem::path("chrQ.fa");
 
-    AlleleMatcher am(tp.string(), "chrQ", 3);
+    DistanceBasedMatcher am(tp.string(), "chrQ", 3);
 
-    am.addLeft(RefVar(2, 2, "T"), 1);    // TP
-    am.addLeft(RefVar(11, 11, "G"), 1);  // FN
-    am.addRight(RefVar(5, 5, "G"), 1);   // TP
-    am.addRight(RefVar(7, 7, "G"), 1);   // FP
+    const auto l1 = am.addLeft(RefVar(2, 2, "T"), 1);    // TP
+    const auto l2 = am.addLeft(RefVar(11, 11, "G"), 1);  // FN
+    const auto r1 = am.addRight(RefVar(5, 5, "G"), 1);   // TP
+    const auto r2 = am.addRight(RefVar(7, 7, "G"), 1);   // FP
 
     HapAssignment assignment;
     am.reset(assignment);
+
     BOOST_CHECK_EQUAL(am.optimize(assignment), (unsigned) 2l);
+
+    BOOST_CHECK_EQUAL(assignment.variant_assignments[l1], (uint8_t)1);
+    BOOST_CHECK_EQUAL(assignment.variant_assignments[r1], (uint8_t)1);
+    BOOST_CHECK_EQUAL(assignment.variant_assignments[l2], (uint8_t)0);
+    BOOST_CHECK_EQUAL(assignment.variant_assignments[r2], (uint8_t)0);
+
     BOOST_CHECK_EQUAL(assignment.variant_assignments.size(), (unsigned) 4l);
 
     auto pass_and_score = am.checkAndScore(assignment);
     BOOST_CHECK_EQUAL(pass_and_score.first, true);
     BOOST_CHECK_EQUAL(pass_and_score.second, (unsigned) 2l);
-    BOOST_CHECK_EQUAL(am.numberOfPossibleAssignments(), (unsigned) (2l * 2l));
+    BOOST_CHECK_EQUAL(am.numberOfPossibleAssignments(), (unsigned) (4l * 4l));
 }
 
