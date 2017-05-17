@@ -67,6 +67,9 @@ namespace variant
          * update / optimize assignments
          */
         virtual size_t optimize(HapAssignment &assignment);
+
+        virtual std::pair<bool, size_t> checkAndScore(HapAssignment const & assignment);
+
     private:
         int max_distance;
     };

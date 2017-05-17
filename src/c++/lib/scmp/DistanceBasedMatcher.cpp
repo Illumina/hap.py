@@ -90,4 +90,16 @@ namespace variant
         return _impl->scoreAssignment(assignment);
     }
 
+    /**
+     * update / optimize assignments
+     *
+     * return < true/false if assignment produces match, number of matched variants >
+     * Total number of variants is in assignment.variant_assignments.size()
+     */
+    std::pair<bool, size_t> DistanceBasedMatcher::checkAndScore(HapAssignment const & assignment)
+    {
+        const bool valid = true;
+        const size_t score = _impl->scoreAssignment(assignment);
+        return std::make_pair(valid, score);
+    }
 }
