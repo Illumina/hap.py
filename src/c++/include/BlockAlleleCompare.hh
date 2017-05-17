@@ -43,6 +43,7 @@
 #include <htslib/vcf.h>
 
 #include "Variant.hh"
+#include "json/json.h"
 
 namespace variant {
 
@@ -74,10 +75,18 @@ namespace variant {
         bool operator<(BlockAlleleCompare const & rhs) const;
 
         enum ComparisonMode {ALLELES, DISTANCE};
+
         /**
-         * Set the comparison mode
+         * Set the comparison mode, and reset the
+         * comparison parameters to default.
          */
         void setComparisonMode(ComparisonMode mode);
+
+        /**
+         * Set comparison parameters
+         * @param params parameters for the comparison method
+         */
+        void setComparisonParameters(Json::Value const & params);
 
         /**
          * Add a BCF record. Will duplicate the record and keep the copy

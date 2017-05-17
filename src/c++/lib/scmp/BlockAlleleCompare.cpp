@@ -36,6 +36,7 @@
 #include <htslib/vcf.h>
 #include "BlockAlleleCompare.hh"
 #include "AlleleMatcher.hh"
+#include "DistanceBasedMatcher.hh"
 
 #include "helpers/BCFHelpers.hh"
 
@@ -51,6 +52,7 @@ namespace variant {
         bool qq_name_is_qual;
 
         ComparisonMode comparison_mode = ALLELES;
+        Json::Value comparison_parameters;
 
         std::list<bcfhelpers::p_bcf1> buffered;
 
@@ -126,6 +128,26 @@ namespace variant {
     void BlockAlleleCompare::setComparisonMode(ComparisonMode mode)
     {
         _impl->comparison_mode = mode;
+        _impl->comparison_parameters = Json::Value();
+        switch(mode)
+        {
+            case ALLELES:
+                break;
+            case DISTANCE:
+                _impl->comparison_parameters["max_distance"] = 30;
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * Set comparison parameters
+     * @param params parameters for the comparison method
+     */
+    void BlockAlleleCompare::setComparisonParameters(Json::Value const & params)
+    {
+        _impl->comparison_parameters = params;
     }
 
     /**
@@ -174,12 +196,13 @@ namespace variant {
             switch(_impl->comparison_mode)
             {
                 case ALLELES:
-                    p_matcher.reset(new AlleleMatcher (_impl->ref_fasta.getFilename(), current_chr));
+                    p_matcher.reset(new AlleleMatcher (_impl->ref_fasta.getFilename(),
+                                                       current_chr));
                     break;
                 case DISTANCE:
-                    p_matcher.reset(new AlleleMatcher (_impl->ref_fasta.getFilename(),
-                                                       current_chr,
-                                                       30  // TODO add parameter
+                    p_matcher.reset(new DistanceBasedMatcher (_impl->ref_fasta.getFilename(),
+                                                              current_chr,
+                                                              _impl->comparison_parameters["max_distance"].asInt()
                     ));
                     break;
                 default:
@@ -191,20 +214,20 @@ namespace variant {
 
             for(auto x = truth_alleles.begin(); x != truth_alleles.end(); ++x)
             {
-                const size_t v_id = matcher.addLeft(x->first, 1);
+                const size_t v_id = p_matcher->addLeft(x->first, 1);
                 comparison_mapping[v_id] = x->second;
                 comparison_mapping_side[v_id] = 0;
             }
 
             for(auto x = query_alleles.begin(); x != query_alleles.end(); ++x)
             {
-                const size_t v_id = matcher.addRight(x->first, 1);
+                const size_t v_id = p_matcher->addRight(x->first, 1);
                 comparison_mapping[v_id] = x->second;
                 comparison_mapping_side[v_id] = 1;
             }
 
             HapAssignment assignment;
-            matcher.optimize(assignment);
+            p_matcher->optimize(assignment);
 
             struct Updates {
                 std::vector<std::string> bd = {".", "."};

@@ -82,6 +82,10 @@ namespace variant
             {
                 assignment.variant_assignments[v_id] = 1;
             }
+            else
+            {
+                assignment.variant_assignments[v_id] = 0;
+            }
         }
         return _impl->scoreAssignment(assignment);
     }

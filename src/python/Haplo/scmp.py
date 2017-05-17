@@ -16,16 +16,9 @@
 # Peter Krusche <pkrusche@illumina.com>
 #
 
-import os
-import logging
-import subprocess
-import tempfile
-import shutil
 import logging
 import traceback
-import pipes
 
-import Haplo.version
 
 from Tools.bcftools import runBcftools
 from Tools import LoggingWriter
@@ -36,14 +29,24 @@ def runSCmp(vcf1, vcf2, target, args):
     """
 
     try:
+        if args.engine == "scmp-distance":
+            cmode = "distance"
+        else:
+            cmode = "alleles"
+
         # change GTs so we can compare them
         vargs = ["merge", "--force-samples", vcf1, vcf2,
-                 "|", "scmp", "-", "-r", args.ref,
+                 "|",
+                 "scmp",
+                 "-M", cmode,
+                 "-", "-r", args.ref,
                  "--threads", str(args.threads),
                  "-o", target]
 
         if args.roc:
             vargs += ["--q", args.roc]
+
+        vargs += ["--distance-maxdist", str(args.engine_scmp_distance)]
 
         runBcftools(*vargs)
 

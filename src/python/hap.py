@@ -114,7 +114,7 @@ def main():
                         help="Number of threads to use.")
 
     parser.add_argument("--engine", dest="engine",
-                        default="xcmp", choices=["xcmp", "vcfeval", "scmp-somatic"],
+                        default="xcmp", choices=["xcmp", "vcfeval", "scmp-somatic", "scmp-distance"],
                         help="Comparison engine to use.")
 
     parser.add_argument("--engine-vcfeval-path", dest="engine_vcfeval", required=False,
@@ -126,6 +126,9 @@ def main():
                              "(SDF -- run rtg format -o ref.SDF ref.fa). You can specify this here "
                              "to save time when running hap.py with vcfeval. If no SDF folder is "
                              "specified, hap.py will create a temporary one.")
+
+    parser.add_argument("--scmp-distance", dest="engine_scmp_distance", required=False, default=30,
+                        help="For distance-based matching, this is the distance between variants to use.")
 
     if Tools.has_sge:
         parser.add_argument("--force-interactive", dest="force_interactive",
@@ -234,7 +237,8 @@ def main():
         args.preprocessing_decompose = False
 
     # xcmp/scmp support bcf; others don't
-    if args.engine in ["xcmp", "scmp-somatic"] and (args.bcf or (args.vcf1.endswith(".bcf") and args.vcf2.endswith(".bcf"))):
+    if args.engine in ["xcmp", "scmp-somatic", "scmp-distance"] \
+            and (args.bcf or (args.vcf1.endswith(".bcf") and args.vcf2.endswith(".bcf"))):
         internal_format_suffix = ".bcf"
     else:
         internal_format_suffix = ".vcf.gz"
@@ -433,7 +437,7 @@ def main():
             tempfiles += Haplo.vcfeval.runVCFEval(args.vcf1, args.vcf2, output_name, args)
             # passed to quantify
             args.type = "ga4gh"
-        elif args.engine == "scmp-somatic":
+        elif args.engine.startswith("scmp"):
             tempfiles += Haplo.scmp.runSCmp(args.vcf1, args.vcf2, output_name, args)
             # passed to quantify
             args.type = "ga4gh"
