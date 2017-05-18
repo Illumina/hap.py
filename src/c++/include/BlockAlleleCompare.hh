@@ -74,7 +74,7 @@ namespace variant {
         bool operator==(BlockAlleleCompare const & rhs) const;
         bool operator<(BlockAlleleCompare const & rhs) const;
 
-        enum ComparisonMode {ALLELES, DISTANCE};
+        enum ComparisonMode {ALLELES, DISTANCE, ENUMERATE_DIPLOID};
 
         /**
          * Set the comparison mode, and reset the

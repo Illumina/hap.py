@@ -205,6 +205,13 @@ namespace variant {
                                                               _impl->comparison_parameters["max_distance"].asInt()
                     ));
                     break;
+                case ENUMERATE_DIPLOID:
+                    p_matcher.reset(new HapSetMatcher(_impl->ref_fasta.getFilename(),
+                                                      current_chr,
+                                                      2,
+                                                      _impl->comparison_parameters["max_enum"].asInt()
+                                                      ));
+                    break;
                 default:
                     error("Invalid comparison mode: %i", _impl->comparison_mode);
             }

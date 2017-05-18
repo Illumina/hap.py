@@ -118,9 +118,12 @@ int main(int argc, char *argv[])
                     ("min-var-distance", po::value<int>(), "Minimum distance between variants allowed to end up "
                             "in separate blocks")
                     ("comparison-mode,M", po::value<std::string>()->default_value("allele"),
-                     "How to compare variants: allele (default) / distance")
+                     "How to compare variants: allele (default) / distance / enumerate")
                     ("distance-maxdist", po::value<int>()->default_value(50),
-                     "For distance comparison, this is the maximum distance between variants s.t. they get matched.");
+                     "For distance comparison, this is the maximum distance between variants s.t. they get matched.")
+                    ("enumerate-maxenum", po::value<int>()->default_value(1 << 16),
+                     "For haplotype enumeration comparison, this is the number of possibilities to enumerate before giving up")
+                    ;
 
             po::positional_options_description popts;
             popts.add("input-file", 1);
@@ -233,6 +236,12 @@ int main(int argc, char *argv[])
             else if(comparison_mode == "alleles")
             {
                 cmode = BlockAlleleCompare::ALLELES;
+            }
+            else if(comparison_mode == "enumerate")
+            {
+                cmode = BlockAlleleCompare::ENUMERATE_DIPLOID;
+                const int max_enum = vm["distance-maxdist"].as<int>();
+                cmode_params["max_enum"] = max_enum;
             }
             else
             {
