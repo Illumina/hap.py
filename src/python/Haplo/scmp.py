@@ -16,8 +16,10 @@
 # Peter Krusche <pkrusche@illumina.com>
 #
 
+import os
 import logging
 import traceback
+import tempfile
 
 
 from Tools.bcftools import runBcftools
@@ -34,21 +36,27 @@ def runSCmp(vcf1, vcf2, target, args):
         else:
             cmode = "alleles"
 
-        # change GTs so we can compare them
-        vargs = ["merge", "--force-samples", vcf1, vcf2,
-                 "|",
-                 "scmp",
-                 "-M", cmode,
-                 "-", "-r", args.ref,
-                 "--threads", str(args.threads),
-                 "-o", target]
+        tf = tempfile.NamedTemporaryFile(delete=False)
+        tf.close()
+        try:
+            # change GTs so we can compare them
+            vargs = ["merge", "--force-samples", vcf1, vcf2,
+                     "-o", tf.name]
+            runBcftools(*vargs)
+            vargs = ["view", tf.name,
+                     "|",
+                     "scmp",
+                     "-M", cmode,
+                     "-", "-r", args.ref,
+                     "--threads", str(args.threads),
+                     "-o", target]
+            if args.roc:
+                vargs += ["--q", args.roc]
 
-        if args.roc:
-            vargs += ["--q", args.roc]
-
-        vargs += ["--distance-maxdist", str(args.engine_scmp_distance)]
-
-        runBcftools(*vargs)
+            vargs += ["--distance-maxdist", str(args.engine_scmp_distance)]
+            runBcftools(*vargs)
+        finally:
+            os.remove(tf.name)
 
         if target.endswith(".vcf.gz"):
             runBcftools("index", "-t", target)
