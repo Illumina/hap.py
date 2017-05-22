@@ -444,9 +444,39 @@ def main():
         else:
             raise Exception("Unknown comparison engine: %s" % args.engine)
 
+
+        if args.preserve_info and args.engine == "vcfeval":
+            # if we use vcfeval we need to merge the INFO fields back in.
+            tf = tempfile.NamedTemporaryFile(suffix=".txt", delete=False)
+            tempfiles.append(tf)
+            print >> tf, "TRUTH_IN"
+            print >> tf, "QUERY_IN"
+            tf.close()
+            info_file = tempfile.NamedTemporaryFile(suffix=".vcf.gz", delete=False)
+            tempfiles.append(info_file.name)
+            info_file.close()
+
+            bcftools.runBcftools("merge", args.vcf1, args.vcf2,
+                        "--force-samples", "-m", "all",
+                        "|", "bcftools", "reheader", "-s", tf.name,
+                        "|", "bcftools", "view",
+                        "-o", info_file.name, "-O", "z")
+            bcftools.runBcftools("index", info_file.name)
+
+            merged_info_file = tempfile.NamedTemporaryFile(suffix=".vcf.gz", delete=False)
+            tempfiles.append(merged_info_file.name)
+            merged_info_file.close()
+
+            bcftools.runBcftools("merge", output_vcf, info_file.name,
+                        "-m", "all",
+                        "|", "bcftools", "view", "-s", "^TRUTH_IN,QUERY_IN", "-X", "-U",
+                        "-o", merged_info_file.name, "-O", "z")
+            output_name = merged_info_file.name
+
         args.in_vcf = [output_name]
         args.runner = "hap.py"
         qfy.quantify(args)
+
 
     finally:
         if args.delete_scratch:
