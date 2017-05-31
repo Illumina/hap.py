@@ -55,6 +55,7 @@ fi
 ${PYTHON} ${HCDIR}/qfy.py \
            ${TMP_OUT}.vcf.gz \
            -o ${TMP_OUT}.qfy  \
+           -r ${DIR}/../../example/chr21.fa \
            -f ${DIR}/../../example/happy/PG_Conf_chr21.bed.gz \
            -t ga4gh -X --verbose
 
