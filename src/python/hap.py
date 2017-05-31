@@ -75,7 +75,6 @@ def main():
                         default=True, action="store_false",
                         help="Filename prefix for scratch report output.")
 
-
     # add quantification args
     qfy.updateArgs(parser)
 
@@ -284,7 +283,8 @@ def main():
                                      args.preprocess_window,
                                      args.threads,
                                      args.gender,
-                                     args.somatic_allele_conversion)
+                                     args.somatic_allele_conversion,
+                                     "TRUTH")
 
         args.vcf1 = ttf.name
 
@@ -349,9 +349,9 @@ def main():
                        args.preprocessing_norm,
                        args.preprocess_window,
                        args.threads,
-                       args.gender,
-                       args.somatic_allele_conversion)  # same gender as truth above
-
+                       args.gender,  # same gender as truth above
+                       args.somatic_allele_conversion,
+                       "QUERY")
         args.vcf2 = qtf.name
         h2 = vcfextract.extractHeadersJSON(args.vcf2)
 

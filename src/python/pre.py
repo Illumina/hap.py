@@ -74,7 +74,8 @@ def preprocess(vcf_input,
                windowsize=10000,
                threads=1,
                gender=None,
-               somatic_allele_conversion=False):
+               somatic_allele_conversion=False,
+               sample="SAMPLE"):
     """ Preprocess a single VCF file
 
     :param vcf_input: input file name
@@ -92,6 +93,7 @@ def preprocess(vcf_input,
     :param threads: number of threads to for preprcessing
     :param gender: the gender of the sample ("male" / "female" / "auto" / None)
     :param somatic_allele_conversion: convert somatic alleles -- False / half / het / hemi / hom
+    :param sample: when using somatic_allele_conversion, name of the output sample
 
     :return: the gender if auto-determined (otherwise the same value as gender parameter)
     """
@@ -188,7 +190,8 @@ def preprocess(vcf_input,
                       targets,
                       reference,
                       required_filters,
-                      somatic_allele_conversion=somatic_allele_conversion)
+                      somatic_allele_conversion=somatic_allele_conversion,
+                      sample=sample)
 
         if leftshift or decompose or gender == "male":
             Haplo.partialcredit.partialCredit(vtf,
