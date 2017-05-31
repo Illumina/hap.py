@@ -89,7 +89,10 @@ def main():
                         default=10000, type=int,
                         help="Preprocessing window size (variants further apart than that size are not expected to interfere).")
     parser.add_argument("--adjust-conf-regions", dest="preprocessing_truth_confregions", action="store_true", default=True,
-                        help="Adjust confident regions to include variant locations.")
+                        help="Adjust confident regions to include variant locations. Note this will only include variants "
+                             "that are included in the CONF regions already when viewing with bcftools; this option only "
+                             "makes sure insertions are padded correctly in the CONF regions (to capture these, both the "
+                             "base before and after must be contained in the bed file).")
     parser.add_argument("--no-adjust-conf-regions", dest="preprocessing_truth_confregions", action="store_false",
                         help="Adjust confident regions to include variant locations.")
 
@@ -199,7 +202,7 @@ def main():
     if not args.ref:
         args.ref = Tools.defaultReference()
 
-    if not os.path.exists(args.ref):
+    if not args.ref or not os.path.exists(args.ref):
         raise Exception("Please specify a valid reference path using -r.")
 
     if not args.reports_prefix:

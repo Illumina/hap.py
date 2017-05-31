@@ -343,15 +343,8 @@ chrQ	110	tp	A	ATT	.	PASS	.	GT	0/1
 
 In order to fully capture the insertion, both surrounding bases should be included in
 the bed file (i.e. capture insertions only if the two
-surrounding bases are in the bed file). This behavior can be enabled using the
-following command line option:
 
-```
-  --ins-surround-match  Match insertions as confident (or for stratification)
-                        only if both surrounding bases are matched.
-```
-
-Hap.py will capture the insertion above in a region if the region at least contains one
+Hap.py will capture the insertion above in a region if the region contains both
 of the two following positions:
 
 ```
@@ -362,6 +355,10 @@ This behavior will apply to all stratification regions, and to confident regions
 `-f` command line option). Note that it will not apply to region the subsetting operations
 implemented in `-T` and `-R`, which use the default behavior of bcftools (REF position
 match).
+
+If the confident regions only contain the padding base, we can fix them using the
+`--adjust-conf-regions` command line option. This option will correctly pad all confident
+insertions.
 
 ## Internal Variant Normalisation and Haplotype Comparison
 

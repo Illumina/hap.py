@@ -5,6 +5,7 @@
 | Ticket  | Description                                                                        |
 |---------|------------------------------------------------------------------------------------|
 | HAP-295 | Preserve INFO fields when running with vcfeval comparison engine also              |
+| HAP-296 | Don't fail when no reference is found in default locations, just require `-r`      |
 | HAP-306 | Add distance-based matching method to assess discovery separately from genotyping  |
 
 ## v0.3.7
