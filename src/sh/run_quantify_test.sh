@@ -25,7 +25,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	-r ${DIR}/../../example/chr21.fa \
 			 	-o ${TMP_OUT} \
                 --no-adjust-conf-regions \
-			 	--force-interactive
+			 	--force-interactive --verbose
 
 if [[ $? != 0 ]]; then
 	echo "hap.py failed!"
@@ -87,6 +87,5 @@ if [[ $? != 0 ]]; then
 	echo "Re-quantified counts are different! diff ${TMP_OUT}.hap.m.json ${TMP_OUT}.qfy.m.json "
 	exit 1
 fi
-
 
 rm -rf ${TMP_OUT}.*
