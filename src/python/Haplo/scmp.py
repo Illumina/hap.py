@@ -76,5 +76,3 @@ def runSCmp(vcf1, vcf2, target, args):
         traceback.print_exc(file=LoggingWriter(logging.ERROR))
         logging.error('-'*60)
         raise
-
-

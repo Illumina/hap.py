@@ -70,7 +70,7 @@ int main(int argc, char* argv[]) {
         std::string input_vcf;
         std::string output_vcf;
         enum {
-            HEMI, HET, HOM, HALF
+            HEMI, HET, HOM, HALF, FIRST
         } gt_output = HALF;
         try
         {
@@ -81,7 +81,8 @@ int main(int argc, char* argv[]) {
                 ("version", "Show version")
                 ("input-file", po::value<std::string>(), "Input VCF file.")
                 ("output-file,o", po::value<std::string>(), "The output file name (VCF / BCF / VCF.gz).")
-                ("gt", po::value<std::string>(), "What GT to write: hemi | het | hom | half for 1 | 0/1 | 1/1 | ./1 ; "
+                ("gt", po::value<std::string>(), "What GT to write: hemi | het | hom | half | first for 1 | 0/1 | 1/1 | ./1 | "
+                                                 "first sample GT; "
                                                  "default is half")
                 ;
 
@@ -148,6 +149,10 @@ int main(int argc, char* argv[]) {
                 else if(gt_str == "half")
                 {
                     gt_output = HALF;
+                }
+                else if(gt_str == "first")
+                {
+                    gt_output = FIRST;
                 }
                 else
                 {
@@ -338,7 +343,10 @@ int main(int argc, char* argv[]) {
                             error("Unsupported format field %s at %s:%i", f.c_str(), vchr.c_str(), line->pos);
                             break;
                     }
-                    bcf_update_format(hdr, line, f.c_str(), NULL, 0, BCF_HT_STR);
+                    if(f != "GT" || gt_output != FIRST)
+                    {
+                        bcf_update_format(hdr, line, f.c_str(), NULL, 0, BCF_HT_STR);
+                    }
                 }
             }
 
@@ -374,7 +382,7 @@ int main(int argc, char* argv[]) {
                         bcf_update_genotypes(output_header.get(), v, gts, 2);
                         break;
                     }
-                    default:
+                    default: // FIRST handled above
                         break;
                 }
             };
@@ -382,8 +390,8 @@ int main(int argc, char* argv[]) {
             // dup here so we can replace the GT without segfault
             line = bcf_dup(line);
             bcf_unpack(line, BCF_UN_ALL);
-            // no ALTS
-            if(line->n_allele == 1)
+            // no ALTS or FIRST genotype output (where we don't split alleles)
+            if(line->n_allele == 1 || gt_output == FIRST)
             {
                 updateGT(line, true);
                 bcf_write(writer, output_header.get(), line);

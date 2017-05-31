@@ -229,11 +229,14 @@ def main():
     tempfiles = []
 
     # turn on allele conversion
-    if args.engine == "scmp-somatic" and args.somatic_allele_conversion == False:
+    if (args.engine == "scmp-somatic" or args.engine == "scmp-distance") \
+            and not args.somatic_allele_conversion:
         args.somatic_allele_conversion = True
+        if args.engine == "scmp-distance":
+            args.somatic_allele_conversion = "first"
 
     # somatic allele conversion should also switch off decomposition
-    if args.somatic_allele_conversion == True and "--decompose" not in sys.argv:
+    if args.somatic_allele_conversion and ("-D" not in sys.argv and "--decompose" not in sys.argv):
         args.preprocessing_decompose = False
 
     # xcmp/scmp support bcf; others don't

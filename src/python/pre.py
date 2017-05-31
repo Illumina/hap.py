@@ -300,7 +300,7 @@ def updateArgs(parser):
                              " half genotypes (see also --set-gt). This will replace all sample "
                              "columns and replace them with a single one.")
 
-    parser.add_argument("--set-gt", dest="somatic_allele_conversion", choices=["half", "hemi", "het", "hom"],
+    parser.add_argument("--set-gt", dest="somatic_allele_conversion", choices=["half", "hemi", "het", "hom", "first"],
                         help="This is used to treat Strelka somatic files "
                              "Possible values for this parameter: "
                              "half / hemi / het / hom / half "
