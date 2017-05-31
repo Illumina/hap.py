@@ -1,5 +1,12 @@
 # Hap.py Release Notes / Change Log
 
+## v0.3.8
+
+| Ticket  | Description                                                                        |
+|---------|------------------------------------------------------------------------------------|
+| HAP-295 | Preserve INFO fields when running with vcfeval comparison engine also              |
+| HAP-306 | Add distance-based matching method to assess discovery separately from genotyping  |
+
 ## v0.3.7
 
 | Ticket  | Description                                                                        |
