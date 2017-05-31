@@ -70,6 +70,12 @@ Hap.py uses these regions to count truth or query variant calls outside these
 regions as unknown (UNK), query variant calls inside these regions either as
 TP or FP.
 
+Truthset confident regions are passed to hap.py using the `-f` command line
+option. Note that this is different from restricting comparison to a subset
+of the genome using `-T` or `-R`: variants outside the confident regions
+do not get removed from the input files, they will be used during comparison
+but then counted as UNK during quantification.
+
 Note that some special rules for variant capture by confident regions apply.
 In particular, we trim variant alleles to determine their exact reference locations,
 and we use these for computing confident region overlap. For more information,

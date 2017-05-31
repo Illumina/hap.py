@@ -93,7 +93,7 @@ def main():
                              "makes sure insertions are padded correctly in the CONF regions (to capture these, both the "
                              "base before and after must be contained in the bed file).")
     parser.add_argument("--no-adjust-conf-regions", dest="preprocessing_truth_confregions", action="store_false",
-                        help="Adjust confident regions to include variant locations.")
+                        help="Do not adjust confident regions for insertions.")
 
     # detailed control of comparison
     parser.add_argument("--unhappy", "--no-haplotype-comparison", dest="no_hc", action="store_true", default=False,

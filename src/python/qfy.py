@@ -228,7 +228,8 @@ def updateArgs(parser):
 
     parser.add_argument("-f", "--false-positives", dest="fp_bedfile",
                         default=None, type=str,
-                        help="False positive / confident call regions (.bed or .bed.gz).")
+                        help="False positive / confident call regions (.bed or .bed.gz). Calls outside "
+                             "these regions will be labelled as UNK.")
 
     parser.add_argument("--stratification", dest="strat_tsv",
                         default=None, type=str,
