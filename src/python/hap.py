@@ -33,6 +33,7 @@ import multiprocessing
 import gzip
 import tempfile
 import time
+import json
 
 scriptDir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'lib', 'python27')))
@@ -43,6 +44,8 @@ from Tools import bcftools
 from Tools.parallel import runParallel, getPool
 from Tools.bcftools import preprocessVCF, bedOverlapCheck
 from Tools.fastasize import fastaContigLengths
+from Tools.sessioninfo import sessionInfo
+
 import Haplo.blocksplit
 import Haplo.xcmp
 import Haplo.vcfeval
@@ -247,6 +250,12 @@ def main():
         internal_format_suffix = ".bcf"
     else:
         internal_format_suffix = ".vcf.gz"
+
+    # write session info and args file
+    session = sessionInfo()
+    session["final_args"] = args.__dict__
+    with open(args.reports_prefix + ".runinfo.json", "w") as sessionfile:
+        json.dump(session, sessionfile)
 
     try:
         logging.info("Comparing %s and %s" % (args.vcf1, args.vcf2))
@@ -482,7 +491,6 @@ def main():
         args.in_vcf = [output_name]
         args.runner = "hap.py"
         qfy.quantify(args)
-
 
     finally:
         if args.delete_scratch:

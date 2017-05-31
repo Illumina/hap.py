@@ -37,8 +37,7 @@ fi
 # This script checks if the extended precision / recall figures have changed significantly
 ${PYTHON} ${DIR}/compare_extended.py ${TMP_OUT}.extended.csv ${DIR}/../../example/happy/test-distancebased.extended.csv
 if [[ $? != 0 ]]; then
-	echo "All extended differs! -- diff ${TMP_OUT}.extended.csv ${DIR}/../../example/happy/test-distancebased.extended.csv
-"
+	echo "All extended differs! -- diff ${TMP_OUT}.extended.csv ${DIR}/../../example/happy/test-distancebased.extended.csv"
 	exit 1
 fi
 
@@ -62,8 +61,7 @@ fi
 # This script checks if the extended precision / recall figures have changed significantly
 ${PYTHON} ${DIR}/compare_extended.py ${TMP_OUT}.extended.csv ${DIR}/../../example/happy/test-allelebased.extended.csv
 if [[ $? != 0 ]]; then
-	echo "All extended differs! -- diff ${TMP_OUT}.extended.csv ${DIR}/../../example/happy/test-allelebased.extended.csv
-"
+	echo "All extended differs! -- diff ${TMP_OUT}.extended.csv ${DIR}/../../example/happy/test-allelebased.extended.csv"
 	exit 1
 fi
 
