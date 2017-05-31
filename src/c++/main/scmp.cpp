@@ -500,8 +500,7 @@ int main(int argc, char *argv[])
                 }
             }
 
-            const int dist_to_previous = (previous_pos < 0) ? std::numeric_limits<int>::max() : line->pos -
-                                                                                                previous_pos;
+            const int dist_to_previous = (previous_pos < 0) ? 0 : line->pos - previous_pos;
             previous_pos = line->pos;
 
             if(vars_in_block > blocksize || dist_to_previous > min_var_distance)

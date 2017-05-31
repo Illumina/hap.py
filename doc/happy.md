@@ -11,6 +11,7 @@
 	- [Restricting to Subsets of the Genome / Input](#restricting-to-subsets-of-the-genome-input)
 	- [Additional Input Options](#additional-input-options)
 	- [Additional Outputs](#additional-outputs)
+	- [Comparison Engines](#comparison-engines)
 	- [Stratification via Bed Regions](#stratification-via-bed-regions)
 	- [Internal Variant Normalisation and Haplotype Comparison](#internal-variant-normalisation-and-haplotype-comparison)
 	- [ROC Curves](#roc-curves)
@@ -287,6 +288,41 @@ for truth and query calls (TP/FP/FN/N/UNK).
 See the [GA4GH page above](https://github.com/ga4gh/benchmarking-tools/blob/master/doc/ref-impl/README.md)
 for more details.
 
+## Comparison Engines
+
+Hap.py can produce benchmarking results and ROCs using different comparison methods which implement the
+[GA4GH intermediate format](https://github.com/ga4gh/benchmarking-tools/blob/master/doc/ref-impl/README.md).
+
+These methods are:
+
+* *xcmp* (hap.py's default comparison engine): this method will assume that both input
+  samples are diploid / human samples. Matching is performed on a haplotype level: xcmp
+  enumerates all possible haplotypes that may be described by truth and query within
+  a small superlocus. If matching pairs of haplotype sequences are found, xcmp will
+  convert all variants within the surrounding superlocus into TPs. Xcmp also recognizes
+  direct genotype or allele matches / mismatches (i.e. the resulting FP.GT and FP.AL
+  columns after running quantify will be meaningful). Global phasing information is used
+  to restrict haplotype enumeration, but PS phasing is not supported.
+* *Rtgtools vcfeval* (see below for more detailed instructions): this is a comparison
+  that is simular to xcmp, but which uses an optimization method to determine TP/FP
+  status on a per-variant level (rather than xcmp's per-superlocus level). This method
+  does not use phasing information when it is present in the input VCF file, and
+  input files must not contain symbolic records (hap.py's preprocess tool can mitigate
+  this when). Vcfeval will not report 'local matches', i.e. FP.AL will be zero when using
+  this method. Vcfeval support must be enabled at build/install time since it requires
+  Java to be available.
+* *scmp-distancebased*: this will match variants by location only. Any variant in the
+  query that has a truth variant nearby (the distance can be set using the `--scmp-distance`
+  parameter).
+* *scmp-somatic*: this mode is intended to be used with Tumor/Normal VCF files. Variants
+  in the query will be matched to truth variants if the same normalized alleles are found nearby.
+  Genotypes are ignored, and multi-sample VCF files will be collapsed into a single column
+  with a pre-specified genotype (this can be customized using the `--set-gt` command
+  line option, which also works with all the other comparison engines).
+
+There are a quite a few differences between these comparison modes which are reflected
+in the ROC outputs. Some examples for this are shown in [microbench.md](microbench.md).
+
 ## Stratification via Bed Regions
 
 Hap.py can compute stratified counts using bed regions of interest. One set of such regions can
@@ -467,12 +503,6 @@ The ROC files give the same columns as the summary and extended statistics outpu
 for a range of thresholds on QUAL (or the feature that was passed to --roc).
 
 ![](roc_table.png)
-
-Hap.py can produce ROCs using vcfeval (see below for instructions)
-or xcmp (hap.py's internal comparison engine).
-
-There are a few differences between these comparison modes which are reflected
-in the ROC outputs. Some examples for this are shown in [microbench.md](microbench.md).
 
 ## Input Preprocessing using bcftools
 
