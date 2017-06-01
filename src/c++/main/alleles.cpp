@@ -61,7 +61,8 @@
 using namespace variant;
 
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[])
+{
     namespace po = boost::program_options;
     namespace bf = boost::filesystem;
 
@@ -69,69 +70,72 @@ int main(int argc, char* argv[]) {
     {
         std::string input_vcf;
         std::string output_vcf;
-        enum {
-            HEMI, HET, HOM, HALF
+        std::string sample = "SAMPLE";
+        enum
+        {
+            HEMI, HET, HOM, HALF, FIRST
         } gt_output = HALF;
         try
         {
             // Declare the supported options.
             po::options_description desc("Allowed options");
             desc.add_options()
-                ("help,h", "produce help message")
-                ("version", "Show version")
-                ("input-file", po::value<std::string>(), "Input VCF file.")
-                ("output-file,o", po::value<std::string>(), "The output file name (VCF / BCF / VCF.gz).")
-                ("gt", po::value<std::string>(), "What GT to write: hemi | het | hom | half for 1 | 0/1 | 1/1 | ./1 ; "
-                                                 "default is half")
-                ;
+                    ("help,h", "produce help message")
+                    ("version", "Show version")
+                    ("input-file", po::value<std::string>(), "Input VCF file.")
+                    ("output-file,o", po::value<std::string>(), "The output file name (VCF / BCF / VCF.gz).")
+                    ("gt", po::value<std::string>(),
+                     "What GT to write: hemi | het | hom | half | first for 1 | 0/1 | 1/1 | ./1 | "
+                             "first sample GT; "
+                             "default is half")
+                    ("sample", po::value<std::string>()->default_value("SAMPLE"), "Output sample name");
 
             po::positional_options_description popts;
             popts.add("input-file", 1);
 
             po::options_description cmdline_options;
             cmdline_options
-                .add(desc)
-                ;
+                    .add(desc);
 
             po::variables_map vm;
 
             po::store(po::command_line_parser(argc, argv).
-                options(cmdline_options).positional(popts).run(), vm);
+                    options(cmdline_options).positional(popts).run(), vm);
             po::notify(vm);
 
-            if (vm.count("version"))
+            if(vm.count("version"))
             {
-                std::cout << "scmp version " << HAPLOTYPES_VERSION << "\n";
+                std::cout << "alleles version " << HAPLOTYPES_VERSION << "\n";
                 return 0;
             }
 
-            if (vm.count("help"))
+            if(vm.count("help"))
             {
                 std::cout << desc << "\n";
                 return 1;
             }
 
-            if (vm.count("input-file"))
+            if(vm.count("input-file"))
             {
-                input_vcf = vm["input-file"].as< std::string >();
+                input_vcf = vm["input-file"].as<std::string>();
             }
             else
             {
                 error("Input file is required.");
             }
 
-            if (vm.count("output-file"))
+            if(vm.count("output-file"))
             {
-                output_vcf = vm["output-file"].as< std::string >();
+                output_vcf = vm["output-file"].as<std::string>();
             }
             else
             {
                 error("Output file name is required.");
             }
 
-            if (vm.count("gt"))
+            if(vm.count("gt"))
             {
-                const std::string gt_str = vm["gt"].as< std::string >();
+                const std::string gt_str = vm["gt"].as<std::string>();
 
                 if(gt_str == "het")
                 {
@@ -149,29 +153,35 @@ int main(int argc, char* argv[]) {
                 {
                     gt_output = HALF;
                 }
+                else if(gt_str == "first")
+                {
+                    gt_output = FIRST;
+                }
                 else
                 {
                     error("Unknown GT output type: %s", gt_str.c_str());
                 }
             }
+
+            sample = vm["sample"].as<std::string>();
         }
-        catch (po::error & e)
+        catch(po::error &e)
         {
             std::cerr << e.what() << "\n";
             return 1;
         }
 
-        bcf_srs_t * reader = bcf_sr_init();
+        bcf_srs_t *reader = bcf_sr_init();
         reader->collapse = COLLAPSE_NONE;
         reader->require_index = 0;
         reader->streaming = 1;
 
-        if (!bcf_sr_add_reader(reader, input_vcf.c_str()))
+        if(!bcf_sr_add_reader(reader, input_vcf.c_str()))
         {
             error("Failed to open or file not indexed: %s\n", input_vcf.c_str());
         }
 
-        bcf_hdr_t * hdr = reader->readers[0].header;
+        bcf_hdr_t *hdr = reader->readers[0].header;
 
         if(!bcf_hdr_get_hrec(hdr, BCF_HL_INFO, "ID", "GT", NULL))
         {
@@ -184,7 +194,7 @@ int main(int argc, char* argv[]) {
         bcfhelpers::p_bcf_hdr output_header(bcfhelpers::ph(bcf_hdr_init("w")));
         {
             int len = 0;
-            char * hdr_text = bcf_hdr_fmt_text(hdr, 0, &len);
+            char *hdr_text = bcf_hdr_fmt_text(hdr, 0, &len);
             if(!hdr_text)
             {
                 error("Failed to process input VCF header.");
@@ -198,11 +208,11 @@ int main(int argc, char* argv[]) {
                 bcf_hdr_append(output_header.get(), hl.c_str());
             }
             bcf_hdr_append(output_header.get(), "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">");
-            bcf_hdr_add_sample(output_header.get(), "SAMPLE");
+            bcf_hdr_add_sample(output_header.get(), sample.c_str());
         }
 
         std::set<std::string> format_names;
-        for (int i = 0; i < hdr->nhrec; i++)
+        for(int i = 0; i < hdr->nhrec; i++)
         {
             const auto hr = hdr->hrec[i];
             if(hr->type == BCF_HL_FMT)
@@ -213,7 +223,7 @@ int main(int argc, char* argv[]) {
                     bool has_values = false;
                     for(int fi = 0; fi < hr->nkeys; ++fi)
                     {
-                        if(has_values && fi < hr->nkeys-1)
+                        if(has_values && fi < hr->nkeys - 1)
                         {
                             header_line += ",";
                         }
@@ -226,7 +236,8 @@ int main(int argc, char* argv[]) {
                         if(strcmp(hr->keys[fi], "ID") == 0)
                         {
                             const std::string fname = hr->vals[fi];
-                            const std::string iname = std::string(hdr->samples[s]) + "_" + fname;
+                            const std::string sname = bcf_hdr_nsamples(hdr) > 1 ? std::string(hdr->samples[s]) : sample;
+                            const std::string iname = sname + "_" + fname;
                             format_names.insert(fname);
                             header_line += "ID=";
                             header_line += iname;
@@ -245,9 +256,9 @@ int main(int argc, char* argv[]) {
         }
         bcf_hdr_sync(output_header.get());
 
-        htsFile * writer = nullptr;
+        htsFile *writer = nullptr;
 
-        const char * mode = "wu";
+        const char *mode = "wu";
 
         if(stringutil::endsWith(output_vcf, ".vcf.gz"))
         {
@@ -272,7 +283,7 @@ int main(int argc, char* argv[]) {
         while(nl)
         {
             nl = bcf_sr_next_line(reader);
-            if (nl <= 0)
+            if(nl <= 0)
             {
                 break;
             }
@@ -287,65 +298,66 @@ int main(int argc, char* argv[]) {
             bcf_unpack(line, BCF_UN_ALL);
 
             // translate FORMAT into INFO
-            for(auto const & f : format_names)
+            for(auto const &f : format_names)
             {
                 auto fmt = bcf_get_fmt(output_header.get(), line, f.c_str());
 
                 if(fmt)
                 {
-                    switch(fmt->type)
+                    for(int s = 0; s < bcf_hdr_nsamples(hdr); ++s)
                     {
-                        case BCF_BT_INT8:
-                        case BCF_BT_INT16:
-                        case BCF_BT_INT32:
+                        const std::string sname = bcf_hdr_nsamples(hdr) > 1 ? std::string(hdr->samples[s]) : sample;
+                        const std::string iname = sname + "_" + f;
+                        switch(fmt->type)
                         {
-                            for(int s = 0; s < bcf_hdr_nsamples(hdr); ++s)
+                            case BCF_BT_INT8:
+                            case BCF_BT_INT16:
+                            case BCF_BT_INT32:
                             {
-                                const std::string iname = std::string(hdr->samples[s]) + "_" + f;
                                 auto values = bcfhelpers::getFormatInts(output_header.get(),
                                                                         line, f.c_str(), s);
 
                                 bcf_update_info_int32(output_header.get(), line, iname.c_str(), values.data(),
-                                                      (int)values.size());
+                                                      (int) values.size());
+                                break;
                             }
-                            break;
-                        }
-                        case BCF_BT_FLOAT:
-                            for(int s = 0; s < bcf_hdr_nsamples(hdr); ++s)
+                            case BCF_BT_FLOAT:
                             {
-                                const std::string iname = std::string(hdr->samples[s]) + "_" + f;
                                 auto values = bcfhelpers::getFormatFloats(output_header.get(),
                                                                           line, f.c_str(), s);
 
                                 bcf_update_info_float(output_header.get(), line, iname.c_str(), values.data(),
-                                                      (int)values.size());
+                                                      (int) values.size());
+                                break;
                             }
-                            break;
-                        case BCF_BT_CHAR:
-                            for(int s = 0; s < bcf_hdr_nsamples(hdr); ++s)
+                            case BCF_BT_CHAR:
                             {
-                                const std::string iname = std::string(hdr->samples[s]) + "_" + f;
                                 auto value = bcfhelpers::getFormatString(output_header.get(),
-                                                                          line, f.c_str(), s);
+                                                                         line, f.c_str(), s);
 
                                 if(value != ".")
                                 {
                                     bcf_update_info_string(output_header.get(), line, iname.c_str(), value.c_str());
                                 }
+                                break;
                             }
-                            break;
-                        default:
-                            error("Unsupported format field %s at %s:%i", f.c_str(), vchr.c_str(), line->pos);
-                            break;
+                            default:
+                                error("Unsupported format field %s at %s:%i", f.c_str(), vchr.c_str(), line->pos);
+                                break;
+                        }
                     }
-                    bcf_update_format(hdr, line, f.c_str(), NULL, 0, BCF_HT_STR);
+                    // if FIRST gt is kept, don't remove GT format
+                    if(f != "GT" || gt_output != FIRST)
+                    {
+                        bcf_update_format(hdr, line, f.c_str(), NULL, 0, BCF_HT_STR);
+                    }
                 }
             }
 
             line->n_sample = 1;
 
             std::list<int> alleles_to_write;
-            auto updateGT = [&output_header, gt_output](bcf1_t * v, bool ref)
+            auto updateGT = [&output_header, gt_output](bcf1_t *v, bool ref)
             {
                 int gtvalue = ref ? 0 : 1;
                 switch(gt_output)
@@ -374,7 +386,7 @@ int main(int argc, char* argv[]) {
                         bcf_update_genotypes(output_header.get(), v, gts, 2);
                         break;
                     }
-                    default:
+                    default: // FIRST handled above
                         break;
                 }
             };
@@ -382,13 +394,13 @@ int main(int argc, char* argv[]) {
             // dup here so we can replace the GT without segfault
             line = bcf_dup(line);
             bcf_unpack(line, BCF_UN_ALL);
-            // no ALTS
-            if(line->n_allele == 1)
+            // no ALTS or FIRST genotype output (where we don't split alleles)
+            if(line->n_allele == 1 || gt_output == FIRST)
             {
                 updateGT(line, true);
                 bcf_write(writer, output_header.get(), line);
             }
-            else if (line->n_allele > 1)
+            else if(line->n_allele > 1)
             {
                 updateGT(line, false);
                 std::list<std::string> alleles;
@@ -397,10 +409,10 @@ int main(int argc, char* argv[]) {
                     alleles.emplace_back(line->d.allele[a]);
                 }
 
-                const char * alleles_to_set[2];
-                const std::string ref =line->d.allele[0];
+                const char *alleles_to_set[2];
+                const std::string ref = line->d.allele[0];
                 alleles_to_set[0] = ref.c_str();
-                for(auto const & al : alleles)
+                for(auto const &al : alleles)
                 {
                     alleles_to_set[1] = al.c_str();
                     bcf_update_alleles(output_header.get(), line, alleles_to_set, 2);
@@ -417,12 +429,12 @@ int main(int argc, char* argv[]) {
         hts_close(writer);
         bcf_sr_destroy(reader);
     }
-    catch(std::runtime_error & e)
+    catch(std::runtime_error &e)
     {
         std::cerr << e.what() << std::endl;
         return 1;
     }
-    catch(std::logic_error & e)
+    catch(std::logic_error &e)
     {
         std::cerr << e.what() << std::endl;
         return 1;

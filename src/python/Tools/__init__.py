@@ -22,11 +22,7 @@ has_sge = vs.has_sge
 
 
 def defaultReference():
-    to_try = ['/opt/hap.py-data/hg19.fa',
-              '/home/peter/workspace/human_genome/hg19.fa',
-              '/home/mkallberg/workspace/PGtools/data/genome.fa',
-              '/illumina/development/iSAAC/iGenomes/'
-              'Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/genome.fa']
+    to_try = ['/opt/hap.py-data/hg19.fa']
     try:
         to_try.insert(0, os.environ["HGREF"])
     except:

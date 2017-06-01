@@ -33,6 +33,7 @@ import multiprocessing
 import gzip
 import tempfile
 import time
+import json
 
 scriptDir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(os.path.abspath(os.path.join(scriptDir, '..', 'lib', 'python27')))
@@ -43,6 +44,8 @@ from Tools import bcftools
 from Tools.parallel import runParallel, getPool
 from Tools.bcftools import preprocessVCF, bedOverlapCheck
 from Tools.fastasize import fastaContigLengths
+from Tools.sessioninfo import sessionInfo
+
 import Haplo.blocksplit
 import Haplo.xcmp
 import Haplo.vcfeval
@@ -75,7 +78,6 @@ def main():
                         default=True, action="store_false",
                         help="Filename prefix for scratch report output.")
 
-
     # add quantification args
     qfy.updateArgs(parser)
 
@@ -89,9 +91,12 @@ def main():
                         default=10000, type=int,
                         help="Preprocessing window size (variants further apart than that size are not expected to interfere).")
     parser.add_argument("--adjust-conf-regions", dest="preprocessing_truth_confregions", action="store_true", default=True,
-                        help="Adjust confident regions to include variant locations.")
+                        help="Adjust confident regions to include variant locations. Note this will only include variants "
+                             "that are included in the CONF regions already when viewing with bcftools; this option only "
+                             "makes sure insertions are padded correctly in the CONF regions (to capture these, both the "
+                             "base before and after must be contained in the bed file).")
     parser.add_argument("--no-adjust-conf-regions", dest="preprocessing_truth_confregions", action="store_false",
-                        help="Adjust confident regions to include variant locations.")
+                        help="Do not adjust confident regions for insertions.")
 
     # detailed control of comparison
     parser.add_argument("--unhappy", "--no-haplotype-comparison", dest="no_hc", action="store_true", default=False,
@@ -114,7 +119,7 @@ def main():
                         help="Number of threads to use.")
 
     parser.add_argument("--engine", dest="engine",
-                        default="xcmp", choices=["xcmp", "vcfeval", "scmp-somatic"],
+                        default="xcmp", choices=["xcmp", "vcfeval", "scmp-somatic", "scmp-distance"],
                         help="Comparison engine to use.")
 
     parser.add_argument("--engine-vcfeval-path", dest="engine_vcfeval", required=False,
@@ -126,6 +131,9 @@ def main():
                              "(SDF -- run rtg format -o ref.SDF ref.fa). You can specify this here "
                              "to save time when running hap.py with vcfeval. If no SDF folder is "
                              "specified, hap.py will create a temporary one.")
+
+    parser.add_argument("--scmp-distance", dest="engine_scmp_distance", required=False, default=30,
+                        help="For distance-based matching, this is the distance between variants to use.")
 
     if Tools.has_sge:
         parser.add_argument("--force-interactive", dest="force_interactive",
@@ -196,7 +204,7 @@ def main():
     if not args.ref:
         args.ref = Tools.defaultReference()
 
-    if not os.path.exists(args.ref):
+    if not args.ref or not os.path.exists(args.ref):
         raise Exception("Please specify a valid reference path using -r.")
 
     if not args.reports_prefix:
@@ -226,18 +234,28 @@ def main():
     tempfiles = []
 
     # turn on allele conversion
-    if args.engine == "scmp-somatic" and args.somatic_allele_conversion == False:
+    if (args.engine == "scmp-somatic" or args.engine == "scmp-distance") \
+            and not args.somatic_allele_conversion:
         args.somatic_allele_conversion = True
+        if args.engine == "scmp-distance":
+            args.somatic_allele_conversion = "first"
 
     # somatic allele conversion should also switch off decomposition
-    if args.somatic_allele_conversion == True and "--decompose" not in sys.argv:
+    if args.somatic_allele_conversion and ("-D" not in sys.argv and "--decompose" not in sys.argv):
         args.preprocessing_decompose = False
 
     # xcmp/scmp support bcf; others don't
-    if args.engine in ["xcmp", "scmp-somatic"] and (args.bcf or (args.vcf1.endswith(".bcf") and args.vcf2.endswith(".bcf"))):
+    if args.engine in ["xcmp", "scmp-somatic", "scmp-distance"] \
+            and (args.bcf or (args.vcf1.endswith(".bcf") and args.vcf2.endswith(".bcf"))):
         internal_format_suffix = ".bcf"
     else:
         internal_format_suffix = ".vcf.gz"
+
+    # write session info and args file
+    session = sessionInfo()
+    session["final_args"] = args.__dict__
+    with open(args.reports_prefix + ".runinfo.json", "w") as sessionfile:
+        json.dump(session, sessionfile)
 
     try:
         logging.info("Comparing %s and %s" % (args.vcf1, args.vcf2))
@@ -274,7 +292,8 @@ def main():
                                      args.preprocess_window,
                                      args.threads,
                                      args.gender,
-                                     args.somatic_allele_conversion)
+                                     args.somatic_allele_conversion,
+                                     "TRUTH")
 
         args.vcf1 = ttf.name
 
@@ -339,9 +358,9 @@ def main():
                        args.preprocessing_norm,
                        args.preprocess_window,
                        args.threads,
-                       args.gender,
-                       args.somatic_allele_conversion)  # same gender as truth above
-
+                       args.gender,  # same gender as truth above
+                       args.somatic_allele_conversion,
+                       "QUERY")
         args.vcf2 = qtf.name
         h2 = vcfextract.extractHeadersJSON(args.vcf2)
 
@@ -433,12 +452,41 @@ def main():
             tempfiles += Haplo.vcfeval.runVCFEval(args.vcf1, args.vcf2, output_name, args)
             # passed to quantify
             args.type = "ga4gh"
-        elif args.engine == "scmp-somatic":
+        elif args.engine.startswith("scmp"):
             tempfiles += Haplo.scmp.runSCmp(args.vcf1, args.vcf2, output_name, args)
             # passed to quantify
             args.type = "ga4gh"
         else:
             raise Exception("Unknown comparison engine: %s" % args.engine)
+
+
+        if args.preserve_info and args.engine == "vcfeval":
+            # if we use vcfeval we need to merge the INFO fields back in.
+            tf = tempfile.NamedTemporaryFile(suffix=".txt", delete=False)
+            tempfiles.append(tf)
+            print >> tf, "TRUTH_IN"
+            print >> tf, "QUERY_IN"
+            tf.close()
+            info_file = tempfile.NamedTemporaryFile(suffix=".vcf.gz", delete=False)
+            tempfiles.append(info_file.name)
+            info_file.close()
+
+            bcftools.runBcftools("merge", args.vcf1, args.vcf2,
+                        "--force-samples", "-m", "all",
+                        "|", "bcftools", "reheader", "-s", tf.name,
+                        "|", "bcftools", "view",
+                        "-o", info_file.name, "-O", "z")
+            bcftools.runBcftools("index", info_file.name)
+
+            merged_info_file = tempfile.NamedTemporaryFile(suffix=".vcf.gz", delete=False)
+            tempfiles.append(merged_info_file.name)
+            merged_info_file.close()
+
+            bcftools.runBcftools("merge", output_vcf, info_file.name,
+                        "-m", "all",
+                        "|", "bcftools", "view", "-s", "^TRUTH_IN,QUERY_IN", "-X", "-U",
+                        "-o", merged_info_file.name, "-O", "z")
+            output_name = merged_info_file.name
 
         args.in_vcf = [output_name]
         args.runner = "hap.py"

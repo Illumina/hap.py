@@ -137,7 +137,8 @@ def preprocessVCF(input, output, location="",
                   regions=None, targets=None,
                   reference=Tools.defaultReference(),
                   filters_only=None,
-                  somatic_allele_conversion=False):
+                  somatic_allele_conversion=False,
+                  sample="SAMPLE"):
     """ Preprocess a VCF + create index
 
     :param input: the input VCF / BCF / ...
@@ -157,6 +158,7 @@ def preprocessVCF(input, output, location="",
                                       True [="half"] / "hemi" / "het" / "hom" / "half"
                                       to assign one of the following genotypes to the
                                       resulting sample:  1 | 0/1 | 1/1 | ./1
+    :param sample: name of the output sample column when using somatic_allele_conversion
     """
     vargs = ["view", input]
 
@@ -199,12 +201,11 @@ def preprocessVCF(input, output, location="",
         if somatic_allele_conversion:
             if type(somatic_allele_conversion) is not str:
                 somatic_allele_conversion = "half"
-            vargs += ["|", "alleles", "-", "-o", "-.vcf", "--gt", somatic_allele_conversion,
+            vargs += ["|", "alleles", "-", "-o", "-.vcf", "--gt", somatic_allele_conversion, "--sample", sample,
                       "|", "bcftools", "view"]
 
-
         if norm:
-            vargs += ["|", "bcftools", "norm", "-f",  reference, "-c", "x", "-D"]
+            vargs += ["|", "bcftools", "norm", "-f", reference, "-c", "x", "-D"]
 
         vargs += ["-o", output]
         if int_suffix == ".vcf.gz":

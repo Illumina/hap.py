@@ -1,5 +1,16 @@
 # Hap.py Release Notes / Change Log
 
+## v0.3.8
+
+| Ticket  | Description                                                                        |
+|---------|------------------------------------------------------------------------------------|
+| HAP-295 | Preserve INFO fields when running with vcfeval comparison engine also              |
+| HAP-296 | Don't fail when no reference is found in default locations, just require `-r`      |
+| HAP-298 | Output run and session info in prefix.runinfo.json                                 |
+| HAP-299 | Improve command line documentation for confident regions.                          |
+| HAP-300 | Correct documentation for `--adjust-conf-regions`                                  |
+| HAP-306 | Add distance-based matching method to assess discovery separately from genotyping  |
+
 ## v0.3.7
 
 | Ticket  | Description                                                                        |

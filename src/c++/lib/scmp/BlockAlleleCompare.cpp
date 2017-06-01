@@ -36,6 +36,7 @@
 #include <htslib/vcf.h>
 #include "BlockAlleleCompare.hh"
 #include "AlleleMatcher.hh"
+#include "DistanceBasedMatcher.hh"
 
 #include "helpers/BCFHelpers.hh"
 
@@ -49,6 +50,9 @@ namespace variant {
         int qq_hdr_id;
         bool qq_name_is_info;
         bool qq_name_is_qual;
+
+        ComparisonMode comparison_mode = ALLELES;
+        Json::Value comparison_parameters;
 
         std::list<bcfhelpers::p_bcf1> buffered;
 
@@ -119,6 +123,34 @@ namespace variant {
     }
 
     /**
+     * Set the comparison mode
+     */
+    void BlockAlleleCompare::setComparisonMode(ComparisonMode mode)
+    {
+        _impl->comparison_mode = mode;
+        _impl->comparison_parameters = Json::Value();
+        switch(mode)
+        {
+            case ALLELES:
+                break;
+            case DISTANCE:
+                _impl->comparison_parameters["max_distance"] = 30;
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * Set comparison parameters
+     * @param params parameters for the comparison method
+     */
+    void BlockAlleleCompare::setComparisonParameters(Json::Value const & params)
+    {
+        _impl->comparison_parameters = params;
+    }
+
+    /**
      * Add a BCF record. Will duplicate the record and keep the copy
      * @param v bcf record
      */
@@ -159,27 +191,50 @@ namespace variant {
                                    &query_alleles,
                                    &truth_mapped]()
         {
-            AlleleMatcher allele_matcher(_impl->ref_fasta.getFilename(), current_chr);
+            std::unique_ptr<HapSetMatcher> p_matcher;
+
+            switch(_impl->comparison_mode)
+            {
+                case ALLELES:
+                    p_matcher.reset(new AlleleMatcher (_impl->ref_fasta.getFilename(),
+                                                       current_chr));
+                    break;
+                case DISTANCE:
+                    p_matcher.reset(new DistanceBasedMatcher (_impl->ref_fasta.getFilename(),
+                                                              current_chr,
+                                                              _impl->comparison_parameters["max_distance"].asInt()
+                    ));
+                    break;
+                case ENUMERATE_DIPLOID:
+                    p_matcher.reset(new HapSetMatcher(_impl->ref_fasta.getFilename(),
+                                                      current_chr,
+                                                      2,
+                                                      _impl->comparison_parameters["max_enum"].asInt()
+                                                      ));
+                    break;
+                default:
+                    error("Invalid comparison mode: %i", _impl->comparison_mode);
+            }
 
             std::unordered_map<size_t, bcf1_t*> comparison_mapping;
             std::unordered_map<size_t, int>     comparison_mapping_side;
 
             for(auto x = truth_alleles.begin(); x != truth_alleles.end(); ++x)
             {
-                const size_t v_id = allele_matcher.addLeft(x->first, 1);
+                const size_t v_id = p_matcher->addLeft(x->first, 1);
                 comparison_mapping[v_id] = x->second;
                 comparison_mapping_side[v_id] = 0;
             }
 
             for(auto x = query_alleles.begin(); x != query_alleles.end(); ++x)
             {
-                const size_t v_id = allele_matcher.addRight(x->first, 1);
+                const size_t v_id = p_matcher->addRight(x->first, 1);
                 comparison_mapping[v_id] = x->second;
                 comparison_mapping_side[v_id] = 1;
             }
 
             HapAssignment assignment;
-            allele_matcher.optimize(assignment);
+            p_matcher->optimize(assignment);
 
             struct Updates {
                 std::vector<std::string> bd = {".", "."};

@@ -70,7 +70,7 @@ if     (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     endif ()
     set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wno-unused-function -Wno-unknown-pragmas")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wunknown-pragmas -Wmissing-prototypes -Wunused-exception-parameter -Wbool-conversion -Wempty-body -Wimplicit-fallthrough -Wsizeof-array-argument -Wstring-conversion -Wno-unused-parameter -Wno-missing-prototypes -Wno-unknown-warning-option -Wno-deprecated-register -Wno-header-guard -Wunused-const-variable -Wno-unused-function -Wno-pessimizing-move -Wno-missing-braces")
+    set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Wno-unknown-pragmas -Wmissing-prototypes -Wunused-exception-parameter -Wbool-conversion -Wempty-body -Wimplicit-fallthrough -Wsizeof-array-argument -Wstring-conversion -Wno-unused-parameter -Wno-missing-prototypes -Wno-unknown-warning-option -Wno-deprecated-register -Wno-header-guard -Wunused-const-variable -Wno-unused-function -Wno-pessimizing-move -Wno-missing-braces")
 
     if (NOT (${compiler_version} VERSION_LESS "3.3"))
         set (CXX_WARN_FLAGS "${CXX_WARN_FLAGS} -Woverloaded-shift-op-parentheses")

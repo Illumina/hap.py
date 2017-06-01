@@ -25,7 +25,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	-r ${DIR}/../../example/chr21.fa \
 			 	-o ${TMP_OUT} \
                 --no-adjust-conf-regions \
-			 	--force-interactive
+			 	--force-interactive --verbose
 
 if [[ $? != 0 ]]; then
 	echo "hap.py failed!"
@@ -55,6 +55,7 @@ fi
 ${PYTHON} ${HCDIR}/qfy.py \
            ${TMP_OUT}.vcf.gz \
            -o ${TMP_OUT}.qfy  \
+           -r ${DIR}/../../example/chr21.fa \
            -f ${DIR}/../../example/happy/PG_Conf_chr21.bed.gz \
            -t ga4gh -X --verbose
 
@@ -87,6 +88,5 @@ if [[ $? != 0 ]]; then
 	echo "Re-quantified counts are different! diff ${TMP_OUT}.hap.m.json ${TMP_OUT}.qfy.m.json "
 	exit 1
 fi
-
 
 rm -rf ${TMP_OUT}.*

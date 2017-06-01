@@ -115,7 +115,7 @@ namespace variant
          * return < true/false if assignment produces match, number of matched variants >
          * Total number of variants is in assignment.variant_assignments.size()
          */
-        std::pair<bool, size_t> checkAndScore(HapAssignment const & assignment);
+        virtual std::pair<bool, size_t> checkAndScore(HapAssignment const & assignment);
 
         /**
          * reset/initialize an assignment

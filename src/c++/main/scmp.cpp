@@ -65,7 +65,8 @@ using namespace variant;
 
 /* #define DEBUG_SCMP_THREADING */
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[])
+{
     namespace po = boost::program_options;
     namespace bf = boost::filesystem;
 
@@ -76,6 +77,7 @@ int main(int argc, char* argv[]) {
         std::string ref;
         std::string only_regions;
         std::string qq_field = "QUAL";
+        std::string comparison_mode;
 
         // limits
         std::string chr;
@@ -87,137 +89,173 @@ int main(int argc, char* argv[]) {
         int threads = 1;
         int blocksize = 20000;
         int min_var_distance = 100000;
+
+        // comparison mode
+        BlockAlleleCompare::ComparisonMode cmode = BlockAlleleCompare::ALLELES;
+        Json::Value cmode_params;
+
         try
         {
             // Declare the supported options.
             po::options_description desc("Allowed options");
             desc.add_options()
-                ("help,h", "produce help message")
-                ("version", "Show version")
-                ("input-file", po::value<std::string>(), "Input VCF file. Must have exactly two samples, the first "
-                    "sample will be used as truth, the second one as query. This can be obtained using bcftools: "
-                    "bcftools merge truth.vcf.gz query.vcf.gz --force-samples")
-                ("output-file,o", po::value<std::string>(), "The output file name (VCF / BCF / VCF.gz).")
-                ("reference,r", po::value<std::string>(), "The reference fasta file (needed only for VCF output).")
-                ("location,l", po::value<std::string>(), "Start location.")
-                ("qq-field,qq", po::value<std::string>(), "QQ field name -- this can be QUAL, an INFO or FORMAT field name")
-                ("only,O", po::value< std::string >(), "Bed file of locations (equivalent to -R in bcftools)")
-                ("limit-records", po::value<int64_t>(), "Maximum umber of records to process")
-                ("message-every", po::value<int64_t>(), "Print a message every N records.")
-                ("apply-filters,f", po::value<bool>(), "Apply filtering in VCF.")
-                ("threads", po::value<int>(), "Number of threads to use.")
-                ("blocksize", po::value<int>(), "Number of variants per block.")
-                ("min-var-distance", po::value<int>(), "Minimum distance between variants allowed to end up "
-                                                       "in separate blocks")
-                ;
+                    ("help,h", "produce help message")
+                    ("version", "Show version")
+                    ("input-file", po::value<std::string>(), "Input VCF file. Must have exactly two samples, the first "
+                            "sample will be used as truth, the second one as query. This can be obtained using bcftools: "
+                            "bcftools merge truth.vcf.gz query.vcf.gz --force-samples")
+                    ("output-file,o", po::value<std::string>(), "The output file name (VCF / BCF / VCF.gz).")
+                    ("reference,r", po::value<std::string>(), "The reference fasta file (needed only for VCF output).")
+                    ("location,l", po::value<std::string>(), "Start location.")
+                    ("qq-field,qq", po::value<std::string>(),
+                     "QQ field name -- this can be QUAL, an INFO or FORMAT field name")
+                    ("only,O", po::value<std::string>(), "Bed file of locations (equivalent to -R in bcftools)")
+                    ("limit-records", po::value<int64_t>(), "Maximum umber of records to process")
+                    ("message-every", po::value<int64_t>(), "Print a message every N records.")
+                    ("apply-filters,f", po::value<bool>(), "Apply filtering in VCF.")
+                    ("threads", po::value<int>(), "Number of threads to use.")
+                    ("blocksize", po::value<int>(), "Number of variants per block.")
+                    ("min-var-distance", po::value<int>(), "Minimum distance between variants allowed to end up "
+                            "in separate blocks")
+                    ("comparison-mode,M", po::value<std::string>()->default_value("allele"),
+                     "How to compare variants: allele (default) / distance / enumerate")
+                    ("distance-maxdist", po::value<int>()->default_value(50),
+                     "For distance comparison, this is the maximum distance between variants s.t. they get matched.")
+                    ("enumerate-maxenum", po::value<int>()->default_value(1 << 16),
+                     "For haplotype enumeration comparison, this is the number of possibilities to enumerate before giving up")
+                    ;
 
             po::positional_options_description popts;
             popts.add("input-file", 1);
 
             po::options_description cmdline_options;
-            cmdline_options
-                .add(desc)
-                ;
+            cmdline_options.add(desc);
 
             po::variables_map vm;
 
             po::store(po::command_line_parser(argc, argv).
-                options(cmdline_options).positional(popts).run(), vm);
+                    options(cmdline_options).positional(popts).run(), vm);
             po::notify(vm);
 
-            if (vm.count("version"))
+            if(vm.count("version"))
             {
                 std::cout << "scmp version " << HAPLOTYPES_VERSION << "\n";
                 return 0;
             }
 
-            if (vm.count("help"))
+            if(vm.count("help"))
             {
                 std::cout << desc << "\n";
                 return 1;
             }
 
-            if (vm.count("input-file"))
+            if(vm.count("input-file"))
             {
-                input_vcf = vm["input-file"].as< std::string >();
+                input_vcf = vm["input-file"].as<std::string>();
             }
             else
             {
                 error("Input file is required.");
             }
 
-            if (vm.count("output-file"))
+            if(vm.count("output-file"))
             {
-                output_vcf = vm["output-file"].as< std::string >();
+                output_vcf = vm["output-file"].as<std::string>();
             }
             else
             {
                 error("Output file name is required.");
             }
 
-            if (vm.count("reference"))
+            if(vm.count("reference"))
             {
-                ref = vm["reference"].as< std::string >();
+                ref = vm["reference"].as<std::string>();
             }
             else
             {
                 error("To write an output VCF, you need to specify a reference file, too.");
             }
 
-            if (vm.count("location"))
+            if(vm.count("location"))
             {
-                stringutil::parsePos(vm["location"].as< std::string >(), chr, start, end);
+                stringutil::parsePos(vm["location"].as<std::string>(), chr, start, end);
             }
 
-            if (vm.count("qq-field"))
+            if(vm.count("qq-field"))
             {
-                qq_field = vm["qq-field"].as< std::string >();
+                qq_field = vm["qq-field"].as<std::string>();
             }
 
-            if (vm.count("only"))
+            if(vm.count("only"))
             {
-                only_regions = vm["only"].as< std::string >();
+                only_regions = vm["only"].as<std::string>();
             }
 
-            if (vm.count("limit-records"))
+            if(vm.count("limit-records"))
             {
-                rlimit = vm["limit-records"].as< int64_t >();
+                rlimit = vm["limit-records"].as<int64_t>();
             }
 
-            if (vm.count("message-every"))
+            if(vm.count("message-every"))
             {
-                message = vm["message-every"].as< int64_t >();
+                message = vm["message-every"].as<int64_t>();
             }
 
-            if (vm.count("apply-filters"))
+            if(vm.count("apply-filters"))
             {
-                apply_filters = vm["apply-filters"].as< bool >();
+                apply_filters = vm["apply-filters"].as<bool>();
             }
 
-            if (vm.count("threads"))
+            if(vm.count("threads"))
             {
-                threads = vm["threads"].as< int >();
+                threads = vm["threads"].as<int>();
             }
 
-            if (vm.count("blocksize"))
+            if(vm.count("blocksize"))
             {
-                blocksize = vm["blocksize"].as< int >();
+                blocksize = vm["blocksize"].as<int>();
             }
 
-            if (vm.count("min-var-distance"))
+            if(vm.count("min-var-distance"))
             {
-                min_var_distance = vm["min-var-distance"].as< int >();
+                min_var_distance = vm["min-var-distance"].as<int>();
             }
 
+            comparison_mode = vm["comparison-mode"].as<std::string>();
+            // make sure we don't break distance-based matching by blocking
+            if(comparison_mode == "distance")
+            {
+                const int distance_max_dist = vm["distance-maxdist"].as<int>();
+                min_var_distance = std::max(min_var_distance, distance_max_dist + 2);
+                // ensure minimum block size also
+                blocksize = std::max(blocksize, 20000);
+
+                cmode = BlockAlleleCompare::DISTANCE;
+                cmode_params["max_distance"] = distance_max_dist;
+            }
+            else if(comparison_mode == "alleles")
+            {
+                cmode = BlockAlleleCompare::ALLELES;
+            }
+            else if(comparison_mode == "enumerate")
+            {
+                cmode = BlockAlleleCompare::ENUMERATE_DIPLOID;
+                const int max_enum = vm["distance-maxdist"].as<int>();
+                cmode_params["max_enum"] = max_enum;
+            }
+            else
+            {
+                error("Invalid comparison mode: %s", comparison_mode.c_str());
+            }
         }
-        catch (po::error & e)
+        catch(po::error &e)
         {
             std::cerr << e.what() << "\n";
             return 1;
         }
 
         FastaFile ref_fasta(ref.c_str());
-        bcf_srs_t * reader = bcf_sr_init();
+        bcf_srs_t *reader = bcf_sr_init();
         reader->collapse = COLLAPSE_NONE;
 
         if(!chr.empty() || !only_regions.empty())
@@ -231,14 +269,15 @@ int main(int argc, char* argv[]) {
             reader->streaming = 1;
         }
 
-        if(!only_regions.empty()) {
+        if(!only_regions.empty())
+        {
             int result = bcf_sr_set_regions(reader, only_regions.c_str(), 1);
             if(result < 0)
             {
                 error("Failed to set regions string %s.", only_regions.c_str());
             }
         }
-        if (!bcf_sr_add_reader(reader, input_vcf.c_str()))
+        if(!bcf_sr_add_reader(reader, input_vcf.c_str()))
         {
             error("Failed to open or file not indexed: %s\n", input_vcf.c_str());
         }
@@ -271,7 +310,7 @@ int main(int argc, char* argv[]) {
         bcfhelpers::p_bcf_hdr output_header(bcfhelpers::ph(bcf_hdr_init("w")));
         {
             int len = 0;
-            char * hdr_text = bcf_hdr_fmt_text(hdr.get(), 0, &len);
+            char *hdr_text = bcf_hdr_fmt_text(hdr.get(), 0, &len);
             if(!hdr_text)
             {
                 error("Failed to process input VCF header.");
@@ -289,9 +328,9 @@ int main(int argc, char* argv[]) {
             bcf_hdr_sync(output_header.get());
         }
 
-        htsFile * writer = nullptr;
+        htsFile *writer = nullptr;
 
-        const char * mode = "wu";
+        const char *mode = "wu";
 
         if(stringutil::endsWith(output_vcf, ".vcf.gz"))
         {
@@ -340,10 +379,10 @@ int main(int argc, char* argv[]) {
         std::vector<std::thread> workers;
 
         auto worker = [&blocks,
-                       &blocks_mutex,
-                       &processed_blocks,
-                       &processed_blocks_mutex,
-                       &all_blocks_added]
+                &blocks_mutex,
+                &processed_blocks,
+                &processed_blocks_mutex,
+                &all_blocks_added]
         {
             bool work_left = true;
             while(work_left)
@@ -356,7 +395,7 @@ int main(int argc, char* argv[]) {
                     std::lock_guard<std::mutex> lk(blocks_mutex);
                     /* std::unique_lock<std::mutex> lk(blocks_mutex); */
                     /* lk.wait([&blocks]() { !blocks.empty(); }); */
-                    if (!blocks.empty())
+                    if(!blocks.empty())
                     {
                         current_block = std::move(blocks.front());
                         blocks.pop();
@@ -389,6 +428,8 @@ int main(int argc, char* argv[]) {
         }
 
         std::unique_ptr<BlockAlleleCompare> p_bac(new BlockAlleleCompare(hdr, ref_fasta, qq_field));
+        p_bac->setComparisonMode(cmode);
+        p_bac->setComparisonParameters(cmode_params);
 
         int nl = 1;
         int previous_pos = -1;
@@ -396,7 +437,7 @@ int main(int argc, char* argv[]) {
         while(nl)
         {
             nl = bcf_sr_next_line(reader);
-            if (nl <= 0)
+            if(nl <= 0)
             {
                 break;
             }
@@ -459,7 +500,7 @@ int main(int argc, char* argv[]) {
                 }
             }
 
-            const int dist_to_previous = (previous_pos < 0) ? std::numeric_limits<int>::max() : line->pos - previous_pos;
+            const int dist_to_previous = (previous_pos < 0) ? 0 : line->pos - previous_pos;
             previous_pos = line->pos;
 
             if(vars_in_block > blocksize || dist_to_previous > min_var_distance)
@@ -468,7 +509,10 @@ int main(int argc, char* argv[]) {
                     std::lock_guard<std::mutex> lock(blocks_mutex);
                     blocks.emplace(std::move(p_bac));
                 }
-                p_bac = std::move(std::unique_ptr<BlockAlleleCompare>(new BlockAlleleCompare(hdr, ref_fasta, qq_field)));
+                p_bac = std::move(
+                        std::unique_ptr<BlockAlleleCompare>(new BlockAlleleCompare(hdr, ref_fasta, qq_field)));
+                p_bac->setComparisonMode(cmode);
+                p_bac->setComparisonParameters(cmode_params);
                 vars_in_block = 0;
                 previous_pos = -1;
             }
@@ -476,12 +520,12 @@ int main(int argc, char* argv[]) {
             p_bac->add(line);
             ++vars_in_block;
 
-            if (message > 0 && (rcount % message) == 0)
+            if(message > 0 && (rcount % message) == 0)
             {
                 auto t1 = CPUClock::now();
                 typedef std::chrono::duration<double, typename CPUClock::period> Cycle;
                 std::cout << stringutil::formatPos(vchr.c_str(), line->pos) << " cycles/record: " <<
-                             (Cycle(t1 - t0).count() / rcount) << "\n";
+                          (Cycle(t1 - t0).count() / rcount) << "\n";
             }
             // count variants here
             ++rcount;
@@ -498,18 +542,19 @@ int main(int argc, char* argv[]) {
             std::cout << "All records read. Waiting for workers to complete" << std::endl;
         }
 
-        for(auto & t : workers)
+        for(auto &t : workers)
         {
             t.join();
         }
 
         // make sure we write in the correct order
-        processed_blocks.sort([](std::unique_ptr<BlockAlleleCompare> const & b1,
-                                 std::unique_ptr<BlockAlleleCompare> const & b2) {
-            return *b1 < *b2;
-        });
+        processed_blocks.sort([](std::unique_ptr<BlockAlleleCompare> const &b1,
+                                 std::unique_ptr<BlockAlleleCompare> const &b2)
+                              {
+                                  return *b1 < *b2;
+                              });
 
-        for(auto & result : processed_blocks)
+        for(auto &result : processed_blocks)
         {
             result->output(writer);
         }
@@ -517,12 +562,12 @@ int main(int argc, char* argv[]) {
         hts_close(writer);
         bcf_sr_destroy(reader);
     }
-    catch(std::runtime_error & e)
+    catch(std::runtime_error &e)
     {
         std::cerr << e.what() << std::endl;
         return 1;
     }
-    catch(std::logic_error & e)
+    catch(std::logic_error &e)
     {
         std::cerr << e.what() << std::endl;
         return 1;
