@@ -23,6 +23,13 @@ RUN apt-get install pkg-config -y
 RUN apt-get install software-properties-common python-software-properties -y
 RUN apt-get install cmake -y
 
+# hap.py v0.3.7+ requires g++ 4.9
+RUN add-apt-repository ppa:ubuntu-toolchain-r/test -y
+RUN apt-get update
+RUN apt-get install g++-4.9 -y
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 50
+RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 50
+
 # upgrade to newest versions / install
 RUN pip install --upgrade cython
 RUN pip install --upgrade numpy

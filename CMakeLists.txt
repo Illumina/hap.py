@@ -24,8 +24,8 @@ else()
 endif()
 
 execute_process(
-    COMMAND ./make_dependencies.sh
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external
+    COMMAND ${CMAKE_SOURCE_DIR}/external/make_dependencies.sh
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     RESULT_VARIABLE EXTERNAL_SUCCESS)
 
 if(NOT "${EXTERNAL_SUCCESS}" STREQUAL "0")
@@ -40,15 +40,18 @@ set(Boost_USE_STATIC_RUNTIME     ON)
 set(Boost_NO_BOOST_CMAKE         ON)
 set(Boost_NO_SYSTEM_PATHS        ON)
 
-set(BOOST_ROOT ${HAPLOTYPES_SOURCE_DIR}/external/boost_install)
+set(BOOST_ROOT ${CMAKE_BINARY_DIR})
 message("Using our own Boost, which was built at ${HAPLOTYPES_SOURCE_DIR}/external/boost_install")
 
 find_package(Boost 1.55.0 COMPONENTS thread iostreams regex unit_test_framework filesystem system program_options REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
-include_directories (${HAPLOTYPES_SOURCE_DIR}/external/zlib-1.2.8)
-set(ZLIB_LIBRARIES ${HAPLOTYPES_SOURCE_DIR}/external/zlib-1.2.8/libz.a)
+include_directories (${CMAKE_BINARY_DIR}/include)
+link_directories (${CMAKE_BINARY_DIR}/lib)
+
+# make sure we use the bundled zlib version
+set(ZLIB_LIBRARIES ${CMAKE_BINARY_DIR}/lib/libz.a)
 
 include_directories (${HAPLOTYPES_SOURCE_DIR}/external/klib)
 include_directories (${HAPLOTYPES_SOURCE_DIR}/external/intervaltree)
@@ -61,17 +64,6 @@ if(USE_SGE)
     set (SGE_AVAILABLE 1)
 else()
     set (SGE_AVAILABLE 0)
-endif()
-
-configure_files("${CMAKE_CURRENT_SOURCE_DIR}/external/zlib-1.2.8" "libz*" "${CMAKE_BINARY_DIR}/lib")
-configure_files("${CMAKE_CURRENT_SOURCE_DIR}/external/htslib" "libhts*" "${CMAKE_BINARY_DIR}/lib")
-configure_files("${CMAKE_CURRENT_SOURCE_DIR}/external/htslib" "tabix" "${CMAKE_BINARY_DIR}/bin")
-configure_files("${CMAKE_CURRENT_SOURCE_DIR}/external/htslib" "bgzip" "${CMAKE_BINARY_DIR}/bin")
-configure_files("${CMAKE_CURRENT_SOURCE_DIR}/external/bcftools" "bcftools" "${CMAKE_BINARY_DIR}/bin")
-configure_files("${CMAKE_CURRENT_SOURCE_DIR}/external/samtools" "samtools" "${CMAKE_BINARY_DIR}/bin")
-
-if(BUILD_VCFEVAL)
-    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/external/rtg-tools/rtg-tools-install" DESTINATION "${CMAKE_BINARY_DIR}/libexec/")
 endif()
 
 include(FindHTSLib)
@@ -97,8 +89,6 @@ git_describe(HAPLOTYPES_VERSION)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/c++/include/Version.hh.in"
                "${CMAKE_BINARY_DIR}/include/Version.hh")
-
-include_directories(${CMAKE_BINARY_DIR}/include)
 
 add_subdirectory (src/c++/main)
 add_subdirectory (src/data)
