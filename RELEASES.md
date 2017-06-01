@@ -4,6 +4,8 @@
 
 | Ticket  | Description                                                                        |
 |---------|------------------------------------------------------------------------------------|
+| HAP-291 | Upgrade rtgtools dependency to version 3.7.1                                       |
+| HAP-292 | Improve Dockerfile and update compiler requirements                                |
 | HAP-295 | Preserve INFO fields when running with vcfeval comparison engine also              |
 | HAP-296 | Don't fail when no reference is found in default locations, just require `-r`      |
 | HAP-298 | Output run and session info in prefix.runinfo.json                                 |
