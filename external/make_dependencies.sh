@@ -34,7 +34,7 @@ fi
 
 if [ -z "$BOOST_ROOT" ];
 then
-    if [ ! -d ${ISD}/include/boost ]; 
+    if [ ! -d ${ISD}/include/boost ];
     then
         cd ${TLD}
         rm -rf ${TLD}/boost_subset_1_58_0
@@ -94,14 +94,14 @@ then
     rm -rf ${TLD}/samtools
     tar xzf ${DIR}/samtools.tar.gz
     cd samtools
-    autoconf -Wno-syntax
+    autoconf -Wno-syntax || autoconf -Wno-syntax
     ./configure --prefix=${ISD} \
         --with-htslib=${TLD}/htslib \
         --without-curses \
         CFLAGS=-I${ISD}/include \
         CPPFLAGS=-I${ISD}/include \
-        LDFLAGS=-L${ISD}/lib 
-    make -j4 
+        LDFLAGS=-L${ISD}/lib
+    make -j4
     make -j4 install
 else
     echo "samtools already built. To rebuild, delete ${ISD}/bin/samtools"
@@ -138,6 +138,6 @@ if [[ ! -z $BUILD_VCFEVAL ]]; then
     if [[ -f ${VCFEVAL_WRAPPER} ]]; then
         echo "using wrapper for rtg-tools: ${VCFEVAL_WRAPPER}"
         cp ${VCFEVAL_WRAPPER} ${ISD}/libexec/rtg-tools-install/rtg-wrapper.sh
-        chmod +x ${ISD}/libexec/rtg-tools-install/rtg-wrapper.sh 
+        chmod +x ${ISD}/libexec/rtg-tools-install/rtg-wrapper.sh
     fi
 fi
