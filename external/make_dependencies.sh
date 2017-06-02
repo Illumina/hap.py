@@ -56,12 +56,14 @@ then
     rm -rf ${TLD}/htslib
     tar xzf ${DIR}/htslib.tar.gz
     cd htslib
-    ./configure --prefix=${ISD} \
+    CFLAGS=-g ./configure --prefix=${ISD} \
         CFLAGS=-I${ISD}/include \
         CXXFLAGS=-I${ISD}/include \
         LDFLAGS=-L${ISD}/lib \
         --disable-plugins \
-        --disable-libcurl
+        --disable-libcurl \
+        --disable-lzma \
+        --disable-bz2
     make -j4
     make -j4 install
 
