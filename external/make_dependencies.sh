@@ -94,6 +94,7 @@ then
     rm -rf ${TLD}/samtools
     tar xzf ${DIR}/samtools.tar.gz
     cd samtools
+    autoconf -Wno-syntax
     ./configure --prefix=${ISD} \
         --with-htslib=${TLD}/htslib \
         --without-curses \
