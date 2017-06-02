@@ -2,6 +2,7 @@
 ##FILTER=<ID=PASS,Description="All	filters	passed">
 ##FILTER=<ID=LowGQX,Description="Low GQX">
 ##FILTER=<ID=HighDPFRatio,Description="DPF Ratio high">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##reference=hg19
 ##contig=<ID=1,length=249250621>
 ##contig=<ID=2,length=243199373>
