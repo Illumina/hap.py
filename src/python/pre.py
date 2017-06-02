@@ -118,10 +118,8 @@ def preprocess(vcf_input,
             int_suffix = ".vcf.gz"
             int_format = "z"
 
-        if vcf_output.endswith(".bcf"):
-            mf = subprocess.check_output("vcfcheck %s --check-bcf-errors 1" % pipes.quote(vcf_input), shell=True)
-        else:
-            mf = subprocess.check_output("vcfcheck %s --check-bcf-errors 0" % pipes.quote(vcf_input), shell=True)
+        # HAP-317 always check for BCF errors since preprocessing tools now require valid headers
+        mf = subprocess.check_output("vcfcheck %s --check-bcf-errors 1" % pipes.quote(vcf_input), shell=True)
 
         if gender == "auto":
             logging.info(mf)

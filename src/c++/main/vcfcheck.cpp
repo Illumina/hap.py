@@ -59,15 +59,17 @@
 
 /* #define DEBUG_VCFCHECK */
 
-namespace WARNING {
-    enum WARNING  {
-        REFPADDING,
-        OVERLAP,
-        SYMALT,
-        UNCERTAINLENGTH,
-        BCFERROR,
-        SIZE
-    };
+namespace WARNING
+{
+enum WARNING
+{
+    REFPADDING,
+    OVERLAP,
+    SYMALT,
+    UNCERTAINLENGTH,
+    BCFERROR,
+    SIZE
+};
 }
 
 int main(int argc, char *argv[])
@@ -99,88 +101,87 @@ int main(int argc, char *argv[])
             // Declare the supported options.
             po::options_description desc("Allowed options");
             desc.add_options()
-                ("help,h", "produce help message")
-                ("version", "Show version")
-                ("input-file", po::value<std::string>(), "The input file")
-                ("output-file,o", po::value<std::string>(), "The output JSON file with basic counts.")
-                ("location,l", po::value<std::string>(), "Start location.")
-                ("limit-records", po::value<int64_t>(), "Maximum number of records to process")
-                ("message-every", po::value<int64_t>(), "Print a message every N records.")
-                ("apply-filters,f", po::value<bool>(), "Apply filtering in VCF.")
-                ("strict-homref,H", po::value<bool>(), "Be strict about hom-ref assertions (i.e. don't allow these to overlap).")
-                ("check-bcf-errors", po::value<bool>(), "Check if turning this file into BCF will succeed or fail.")
-                ("all-warnings,W", po::value<bool>(), "Show all warnings, not just the first instance.")
-            ;
+                    ("help,h", "produce help message")
+                    ("version", "Show version")
+                    ("input-file", po::value<std::string>(), "The input file")
+                    ("output-file,o", po::value<std::string>(), "The output JSON file with basic counts.")
+                    ("location,l", po::value<std::string>(), "Start location.")
+                    ("limit-records", po::value<int64_t>(), "Maximum number of records to process")
+                    ("message-every", po::value<int64_t>(), "Print a message every N records.")
+                    ("apply-filters,f", po::value<bool>(), "Apply filtering in VCF.")
+                    ("strict-homref,H", po::value<bool>(),
+                     "Be strict about hom-ref assertions (i.e. don't allow these to overlap).")
+                    ("check-bcf-errors", po::value<bool>(), "Check if turning this file into BCF will succeed or fail.")
+                    ("all-warnings,W", po::value<bool>(), "Show all warnings, not just the first instance.");
 
             po::positional_options_description popts;
             popts.add("input-file", -1);
 
             po::options_description cmdline_options;
             cmdline_options
-                .add(desc)
-            ;
+                    .add(desc);
 
             po::variables_map vm;
 
             po::store(po::command_line_parser(argc, argv).
-                      options(cmdline_options).positional(popts).run(), vm);
+                    options(cmdline_options).positional(popts).run(), vm);
             po::notify(vm);
 
-            if (vm.count("version"))
+            if(vm.count("version"))
             {
                 std::cout << "vcfcheck version " << HAPLOTYPES_VERSION << "\n";
                 return 0;
             }
 
-            if (vm.count("help"))
+            if(vm.count("help"))
             {
                 std::cout << desc << "\n";
                 return 1;
             }
 
-            if (vm.count("input-file"))
+            if(vm.count("input-file"))
             {
-                file = vm["input-file"].as< std::string >();
+                file = vm["input-file"].as<std::string>();
             }
 
-            if (vm.count("output-file"))
+            if(vm.count("output-file"))
             {
-                output_file = vm["output-file"].as< std::string >();
+                output_file = vm["output-file"].as<std::string>();
             }
 
-            if (vm.count("location"))
+            if(vm.count("location"))
             {
-                stringutil::parsePos(vm["location"].as< std::string >(), chr, start, end);
+                stringutil::parsePos(vm["location"].as<std::string>(), chr, start, end);
             }
 
-            if (vm.count("limit-records"))
+            if(vm.count("limit-records"))
             {
-                rlimit = vm["limit-records"].as< int64_t >();
+                rlimit = vm["limit-records"].as<int64_t>();
             }
 
-            if (vm.count("message-every"))
+            if(vm.count("message-every"))
             {
-                message = vm["message-every"].as< int64_t >();
+                message = vm["message-every"].as<int64_t>();
             }
 
-            if (vm.count("apply-filters"))
+            if(vm.count("apply-filters"))
             {
-                apply_filters = vm["apply-filters"].as< bool >();
+                apply_filters = vm["apply-filters"].as<bool>();
             }
 
-            if (vm.count("strict-homref"))
+            if(vm.count("strict-homref"))
             {
-                strict_homref = vm["strict-homref"].as< bool >();
+                strict_homref = vm["strict-homref"].as<bool>();
             }
 
-            if (vm.count("all-warnings"))
+            if(vm.count("all-warnings"))
             {
-                all_warnings = vm["all-warnings"].as< bool >();
+                all_warnings = vm["all-warnings"].as<bool>();
             }
 
-            if (vm.count("check-bcf-errors"))
+            if(vm.count("check-bcf-errors"))
             {
-                check_bcf = vm["check-bcf-errors"].as< bool >();
+                check_bcf = vm["check-bcf-errors"].as<bool>();
             }
 
             if(file.size() == 0)
@@ -189,13 +190,13 @@ int main(int argc, char *argv[])
                 return 1;
             }
         }
-        catch (po::error & e)
+        catch(po::error &e)
         {
             std::cerr << e.what() << "\n";
             return 1;
         }
 
-        bcf_srs_t * reader = bcf_sr_init();
+        bcf_srs_t *reader = bcf_sr_init();
         reader->collapse = COLLAPSE_NONE;
         if(chr.empty())
         {
@@ -208,7 +209,7 @@ int main(int argc, char *argv[])
             reader->streaming = 0;
         }
 
-        if (!bcf_sr_add_reader(reader, file.c_str()))
+        if(!bcf_sr_add_reader(reader, file.c_str()))
         {
             error("Failed to open or file not indexed: %s\n", file.c_str());
         }
@@ -231,7 +232,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        bcf_hdr_t * hdr = reader->readers[0].header;
+        bcf_hdr_t *hdr = reader->readers[0].header;
 
         if(bcf_hdr_nsamples(hdr) < 1)
         {
@@ -246,10 +247,10 @@ int main(int argc, char *argv[])
         // this could be improved using and interval list
         // currently, we only check directly adjacent overlaps
         std::unique_ptr<int[]> previous_allele_count(new int[bcf_hdr_nsamples(hdr)]);
-        memset(previous_allele_count.get(), 0, sizeof(int)*bcf_hdr_nsamples(hdr));
+        memset(previous_allele_count.get(), 0, sizeof(int) * bcf_hdr_nsamples(hdr));
 
         int has_warned[WARNING::SIZE];
-        memset(has_warned, 0, sizeof(int)*WARNING::SIZE);
+        memset(has_warned, 0, sizeof(int) * WARNING::SIZE);
 
         int n_nonref = 0;
 
@@ -266,7 +267,7 @@ int main(int argc, char *argv[])
         while(nl)
         {
             nl = bcf_sr_next_line(reader);
-            if (nl <= 0)
+            if(nl <= 0)
             {
                 break;
             }
@@ -281,16 +282,19 @@ int main(int argc, char *argv[])
                 const std::string vchr = bcfhelpers::getChrom(hdr, line);
                 if(check_bcf)
                 {
-                    error("Record at %s:%i will not translate into BCF. Check if the header is incomplete (error code %i)",
-                          vchr.c_str(), line->pos+1, line->errcode);
+                    error("Record at %s:%i will not translate into BCF. Check if the header is incomplete (error code %i)."
+                                  " The header must have all contigs present as #contig entries (contrary to the"
+                                  " htslib error message, tabix indexing is not sufficient), and all the INFO and FORMAT"
+                                  " types must match the values in all records.",
+                          vchr.c_str(), line->pos + 1, line->errcode);
                 }
                 else
                 {
                     if(!has_warned[WARNING::BCFERROR])
                     {
-                        std::cerr << "[W] Record at " << vchr << ":" << line->pos+1 <<
-                            " will not translate into BCF. Check if the header is incomplete " <<
-                            " (error code " << line->errcode << ") -- all records like this are skipped." << "\n";
+                        std::cerr << "[W] Record at " << vchr << ":" << line->pos + 1 <<
+                                  " will not translate into BCF. Check if the header is incomplete " <<
+                                  " (error code " << line->errcode << ") -- all records like this are skipped." << "\n";
                     }
                     has_warned[WARNING::BCFERROR]++;
                     // skip
@@ -315,7 +319,7 @@ int main(int argc, char *argv[])
             {
                 // chromosome switch
                 previous_end = -1;
-                memset(previous_allele_count.get(), 0, sizeof(int)*bcf_hdr_nsamples(hdr));
+                memset(previous_allele_count.get(), 0, sizeof(int) * bcf_hdr_nsamples(hdr));
             }
 
             if(apply_filters)
@@ -350,12 +354,12 @@ int main(int argc, char *argv[])
 
             bcf_unpack(line, BCF_UN_ALL);
 
-            int64_t vstart = -1, vend= -1;
+            int64_t vstart = -1, vend = -1;
             try
             {
                 bcfhelpers::getLocation(hdr, line, vstart, vend);
             }
-            catch(bcfhelpers::importexception const & e)
+            catch(bcfhelpers::importexception const &e)
             {
                 std::cerr << e.what() << "\n";
                 vend = vstart;
@@ -383,13 +387,14 @@ int main(int argc, char *argv[])
                     {
                         if(all_warnings || !has_warned[WARNING::REFPADDING])
                         {
-                            std::cerr << "[W] variant at " << vchr << ":" << vstart << " has more than one base of reference padding \n";
+                            std::cerr << "[W] variant at " << vchr << ":" << vstart
+                                      << " has more than one base of reference padding \n";
                         }
                         has_warned[WARNING::REFPADDING]++;
                     }
                 }
             }
-            catch(bcfhelpers::importexception const & e)
+            catch(bcfhelpers::importexception const &e)
             {
                 std::cerr << "[W]" << e.what() << "\n";
             }
@@ -447,7 +452,7 @@ int main(int argc, char *argv[])
                             error("Call with invalid genotype (non-existent allele) at %s:%i",
                                   vchr.c_str(), vstart + 1);
                         }
-                        const char * alt = line->d.allele[gt[g]];
+                        const char *alt = line->d.allele[gt[g]];
 
                         if(((strchr(alt, '*') || strchr(alt, '.')) && strlen(alt) > 1))
                         {
@@ -482,7 +487,8 @@ int main(int argc, char *argv[])
                 {
                     if(all_warnings || !has_warned[WARNING::OVERLAP])
                     {
-                        std::cerr << "[W] overlapping records at " << vchr << ":" << vstart << " for sample " << isample << "\n";
+                        std::cerr << "[W] overlapping records at " << vchr << ":" << vstart << " for sample " << isample
+                                  << "\n";
                     }
                     has_warned[WARNING::OVERLAP]++;
                 }
@@ -554,7 +560,7 @@ int main(int argc, char *argv[])
 
             current_chr = vchr;
 
-            if (message > 0 && (rcount % message) == 0)
+            if(message > 0 && (rcount % message) == 0)
             {
                 std::cout << stringutil::formatPos(vchr.c_str(), line->pos) << "\n";
             }
@@ -577,16 +583,18 @@ int main(int argc, char *argv[])
         counts_root["SYMALT"] = has_warned[WARNING::SYMALT];
         counts_root["OVERLAP"] = has_warned[WARNING::OVERLAP];
         counts_root["UNCERTAINLENGTH"] = has_warned[WARNING::UNCERTAINLENGTH];
-        counts_root["records"] = (int)rcount;
+        counts_root["records"] = (int) rcount;
 
         if(has_warned[WARNING::BCFERROR])
         {
-            std::cerr << "[W] Variants that will cause trouble when writing BCF: " << has_warned[WARNING::BCFERROR] << "\n";
+            std::cerr << "[W] Variants that will cause trouble when writing BCF: " << has_warned[WARNING::BCFERROR]
+                      << "\n";
         }
 
         if(has_warned[WARNING::REFPADDING])
         {
-            std::cerr << "[W] Variants that have >1 base of reference padding: " << has_warned[WARNING::REFPADDING] << "\n";
+            std::cerr << "[W] Variants that have >1 base of reference padding: " << has_warned[WARNING::REFPADDING]
+                      << "\n";
         }
         if(has_warned[WARNING::OVERLAP])
         {
@@ -598,7 +606,8 @@ int main(int argc, char *argv[])
         }
         if(has_warned[WARNING::UNCERTAINLENGTH])
         {
-            std::cerr << "[W] Variants that have alleles with uncertain length: " << has_warned[WARNING::UNCERTAINLENGTH] << "\n";
+            std::cerr << "[W] Variants that have alleles with uncertain length: "
+                      << has_warned[WARNING::UNCERTAINLENGTH] << "\n";
         }
 
         std::cerr << "[I] Total VCF records:         " << rcount << "\n";
@@ -613,12 +622,12 @@ int main(int argc, char *argv[])
 
         bcf_sr_destroy(reader);
     }
-    catch(std::runtime_error & e)
+    catch(std::runtime_error &e)
     {
         std::cerr << e.what() << std::endl;
         return 1;
     }
-    catch(std::logic_error & e)
+    catch(std::logic_error &e)
     {
         std::cerr << e.what() << std::endl;
         return 1;

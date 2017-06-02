@@ -56,9 +56,9 @@ then
     rm -rf ${TLD}/htslib
     tar xzf ${DIR}/htslib.tar.gz
     cd htslib
-    CFLAGS=-g ./configure --prefix=${ISD} \
-        CFLAGS=-I${ISD}/include \
-        CXXFLAGS=-I${ISD}/include \
+    ./configure --prefix=${ISD} \
+        CFLAGS=-I${ISD}/include\ -g \
+        CXXFLAGS=-I${ISD}/include\ -g \
         LDFLAGS=-L${ISD}/lib \
         --disable-plugins \
         --disable-libcurl \

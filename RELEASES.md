@@ -1,5 +1,11 @@
 # Hap.py Release Notes / Change Log
 
+## v0.3.9
+
+| Ticket  | Description                                                                        |
+|---------|------------------------------------------------------------------------------------|
+| HAP-317 | Update htslib to 1.4.1 and always check for BCF conversion errors                  |
+
 ## v0.3.8
 
 | Ticket  | Description                                                                        |
