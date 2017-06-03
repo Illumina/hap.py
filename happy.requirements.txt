@@ -1,7 +1,8 @@
 Cython
 numpy
 pandas
-pybedtools
+psutil
+pip
 pysam
 nose
 scipy
