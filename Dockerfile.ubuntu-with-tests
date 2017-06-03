@@ -31,9 +31,6 @@ COPY . /opt/hap.py-source/
 # make minimal HG19 reference sequence
 RUN mkdir -p /opt/hap.py-data
 
-# download HG19 reference data
-WORKDIR /opt/hap.py-data
-
 # get + install ant
 WORKDIR /opt
 RUN wget http://archive.apache.org/dist/ant/binaries/apache-ant-1.9.7-bin.tar.gz && \
@@ -44,11 +41,15 @@ ENV PATH $PATH:/opt/apache-ant-1.9.7/bin
 # run hap.py installer in the image, don't run tests since we don't have a reference file
 WORKDIR /opt/hap.py-source
 RUN python install.py /opt/hap.py --with-rtgtools --no-tests
-WORKDIR /opt/hap.py
 
+# download HG19 reference data
 # This downloads from UCSC
+WORKDIR /opt/hap.py-data
+ENV PATH $PATH:/opt/hap.py/bin
 RUN /opt/hap.py-source/src/sh/make_hg19.sh && samtools faidx /opt/hap.py-data/hg19.fa
 # Run tests
+ENV HG19 /opt/hap.py-data/hg19.fa
+WORKDIR /opt/hap.py
 RUN /opt/hap.py-source/src/sh/run_tests.sh
 
 # remove source folder
