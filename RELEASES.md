@@ -5,6 +5,8 @@
 | Ticket  | Description                                                                        |
 |---------|------------------------------------------------------------------------------------|
 | HAP-317 | Update htslib to 1.4.1 and always check for BCF conversion errors                  |
+| HAP-318 | Update rtgtools to 3.8.1                                                           |
+| HAP-319 | Slimmer docker image without hg19 reference                                        |
 
 ## v0.3.8
 
