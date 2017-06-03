@@ -11,5 +11,5 @@ node {
 
     stage 'Test'
 
-    sh 'cd ${WORKSPACE}/install && echo "PYTHON=/illumina/sync/software/groups/hap.py/latest/python-ve/bin/python-wrapper.sh ${WORKSPACE}/src/sh/run_tests.sh" | qsub -l h_vmem=8G -pe threaded 4 -cwd -sync y -N jnks-hap.py'
+    sh 'cd ${WORKSPACE}/install && echo "PYTHON=/illumina/sync/software/groups/hap.py/latest/python-ve/bin/python-wrapper.sh ${WORKSPACE}/src/sh/run_tests.sh" | qsub -l excl -cwd -sync y -N jnks-hap.py'
 }
