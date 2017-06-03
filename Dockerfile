@@ -17,6 +17,8 @@ RUN apt-get install python2.7 python2.7-dev python \
 RUN apt-get install software-properties-common python-software-properties -y
 RUN apt-get clean -y
 
+RUN pip install bx-python
+
 RUN echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | debconf-set-selections && \
     add-apt-repository -y ppa:webupd8team/java && \
     apt-get update && \
