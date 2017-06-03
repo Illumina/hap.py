@@ -1,6 +1,7 @@
 ##fileformat=VCFv4.1
 ##FILTER=<ID=PASS,Description="All	filters	passed">
 ##reference=hg19
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##contig=<ID=1,length=249250621>
 ##contig=<ID=2,length=243199373>
 ##contig=<ID=3,length=198022430>

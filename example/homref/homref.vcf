@@ -1,7 +1,7 @@
 ##fileformat=VCFv4.1
 ##FILTER=<ID=PASS,Description="All	filters	passed">
 ##INFO=<ID=END,Number=.,Type=Integer,Description="SV end position">
-##contig=<ID=21,length=48129895>
+##contig=<ID=chr21,length=48129895>
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA12878
 chr21	20001394	.	C	.	.	PASS	END=20001396	GT	0/0
 chr21	20001450	.	C	.	.	PASS	END=20001480	GT	0/0
