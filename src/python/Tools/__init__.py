@@ -16,9 +16,14 @@ import subprocess
 from datetime import date
 
 # noinspection PyUnresolvedReferences
-import Haplo.version as vs  # pylint: disable=E0401,E0611
-version = vs.__version__
-has_sge = vs.has_sge
+try:
+    import Haplo.version as vs  # pylint: disable=E0401,E0611
+    version = vs.__version__
+    has_sge = vs.has_sge
+except ImportError:
+    logging.warn("No version found. Please follow the installation instructions.")
+    version = "unknown"
+    has_sge = False
 
 
 def defaultReference():

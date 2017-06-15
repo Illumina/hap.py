@@ -17,6 +17,7 @@ from Tools.vcfextract import vcfExtract
 from Strelka import extractStrelkaSNVFeatures, extractStrelkaIndelFeatures
 from Mutect import extractMutectSNVFeatures, extractMutectIndelFeatures
 from Varscan2 import extractVarscan2SNVFeatures, extractVarscan2IndelFeatures
+from Pisces import extractPiscesSNVFeatures, extractPiscesIndelFeatures
 
 
 class FeatureSet(object):
@@ -227,3 +228,32 @@ class Varscan2HCCIndelFeatures(StrelkaAdmixIndelFeatures):
         return GenericFeatures.collectFeatures(vcfname, tag, features, processor=StrelkaAdmixIndelFeatures.processValue)
 
 FeatureSet.register("hcc.varscan2.indel", Varscan2HCCIndelFeatures)
+
+
+class PiscesHCCSNVFeatures(StrelkaAdmixSNVFeatures):
+    """ Collect SNV features from Pisces-to-HCC truthset comparison """
+    def collect(self, vcfname, tag):
+        """ Return a data frame with features collected from the given VCF, tagged by given type """
+        if tag not in ["TP", "FN"]:
+            return extractPiscesSNVFeatures(vcfname, tag, self.chr_depth)
+        else:
+            features = ["CHROM", "POS", "REF", "ALT", "QUAL",
+                        "I.MapQrange", "I.somatic", "I.filtered", "S.1.VT",
+                        "I.T_ALT_RATE", "I.DP_normal", "I.DP_tumor", "I.tag", "I.count"]
+        return GenericFeatures.collectFeatures(vcfname, tag, features, processor=StrelkaAdmixSNVFeatures.processValue)
+
+FeatureSet.register("hcc.pisces.snv", PiscesHCCSNVFeatures)
+
+
+class PiscesHCCIndelFeatures(StrelkaAdmixIndelFeatures):
+    """ Collect Indel features from Pisces-to-HCC truthset comparison """
+    def collect(self, vcfname, tag):
+        """ Return a data frame with features collected from the given VCF, tagged by given type """
+        if tag not in ["TP", "FN"]:
+            return extractPiscesIndelFeatures(vcfname, tag, self.chr_depth)
+        else:
+            features = ["CHROM", "POS", "REF", "ALT", "QUAL", "S.1.VT",
+                        "I.T_ALT_RATE", "I.DP_normal", "I.DP_tumor", "I.tag", "I.count"]
+        return GenericFeatures.collectFeatures(vcfname, tag, features, processor=StrelkaAdmixIndelFeatures.processValue)
+
+FeatureSet.register("hcc.pisces.indel", PiscesHCCIndelFeatures)
