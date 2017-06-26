@@ -302,7 +302,7 @@ def main():
         raise Exception("Boost directory doesn't exist.")
 
     # build deps
-    build_external(source_dir, args)
+    #build_external(source_dir, args)
 
     # build hap.py
     build_dir = tempfile.mkdtemp(prefix="build", dir=args.scratch_path)
