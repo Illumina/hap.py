@@ -124,26 +124,6 @@ def replace_shebang(filename, shebang):
                 f.write(l)
 
 
-def build_external(source_dir, args):
-    """ Build hap.py external dependencies """
-    print >>sys.stderr, "Building external dependencies"
-    if args.boost:
-        boost_prefix = "BOOST_ROOT=%s " % args.boost
-    else:
-        boost_prefix = ""
-
-    setupscript = ""
-    if args.setup != "auto":
-        setupscript = " . %s && " % os.path.join(source_dir, "src", "sh", args.setup + "-setup.sh")
-
-    setupscript += boost_prefix
-
-    to_run = "cd %s && %s ./make_dependencies.sh rebuild" % (os.path.join(source_dir, "external"),
-                                                             setupscript)
-    print >>sys.stderr, to_run
-    subprocess.check_call(to_run, shell=True)
-
-
 def build_haplotypes(source_dir, build_dir, args):
     if args.boost:
         boost_prefix = "BOOST_ROOT=%s " % args.boost
@@ -257,10 +237,6 @@ def main():
                         help="Keep the scratch folder.", default=False,
                         action="store_true")
 
-    parser.add_argument("--no-rebuild-external", dest="external_build", default=True,
-                        action="store_false",
-                        help="Don't rebuild external dependencies if not necessary.")
-
     parser.add_argument("--with-rtgtools", dest="build_rtgtools", default=False,
                         action="store_true",
                         help="Get and build rtgtools. You need to have Java and Ant for this.")
@@ -300,9 +276,6 @@ def main():
 
     if args.boost and not os.path.exists(args.boost):
         raise Exception("Boost directory doesn't exist.")
-
-    # build deps
-    build_external(source_dir, args)
 
     # build hap.py
     build_dir = tempfile.mkdtemp(prefix="build", dir=args.scratch_path)
