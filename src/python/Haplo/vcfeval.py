@@ -112,6 +112,9 @@ def runVCFEval(vcf1, vcf2, target, args):
         if args.roc:
             runme += " -f %s" % pipes.quote(args.roc)
 
+        if args.engine_scmp_distance:
+            runme += " --Xloose-match-distance=%i" % args.engine_scmp_distance
+
         logging.info(runme)
         po = subprocess.Popen(runme,
                               shell=True,
