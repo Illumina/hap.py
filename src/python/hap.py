@@ -132,8 +132,11 @@ def main():
                              "to save time when running hap.py with vcfeval. If no SDF folder is "
                              "specified, hap.py will create a temporary one.")
 
-    parser.add_argument("--scmp-distance", dest="engine_scmp_distance", required=False, default=30,
-                        help="For distance-based matching, this is the distance between variants to use.")
+    parser.add_argument("--scmp-distance", dest="engine_scmp_distance", required=False, default=30, type=int,
+                        help="For distance-based matching (vcfeval and scmp), this is the distance between variants to use.")
+
+    parser.add_argument("--lose-match-distance", dest="engine_scmp_distance", required=False, type=int,
+                        help="For distance-based matching (vcfeval and scmp), this is the distance between variants to use.")
 
     if Tools.has_sge:
         parser.add_argument("--force-interactive", dest="force_interactive",

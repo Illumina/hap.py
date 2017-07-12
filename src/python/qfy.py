@@ -168,6 +168,7 @@ def quantify(args):
                               "QUERY.FP",
                               "QUERY.UNK",
                               "FP.gt",
+                              "FP.al",
                               "METRIC.Recall",
                               "METRIC.Precision",
                               "METRIC.Frac_NA",

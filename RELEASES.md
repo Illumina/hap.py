@@ -1,5 +1,13 @@
 # Hap.py Release Notes / Change Log
 
+## v0.3.10
+
+| Ticket  | Description                                                                        |
+|---------|------------------------------------------------------------------------------------|
+| HAP-326 | Support Pisces VCFs in som.py                                                      |
+| HAP-332 | Fix bug in install.py related to external dependencies                             |
+| HAP-333 | Update rtgtools to 3.8.2 and add support for distance-based matching               |
+
 ## v0.3.9
 
 | Ticket  | Description                                                                        |
