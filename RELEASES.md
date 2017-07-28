@@ -7,6 +7,7 @@
 | HAP-326 | Support Pisces VCFs in som.py                                                      |
 | HAP-332 | Fix bug in install.py related to external dependencies                             |
 | HAP-333 | Update rtgtools to 3.8.2 and add support for distance-based matching               |
+| HAP-336 | Change Dataframe.sort to sort_value in som.py (#21)                                |
 
 ## v0.3.9
 
