@@ -446,7 +446,7 @@ def main():
             ac = list(ambiClasses.iteritems())
             if ac:
                 ambie = pandas.DataFrame(ac, columns=["class", "count"])
-                ambie.sort(["class"], inplace=True)
+                ambie.sort_values(["class"], inplace=True)
                 pandas.set_option("display.max_rows", 1000)
                 pandas.set_option("display.max_columns", 1000)
                 pandas.set_option("display.width", 1000)
@@ -465,7 +465,7 @@ def main():
             ar = list(ambiReasons.iteritems())
             if ar:
                 ambie = pandas.DataFrame(ar, columns=["reason", "count"])
-                ambie.sort(["reason"], inplace=True)
+                ambie.sort_values(["reason"], inplace=True)
                 pandas.set_option("display.max_rows", 1000)
                 pandas.set_option("display.max_columns", 1000)
                 pandas.set_option("display.width", 1000)
@@ -497,8 +497,8 @@ def main():
             # ... which we don't need to do since tps1 and tps2 have the same ordering
 
             logging.info("Sorting...")
-            tps.sort(["CHROM", "POS"], inplace=True)
-            tps2.sort(["CHROM", "POS"], inplace=True)
+            tps.sort_values(["CHROM", "POS"], inplace=True)
+            tps2.sort_values(["CHROM", "POS"], inplace=True)
             tps = tps.reset_index(drop=True)
             tps2 = tps2.reset_index(drop=True)
 
