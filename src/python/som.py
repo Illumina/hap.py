@@ -32,6 +32,7 @@ import tempfile
 import shutil
 import pandas
 import numpy as np
+np.seterr(all='ignore')
 import gzip
 import json
 from collections import Counter
@@ -49,9 +50,7 @@ from Tools.metric import makeMetricsObject, dataframeToMetricsTable
 from Tools.fastasize import fastaContigLengths, calculateLength
 import Somatic
 
-
-# noinspection PyBroadException
-def main():
+def parse_args():
     parser = argparse.ArgumentParser("Somatic Comparison")
 
     parser.add_argument("truth", help="Truth VCF file")
@@ -115,6 +114,9 @@ def main():
     parser.add_argument("--feature-table", dest="features", default=False, choices=Somatic.FeatureSet.sets.keys(),
                         help="Select a feature table to output.")
 
+    parser.add_argument("--happy-stats", dest="happy_stats", default=False, action="store_true",
+                        help="Generate summary.csv.")
+
     parser.add_argument("--bam", dest="bams", default=[], action="append",
                         help="pass one or more BAM files for feature table extraction")
 
@@ -153,7 +155,7 @@ def main():
                              " - this will override the --feature-table switch!")
 
     parser.add_argument("--bin-afs", dest="af_strat", default=None, action="store_true",
-                        help="Stratify into different AF buckets. This needs to have features available"
+                        help="Stratify into different AF buckets. This needs to have features available "
                              "for getting the AF both in truth and query variants.")
     parser.add_argument("--af-binsize", dest="af_strat_binsize", default=0.2,
                         help="Bin size for AF binning (should be < 1). Multiple bin sizes can be specified using a comma, "
@@ -238,6 +240,188 @@ def main():
         raise Exception("Counting filtered / unfiltered FNs only works when a feature table is selected, "
                         "and when using unfiltered variants. Specify -P --feature-table <...> or use "
                         "--roc to select a ROC type.")
+
+    if args.happy_stats and (not args.inc_nonpass or not args.features):
+        raise Exception("Obtaining hap.py stats only works when a feature table is selected, "
+                        "and when using unfiltered variants. Specify -P --feature-table <...> or use "
+                        "--roc to select a ROC type.")
+
+    if args.scratch_prefix:
+        scratch = os.path.abspath(args.scratch_prefix)
+        args.delete_scratch = False
+        Tools.mkdir_p(scratch)
+    else:
+        scratch = tempfile.mkdtemp()
+
+    return args
+
+
+def resolve_vtype(args):
+    fvtype = args.features.split(".")[-1]
+    if fvtype == "snv":
+        vtype = "SNP"
+    elif fvtype == "indel":
+        vtype = "INDEL"
+    else:
+        logging.warning("Could not parse variant type from feature table arg, setting to NA")
+        vtype = "NA"
+    return vtype
+
+
+def summary_from_featuretable(f, args):
+
+    # define vtype to match those in hap.py
+    vtype = resolve_vtype(args)
+
+    # define output data frame and temporary dict
+    happy_cols = ["Type", "Filter", "TRUTH.TOTAL", "TRUTH.TP",
+        "TRUTH.FN", "QUERY.TOTAL", "QUERY.FP", "QUERY.UNK", "FP.gt", "METRIC.Recall",
+        "METRIC.Precision", "METRIC.Frac_NA", "METRIC.F1_Score",
+        "TRUTH.TOTAL.TiTv_ratio", "QUERY.TOTAL.TiTv_ratio",
+        "TRUTH.TOTAL.het_hom_ratio", "QUERY.TOTAL.het_hom_ratio"]
+    happy_summary = pandas.DataFrame(columns = happy_cols)
+    r = dict()
+    r["Type"] = vtype
+    decimals = 4
+
+    # truth numbers do not depend on filter
+    truth = f[(f["REF.truth"].notnull()) & (f["REF.truth"] != "") & (f["REF.truth"] != ".")]
+    r["TRUTH.TOTAL"] = truth.shape[0]
+    r["TRUTH.TP"] = truth[(truth["tag"] == "TP")].shape[0]
+    r["TRUTH.FN"] = truth[(truth["tag"] == "FN")].shape[0]
+    r["TRUTH.TOTAL.het_hom_ratio"] = "NA"
+    r["TRUTH.TOTAL.TiTv_ratio"] = "NA"
+
+    # query numbers can be from PASS / ALL variants
+    for vfilter in ["PASS", "ALL"]:
+        r["Filter"] = vfilter
+
+        query = f[(f["REF"].notnull()) & (f["REF"] != "") & (f["REF"] != ".") & \
+                  (f["ALT"].notnull()) & (f["ALT"] != "") & (f["ALT"] != ".")]
+        if vfilter == "PASS":
+            query = query[(query["FILTER"] == "PASS") | (query["FILTER"].isnull()) | (query["FILTER"] == "") | (query["FILTER"] == ".")]
+
+        # query counts across all AFs
+        r["QUERY.TOTAL"] = query.shape[0]
+        r["QUERY.FP"] = query[(query["tag"] == "FP")].shape[0]
+        r["QUERY.UNK"] = query[(query["tag"] == "UNK")].shape[0]
+        r["FP.gt"] = "NA"
+        r["QUERY.TOTAL.het_hom_ratio"] = "NA"
+        r["QUERY.TOTAL.TiTv_ratio"] = "NA"
+
+        # performance metrics across all AFs
+        r["METRIC.Recall"] = np.round(np.true_divide(r["TRUTH.TP"], r["TRUTH.TOTAL"]), decimals)
+        r["METRIC.Precision"] = np.round(np.true_divide(r["TRUTH.TP"], (r["TRUTH.TP"] + r["QUERY.FP"])), decimals)
+        r["METRIC.Frac_NA"] = np.round(np.true_divide(r["QUERY.UNK"], r["QUERY.TOTAL"]), decimals)
+        r["METRIC.F1_Score"] = np.round(np.true_divide(2 * r["METRIC.Precision"] * r["METRIC.Recall"], (r["METRIC.Precision"] + r["METRIC.Recall"])), decimals)
+
+        happy_summary = happy_summary.append(pandas.DataFrame([r]))
+
+    # reorder columns and return
+    happy_summary = happy_summary[happy_cols]
+
+    # append breaks col types - fix them
+    int_cols = ["TRUTH.TOTAL", "TRUTH.TP", "TRUTH.FN", "QUERY.TOTAL", "QUERY.FP", "QUERY.UNK"]
+    for col in int_cols:
+        happy_summary[col] = happy_summary[col].astype("int")
+
+    # return
+    return happy_summary
+
+
+def extended_from_featuretable(f, args):
+    # define vtype to match those in hap.py
+    vtype = resolve_vtype(args)
+
+    # define output data frame and temporary dict
+    happy_cols = ["Type", "Subtype", "Subset", "Filter",
+        "TRUTH.TOTAL", "TRUTH.TP", "TRUTH.FN",
+        "QUERY.TOTAL", "QUERY.FP", "QUERY.UNK", "FP.gt", "METRIC.Recall",
+        "METRIC.Precision", "METRIC.Frac_NA", "METRIC.F1_Score",
+        "TRUTH.TOTAL.TiTv_ratio", "QUERY.TOTAL.TiTv_ratio",
+        "TRUTH.TOTAL.het_hom_ratio", "QUERY.TOTAL.het_hom_ratio"]
+    happy_extended = pandas.DataFrame(columns = happy_cols)
+    r = dict()
+    r["Type"] = vtype
+    r["Subype"] = "*"
+    decimals = 4
+
+    # set up AF iterators
+    start = 0.0
+    end = 1.0
+    current_binsize = args.af_strat_binsize[0]
+    next_binsize = 0
+    af_t_feature = args.af_strat_truth
+    af_q_feature = args.af_strat_query
+
+    # iterate over AF bins
+    while start < 1.0:
+
+        # include 1 in last interval
+        end = start + current_binsize
+        r["Subset"] = "[%.2f-%.2f)" % (start, end)
+        if end >= 1:
+            end = 1.00000001
+            r["Subset"] = "[1.00-1.00]"
+
+        # truth numbers do not depend on filter
+        truth = f[(f["REF.truth"].notnull()) & (f["REF.truth"] != "") & (f["REF.truth"] != ".") & \
+                  (f[af_t_feature] >= start) & (f[af_t_feature] < end)]
+        r["TRUTH.TOTAL"] = truth.shape[0]
+        r["TRUTH.TP"] = truth[(truth["tag"] == "TP")].shape[0]
+        r["TRUTH.FN"] = truth[(truth["tag"] == "FN")].shape[0]
+        r["TRUTH.TOTAL.het_hom_ratio"] = "NA"
+        r["TRUTH.TOTAL.TiTv_ratio"] = "NA"
+
+        # query numbers can be from PASS / ALL variants
+        for vfilter in ["PASS", "ALL"]:
+            r["Filter"] = vfilter
+
+            query = f[(f["REF"].notnull()) & (f["REF"] != "") & (f["REF"] != ".") & \
+                      (f["ALT"].notnull()) & (f["ALT"] != "") & (f["ALT"] != ".") & \
+                      (f[af_q_feature] >= start) & (f[af_q_feature] < end)]
+            if vfilter == "PASS":
+                query = query[(query["FILTER"] == "PASS") | (query["FILTER"].isnull()) | (query["FILTER"] == "") | (query["FILTER"] == ".")]
+
+            # query counts across all AFs
+            r["QUERY.TOTAL"] = query.shape[0]
+            r["QUERY.FP"] = query[(query["tag"] == "FP")].shape[0]
+            r["QUERY.UNK"] = query[(query["tag"] == "UNK")].shape[0]
+            r["FP.gt"] = "NA"
+            r["QUERY.TOTAL.het_hom_ratio"] = "NA"
+            r["QUERY.TOTAL.TiTv_ratio"] = "NA"
+
+            # performance metrics across all AFs
+            r["METRIC.Recall"] = np.round(np.true_divide(r["TRUTH.TP"], r["TRUTH.TOTAL"]), decimals)
+            r["METRIC.Precision"] = np.round(np.true_divide(r["TRUTH.TP"], (r["TRUTH.TP"] + r["QUERY.FP"])), decimals)
+            r["METRIC.Frac_NA"] = np.round(np.true_divide(r["QUERY.UNK"], r["QUERY.TOTAL"]), decimals)
+            r["METRIC.F1_Score"] = np.round(np.true_divide(2 * r["METRIC.Precision"] * r["METRIC.Recall"], (r["METRIC.Precision"] + r["METRIC.Recall"])), decimals)
+
+            happy_extended = happy_extended.append(pandas.DataFrame([r]))
+
+        # re-configure counters
+        start = end
+        next_binsize += 1
+        if next_binsize >= len(args.af_strat_binsize):
+            next_binsize = 0
+        current_binsize = args.af_strat_binsize[next_binsize]
+
+    # reorder columns and return
+    happy_extended = happy_extended[happy_cols]
+
+    # append breaks col types - fix them
+    int_cols = ["TRUTH.TOTAL", "TRUTH.TP", "TRUTH.FN", "QUERY.TOTAL", "QUERY.FP", "QUERY.UNK"]
+    for col in int_cols:
+        happy_extended[col] = happy_extended[col].astype("int")
+
+    # return
+    return happy_extended
+
+
+# noinspection PyBroadException
+def main():
+
+    args = parse_args()
 
     if args.scratch_prefix:
         scratch = os.path.abspath(args.scratch_prefix)
@@ -603,13 +787,13 @@ def main():
             af_t_feature = args.af_strat_truth
             af_q_feature = args.af_strat_query
             for vtype in ["records", "SNVs", "indels"]:
+                featuretable["vtype"] = "NA"
+                featuretable.loc[(featuretable["REF"].str.len() > 0) & (featuretable["ALT"].str.len() == featuretable["REF"].str.len()), "vtype"] = "SNV"
+                featuretable.loc[(featuretable["REF"].str.len() != 1) | (featuretable["ALT"].str.len() != 1), "vtype"] = "INDEL"
                 if vtype == "SNVs":
-                    featuretable_this_type = featuretable[(featuretable["REF"].str.len() > 0) &
-                                                          (featuretable["ALT"].str.len() ==
-                                                           featuretable["REF"].str.len())]
+                    featuretable_this_type = featuretable[(featuretable["vtype"] == "SNV")]
                 elif vtype == "indels":
-                    featuretable_this_type = featuretable[(featuretable["REF"].str.len() != 1) |
-                                                          (featuretable["ALT"].str.len() != 1)]
+                    featuretable_this_type = featuretable[(featuretable["vtype"] == "INDEL")]
                 else:
                     featuretable_this_type = featuretable
 
@@ -658,7 +842,7 @@ def main():
                              "fp": n_fp.shape[0],
                              "fn": n_fn.shape[0],
                              "unk": n_unk.shape[0],
-                             "ambi": n_ambi.shape[0], }
+                             "ambi": n_ambi.shape[0]}
 
                         if args.count_filtered_fn:
                             r["fp.filtered"] = n_fp[n_fp["FILTER"] != ""].shape[0]
@@ -763,9 +947,25 @@ def main():
 
         vstring = " ".join(sys.argv)
         res["sompycmd"] = vstring
+
+        # save results
         res.to_csv(args.output + ".stats.csv")
+
         with open(args.output + ".metrics.json", "w") as fp:
             json.dump(metrics_output, fp)
+
+        if args.happy_stats:
+            # parse saved feature table as the one in memory has been updated
+            featuretable = pandas.read_csv(args.output + ".features.csv", low_memory = False)
+
+            # hap.py summary.csv
+            summary = summary_from_featuretable(featuretable, args)
+            summary.to_csv(args.output + ".summary.csv")
+
+            #  hap.py extended.csv
+            if args.af_strat:
+                extended = extended_from_featuretable(featuretable, args)
+                extended.to_csv(args.output + ".extended.csv")
 
     finally:
         if args.delete_scratch:
