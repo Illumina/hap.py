@@ -359,10 +359,10 @@ def extended_from_featuretable(f, args):
 
         # include 1 in last interval
         end = start + current_binsize
-        r["Subset"] = "[%.2f-%.2f)" % (start, end)
+        r["Subset"] = "[%.2f,%.2f)" % (start, end)
         if end >= 1:
             end = 1.00000001
-            r["Subset"] = "[1.00-1.00]"
+            r["Subset"] = "[1.00,1.00]"
 
         # truth numbers do not depend on filter
         truth = f[(f["REF.truth"].notnull()) & (f["REF.truth"] != "") & (f["REF.truth"] != ".") & \
@@ -787,11 +787,11 @@ def main():
             af_t_feature = args.af_strat_truth
             af_q_feature = args.af_strat_query
             for vtype in ["records", "SNVs", "indels"]:
-                featuretable["vtype"] = "NA"
-                featuretable.loc[(featuretable["REF"].str.len() > 0) & (featuretable["ALT"].str.len() == featuretable["REF"].str.len()), "vtype"] = "SNV"
-                featuretable.loc[(featuretable["REF"].str.len() != 1) | (featuretable["ALT"].str.len() != 1), "vtype"] = "INDEL"
+                featuretable["vtype"] = resolve_vtype(args)
+                # featuretable.loc[(featuretable["REF"].str.len() > 0) & (featuretable["ALT"].str.len() == featuretable["REF"].str.len()), "vtype"] = "SNV"
+                # featuretable.loc[(featuretable["REF"].str.len() != 1) | (featuretable["ALT"].str.len() != 1), "vtype"] = "INDEL"
                 if vtype == "SNVs":
-                    featuretable_this_type = featuretable[(featuretable["vtype"] == "SNV")]
+                    featuretable_this_type = featuretable[(featuretable["vtype"] == "SNP")]
                 elif vtype == "indels":
                     featuretable_this_type = featuretable[(featuretable["vtype"] == "INDEL")]
                 else:
@@ -874,8 +874,6 @@ def main():
         res["na"] = res["unk"] / (res["total.query"])
         res["ambiguous"] = res["ambi"] / res["total.query"]
 
-        res = res[(res["total.truth"] > 0)]
-
         any_fp = fpclasses.countbases(label="FP")
 
         fp_region_count = 0
@@ -935,6 +933,7 @@ def main():
 
         # HAP-162 remove inf values
         res.replace([np.inf, -np.inf], 0)
+
         metrics_output["metrics"].append(dataframeToMetricsTable("result", res))
         vstring = "som.py-%s" % Tools.version
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Compare two som.py csv files
+# Compare som.py stats.csv and hap.py summary.csv files
 
 import sys
 import argparse
@@ -24,13 +24,12 @@ def eval_equal(metric_name, count_a, count_b):
     logging.info("%s: %d vs %d - %s" % (metric_name, a, b, e))
     return e
 
-
 if __name__ == '__main__':
     args = parse_args()
     sompy_stats = csv.DictReader(open(args.sompy_stats))
     happy_summary = csv.DictReader(open(args.happy_summary))
 
-    # compare first row of som.py stats to PASS?ALL rows in hap.py summary
+    # compare first row of som.py stats to PASS/ALL rows in hap.py summary
     s = sompy_stats.next()
 
     if s["type"] == "SNVs":
@@ -52,12 +51,10 @@ if __name__ == '__main__':
             outcomes[h["Filter"]].add(eval_equal(metric_name="QUERY.FP", count_a=s["fp"], count_b=h["QUERY.FP"]))
             outcomes[h["Filter"]].add(eval_equal(metric_name="QUERY.UNK", count_a=s["unk"], count_b=h["QUERY.UNK"]))
 
-    n_fails = 0
-    for vfilter in outcomes:
-        if "FAIL" in outcomes[vfilter]:
-            n_fails += 1
-    if n_fails == len(outcomes):
-        logging.error("Done: Checks have FAILED for all variant filters")
+    failed_vfilters = [x for x in outcomes if "FAIL" in outcomes[x]]
+    if len(failed_vfilters) == 2:
+        logging.error("Checks have FAILED for all variant filters")
         sys.exit(1)
     else:
-        logging.info("Done: PASS")
+        logging.info("Failed filters: %s" % failed_vfilters)
+        logging.info("DONE")
