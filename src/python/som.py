@@ -299,7 +299,7 @@ def summary_from_featuretable(f, args):
         query = f[(f["REF"].notnull()) & (f["REF"] != "") & (f["REF"] != ".") & \
                   (f["ALT"].notnull()) & (f["ALT"] != "") & (f["ALT"] != ".")]
         if vfilter == "PASS":
-            query = query[(query["FILTER"] == "PASS") | (query["FILTER"].isnull()) | (query["FILTER"] == "") | (query["FILTER"] == ".")]
+            query = query[(query["FILTER"].isnull()) | (query["FILTER"] == "PASS") | (query["FILTER"] == "") | (query["FILTER"] == ".")]
 
         # query counts across all AFs
         r["QUERY.TOTAL"] = query.shape[0]
@@ -381,7 +381,7 @@ def extended_from_featuretable(f, args):
                       (f["ALT"].notnull()) & (f["ALT"] != "") & (f["ALT"] != ".") & \
                       (f[af_q_feature] >= start) & (f[af_q_feature] < end)]
             if vfilter == "PASS":
-                query = query[(query["FILTER"] == "PASS") | (query["FILTER"].isnull()) | (query["FILTER"] == "") | (query["FILTER"] == ".")]
+                query = query[(query["FILTER"].isnull()) | (query["FILTER"] == "PASS") | (query["FILTER"] == "") | (query["FILTER"] == ".")]
 
             # query counts across all AFs
             r["QUERY.TOTAL"] = query.shape[0]
@@ -956,7 +956,7 @@ def main():
 
         if args.happy_stats:
             # parse saved feature table as the one in memory has been updated
-            featuretable = pandas.read_csv(args.output + ".features.csv", low_memory = False)
+            featuretable = pandas.read_csv(args.output + ".features.csv", low_memory = False, dtype = {"FILTER": str})
 
             # hap.py summary.csv
             summary = summary_from_featuretable(featuretable, args)
