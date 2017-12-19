@@ -789,14 +789,7 @@ def main():
             af_q_feature = args.af_strat_query
             for vtype in ["records", "SNVs", "indels"]:
                 featuretable["vtype"] = resolve_vtype(args)
-                # featuretable.loc[(featuretable["REF"].str.len() > 0) & (featuretable["ALT"].str.len() == featuretable["REF"].str.len()), "vtype"] = "SNV"
-                # featuretable.loc[(featuretable["REF"].str.len() != 1) | (featuretable["ALT"].str.len() != 1), "vtype"] = "INDEL"
-                if vtype == "SNVs":
-                    featuretable_this_type = featuretable[(featuretable["vtype"] == "SNP")]
-                elif vtype == "indels":
-                    featuretable_this_type = featuretable[(featuretable["vtype"] == "INDEL")]
-                else:
-                    featuretable_this_type = featuretable
+                featuretable_this_type = featuretable
 
                 if args.count_filtered_fn:
                     res.ix[res["type"] == vtype, "fp.filtered"] = featuretable_this_type[
@@ -863,7 +856,9 @@ def main():
                             next_binsize = 0
                         current_binsize = args.af_strat_binsize[next_binsize]
 
-        # remove things where we haven't seen any variants in truth and query
+        if not args.af_strat:
+            res = res[(res["total.truth"] > 0)]
+            
         # summary metrics with confidence intervals
         ci_alpha = 1.0 - args.ci_level
 
@@ -874,9 +869,6 @@ def main():
         res["precision"], res["precision_lower"], res["precision_upper"] = precision
         res["na"] = res["unk"] / (res["total.query"])
         res["ambiguous"] = res["ambi"] / res["total.query"]
-
-        if not args.af_strat:
-            res = res[(res["total.truth"] > 0)]
 
         any_fp = fpclasses.countbases(label="FP")
 
