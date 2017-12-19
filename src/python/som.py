@@ -50,6 +50,7 @@ from Tools.metric import makeMetricsObject, dataframeToMetricsTable
 from Tools.fastasize import fastaContigLengths, calculateLength
 import Somatic
 
+
 def parse_args():
     parser = argparse.ArgumentParser("Somatic Comparison")
 
@@ -342,8 +343,6 @@ def extended_from_featuretable(f, args):
         "TRUTH.TOTAL.het_hom_ratio", "QUERY.TOTAL.het_hom_ratio"]
     happy_extended = pandas.DataFrame(columns = happy_cols)
     r = dict()
-    r["Type"] = vtype
-    r["Subype"] = "*"
     decimals = 4
 
     # set up AF iterators
@@ -356,6 +355,9 @@ def extended_from_featuretable(f, args):
 
     # iterate over AF bins
     while start < 1.0:
+        # static columns
+        r["Subtype"] = "*"
+        r["Type"] = vtype
 
         # include 1 in last interval
         end = start + current_binsize
@@ -396,7 +398,6 @@ def extended_from_featuretable(f, args):
             r["METRIC.Precision"] = np.round(np.true_divide(r["TRUTH.TP"], (r["TRUTH.TP"] + r["QUERY.FP"])), decimals)
             r["METRIC.Frac_NA"] = np.round(np.true_divide(r["QUERY.UNK"], r["QUERY.TOTAL"]), decimals)
             r["METRIC.F1_Score"] = np.round(np.true_divide(2 * r["METRIC.Precision"] * r["METRIC.Recall"], (r["METRIC.Precision"] + r["METRIC.Recall"])), decimals)
-
             happy_extended = happy_extended.append(pandas.DataFrame([r]))
 
         # re-configure counters
@@ -874,6 +875,9 @@ def main():
         res["na"] = res["unk"] / (res["total.query"])
         res["ambiguous"] = res["ambi"] / res["total.query"]
 
+        if not args.af_strat:
+            res = res[(res["total.truth"] > 0)]
+
         any_fp = fpclasses.countbases(label="FP")
 
         fp_region_count = 0
@@ -964,7 +968,7 @@ def main():
             #  hap.py extended.csv
             if args.af_strat:
                 extended = extended_from_featuretable(featuretable, args)
-                extended.to_csv(args.output + ".extended.csv")
+                extended.to_csv(args.output + ".extended.csv", index=False, na_rep="NA")
 
     finally:
         if args.delete_scratch:
