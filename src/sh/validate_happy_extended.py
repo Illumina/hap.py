@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Compare som.py stats.csv and hap.py summary.csv files
+# Compare som.py stats.csv and hap.py extended.csv files
 
 import sys
 import argparse
