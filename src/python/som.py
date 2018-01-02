@@ -303,9 +303,9 @@ def summary_from_featuretable(f, args):
             query = query[(query["FILTER"].isnull()) | (query["FILTER"] == "PASS") | (query["FILTER"] == "") | (query["FILTER"] == ".")]
 
         # query counts across all AFs
-        r["QUERY.TOTAL"] = query.shape[0]
         r["QUERY.FP"] = query[(query["tag"] == "FP")].shape[0]
-        r["QUERY.UNK"] = query[(query["tag"] == "UNK")].shape[0]
+        r["QUERY.UNK"] = query[(query["tag"] == "UNK")].shape[0] + query[(query["tag"] == "AMBI")].shape[0]
+        r["QUERY.TOTAL"] = r["TRUTH.TP"] + r["QUERY.FP"] + r["QUERY.UNK"]
         r["FP.gt"] = "NA"
         r["QUERY.TOTAL.het_hom_ratio"] = "NA"
         r["QUERY.TOTAL.TiTv_ratio"] = "NA"
@@ -386,9 +386,9 @@ def extended_from_featuretable(f, args):
                 query = query[(query["FILTER"].isnull()) | (query["FILTER"] == "PASS") | (query["FILTER"] == "") | (query["FILTER"] == ".")]
 
             # query counts across all AFs
-            r["QUERY.TOTAL"] = query.shape[0]
             r["QUERY.FP"] = query[(query["tag"] == "FP")].shape[0]
-            r["QUERY.UNK"] = query[(query["tag"] == "UNK")].shape[0]
+            r["QUERY.UNK"] = query[(query["tag"] == "UNK")].shape[0] + query[(query["tag"] == "AMBI")].shape[0]
+            r["QUERY.TOTAL"] = r["TRUTH.TP"] + r["QUERY.FP"] + r["QUERY.UNK"]
             r["FP.gt"] = "NA"
             r["QUERY.TOTAL.het_hom_ratio"] = "NA"
             r["QUERY.TOTAL.TiTv_ratio"] = "NA"
@@ -858,7 +858,7 @@ def main():
 
         if not args.af_strat:
             res = res[(res["total.truth"] > 0)]
-            
+
         # summary metrics with confidence intervals
         ci_alpha = 1.0 - args.ci_level
 

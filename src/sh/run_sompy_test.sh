@@ -266,7 +266,7 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-CMD="${PYTHON} ${DIR}/validate_happy_stats.py --sompy_stats ${TMP_OUT}.stats.csv --happy_summary ${TMP_OUT}.summary.csv"
+CMD="${PYTHON} ${DIR}/validate_happy_summary.py --sompy_stats ${TMP_OUT}.stats.csv --happy_summary ${TMP_OUT}.summary.csv"
 echo $CMD; $CMD
 if [[ $? != 0 ]]; then
 	echo "Output counts differ between ${TMP_OUT}.stats.csv and ${TMP_OUT}.summary.csv!"
@@ -297,7 +297,7 @@ if [[ $? != 0 ]]; then
 	exit 1
 fi
 
-CMD="${PYTHON} ${DIR}/validate_happy_stats.py --sompy_stats ${TMP_OUT}.stats.csv --happy_summary ${TMP_OUT}.summary.csv"
+CMD="${PYTHON} ${DIR}/validate_happy_summary.py --sompy_stats ${TMP_OUT}.stats.csv --happy_summary ${TMP_OUT}.summary.csv"
 echo $CMD; $CMD
 if [[ $? != 0 ]]; then
 	echo "Output counts differ between ${TMP_OUT}.stats.csv and ${TMP_OUT}.summary.csv!"
