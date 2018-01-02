@@ -49,7 +49,7 @@ if __name__ == '__main__':
             outcomes[h["Filter"]].add(eval_equal(metric_name="TRUTH.FN", count_a=s["fn"], count_b=h["TRUTH.FN"]))
             outcomes[h["Filter"]].add(eval_equal(metric_name="QUERY.TOTAL", count_a=s["total.query"], count_b=h["QUERY.TOTAL"]))
             outcomes[h["Filter"]].add(eval_equal(metric_name="QUERY.FP", count_a=s["fp"], count_b=h["QUERY.FP"]))
-            outcomes[h["Filter"]].add(eval_equal(metric_name="QUERY.UNK", count_a=s["unk"]+s["ambi"], count_b=h["QUERY.UNK"]))
+            outcomes[h["Filter"]].add(eval_equal(metric_name="QUERY.UNK", count_a=int(s["unk"])+int(s["ambi"]), count_b=h["QUERY.UNK"]))
 
     failed_vfilters = [x for x in outcomes if "FAIL" in outcomes[x]]
     if len(failed_vfilters) == 2:
