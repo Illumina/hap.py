@@ -28,4 +28,3 @@ fi
 export ANT_HOME=/illumina/thirdparty/ant/apache-ant-1.9.2
 export EXTRA_CMAKE_OPTS="-DUSE_SGE=ON -DBUILD_VCFEVAL=ON -DVCFEVAL_WRAPPER=${DIR}/rtg-wrapper.sh"
 export HAPPY_PATCH_SAMTOOLS="yes"
-
