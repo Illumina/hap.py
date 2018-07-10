@@ -458,8 +458,8 @@ a ROC curve based on the query GQX field:
 The `--roc` switch specifies the feature to filter on. Hap.py translates the
 truth and query GQ(X) fields into the INFO fields T_GQ and Q_GQ, it tries to
 use GQX first, if this is not present, it will use GQ. When run without
-internal preprocessing any other input INFO field can be used (e.g. VQSLOD for
-GATK).
+internal preprocessing any other input INFO field can be used (e.g. 
+--roc INFO.VQSLOD for GATK).
 
 The `--roc-filter` switch may be used to specify the particular VCF filter
 which implements a threshold on the quality score. When calculating filtered

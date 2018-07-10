@@ -44,7 +44,7 @@ REF=$DIR/hg38.chr21.fa
 # -------
 #
 # To make ROCs for GATK, we discard the LowQual filter and use QUAL
-# For VQSR ROCs, we would use VQSLOD and discard the VQSR Tranche filters
+# For VQSR ROCs, we would use INFO.VQSLOD and discard the VQSR Tranche filters
 
 f=GATK3
 g=${DIR}/NA12878-GATK3-chr21.vcf.gz
