@@ -364,7 +364,7 @@ def extended_from_featuretable(f, args):
         r["Subset"] = "[%.2f,%.2f)" % (start, end)
         if end >= 1:
             end = 1.00000001
-            r["Subset"] = "[1.00,1.00]"
+            r["Subset"] = "[%.2f,1.00]" % start
 
         # truth numbers do not depend on filter
         truth = f[(f["REF.truth"].notnull()) & (f["REF.truth"] != "") & (f["REF.truth"] != ".") & \
