@@ -1,5 +1,11 @@
 # Hap.py Release Notes / Change Log
 
+## v0.3.11
+
+| Ticket  | Description                                                                        |
+|---------|------------------------------------------------------------------------------------|
+| HAP-341 | Update rtgtools to 3.10.1                                                          |
+
 ## v0.3.10
 
 | Ticket  | Description                                                                        |
