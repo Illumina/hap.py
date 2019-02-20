@@ -44,13 +44,13 @@ are not supported, all input bed or bed.gz files must only contain bed records).
 
 Hap.py will report counts of
 
-*   ***true-positives (TP)***: variants/genotypes that match in truth and query.
-*   ***false-positives (FP)***: variants that have mismatching genotypes or alt
+*   ***true-positives (TP)*** : variants/genotypes that match in truth and query.
+*   ***false-positives (FP)*** : variants that have mismatching genotypes or alt
     alleles, as well as query variant calls in regions a truth set would call
     confident hom-ref regions.
 *   ***false-negatives (FN)*** : variants present in the truth set, but missed
     in the query.
-*   ***non-assessed calls (UNK)***: variants outside the truth set regions
+*   ***non-assessed calls (UNK)*** : variants outside the truth set regions
 
 From these counts, we are able to calculate
 
