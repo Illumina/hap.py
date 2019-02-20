@@ -351,7 +351,7 @@ docker build -f Dockerfile.centos6 .
 You will need these tools / libraries on your system to compile the code:
 
 * CMake &gt; 2.8
-* GCC/G++ 4.8+ for compiling
+* GCC/G++ 4.9.2+ for compiling
 * Boost 1.55+
 * Python 2, version 2.7.8 or greater
 * Python packages: Pandas, Numpy, Scipy, pysam, bx-python
