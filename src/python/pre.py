@@ -316,7 +316,7 @@ def updateArgs(parser):
                              "resulting sample:  1 | 0/1 | 1/1 | ./1. This will replace all sample "
                              "columns and replace them with a single one.")
 
-    parser.add_argument('--no-convert-gvcf', dest='no_convert_gvcf', action="store-true", default=False,
+    parser.add_argument('--no-convert-gvcf', dest='no_convert_gvcf', action="store_true", default=False,
                         help='Normally, hap.py will assume any file ending in .gvcf or .gvcf.gz '
                              'is a genome VCF and try to convert it to a standard VCF by removing '
                              'non-variant positions. Set this flag to prevent the conversion. ')
