@@ -114,9 +114,15 @@ def preprocess(vcf_input,
                              "records in the file. I will run vcfcheck to see if we will run into trouble. "
                              "To save time in the future, consider converting your files into bcf using bcftools before"
                              " running pre.py.")
+            convert_gvcf_to_vcf = False
+        elif vcf_input.endswith('.gvcf.gz'):
+            int_suffix = '.gvcf.gz'
+            int_format = 'z'
+            convert_gvcf_to_vcf = True
         else:
             int_suffix = ".vcf.gz"
             int_format = "z"
+            convert_gvcf_to_vcf = False
 
         # HAP-317 always check for BCF errors since preprocessing tools now require valid headers
         mf = subprocess.check_output("vcfcheck %s --check-bcf-errors 1" % pipes.quote(vcf_input), shell=True)
@@ -189,7 +195,9 @@ def preprocess(vcf_input,
                       reference,
                       required_filters,
                       somatic_allele_conversion=somatic_allele_conversion,
-                      sample=sample)
+                      sample=sample,
+                      convert_gvcf=convert_gvcf_to_vcf,
+                      num_threads=threads)
 
         if leftshift or decompose or gender == "male":
             Haplo.partialcredit.partialCredit(vtf,
