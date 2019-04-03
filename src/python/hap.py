@@ -296,7 +296,8 @@ def main():
                                      args.threads,
                                      args.gender,
                                      args.somatic_allele_conversion,
-                                     "TRUTH")
+                                     "TRUTH",
+                                     no_convert_gvcf=args.no_convert_gvcf)
 
         args.vcf1 = ttf.name
 
@@ -363,7 +364,8 @@ def main():
                        args.threads,
                        args.gender,  # same gender as truth above
                        args.somatic_allele_conversion,
-                       "QUERY")
+                       "QUERY",
+                       no_convert_gvcf=args.no_convert_gvcf)
         args.vcf2 = qtf.name
         h2 = vcfextract.extractHeadersJSON(args.vcf2)
 

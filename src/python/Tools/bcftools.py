@@ -184,6 +184,7 @@ def preprocessVCF(input_filename, output_filename, location="",
         vargs += ['bcftools', 'view', '-a', '-I', '-O', 'u', '|']
         # remove variants with NON_REF alleles, don't compute the AD/AF fields
         vargs += ['bcftools', 'view', '-I', '-e', 'ALT[*] = "<NON_REF>"', '-O', 'v', '|']
+        vargs += ["bcftools", "view"]
     else:
         vargs += ["bcftools", "view", input_filename]
 

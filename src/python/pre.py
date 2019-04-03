@@ -75,7 +75,8 @@ def preprocess(vcf_input,
                threads=1,
                gender=None,
                somatic_allele_conversion=False,
-               sample="SAMPLE"):
+               sample="SAMPLE",
+               no_convert_gvcf=False):
     """ Preprocess a single VCF file
 
     :param vcf_input: input file name
@@ -115,10 +116,10 @@ def preprocess(vcf_input,
                              "To save time in the future, consider converting your files into bcf using bcftools before"
                              " running pre.py.")
             convert_gvcf_to_vcf = False
-        elif vcf_input.endswith('.gvcf.gz'):
+        elif vcf_input.endswith('.gvcf.gz') or vcf_input.endswith('.gvcf'):
             int_suffix = '.gvcf.gz'
             int_format = 'z'
-            convert_gvcf_to_vcf = True
+            convert_gvcf_to_vcf = not no_convert_gvcf
         else:
             int_suffix = ".vcf.gz"
             int_format = "z"
@@ -172,10 +173,7 @@ def preprocess(vcf_input,
             except:
                 logging.warn("Guessing the chr prefix in %s has failed." % vcf_input)
 
-        # all these require preprocessing
-        vtf = vcf_input
-
-        if leftshift or decompose:
+        if leftshift or decompose: # all these require preprocessing
             vtf = tempfile.NamedTemporaryFile(delete=False,
                                               suffix=int_suffix)
             vtf.close()
@@ -246,7 +244,8 @@ def preprocessWrapper(args):
                args.window,
                args.threads,
                args.gender,
-               args.somatic_allele_conversion)
+               args.somatic_allele_conversion,
+               no_convert_gvcf=args.no_convert_gvcf1)
 
     elapsed = time.time() - starttime
     logging.info("preprocess for %s -- time taken %.2f" % (args.input, elapsed))
@@ -316,6 +315,11 @@ def updateArgs(parser):
                              "to assign one of the following genotypes to the "
                              "resulting sample:  1 | 0/1 | 1/1 | ./1. This will replace all sample "
                              "columns and replace them with a single one.")
+
+    parser.add_argument('--no-convert-gvcf', dest='no_convert_gvcf', action="store-true", default=False,
+                        help='Normally, hap.py will assume any file ending in .gvcf or .gvcf.gz '
+                             'is a genome VCF and try to convert it to a standard VCF by removing '
+                             'non-variant positions. Set this flag to prevent the conversion. ')
 
     # genotype handling on chrX.
     parser.add_argument("--gender", dest="gender", choices=["male", "female", "auto", "none"], default="auto",
