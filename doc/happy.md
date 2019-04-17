@@ -277,6 +277,14 @@ export HGREF=path-to-your-reference.fa
 
 before running hap.py.
 
+```
+  --convert-gvcf
+```
+
+Convert the query VCF from a genome VCF (GVCF) that contains depth information
+about every position in the genome to a standard VCF that contains only variant
+positions.
+
 ## Additional Outputs
 
 ```
