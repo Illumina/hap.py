@@ -4,30 +4,43 @@ ENV HOME /root
 ENV LANG en_US.UTF-8
 ENV LC_ALL en_US.UTF-8
 
-RUN  yum install -y wget curl tar gzip bzip2 which perl
-
-RUN  mkdir -p /opt/illumina/haplocompare && \
+RUN yum install -y \
+    bzip2 \
+    bzip2-devel \
+    centos-release-scl \
+    cmake \
+    curl \
+    devtoolset-8-gcc \
+    devtoolset-3-binutils \
+    devtoolset-8-gcc-c++ \
+    devtoolset-8-gcc-gfortran \
+    git \
+    gzip \
+    java-1.8.0-openjdk \
+    ncurses-devel \ 
+    perl \
+    tar \
+    wget \
+    which \
+    zlib-devel \
+    
+RUN yum upgrade -y && yum update -y && yum clean all
+    
+RUN mkdir -p /opt/illumina/haplocompare && \
      cd /opt/illumina/haplocompare && \
      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh && \
      bash Miniconda2-latest-Linux-x86_64.sh -b -p /opt/miniconda2
 
 ENV PATH /opt/miniconda2/bin:${PATH}
 
-RUN  yum install -y centos-release-scl && \
-     yum install -y devtoolset-3-gcc devtoolset-3-binutils && \
-     yum install -y devtoolset-3-gcc-c++ devtoolset-3-gcc-gfortran && \
-     yum install -y cmake bzip2-devel ncurses-devel zlib-devel git
-
-RUN  conda config --add channels bioconda && \
-     conda install -y cython numpy scipy biopython matplotlib pandas pysam bx-python pyvcf cyvcf2 nose
-
-RUN yum upgrade -y && yum update -y && yum clean all
+RUN conda config --add channels bioconda && \
+    conda install -y cython numpy scipy biopython matplotlib pandas pysam bx-python pyvcf cyvcf2 nose
 
 COPY . /opt/illumina/haplocompare/hap.py-source
 WORKDIR /opt/illumina/haplocompare/hap.py-source
 
 # patch samtools for centos 6
-RUN  cd external && \
+RUN cd external && \
      tar xvzf samtools.tar.gz && \
      cd samtools && \
      cat Makefile | sed 's/-ldl/-ldl -ltinfo/' > Makefile.bak && \
@@ -35,12 +48,6 @@ RUN  cd external && \
      cd .. && \
      rm -f samtools.tar.gz && \
      tar czvf samtools.tar.gz samtools
-
-
-ENV JDK_VERSION 8u11
-ENV JDK_BUILD_VERSION b12
-RUN curl -LO "http://download.oracle.com/otn-pub/java/jdk/$JDK_VERSION-$JDK_BUILD_VERSION/jdk-$JDK_VERSION-linux-x64.rpm" -H 'Cookie: oraclelicense=accept-securebackup-cookie' && rpm -i jdk-$JDK_VERSION-linux-x64.rpm && rm -f jdk-$JDK_VERSION-linux-x64.rpm && yum clean all
-ENV JAVA_HOME /usr/java/default
 
 # get + install ant
 WORKDIR /opt
