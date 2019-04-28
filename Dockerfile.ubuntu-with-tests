@@ -1,5 +1,6 @@
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get upgrade -y
 RUN apt-get install build-essential zlib1g-dev libbz2-dev pkg-config cmake libncurses5-dev autoconf -y
 RUN apt-get install git bzip2 wget -y
@@ -14,17 +15,17 @@ RUN apt-get install python2.7 python2.7-dev python \
                     python-pysam \
                     python-scipy \
                     -y
-RUN apt-get install software-properties-common python-software-properties -y
+RUN apt-get install software-properties-common -y
 RUN apt-get clean -y
 
 RUN pip install bx-python
 
-RUN echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | debconf-set-selections && \
-    add-apt-repository -y ppa:webupd8team/java && \
+RUN echo oracle-java11-installer shared/accepted-oracle-license-v1-2 select true | debconf-set-selections && \
+    add-apt-repository -y ppa:linuxuprising/java && \
     apt-get update && \
-    apt-get install -y oracle-java8-installer && \
+    apt-get install -y oracle-java11-installer && \
     rm -rf /var/lib/apt/lists/* && \
-    rm -rf /var/cache/oracle-jdk8-installer
+    rm -rf /var/cache/oracle-jdk11-installer
 
 # copy git repository into the image
 RUN mkdir -p /opt/hap.py-source
