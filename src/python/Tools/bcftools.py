@@ -148,7 +148,7 @@ def preprocessVCF(input_filename, output_filename, location="",
                   filters_only=None,
                   somatic_allele_conversion=False,
                   sample="SAMPLE",
-                  convert_gvcf=False,
+                  filter_nonref=True,
                   num_threads=4):
     """ Preprocess a VCF + create index
 
@@ -170,23 +170,12 @@ def preprocessVCF(input_filename, output_filename, location="",
                                       to assign one of the following genotypes to the
                                       resulting sample:  1 | 0/1 | 1/1 | ./1
     :param sample: name of the output sample column when using somatic_allele_conversion
+    :param filter_nonref: remove any variants genotyped as <NON_REF>
     """
-    vargs = []
-
-    # Convert from a genome vcf (gvcf) HAP-355
-    if convert_gvcf:
-        # prefilter for variant sites (all sites have a NON_REF allele, hence use 2 here)
-        vargs += ['bcftools', 'view', '-I', '-e', 'N_ALT < 2', '--threads', str(num_threads), '-O', 'u', str(input_filename),
-                  '|']
-        # strip uninteresting details and arrays which prevent allele trimming
-        vargs += ['bcftools', 'annotate', '-x', 'INFO,^FORMAT/GT,FORMAT/DP,FORMAT/GQ', '-O', 'u', '|']
-        # trim missing alleles, don't compute the AD/AF fields
-        vargs += ['bcftools', 'view', '-a', '-I', '-O', 'u', '|']
-        # remove variants with NON_REF alleles, don't compute the AD/AF fields
-        vargs += ['bcftools', 'view', '-I', '-e', 'ALT[*] = "<NON_REF>"', '-O', 'v', '|']
-        vargs += ["bcftools", "view"]
-    else:
-        vargs += ["bcftools", "view", input_filename]
+    vargs = ["bcftools", "view", "-O", "v", input]
+        
+    if filter_nonref:     
+        vargs += ["|", "python", "{}/remove_nonref_gt_variants.py".format(scriptDir), "|", "bcftools", "view", "-O", "v"]
 
     if type(location) is list:
         location = ",".join(location)

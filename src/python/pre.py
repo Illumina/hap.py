@@ -76,7 +76,7 @@ def preprocess(vcf_input,
                gender=None,
                somatic_allele_conversion=False,
                sample="SAMPLE",
-               convert_gvcf_to_vcf=False):
+               filter_nonref=True):
     """ Preprocess a single VCF file
 
     :param vcf_input: input file name
@@ -92,12 +92,12 @@ def preprocess(vcf_input,
     :param bcftools_norm: use bcftools_norm
     :param windowsize: normalisation window size
     :param threads: number of threads to for preprcessing
-    :param gender: the gender of the sample ("male" / "female" / "auto" / None)
+    :param gender: the sex of the sample ("male" / "female" / "auto" / None)
     :param somatic_allele_conversion: convert somatic alleles -- False / half / het / hemi / hom
     :param sample: when using somatic_allele_conversion, name of the output sample
-    :param convert_gvcf_to_vcf: if true, filter non-variant positions from the VCF and strip extraneous fields
+    :param filter_nonref: remove any variants genotyped as <NON_REF>
 
-    :return: the gender if auto-determined (otherwise the same value as gender parameter)
+    :return: the sex if auto-determined (otherwise the same value as sex parameter)
     """
 
     tempfiles = []
@@ -189,7 +189,7 @@ def preprocess(vcf_input,
                       required_filters,
                       somatic_allele_conversion=somatic_allele_conversion,
                       sample=sample,
-                      convert_gvcf=convert_gvcf_to_vcf,
+                      filter_nonref=filter_nonref,
                       num_threads=threads)
 
         if leftshift or decompose or gender == "male":
@@ -311,13 +311,12 @@ def updateArgs(parser):
                              "resulting sample:  1 | 0/1 | 1/1 | ./1. This will replace all sample "
                              "columns and replace them with a single one.")
 
-    parser.add_argument('--convert-gvcf', dest='convert_gvcf', action="store_true", default=False,
-                        help='Try to convert the query VCF from a genome VCF to a standard VCF by removing '
-                             'non-variant positions.')
+    parser.add_argument('--filter-nonref', dest='filter_nonref', action="store_true", default=False,
+                        help='Remove any variants genotyped as <NON_REF>.')  
 
     # genotype handling on chrX.
     parser.add_argument("--gender", dest="gender", choices=["male", "female", "auto", "none"], default="auto",
-                        help="Specify gender. This determines how haploid calls on chrX get treated: for male samples,"
+                        help="Specify sex. This determines how haploid calls on chrX get treated: for male samples,"
                              " all non-ref calls (in the truthset only when running through hap.py) are given a 1/1 genotype.")
 
 
