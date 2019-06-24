@@ -325,6 +325,9 @@ def main():
         args.locations = sorted(args.locations)
 
         logging.info("Preprocessing query: %s" % args.vcf2)
+        if args.convert_gvcf:
+            logging.info("Converting genome VCF to VCF")
+
         starttime = time.time()
 
         if args.pass_only:
@@ -363,7 +366,8 @@ def main():
                        args.threads,
                        args.gender,  # same gender as truth above
                        args.somatic_allele_conversion,
-                       "QUERY")
+                       "QUERY",
+                       convert_gvcf_to_vcf=args.convert_gvcf)
         args.vcf2 = qtf.name
         h2 = vcfextract.extractHeadersJSON(args.vcf2)
 
