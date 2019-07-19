@@ -16,6 +16,7 @@ TMP_OUT=`mktemp -t happy.XXXXXXXXXX`
 ${PYTHON} ${HCDIR}/hap.py \
 			 	${DIR}/../../example/decomp/decomp_test.truth.vcf.gz \
 			 	${DIR}/../../example/decomp/decomp_test.query.vcf.gz \
+				-r ${DIR}/../../example/chr21.fa \
 			 	-f ${DIR}/../../example/decomp/decomp_test.conf.bed.gz \
 			 	-o ${TMP_OUT} \
                 --preprocess-truth \
