@@ -75,7 +75,8 @@ def preprocess(vcf_input,
                threads=1,
                gender=None,
                somatic_allele_conversion=False,
-               sample="SAMPLE"):
+               sample="SAMPLE",
+               filter_nonref=True):
     """ Preprocess a single VCF file
 
     :param vcf_input: input file name
@@ -91,11 +92,12 @@ def preprocess(vcf_input,
     :param bcftools_norm: use bcftools_norm
     :param windowsize: normalisation window size
     :param threads: number of threads to for preprcessing
-    :param gender: the gender of the sample ("male" / "female" / "auto" / None)
+    :param gender: the sex of the sample ("male" / "female" / "auto" / None)
     :param somatic_allele_conversion: convert somatic alleles -- False / half / het / hemi / hom
     :param sample: when using somatic_allele_conversion, name of the output sample
+    :param filter_nonref: remove any variants genotyped as <NON_REF>
 
-    :return: the gender if auto-determined (otherwise the same value as gender parameter)
+    :return: the sex if auto-determined (otherwise the same value as sex parameter)
     """
 
     tempfiles = []
@@ -166,10 +168,7 @@ def preprocess(vcf_input,
             except:
                 logging.warn("Guessing the chr prefix in %s has failed." % vcf_input)
 
-        # all these require preprocessing
-        vtf = vcf_input
-
-        if leftshift or decompose:
+        if leftshift or decompose: # all these require preprocessing
             vtf = tempfile.NamedTemporaryFile(delete=False,
                                               suffix=int_suffix)
             vtf.close()
@@ -189,7 +188,9 @@ def preprocess(vcf_input,
                       reference,
                       required_filters,
                       somatic_allele_conversion=somatic_allele_conversion,
-                      sample=sample)
+                      sample=sample,
+                      filter_nonref=filter_nonref,
+                      num_threads=threads)
 
         if leftshift or decompose or gender == "male":
             Haplo.partialcredit.partialCredit(vtf,
@@ -238,7 +239,8 @@ def preprocessWrapper(args):
                args.window,
                args.threads,
                args.gender,
-               args.somatic_allele_conversion)
+               args.somatic_allele_conversion,
+               convert_gvcf_to_vcf=args.convert_gvcf)
 
     elapsed = time.time() - starttime
     logging.info("preprocess for %s -- time taken %.2f" % (args.input, elapsed))
@@ -309,9 +311,12 @@ def updateArgs(parser):
                              "resulting sample:  1 | 0/1 | 1/1 | ./1. This will replace all sample "
                              "columns and replace them with a single one.")
 
+    parser.add_argument('--filter-nonref', dest='filter_nonref', action="store_true", default=False,
+                        help='Remove any variants genotyped as <NON_REF>.')  
+
     # genotype handling on chrX.
     parser.add_argument("--gender", dest="gender", choices=["male", "female", "auto", "none"], default="auto",
-                        help="Specify gender. This determines how haploid calls on chrX get treated: for male samples,"
+                        help="Specify sex. This determines how haploid calls on chrX get treated: for male samples,"
                              " all non-ref calls (in the truthset only when running through hap.py) are given a 1/1 genotype.")
 
 

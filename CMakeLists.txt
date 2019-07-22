@@ -84,8 +84,11 @@ set(HAPLOTYPES_ALL_LIBS ${HAPLOTYPES_LIBRARY}
                         ${CMAKE_THREAD_LIBS_INIT})
 
 
-include(GetGitRevisionDescription)
-git_describe(HAPLOTYPES_VERSION)
+execute_process(COMMAND git describe --tags --always
+    OUTPUT_VARIABLE HAPLOTYPES_VERSION
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/c++/include/Version.hh.in"
                "${CMAKE_BINARY_DIR}/include/Version.hh")

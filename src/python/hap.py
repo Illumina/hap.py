@@ -183,8 +183,8 @@ def main():
         parser.print_help()
         exit(1)
 
+    print "Hap.py %s" % Tools.version        
     if args.version:
-        print "Hap.py %s" % Tools.version
         exit(0)
 
     if args.roc:
@@ -325,6 +325,9 @@ def main():
         args.locations = sorted(args.locations)
 
         logging.info("Preprocessing query: %s" % args.vcf2)
+        if args.filter_nonref:
+            logging.info("Filtering out any variants genotyped as <NON_REF>")
+
         starttime = time.time()
 
         if args.pass_only:
@@ -363,7 +366,8 @@ def main():
                        args.threads,
                        args.gender,  # same gender as truth above
                        args.somatic_allele_conversion,
-                       "QUERY")
+                       "QUERY",
+                       filter_nonref=args.filter_nonref)
         args.vcf2 = qtf.name
         h2 = vcfextract.extractHeadersJSON(args.vcf2)
 
