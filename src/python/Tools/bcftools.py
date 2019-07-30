@@ -1,3 +1,4 @@
+#!/illumina/sync/software/groups/hap.py/2016q2/python-ve/bin/python-wrapper.sh
 # coding=utf-8
 #
 # Copyright (c) 2010-2015 Illumina, Inc.
@@ -18,6 +19,9 @@ import gzip
 import pipes
 
 import Tools
+
+
+scriptDir = os.path.abspath(os.path.dirname(__file__))
 
 
 def runShellCommand(*args):
@@ -172,7 +176,7 @@ def preprocessVCF(input_filename, output_filename, location="",
     :param sample: name of the output sample column when using somatic_allele_conversion
     :param filter_nonref: remove any variants genotyped as <NON_REF>
     """
-    vargs = ["bcftools", "view", "-O", "v", input]
+    vargs = ["bcftools", "view", "-O", "v", input_filename]
         
     if filter_nonref:     
         vargs += ["|", "python", "{}/remove_nonref_gt_variants.py".format(scriptDir), "|", "bcftools", "view", "-O", "v"]
