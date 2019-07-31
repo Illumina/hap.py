@@ -277,7 +277,10 @@ def main():
            (args.preprocessing_leftshift or args.preprocessing_norm or args.preprocessing_decompose):
             args.preprocessing_truth = False
             logging.info("Turning off pre.py preprocessing for somatic comparisons")
-
+            
+        if args.preprocessing_truth and args.filter_nonref:
+            logging.info("Filtering out any variants genotyped as <NON_REF>")
+            
         tempfiles.append(ttf.name)
         tempfiles.append(ttf.name + ".csi")
         tempfiles.append(ttf.name + ".tbi")
@@ -295,8 +298,9 @@ def main():
                                      args.preprocess_window,
                                      args.threads,
                                      args.gender,
-                                     args.somatic_allele_conversion,
-                                     "TRUTH")
+                                     args.somatic_allele_conversion,                                     
+                                     "TRUTH",
+                                     filter_nonref=args.filter_nonref if args.preprocessing_truth else False)
 
         args.vcf1 = ttf.name
 
