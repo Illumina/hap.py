@@ -126,6 +126,7 @@ def main():
                         default=Haplo.vcfeval.findVCFEval(),
                         help="This parameter should give the path to the \"rtg\" executable. "
                              "The default is %s" % Haplo.vcfeval.findVCFEval())
+                             
     parser.add_argument("--engine-vcfeval-template", dest="engine_vcfeval_template", required=False,
                         help="Vcfeval needs the reference sequence formatted in its own file format "
                              "(SDF -- run rtg format -o ref.SDF ref.fa). You can specify this here "
@@ -278,8 +279,12 @@ def main():
             args.preprocessing_truth = False
             logging.info("Turning off pre.py preprocessing for somatic comparisons")
             
-        if args.preprocessing_truth and args.filter_nonref:
-            logging.info("Filtering out any variants genotyped as <NON_REF>")
+        if args.preprocessing_truth:
+            if args.filter_nonref:
+                logging.info("Filtering out any variants genotyped as <NON_REF>")
+                
+        if args.convert_gvcf_truth:
+            logging.info("Converting genome VCF to VCF")            
             
         tempfiles.append(ttf.name)
         tempfiles.append(ttf.name + ".csi")
@@ -300,7 +305,8 @@ def main():
                                      args.gender,
                                      args.somatic_allele_conversion,                                     
                                      "TRUTH",
-                                     filter_nonref=args.filter_nonref if args.preprocessing_truth else False)
+                                     filter_nonref=args.filter_nonref if args.preprocessing_truth else False,
+                                     convert_gvcf_to_vcf=args.convert_gvcf_truth)
 
         args.vcf1 = ttf.name
 
@@ -331,6 +337,8 @@ def main():
         logging.info("Preprocessing query: %s" % args.vcf2)
         if args.filter_nonref:
             logging.info("Filtering out any variants genotyped as <NON_REF>")
+        if args.convert_gvcf_query:
+            logging.info("Converting genome VCF to VCF")
 
         starttime = time.time()
 
@@ -371,7 +379,9 @@ def main():
                        args.gender,  # same gender as truth above
                        args.somatic_allele_conversion,
                        "QUERY",
-                       filter_nonref=args.filter_nonref)
+                       filter_nonref=args.filter_nonref,
+                       convert_gvcf_to_vcf=args.convert_gvcf_query)
+                       
         args.vcf2 = qtf.name
         h2 = vcfextract.extractHeadersJSON(args.vcf2)
 
