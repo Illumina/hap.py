@@ -179,23 +179,23 @@ def preprocessVCF(input_filename, output_filename, location="",
     """
     #ToDo: refactor for simplicity and performance
 
-    vargs = ["bcftools", "view", "-O", "v", "--threads", str(num_threads), input_filename, "|"]
+    vargs = ["bcftools", "view", "--threads", str(num_threads), "-O", "v", input_filename, "|" ]
        
        
     if convert_gvcf:            
         # prefilter for variant sites (all genome VCF sites have a NON_REF allele, hence use 2 here)
-        vargs += ['bcftools', 'view', '-I', '-e', 'N_ALT < 2', '--threads', str(num_threads), '-O', 'u', '|']
+        vargs += ['bcftools', 'view', '-I', '-e', 'N_ALT < 2', '-O', 'u', '|']
         # strip uninteresting details and arrays which prevent allele trimming
-        vargs += ['bcftools', 'annotate', '-x', 'INFO,^FORMAT/GT,FORMAT/DP,FORMAT/GQ', '--threads', str(num_threads), '-O', 'u', '|']
+        vargs += ['bcftools', 'annotate', '-x', 'INFO,^FORMAT/GT,FORMAT/DP,FORMAT/GQ', '-O', 'u', '|']
         # trim missing alleles, don't compute the AD/AF fields
-        vargs += ['bcftools', 'view', '-a', '-I', '--threads', str(num_threads), '-O', 'u', '|']
+        vargs += ['bcftools', 'view', '-a', '-I', '-O', 'u', '|']
         # remove variants with NON_REF alleles, don't compute the AD/AF fields
-        vargs += ['bcftools', 'view', '-I', '-e', 'ALT[*] = "<NON_REF>"', '--threads', str(num_threads), '-O', 'v', '|']
+        vargs += ['bcftools', 'view', '-I', '-e', 'ALT[*] = "<NON_REF>"', '-O', 'v', '|']
 
-    vargs += ["bcftools", "view", '--threads', str(num_threads), "-O", "v"]
+    vargs += ["bcftools", "view", "-O", "v"]
 
     if filter_nonref:     
-        vargs += ["|", "python", "{}/remove_nonref_gt_variants.py".format(scriptDir), "|", "bcftools", "view", '--threads', str(num_threads), "-O", "v"]
+        vargs += ["|", "python", "{}/remove_nonref_gt_variants.py".format(scriptDir), "|", "bcftools", "view",  "-O", "v"]
 
 
     if type(location) is list:
@@ -208,13 +208,13 @@ def preprocessVCF(input_filename, output_filename, location="",
 
     if chrprefix:
         vargs += ["|", "perl", "-pe", "s/^([0-9XYM])/chr$1/", "|", "perl", "-pe", "s/chrMT/chrM/", "|", "bcftools",
-                  "view", '--threads', str(num_threads)]
+                  "view"]
 
     if targets:
-        vargs += ["-T", targets, "|", "bcftools", "view", '--threads', str(num_threads)]
+        vargs += ["-T", targets, "|", "bcftools", "view"]
 
     if location:
-        vargs += ["-t", location, "|", "bcftools", "view", '--threads', str(num_threads)]
+        vargs += ["-t", location, "|", "bcftools", "view"]
 
     if output_filename.endswith("vcf.gz"):
         int_suffix = "vcf.gz"
@@ -241,7 +241,7 @@ def preprocessVCF(input_filename, output_filename, location="",
             if type(somatic_allele_conversion) is not str:
                 somatic_allele_conversion = "half"
             vargs += ["|", "alleles", "-", "-o", "-.vcf", "--gt", somatic_allele_conversion, "--sample", sample,
-                      "|", "bcftools", "view", '--threads', str(num_threads)]
+                      "|", "bcftools", "view"]
 
         if norm:
             vargs += ["|", "bcftools", "norm", "-f", reference, "-c", "x", "-D"]
