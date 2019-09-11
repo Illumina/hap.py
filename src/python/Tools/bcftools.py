@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # coding=utf-8
 #
 # Copyright (c) 2010-2015 Illumina, Inc.
@@ -18,6 +19,9 @@ import gzip
 import pipes
 
 import Tools
+
+
+scriptDir = os.path.abspath(os.path.dirname(__file__))
 
 
 def runShellCommand(*args):
@@ -149,6 +153,7 @@ def preprocessVCF(input_filename, output_filename, location="",
                   somatic_allele_conversion=False,
                   sample="SAMPLE",
                   filter_nonref=True,
+                  convert_gvcf=False,
                   num_threads=4):
     """ Preprocess a VCF + create index
 
@@ -172,10 +177,26 @@ def preprocessVCF(input_filename, output_filename, location="",
     :param sample: name of the output sample column when using somatic_allele_conversion
     :param filter_nonref: remove any variants genotyped as <NON_REF>
     """
-    vargs = ["bcftools", "view", "-O", "v", input]
-        
+    #ToDo: refactor for simplicity and performance
+
+    vargs = ["bcftools", "view", "--threads", str(num_threads), "-O", "v", input_filename, "|" ]
+       
+       
+    if convert_gvcf:            
+        # prefilter for variant sites (all genome VCF sites have a NON_REF allele, hence use 2 here)
+        vargs += ['bcftools', 'view', '-I', '-e', 'N_ALT < 2', '-O', 'u', '|']
+        # strip uninteresting details and arrays which prevent allele trimming
+        vargs += ['bcftools', 'annotate', '-x', 'INFO,^FORMAT/GT,FORMAT/DP,FORMAT/GQ', '-O', 'u', '|']
+        # trim missing alleles, don't compute the AD/AF fields
+        vargs += ['bcftools', 'view', '-a', '-I', '-O', 'u', '|']
+        # remove variants with NON_REF alleles, don't compute the AD/AF fields
+        vargs += ['bcftools', 'view', '-I', '-e', 'ALT[*] = "<NON_REF>"', '-O', 'v', '|']
+
+    vargs += ["bcftools", "view", "-O", "v"]
+
     if filter_nonref:     
-        vargs += ["|", "python", "{}/remove_nonref_gt_variants.py".format(scriptDir), "|", "bcftools", "view", "-O", "v"]
+        vargs += ["|", "python", "{}/remove_nonref_gt_variants.py".format(scriptDir), "|", "bcftools", "view",  "-O", "v"]
+
 
     if type(location) is list:
         location = ",".join(location)
