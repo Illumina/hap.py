@@ -5,6 +5,9 @@
 | Ticket  | Description                                                                        |
 |---------|------------------------------------------------------------------------------------|
 | HAP-341 | Update rtgtools to 3.10.1                                                          |
+| HAP-342 | som.py output tables to quantify / GA4GH format                                    |
+| HAP-346 | src/sh/illumina-setup.sh out of date                                               |
+| HAP-352 | string formatting in som.py: last interval is always [1.0, 1.0] in *extended.csv   |
 
 ## v0.3.10
 
