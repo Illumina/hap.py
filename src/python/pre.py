@@ -76,7 +76,8 @@ def preprocess(vcf_input,
                gender=None,
                somatic_allele_conversion=False,
                sample="SAMPLE",
-               filter_nonref=True):
+               filter_nonref=True,
+               convert_gvcf_to_vcf=False):
     """ Preprocess a single VCF file
 
     :param vcf_input: input file name
@@ -190,6 +191,7 @@ def preprocess(vcf_input,
                       somatic_allele_conversion=somatic_allele_conversion,
                       sample=sample,
                       filter_nonref=filter_nonref,
+                      convert_gvcf=convert_gvcf_to_vcf,
                       num_threads=threads)
 
         if leftshift or decompose or gender == "male":
@@ -313,6 +315,12 @@ def updateArgs(parser):
 
     parser.add_argument('--filter-nonref', dest='filter_nonref', action="store_true", default=False,
                         help='Remove any variants genotyped as <NON_REF>.')  
+                        
+    parser.add_argument('--convert-gvcf-truth', dest='convert_gvcf_truth', action="store_true", default=False,
+                        help='Convert the truth set from genome VCF format to a VCF before processing.')  
+                        
+    parser.add_argument('--convert-gvcf-query', dest='convert_gvcf_query', action="store_true", default=False,
+                        help='Convert the query set from genome VCF format to a VCF before processing.')                          
 
     # genotype handling on chrX.
     parser.add_argument("--gender", dest="gender", choices=["male", "female", "auto", "none"], default="auto",
