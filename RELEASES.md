@@ -1,5 +1,18 @@
 # Hap.py Release Notes / Change Log
 
+## v0.3.12
+
+| Ticket  | Description                                                                        |
+|---------|------------------------------------------------------------------------------------|
+| HAP-355 | Ensure compatibility with genome VCF from DRAGEN pipelines                         |
+| HAP-356 | quantify module throws regex error                                                 |
+| HAP-357 | Deal with change in Java license terms                                             |
+| HAP-359 | Hap.py crashes when ingesting variants genotyped as <NON_REF>                      |
+| HAP-360 | Apply non-ref filter to truth set when --preprocess-truth is set                   |
+| HAP-361 | Hap.py "blocksplit" processes still failing on DRAGEN gVCFs even with pre-filtering NON_REF genotypes 
+| HAP-362 | Hap.py blocksplit sometimes crashes with "invalid next size (fast)" error          |
+| HAP-363 | Use 'git describe' to obtain version number during Cmake                           |
+
 ## v0.3.11
 
 | Ticket  | Description                                                                        |
