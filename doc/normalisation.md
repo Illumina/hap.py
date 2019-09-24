@@ -137,8 +137,7 @@ sensibly scored, the we provide the following option, which is safe to use
 on both genome VCFs and standard VCFs:
 
 ```
-  --filter-nonref       Remove any variants genotyped as <NON_REF>.
-                        
+  --filter-nonref       Remove any variants genotyped as <NON_REF>.                 
 ```
 
 If hap.py still crashes when processing a genome VCF, we provide separate
@@ -150,8 +149,7 @@ cause all biallelic variants to be filtered out (most of them).
 
 ```
   --convert-gvcf-truth Convert the truth genome VCF to a standard VCF.
-  --convert-gvcf-query Convert the query genome VCF to a standard VCF.
-                        
+  --convert-gvcf-query Convert the query genome VCF to a standard VCF.          
 ```
 
 Runtime behaviour can also be controlled as follows:
