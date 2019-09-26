@@ -4,21 +4,22 @@
 
 - [Hap.py User's Manual](#happy-users-manual)
 - [Introduction](#introduction)
-- [Getting Started](#getting-started)
-- [Full List of Command line Options](#full-list-of-command-line-options)
-	- [Minimal Options](#minimal-options)
-	- [Running / Debugging issues](#running-debugging-issues)
-	- [Restricting to Subsets of the Genome / Input](#restricting-to-subsets-of-the-genome-input)
-	- [Additional Input Options](#additional-input-options)
-	- [Additional Outputs](#additional-outputs)
-	- [Comparison Engines](#comparison-engines)
-	- [Stratification via Bed Regions](#stratification-via-bed-regions)
-	- [Internal Variant Normalisation and Haplotype Comparison](#internal-variant-normalisation-and-haplotype-comparison)
-	- [ROC Curves](#roc-curves)
-	- [Input Preprocessing using bcftools](#input-preprocessing-using-bcftools)
-	- [Haplotype Comparison Parameters](#haplotype-comparison-parameters)
-	- [Using RTG-Tools / VCFEval as the comparison engine](#using-rtg-tools-vcfeval-as-the-comparison-engine)
--  [Full-List-of-Output-Columns](#full-list-of-output-columns)
+- [Getting started](#getting-started)
+- [Full list of command line options](#full-list-of-command-line-options)
+	- [Minimal options](#minimal-options)
+	- [Running and debugging issues](#running-and-debugging-issues)
+	- [Restricting to subsets of the genome](#restricting-to-subsets-of-the-genome)
+	- [Additional input options](#additional-input-options)
+	- [Working with genome VCFs](#working-with-genome-vcfs)
+	- [Additional outputs](#additional-outputs)
+	- [Comparison engines](#comparison-engines)
+	- [Stratification via BED regions](#stratification-via-bed-regions)
+	- [Internal variant normalisation and haplotype comparison](#internal-variant-normalisation-and-haplotype-comparison)
+	- [ROC curves](#roc-curves)
+	- [Input preprocessing using bcftools](#input-preprocessing-using-bcftools)
+	- [Haplotype comparison parameters](#haplotype-comparison-parameters)
+	- [Using RTG-Tools - VCFEval as the comparison engine](#using-rtg-tools-vcfeval-as-the-comparison-engine)
+-  [Full list of output list of output columns](#full-list-of-output-columns)
 
 <!-- /TOC -->
 
@@ -41,6 +42,9 @@ The inputs to hap.py are two VCF files (a "truth" and a "query" file), and an
 optional "confident call region" bed file (NOTE: bed files with
 [track information](https://genome.ucsc.edu/goldenPath/help/customTrack.html)
 are not supported, all input bed or bed.gz files must only contain bed records).
+
+> Note: If you are running hap.py with _genome_ VCFs that include symbolic alleles
+> please see the section [Working with genome VCFs](#working-with-genome-vcfs)
 
 Hap.py will report counts of
 
@@ -124,7 +128,7 @@ example use case is computing precision / recall on exoms as well as on the whol
 or using the stratification regions from the GA4GH benchmarking repository at
 [https://github.com/ga4gh/benchmarking-tools](https://github.com/ga4gh/benchmarking-tools).
 
-# Getting Started
+# Getting started
 
 Below, we assume that the code has been installed to the directory `${HAPPY}`.
 
@@ -164,9 +168,9 @@ The extended table gives metrics in a more stratified format:
 
 ![](extended.table.png)
 
-# Full List of Command line Options
+# Full list of command line options
 
-## Minimal Options
+## Minimal options
 
 You can run hap.py with the -h switch to get help.
 
@@ -179,7 +183,7 @@ $ ${HAPPY}/bin/hap.py truth.vcf.gz query.vcf.gz \
       -o output-prefix --force-interactive
 ```
 
-## Running / Debugging issues
+## Running and debugging issues
 
 ```
   --force-interactive
@@ -219,7 +223,7 @@ All temporary files go into a scratch folder, which normally defaults to a
 subdirectory of `/tmp`. This can be customised (e.g. when fast local storage is
 available).
 
-## Restricting to Subsets of the Genome / Input
+## Restricting to subsets of the genome
 
 ```
   --location LOCATIONS, -l LOCATIONS
@@ -251,7 +255,7 @@ will fail).
 Restrict analysis to given (dense) regions (similar to using -T in bcftools).
 One example use for this is to restrict the analysis to exome-only data.
 
-## Additional Input Options
+## Additional input options
 
 ```
   -f FP_BEDFILE, --false-positives FP_BEDFILE
@@ -277,15 +281,33 @@ export HGREF=path-to-your-reference.fa
 
 before running hap.py.
 
+## Working with genome VCFs
+
+The presence of the <NON_REF> symbolic allele in genome VCFs can cause problems
+for hap.py, especially if it is part of a genotype. As a workaround, we 
+provide several options. Since variants genotyped as <NON_REF> cannot be
+sensibly scored, the we provide the following option, which is safe to use
+on both genome VCFs and standard VCFs:
+
 ```
-  --convert-gvcf
+  --filter-nonref       Remove any variants genotyped as <NON_REF>.
+                        
 ```
 
-Convert the query VCF from a genome VCF (GVCF) that contains depth information
-about every position in the genome to a standard VCF that contains only variant
-positions.
+If hap.py still crashes when processing a genome VCF, we provide separate
+options to perform on-the-fly conversion of a genome VCF to a standard VCF
+by removing all <NON_REF> alleles and non-variant blocks. Note that this 
+also removes some fields from the INFO column. These options should only
+be used on genome VCFs since attempting to convert a standard VCF will 
+cause all biallelic variants to be filtered out (most of them).
 
-## Additional Outputs
+```
+  --convert-gvcf-truth Convert the truth genome VCF to a standard VCF.
+  --convert-gvcf-query Convert the query genome VCF to a standard VCF.
+                        
+```
+
+## Additional outputs
 
 ```
   -V, --write-vcf
@@ -302,7 +324,7 @@ for truth and query calls (TP/FP/FN/N/UNK).
 See the [GA4GH page above](https://github.com/ga4gh/benchmarking-tools/blob/master/doc/ref-impl/README.md)
 for more details.
 
-## Comparison Engines
+## Comparison engines
 
 Hap.py can produce benchmarking results and ROCs using different comparison methods which implement the
 [GA4GH intermediate format](https://github.com/ga4gh/benchmarking-tools/blob/master/doc/ref-impl/README.md).
@@ -337,7 +359,7 @@ These methods are:
 There are a quite a few differences between these comparison modes which are reflected
 in the ROC outputs. Some examples for this are shown in [microbench.md](microbench.md).
 
-## Stratification via Bed Regions
+## Stratification via BED regions
 
 Hap.py can compute stratified counts using bed regions of interest. One set of such regions can
 be found here:
@@ -410,7 +432,7 @@ If the confident regions only contain the padding base, we can fix them using th
 `--adjust-conf-regions` command line option. This option will correctly pad all confident
 insertions.
 
-## Internal Variant Normalisation and Haplotype Comparison
+## Internal variant normalisation and haplotype comparison
 
 ```
   -L, --leftshift       Left-shift variants in their unary representation. This is off by default.
@@ -448,7 +470,7 @@ many cases by this type of decomposition. The micro-benchmark example in
 [microbench.md](microbench.md) shows the effect of different pre-processing
 switches.
 
-## ROC Curves
+## ROC curves
 
 Hap.py can create data for ROC-style curves. Normally, it is preferable to calculate
 such curves based on the input variant representations, and not to perform any
@@ -518,13 +540,13 @@ for a range of thresholds on QUAL (or the feature that was passed to --roc).
 
 ![](roc_table.png)
 
-## Input Preprocessing using bcftools
+## Input preprocessing using bcftools
 
 Hap.py has a range of options to control pre-processing separately for truth
 and query. Hap.py supports the same options as pre.py, which is described in
 [normalisation.md](normalisation.md).
 
-## Haplotype Comparison Parameters
+## Haplotype comparison parameters
 
 ```
   -w WINDOW, --window-size WINDOW
@@ -558,7 +580,7 @@ is to use vcfeval as a comparison engine instead.
 Reference-pad and expand the sequences generate haplotype blocks by this many
 basepairs left and right.  This is useful for approximate block matching.
 
-## Using RTG-Tools / VCFEval as the comparison engine
+## Using RTG-Tools, VCFEval as the comparison engine
 
 RTG-Tools (see [https://github.com/RealTimeGenomics/rtg-tools](https://github.com/RealTimeGenomics/rtg-tools)
 provides a feature called "vcfeval" which performs complex variant comparisons. Hap.py
@@ -595,7 +617,7 @@ hap.py truth.vcf.gz query.vcf.gz -f conf.bed.gz -o ./test -V --engine=vcfeval --
 
 Most other command line arguments and outputs will work as before.
 
-# Full List of Output Columns
+# Full list of output columns
 
 Happy outputs a set of stratification columns, followed by metrics columns.
 Stratification columns may contain the placeholder "*" value, which indicates
