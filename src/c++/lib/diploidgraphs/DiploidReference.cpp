@@ -230,6 +230,11 @@ void DiploidReference::setRegion(
                 if(opposite_path != nu_haps.end() && opposite_path != nu_haps.begin())
                 {
                     size_t p2 = opposite_path->second;
+                    // make order reproducible since map is not ordered
+                    if(p2 > p1)
+                    {
+                        std::swap(p1, p2);
+                    }
 
                     nu_haps.erase(nu_haps.begin());
                     nu_haps.erase(opposite_path);
