@@ -105,7 +105,7 @@ when using variant calling methods that produce many complex variant calls,
 these corner cases can become relevant. Moreover, when benchmarking against
 gold-standard datasets that cover difficult regions of the genome (e.g.
 [Platinum Genomes](http://www.illumina.com/platinumgenomes/)), the more complicated
-subsets of the genome will be respnsible for most of the difference between
+subsets of the genome will be responsible for most of the difference between
 methods.
 
 ### Variant preprocessing
@@ -164,7 +164,7 @@ prefer to combine local haplotypes in the same variant records
 different variant calling methods.
 
 ```
-chr1    201586350       .       CTCTCTCTCT      C
+chr1    201586350       .       CTCTCTCTC       C
 chr1    201586359       .       T               A
 ```
 
@@ -351,7 +351,7 @@ docker build -f Dockerfile.centos6 .
 You will need these tools / libraries on your system to compile the code:
 
 * CMake &gt; 2.8
-* GCC/G++ 4.8+ for compiling
+* GCC/G++ 4.9.2+ for compiling
 * Boost 1.55+
 * Python 2, version 2.7.8 or greater
 * Python packages: Pandas, Numpy, Scipy, pysam, bx-python

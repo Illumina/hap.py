@@ -48,13 +48,13 @@ are not supported, all input bed or bed.gz files must only contain bed records).
 
 Hap.py will report counts of
 
-*   ***true-positives (TP)***: variants/genotypes that match in truth and query.
-*   ***false-positives (FP)***: variants that have mismatching genotypes or alt
+*   ***true-positives (TP)*** : variants/genotypes that match in truth and query.
+*   ***false-positives (FP)*** : variants that have mismatching genotypes or alt
     alleles, as well as query variant calls in regions a truth set would call
     confident hom-ref regions.
 *   ***false-negatives (FN)*** : variants present in the truth set, but missed
     in the query.
-*   ***non-assessed calls (UNK)***: variants outside the truth set regions
+*   ***non-assessed calls (UNK)*** : variants outside the truth set regions
 
 From these counts, we are able to calculate
 
@@ -488,8 +488,8 @@ a ROC curve based on the query GQX field:
 The `--roc` switch specifies the feature to filter on. Hap.py translates the
 truth and query GQ(X) fields into the INFO fields T_GQ and Q_GQ, it tries to
 use GQX first, if this is not present, it will use GQ. When run without
-internal preprocessing any other input INFO field can be used (e.g. VQSLOD for
-GATK).
+internal preprocessing any other input INFO field can be used (e.g. 
+--roc INFO.VQSLOD for GATK).
 
 The `--roc-filter` switch may be used to specify the particular VCF filter
 which implements a threshold on the quality score. When calculating filtered

@@ -1,4 +1,6 @@
-FROM ubuntu:16.04
+FROM ubuntu:18.04
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
     apt-get install -y \
@@ -28,7 +30,6 @@ RUN apt-get update && \
         wget \
         zlib1g-dev && \
     apt-get clean -y
-
 
 RUN pip install bx-python
 
