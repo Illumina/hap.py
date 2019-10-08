@@ -41,7 +41,6 @@
 #include "helpers/BCFHelpers.hh"
 
 #include <map>
-#include <regex>
 #include <unordered_map>
 #include <htslib/vcf.h>
 
@@ -102,7 +101,6 @@ namespace variant
     void QuantifyRegions::load(std::vector<std::string> const &rnames, bool fixchr)
     {
         std::unordered_map<std::string, size_t> label_map;
-        const std::regex trailing_number_regex ("(.+)_([0-9]+)$");
         for (std::string const &f : rnames)
         {
             std::vector<std::string> v;
@@ -238,10 +236,22 @@ namespace variant
 
                         if (!fixed_label && v.size() > 3)
                         {
-                            std::smatch string_matches;
-                            if(std::regex_match(v[3], string_matches, trailing_number_regex))
+                            size_t split = v[3].size();
+                            for (size_t pos = v[3].size(); pos != 0; --pos)
                             {
-                                label_ids.insert(getLabelId(label + "_" + string_matches.str(1), 1));
+                                if (v[3][pos] < '0' || v[3][pos] > '9')
+                                {
+                                    break;
+                                }
+                                else
+                                {
+                                    split = pos;
+                                }
+                            }
+
+                            if(split < v[3].size() && v[3][split] == '_')
+                            {
+                                label_ids.insert(getLabelId(label + "_" + v[3].substr(0, split), 1));
                                 label_ids.insert(getLabelId(label + "_" + v[3], 2));
                             }
                             else

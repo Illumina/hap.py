@@ -16,7 +16,8 @@ usage: VCF preprocessor [-h] [--location LOCATIONS] [--pass-only]
                         [-T TARGETS_BEDFILE] [-L] [-D] [--bcftools-norm]
                         [--fixchr] [--no-fixchr] [--bcf] [-v] [-r REF]
                         [-w WINDOW] [--threads THREADS] [--force-interactive]
-                        [--logfile LOGFILE] [--verbose | --quiet]
+                        [--logfile LOGFILE] [--verbose | --quiet] [--filter-nonref]
+                        [--convert-gvcf-truth] [--convert-gvcf-query]
                         input output
 ```
 
@@ -127,6 +128,28 @@ The default value is 10000, which should be sufficient for short reads.
   -w WINDOW, --window-size WINDOW
                         Preprocessing window size (variants further apart than
                         that size are not expected to interfere).
+```
+
+The presence of the <NON_REF> symbolic allele in genome VCFs can cause problems
+for hap.py, especially if it is part of a genotype. As a workaround, we 
+provide several options. Since variants genotyped as <NON_REF> cannot be
+sensibly scored, the we provide the following option, which is safe to use
+on both genome VCFs and standard VCFs:
+
+```
+  --filter-nonref       Remove any variants genotyped as <NON_REF>.                 
+```
+
+If hap.py still crashes when processing a genome VCF, we provide separate
+options to perform on-the-fly conversion of a genome VCF to a standard VCF
+by removing all <NON_REF> alleles and non-variant blocks. Note that this 
+also removes some fields from the INFO column. These options should only
+be used on genome VCFs since attempting to convert a standard VCF will 
+cause all biallelic variants to be filtered out (most of them).
+
+```
+  --convert-gvcf-truth Convert the truth genome VCF to a standard VCF.
+  --convert-gvcf-query Convert the query genome VCF to a standard VCF.          
 ```
 
 Runtime behaviour can also be controlled as follows:
