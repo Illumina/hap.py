@@ -137,7 +137,7 @@ sensibly scored, the we provide the following option, which is safe to use
 on both genome VCFs and standard VCFs:
 
 ```
- --filter-nonref       Remove any variants genotyped as <NON_REF>.                 
+  --filter-nonref       Remove any variants genotyped as <NON_REF>.                 
 ```
 
 If hap.py still crashes when processing a genome VCF, we provide separate
