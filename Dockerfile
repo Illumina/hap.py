@@ -24,7 +24,6 @@ RUN apt-get update && \
         python-pandas \
         python-distribute \
         python-pysam \
-        python-software-properties \
         python-scipy \                    
         software-properties-common \
         wget \
