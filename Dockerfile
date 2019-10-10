@@ -1,4 +1,6 @@
-FROM ubuntu:16.04
+FROM ubuntu:18.04
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
     apt-get install -y \
@@ -22,13 +24,11 @@ RUN apt-get update && \
         python-pandas \
         python-distribute \
         python-pysam \
-        python-software-properties \
         python-scipy \                    
         software-properties-common \
         wget \
         zlib1g-dev && \
     apt-get clean -y
-
 
 RUN pip install bx-python
 

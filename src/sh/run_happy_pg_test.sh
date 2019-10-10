@@ -95,7 +95,7 @@ ${PYTHON} ${HCDIR}/hap.py \
 			 	-r ${DIR}/../../example/chr21.fa \
 			 	-o ${TMP_OUT}.unhappy \
 			 	-X --unhappy \
-			 	--roc VQSLOD \
+			 	--roc INFO.VQSLOD \
 			 	--force-interactive
 
 if [[ $? != 0 ]]; then
