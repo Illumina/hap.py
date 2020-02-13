@@ -235,7 +235,7 @@ def preprocessVCF(input_filename, output_filename, location="",
                 vargs += ["-o", tff.name, "-O", "b"]
                 runShellCommand(*vargs)
                 runShellCommand('bcftools', "index", tff.name)
-            vargs = ["view", tff.name, "-R", regions]
+            vargs = ["bcftools", "view", tff.name, "-R", regions]
 
         if somatic_allele_conversion:
             if type(somatic_allele_conversion) is not str:
