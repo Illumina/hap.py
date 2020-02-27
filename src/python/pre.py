@@ -242,7 +242,7 @@ def preprocessWrapper(args):
                args.threads,
                args.gender,
                args.somatic_allele_conversion,
-               convert_gvcf_to_vcf=args.convert_gvcf)
+               convert_gvcf_to_vcf=args.convert_gvcf_to_vcf)
 
     elapsed = time.time() - starttime
     logging.info("preprocess for %s -- time taken %.2f" % (args.input, elapsed))
@@ -316,12 +316,9 @@ def updateArgs(parser):
     parser.add_argument('--filter-nonref', dest='filter_nonref', action="store_true", default=False,
                         help='Remove any variants genotyped as <NON_REF>.')  
                         
-    parser.add_argument('--convert-gvcf-truth', dest='convert_gvcf_truth', action="store_true", default=False,
-                        help='Convert the truth set from genome VCF format to a VCF before processing.')  
+    parser.add_argument('--convert-gvcf-to-vcf', dest='convert_gvcf_to_vcf', action="store_true", default=False,
+                        help='Convert the input set from genome VCF format to a VCF before processing.')
                         
-    parser.add_argument('--convert-gvcf-query', dest='convert_gvcf_query', action="store_true", default=False,
-                        help='Convert the query set from genome VCF format to a VCF before processing.')                          
-
     # genotype handling on chrX.
     parser.add_argument("--gender", dest="gender", choices=["male", "female", "auto", "none"], default="auto",
                         help="Specify sex. This determines how haploid calls on chrX get treated: for male samples,"
