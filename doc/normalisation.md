@@ -17,7 +17,7 @@ usage: VCF preprocessor [-h] [--location LOCATIONS] [--pass-only]
                         [--fixchr] [--no-fixchr] [--bcf] [-v] [-r REF]
                         [-w WINDOW] [--threads THREADS] [--force-interactive]
                         [--logfile LOGFILE] [--verbose | --quiet] [--filter-nonref]
-                        [--convert-gvcf-truth] [--convert-gvcf-query]
+                        [--convert-gvcf-to-vcf]
                         input output
 ```
 
@@ -148,8 +148,7 @@ be used on genome VCFs since attempting to convert a standard VCF will
 cause all biallelic variants to be filtered out (most of them).
 
 ```
-  --convert-gvcf-truth Convert the truth genome VCF to a standard VCF.
-  --convert-gvcf-query Convert the query genome VCF to a standard VCF.          
+  --convert-gvcf-to-vcf Convert the input genome VCF to a standard VCF.
 ```
 
 Runtime behaviour can also be controlled as follows:
