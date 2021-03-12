@@ -83,6 +83,10 @@ def main():
 
     # control preprocessing
     pre.updateArgs(parser)
+    parser.add_argument('--convert-gvcf-truth', dest='convert_gvcf_truth', action="store_true", default=False,
+                        help='Convert the truth set from genome VCF format to a VCF before processing.')  
+    parser.add_argument('--convert-gvcf-query', dest='convert_gvcf_query', action="store_true", default=False,
+                        help='Convert the query set from genome VCF format to a VCF before processing.')   
     parser.add_argument("--preprocess-truth", dest="preprocessing_truth", action="store_true", default=False,
                         help="Preprocess truth file with same settings as query (default is to accept truth in original format).")
     parser.add_argument("--usefiltered-truth", dest="usefiltered_truth", action="store_true", default=False,
@@ -282,10 +286,13 @@ def main():
         if args.preprocessing_truth:
             if args.filter_nonref:
                 logging.info("Filtering out any variants genotyped as <NON_REF>")
-                
-        if args.convert_gvcf_to_vcf:
+        
+        ## Only converting truth gvcf to vcf if both arguments are true
+        convert_gvcf_truth = False
+        if args.convert_gvcf_truth or args.convert_gvcf_to_vcf:
             logging.info("Converting genome VCF to VCF")            
-            
+            convert_gvcf_truth=True 
+
         tempfiles.append(ttf.name)
         tempfiles.append(ttf.name + ".csi")
         tempfiles.append(ttf.name + ".tbi")
@@ -306,7 +313,7 @@ def main():
                                      args.somatic_allele_conversion,                                     
                                      "TRUTH",
                                      filter_nonref=args.filter_nonref if args.preprocessing_truth else False,
-                                     convert_gvcf_to_vcf=args.convert_gvcf_to_vcf)
+                                     convert_gvcf_to_vcf=convert_gvcf_truth)
 
         args.vcf1 = ttf.name
 
@@ -337,8 +344,12 @@ def main():
         logging.info("Preprocessing query: %s" % args.vcf2)
         if args.filter_nonref:
             logging.info("Filtering out any variants genotyped as <NON_REF>")
-        if args.convert_gvcf_to_vcf:
-            logging.info("Converting genome VCF to VCF")
+        
+        ## Only converting truth gvcf to vcf if both arguments are true
+        convert_gvcf_query = False
+        if args.convert_gvcf_query or args.convert_gvcf_to_vcf:
+            logging.info("Converting genome VCF to VCF")            
+            convert_gvcf_query=True 
 
         starttime = time.time()
 
@@ -380,7 +391,7 @@ def main():
                        args.somatic_allele_conversion,
                        "QUERY",
                        filter_nonref=args.filter_nonref,
-                       convert_gvcf_to_vcf=args.convert_gvcf_to_vcf)
+                       convert_gvcf_to_vcf=convert_gvcf_query)
                        
         args.vcf2 = qtf.name
         h2 = vcfextract.extractHeadersJSON(args.vcf2)
