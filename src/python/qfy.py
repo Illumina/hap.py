@@ -249,7 +249,7 @@ def updateArgs(parser):
                         help="Write an annotated VCF.")
 
     parser.add_argument("-X", "--write-counts", dest="write_counts",
-                        default=True, action="store_true",
+                        default=False, action="store_true",
                         help="Write advanced counts and metrics.")
 
     parser.add_argument("--output-vtc", dest="output_vtc",
