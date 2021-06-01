@@ -252,10 +252,6 @@ def updateArgs(parser):
                         default=True, action="store_true",
                         help="Write advanced counts and metrics.")
 
-    parser.add_argument("--no-write-counts", dest="write_counts",
-                        default=True, action="store_false",
-                        help="Do not write advanced counts and metrics.")
-
     parser.add_argument("--output-vtc", dest="output_vtc",
                         default=False, action="store_true",
                         help="Write VTC field in the final VCF which gives the counts each position has contributed to.")
