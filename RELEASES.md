@@ -1,4 +1,12 @@
 # Hap.py Release Notes / Change Log
+## v0.3.15
+* Update rtgtools to v3.12.1
+* som.py no long hangs; fp.filtered SNV counting is incorrect. https://jira.illumina.com/browse/HAP-373. Use stable som.py v0.3.10.
+
+## v0.3.14
+* Fixed issues created by previous change to convert_gvcf arguments
+* Removed redundant truth and query gvcf parameters in pre.py.
+* som.py no long hangs; fp.filtered SNV counting is incorrect. https://jira.illumina.com/browse/HAP-373. Use stable som.py v0.3.10.
 
 ## v0.3.12
 
@@ -327,4 +335,5 @@
 | HAP-54    | Version number does not display                                                  |
 | HAP-62    | hap.py non-verbose fail when FP regions file not found                           |
 | HAP-63    | Add more comprehensive PG hap.py test (PGv7 vs. GATK 1.6 on chr21)               |
+
 
