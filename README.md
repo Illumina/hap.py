@@ -429,7 +429,7 @@ can be carried out on a desktop system.
 Hap.py is known to build and run on the following linux distributions (see also the [Dockerfile](Dockerfile)
 for a list of required packages):
 
-    Ubuntu 12.04,14.04,16.04
+    Ubuntu 12.04,14.04,16.04,18.04
     CentOS 5,6,7
 
 Hap.py must be compiled with g++ version 4.9.x or later, or with a recent version of Clang (testing is performed
@@ -481,3 +481,4 @@ export BOOST_ROOT=$HOME/boost_1_55_0_install
 
 The complete list of dependencies / packages to install beforehand can be found
 in the [Dockerfile](Dockerfile).
+
