@@ -1,4 +1,12 @@
 # Hap.py Release Notes / Change Log
+## v0.3.15
+* Updated rtgtools to v3.12.1
+* Defect remains: https://jira.illumina.com/browse/HAP-373. Use stable som.py v0.3.10.
+
+## v0.3.14
+* Fixed issues created by previous change to convert_gvcf arguments
+* Removed redundant truth and query gvcf parameters in pre.py.
+* som.py no longer hangs; fp.filtered SNV counting is incorrect. https://jira.illumina.com/browse/HAP-373. Use stable som.py v0.3.10.
 
 ## v0.3.12
 
