@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
             ("location,l", po::value<std::string>(), "Start location.")
             ("regions,R", po::value<std::string>(), "Use a bed file for getting a subset of regions (traversal via tabix).")
             ("targets,T", po::value<std::string>(), "Use a bed file for getting a subset of targets (streaming the whole file, ignoring things outside the bed regions).")
-            ("limit-records", po::value<int64_t>(), "Maximum umber of records to process")
+            ("limit-records", po::value<int64_t>(), "Maximum Number of records to process")
             ("message-every", po::value<int64_t>(), "Print a message every N records.")
             ("apply-filters,f", po::value<bool>(), "Apply filtering in VCF.")
             ("leftshift", po::value<bool>(), "Leftshift variant alleles.")
