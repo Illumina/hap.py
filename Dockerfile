@@ -30,7 +30,7 @@ RUN apt-get update && \
         zlib1g-dev && \
     apt-get clean -y
 
-RUN pip install bx-python
+RUN pip install bx-python==0.8.8
 
 # copy git repository into the image
 RUN mkdir -p /opt/hap.py-source
