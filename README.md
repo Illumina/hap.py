@@ -6,7 +6,7 @@ Peter Krusche <pkrusche@illumina.com>
 This is a set of programs based on [htslib](https://github.com/samtools/htslib)
 to benchmark variant calls against gold standard truth datasets.
 
-To compare a VCF against a gold standard dataset, use the following commmand line
+To compare a VCF against a gold standard dataset, use the following command line
 to perform genotype-level haplotype comparison.
 
 ```bash
